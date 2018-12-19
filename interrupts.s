@@ -6,13 +6,19 @@
 
 .export _initVBI
 .export _immediateUserVBI
-.code
+.export _displayListInterrupt
 
+.code
 PCOLR0 = $02C0		; Player 0 color
 PCOLR1 = $02C1		; Player 1 color
+CHBASE = $D409		; Character set
+COLPF0 = $D016		; 
+COLPF1 = $D017		; text luminance
+COLPF2 = $D018		; text background
+COLPF3 = $D019		; 
 CUR_SKIP = 10		; number of frames to skip for color cycling
 CUR_TIMER = $0600	; Cursor color cycling frame skip countdown timer
-STICK_TIMER = $0610	; Joystick countdown timer for repeating joystick moves
+STICK_TIMER = $0601	; Joystick countdown timer for repeating joystick moves
 
 .proc _initVBI		; on entry: X=MSB, A=LSB
 	tay				; move LSB to Y
@@ -63,4 +69,14 @@ write_color:
 	
 return:
 	jmp $E45F			; jump to the OS immediate VBI routine
+.endproc
+
+.proc _displayListInterrupt
+	pha					; push accumulator onto stack
+	lda #$0E			; Set text window to use white on dark gray
+	sta COLPF1			; text brightness
+	lda #$04
+	sta COLPF2			; text background
+	pla					; pull accumulator from stack
+	rti
 .endproc

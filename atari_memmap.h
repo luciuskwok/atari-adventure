@@ -36,6 +36,9 @@
 #define COLOR3 (0x02C7)
 #define COLOR4 (0x02C8)
 
+// Sprites
+#define HPOSP0 (0xD000)
+
 // Memory Management
 #define MEMTOP (0x02E5)
 #define CHBAS (0x02F4)
