@@ -10,70 +10,57 @@
 
 PCOLR0 = $02C0		; Player 0 color
 PCOLR1 = $02C1		; Player 1 color
+CUR_SKIP = 10		; number of frames to skip for color cycling
+CUR_TIMER = $0600	; Cursor color cycling frame skip countdown timer
+STICK_TIMER = $0610	; Joystick countdown timer for repeating joystick moves
 
-.proc _initVBI
-			; MSB is in X register
-	tay		; LSB is in A register, so transfer to Y
-	lda #6		; 6=Immediate, 7=Deferred.
-	jsr $E45C	;SETVBV
+.proc _initVBI		; on entry: X=MSB, A=LSB
+	tay				; move LSB to Y
+	lda #CUR_SKIP	; init CUR_TIMER to CUR_SKIP
+	sta CUR_TIMER	
+	lda #6			; 6=Immediate, 7=Deferred.
+	jsr $E45C		; SETVBV
 	rts
-.endproc	
+.endproc
 	
 .proc _immediateUserVBI
-cursor_timer = $0600		; timer is used to slow down the updates
-cursor_target = $0601
-cursor_color = $0602
-selection_color = $0603
-joystick_timer = $0610		; countdown timer for repeating joystick moves
 
-	lda joystick_timer	; sets Z flag (Z=1 if joystick_timer is zero)
+	lda STICK_TIMER		; sets Z flag (Z=1 if joystick_timer is zero)
 	beq update_cursor	; skip decrement if already at zero
-	dec joystick_timer
+	dec STICK_TIMER
 	
 update_cursor:
-	lda cursor_timer	
-	sbc #1
-	sta cursor_timer	; store updated timer value
-	bpl return		; if timer >= 0, skip updating the color
-	lda #6			; reset the timer to 5 ticks
-	sta cursor_timer
-				
-				; == Cycle only the luminance of the color value ==
-	lda PCOLR0		
-	and #$0F		; isolate luminance in A register
-	cmp cursor_target
-	bne update_color
-
-				; == Reset the target if the color is equal to target
-	cmp #$08		; if A is < $08, set cursor_target to $0F
-	bcc reset_target_to_max
-reset_target_to_zero:
-	ldy #$00		; reset target to #00
-	sty cursor_target
-	clv
-	bvc update_color
-reset_target_to_max:
-	ldy #$0D		; reset target to $0D
-	sty cursor_target
-	
-update_color:
-	cmp cursor_target
-	bcc increment_luminance
-decrement_luminance:
-	sbc #1			; decrement luminance
-	clv
-	bvc write_color
-increment_luminance:
-	adc #1
-	
+	clv					; clear overflow flag just in case
+	dec CUR_TIMER	
+	bne return			; if timer != 0, skip updating the color
+	lda #CUR_SKIP		; reset the timer to 5 ticks
+	sta CUR_TIMER
+						; == Cycle only the luminance of the color value ==						
+	lda PCOLR0			; get the color (Addr=3459)
+	tax					; use X register for new color value
+	and #$0F			; isolate the luminance in A
+	cmp #$01			; if luminance is 1
+	bne skip_1
+	dex					; set luminance to 0
+	bvc write_color		; unconditional branch 
+skip_1:						
+	cmp #$0E			; if luminance is E
+	bne skip_2
+	inx					; set luminance to F
+	bvc write_color		; unconditional branch 
+skip_2:
+	and #$01			; odd or even
+	beq skip_3
+	dex 				; if odd, subtract 2
+	dex
+	bvc write_color		; unconditional branch 
+skip_3:
+	inx					; else if even, add 2
+	inx
 write_color:
-	ora cursor_color	; add color hue for cursor
-	sta PCOLR0
-	and #$0F		; replace color hue for selection
-	ora selection_color
-	sta COLOR2
-	
+	stx PCOLR0			; store new color value in players 0 and 1
+	stx PCOLR1
 	
 return:
-	jmp $E45F		; jump to the OS immediate VBI routine
+	jmp $E45F			; jump to the OS immediate VBI routine
 .endproc

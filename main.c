@@ -33,6 +33,9 @@ void initFont(unsigned char fontPage);
 void initSprites(unsigned char spritePage);
 void fillScreen(void);
 void printString(const char* s, unsigned char color, unsigned char x, unsigned char y);
+void hexString(char *s, unsigned int x);
+extern void __fastcall__ initVBI(void *addr);
+extern void __fastcall__ immediateUserVBI(void);
 
 
 // Binary Data
@@ -108,6 +111,9 @@ void initGraphics(void) {
 	initAnticMode7();
 	initSprites(ramtopValue - 8);
 	initFont(ramtopValue - 12);
+	
+	// == Set up VBI ==
+	initVBI(immediateUserVBI); // Safe value: 0xE45F
 }
 
 
@@ -209,6 +215,7 @@ void initSprites(unsigned char spritePage) {
 void fillScreen(void) {
 	unsigned char *screen = (unsigned char *)PEEKW(SAVMSC);
 	unsigned char x, y;
+	char hex[5];
 	
 	for (y = 0; y < 11; ++y) {
 		for (x = 0; x < 11; ++x) {
@@ -221,18 +228,23 @@ void fillScreen(void) {
 	}
 	
 	printString("ALISA", 0, 12, 0);
-	printString("g99h12", 0, 12, 1);
+	printString("g99h123", 0, 12, 1);
 
 	printString("MARIE", 2, 12, 3);
-	printString("g1 h2", 2, 12, 4);
+	printString("g1 h4", 2, 12, 4);
 	
 	printString("GUY", 0, 12, 6);
-	printString("g99h12", 0, 12, 7);
+	printString("g10h67", 0, 12, 7);
 
 	printString("NYORN", 2, 12, 9);
-	printString("g1 h2", 2, 12, 10);
+	printString("g7 h78", 2, 12, 10);
 	
 	printString("$999,999", 0, 0, 15);
+	
+	// Debug: print location of VBI
+	hexString(hex, (unsigned int)immediateUserVBI);
+	//hexString(hex, 0x12AF);
+	printString(hex, 0, 0, 13);
 	
 }
 
@@ -248,5 +260,23 @@ void printString(const char* s, unsigned char color, unsigned char x, unsigned c
 		++x;
 		++index;
 	}
+}
+
+// == hexString() ==
+void hexString(char *s, unsigned int x) {
+	char i;
+	char c;
+	
+	for (i=0; i<4; ++i) {
+		c = x & 0x0F;
+		if (c < 10) {
+			c += 0x30;
+		} else {
+			c += 0x41 - 10;
+		}
+		s[3-i] = c;
+		x = x >> 4;
+	}
+	s[4] = 0;
 }
 
