@@ -257,7 +257,7 @@ void drawMap(const UInt8 *map, UInt8 mapWidth, UInt8 mapHeight, UInt8 centerX, U
 				c = map[x + mapWidth * y];
 				
 				// Add sprite tile for special tiles
-				if (1 <= c && c <5) {
+				if (1 <= c && c <= 5) {
 					drawSpriteTile(tileSprites + 8 * (c-1), col, row);
 				}
 
