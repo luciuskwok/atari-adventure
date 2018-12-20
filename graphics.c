@@ -13,18 +13,19 @@ extern void __fastcall__ displayListInterrupt(void);
 
 
 // Player-Missile Constants
-#define PM_LEFT_MARGIN (48)
+#define PM_LEFT_MARGIN (52)
 #define P2_XPOS (0x0604)
+#define SCREEN_WIDTH (24)
 
 // Globals
 UInt8 spritePage;
 UInt8 testMap[256]; // holds decoded map 16x16 for testing
+UInt8 *textWindow;
 
 
 // == initGraphics() ==
 void initGraphics(void) {
 	UInt8 ramtopValue = PEEK(RAMTOP);
-	
 	
 	// Globals
 	spritePage = ramtopValue - 8;
@@ -49,6 +50,10 @@ void initGraphics(void) {
 	initVBI(immediateUserVBI); // Safe value: 0xE45F
 	POKEW (VDSLST, (UInt16)displayListInterrupt);
 	ANTIC.nmien = 0xC0; // enable both DLI and VBI
+
+	// == Test Scrolling ==
+	ANTIC.hscrol = 4;
+	ANTIC.vscrol = 8;
 }
 
 
@@ -58,26 +63,37 @@ void initDisplayList(void) {
 	// Display list is already set up by the runtime to the equivalent of BASIC's GR.0. 
 	// We can just overwrite that DL with our own.
 	UInt8 *displayListPtr = (UInt8 *)PEEKW(SDLSTL);
+	UInt8 *write = displayListPtr;
 	UInt8 *screenMemPtr = (UInt8 *)PEEKW(SAVMSC);
-	UInt8 *writePtr;
 	UInt8 i;
+	const UInt8 dl_Interrupt = 0x80;
+	const UInt8 dl_LMS = 0x40;
+	const UInt8 dl_VScroll = 0x20;
+	const UInt8 dl_HScroll = 0x10;
+	const UInt8 colorModeLine = (dl_Interrupt | dl_HScroll | 7);
+
+
+	write += 3; // Skip DL instructions that are already blank rows.
+	*write = colorModeLine | dl_LMS;
+	*(++write) = (UInt16)screenMemPtr % 256;
+	*(++write) = (UInt16)screenMemPtr / 256;
 	
-	writePtr = displayListPtr + 3;
-	*writePtr = DL_DLI(DL_LMS(DL_CHR20x16x2)); // Antic mode 3 + LMS + DLI
-	*(++writePtr) = (UInt16)screenMemPtr % 256;
-	*(++writePtr) = (UInt16)screenMemPtr / 256;
-	
-	for (i=1; i<11; ++i) { // 11 lines of double height tiles = 176 scanlines
-		*(++writePtr) = DL_DLI(DL_CHR20x16x2); // + DLI on every tile row
+	for (i=1; i<9; ++i) { // 9 rows * 16 scanlines = 144 scanlines
+		*(++write) = colorModeLine; // DLI on every tile row
 	}
 	
-	*(++writePtr) = DL_BLK4; // 4 blank lines
-	*(++writePtr) = DL_CHR40x8x1; // 2 lines of text
-	*(++writePtr) = DL_CHR40x8x1; 
+	*(++write) = DL_BLK8; // 8 blank scanlines
+
+	for (i=0; i<5; ++i) { // 5 rows of text = 40 scanlines
+		*(++write) = DL_CHR40x8x1; 
+	}
 	
-	*(++writePtr) = DL_JVB; // Vertical blank + jump to beginning of display list
-	*(++writePtr) = (UInt16)displayListPtr % 256;
-	*(++writePtr) = (UInt16)displayListPtr / 256;
+	*(++write) = DL_JVB; // Vertical blank + jump to beginning of display list
+	*(++write) = (UInt16)displayListPtr % 256;
+	*(++write) = (UInt16)displayListPtr / 256;
+
+	// Set the textWindow pointer based on DL memory usage
+	textWindow = screenMemPtr + (9 * 24);
 }
 
 
@@ -125,12 +141,12 @@ void initSprites(void) {
 	}
 	
 	// Draw cursor sprite, which takes up 2 players because it is 10 pixels wide
-	drawSprite(cursorSprite1, 10, 0, 39);
-	drawSprite(cursorSprite2, 10, 1, 39);
+	drawSprite(cursorSprite1, 10, 0, 31);
+	drawSprite(cursorSprite2, 10, 1, 31);
 	
 	// Cursor sprites are in a fixed position
-	GTIA_WRITE.hposp0 = 36 + PM_LEFT_MARGIN;
-	GTIA_WRITE.hposp1 = 44 + PM_LEFT_MARGIN;
+	GTIA_WRITE.hposp0 = PM_LEFT_MARGIN + 9 * 8 - 4;
+	GTIA_WRITE.hposp1 = PM_LEFT_MARGIN + 10 * 8 - 4;
 
 	// Set up ANTIC
 	ANTIC.pmbase = spritePage;
@@ -180,66 +196,20 @@ void decodeRleMap(UInt8 *outMap, UInt16 mapLength, const UInt8 *inRleMap) {
 void clearScreen(void) {
 	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
 	UInt16 i;
-	// Screen is made up of 11 lines * 20 tiles + 2 lines * 40 tiles
-	const UInt16 max = 11 * 20 + 2 * 40;
-	
-	for (i=0; i<max; ++i) {
+	// Screen is made up of 10 lines * 24 tiles + 5 lines * 48 tiles = 480
+	for (i=0; i<512; ++i) {
 		screen[i] = 0;
 	}
-}
-
-// == fillScreen() ==
-// Set the screen to show all 256 characters
-void fillScreen(void) {
-	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
-	UInt8 y;
-	
-// 	for (x=0; x<80; ++x) {
-// 		screen[220+x] = x;
-// 	}
-
-	// Draw the HP and LV tiles
-	for (y=1; y<12; y+=3) {
-		screen[20 * y + 12] = tLV | 0x40;
-		screen[20 * y + 15] = tHP | 0x40;
-	}
-	
-	// Draw health potion and fang tiles
-	screen[220 + 1 * 20 + 13] = tPotion;
-	screen[220 + 3 * 20 + 13] = tFang;
-	
-	
-	printString("ALISA", 0, 12, 0);
-	printString("99", 0, 13, 1); // Lv
-	printString("123", 0, 16, 1); // HP
-
-	printString("MARIE", 2, 12, 3);
-	printString("1", 2, 13, 4); // Lv
-	printString("4", 2, 16, 4); // HP
-	
-	printString("GUY", 0, 12, 6);
-	printString("19", 0, 13, 7); // Lv
-	printString("67", 0, 16, 7); // HP
-
-	printString("NYORN", 2, 12, 9);
-	printString("7", 2, 13, 10); // Lv
-	printString("78", 2, 16, 10); // HP
-	
-	printString("$999,999", 0, 4, 12);
-	printString("Rep:2010", 0, 4, 14);
-	printString("21", 0, 14, 12);
-	printString("1999", 0, 14, 14);
-
-// 	printDebugInfo("DLI:", (UInt16)displayListInterrupt, 0);
 }
 
 // == drawMap() ==
 void drawMap(const UInt8 *map, UInt8 mapWidth, UInt8 mapHeight, UInt8 centerX, UInt8 centerY) {
 	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
-	const UInt8 windowWidth = 11;
-	const UInt8 windowHeight = 11;
-	const int windowOriginX = (int)centerX - 5;
-	const int windowOriginY = (int)centerY - 5;
+	const int windowOriginX = (int)centerX - 9;
+	const int windowOriginY = (int)centerY - 4;
+	const UInt8 windowWidth = 19;
+	const UInt8 windowHeight = 9;
+	const UInt8 leftMargin = 2;
 	UInt8 row, col, c;
 	int x, y, screenIndex;
 	
@@ -252,7 +222,7 @@ void drawMap(const UInt8 *map, UInt8 mapWidth, UInt8 mapHeight, UInt8 centerX, U
 		
 		for (col=0; col<windowWidth; ++col) {
 			x = windowOriginX + col;
-			screenIndex = col + 20 * row;
+			screenIndex = col + SCREEN_WIDTH * row + leftMargin;
 			if (0 <= y && y < mapHeight && 0 <= x && x < mapWidth) {
 				c = map[x + mapWidth * y];
 				

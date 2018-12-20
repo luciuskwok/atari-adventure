@@ -11,12 +11,15 @@
 .code
 PCOLR0 = $02C0		; Player 0 color
 PCOLR1 = $02C1		; Player 1 color
+
 CHBASE = $D409		; Character set
 HPOSP2 = $D002		; Player 2 horizontal position
 COLPF0 = $D016		; 
 COLPF1 = $D017		; text luminance
 COLPF2 = $D018		; text background
 COLPF3 = $D019		; 
+WSYNC  = $D40A
+
 CUR_SKIP = 15		; number of frames to skip for color cycling
 CUR_TIMER = $0600	; Cursor color cycling frame skip countdown timer
 STICK_TIMER = $0601	; Joystick countdown timer for repeating joystick moves
@@ -89,7 +92,8 @@ return:
 	adc #1				; ++DLI_ROW
 	tax
 	sta DLI_ROW
-	cpx #11				; if DLI_ROW >= 11, skip to setting text color
+	sta WSYNC			; wait for horizontal sync
+	cpx #9				; if DLI_ROW >= 9, skip to setting text color
 	bcs text_color
 	
 	lda P2_XPOS,X		; HPOSP2 = P2_XPOS[DLI_ROW]

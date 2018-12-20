@@ -1,13 +1,45 @@
 // text.c
 
 #include "text.h"
+#include "graphics.h"
 #include "tiles.h"
 #include "atari_memmap.h"
 #include <atari.h>
 
 
-// == printString() ==
-void printString(const char *s, UInt8 color, UInt8 x, UInt8 y) {
+// Constants
+#define SCREEN_WIDTH (40)
+
+
+// == printCharaStats() ==
+void printCharaStats(UInt8 player, const char *name, UInt8 level, UInt8 hp) {
+	UInt8 x = player * 10;
+	char s[8];
+
+	printString(name, x, 0);
+	++x;
+	printString("Lv:", x, 1);
+	printString("HP:", x, 2);
+	// TODO: print numbers
+}
+
+// == printPartyStats() ==
+void printPartyStats(UInt16 money, UInt16 potions, UInt16 fangs, UInt16 reputation) {
+
+}
+
+// == clearTextWindow() ==
+void clearTextWindow(void) {
+	UInt16 i;
+
+	for (i=0; i<5*SCREEN_WIDTH; ++i) {
+		textWindow[i] = 0;
+	}
+}
+
+
+// == printColorString() ==
+void printColorString(const char *s, UInt8 color, UInt8 x, UInt8 y) {
 	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
 	UInt8 index = 0;
 	char c;
@@ -19,11 +51,29 @@ void printString(const char *s, UInt8 color, UInt8 x, UInt8 y) {
 			c -= 0x20;
 		}
 		c += (color * 64);
-		screen[(UInt16)x + 20 * (UInt16)y] = c;
+		screen[(UInt16)x + SCREEN_WIDTH * (UInt16)y] = c;
 		++x;
 		++index;
 	}
 }
+
+// == printString() ==
+void printString(const char *s, UInt8 x, UInt8 y) {
+	UInt8 index = 0;
+	char c;
+
+	while (c = s[index]) {
+		if (c < 0x20) {
+			c += 0x40;
+		} else if (c < 0x60) {
+			c -= 0x20;
+		}
+		textWindow[(UInt16)x + SCREEN_WIDTH * (UInt16)y] = c;
+		++x;
+		++index;
+	}
+}
+
 
 // == printDebugInfo() ==
 void printDebugInfo(const char *label, UInt16 value, UInt8 position) {
@@ -32,8 +82,8 @@ void printDebugInfo(const char *label, UInt16 value, UInt8 position) {
 	char labelLength = strlen(label);
 	
 	hexString(hexStr, value);
-	printString(label, 0, position, 11);
-	printString(hexStr, 0, position + labelLength, 11);
+	printString(label, position, 0);
+	printString(hexStr, position + labelLength, 0);
 }
 
 // == hexString() ==
