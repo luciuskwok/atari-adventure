@@ -105,7 +105,7 @@ void initFont(UInt8 fontPage) {
 	UInt16 index;
 	UInt8 tileIndex;
 	
-	// Copy char set from ROM to RAM, 128 characters.
+	// Copy character set from ROM to RAM, 128 characters.
 	for (index=0; index<1024; ++index) {
 		customFontPtr[index] = romFontPtr[index];
 	}
@@ -243,7 +243,7 @@ void drawMap(const UInt8 *map, UInt8 mapWidth, UInt8 mapHeight, UInt8 centerX, U
 
 
 // == drawSprite() ==
-void drawSprite(const UInt8 *sprite, char spriteLength, char player, char y) {
+void drawSprite(const UInt8 *sprite, UInt8 spriteLength, UInt8 player, UInt8 y) {
 	UInt8 *pmbasePtr = (UInt8 *) (spritePage * 256 + 384);
 	const UInt16 pmLength = 128;
 	UInt16 offset = y + 16; // overscan area
@@ -257,7 +257,7 @@ void drawSprite(const UInt8 *sprite, char spriteLength, char player, char y) {
 }
 
 // == drawSpriteTile() ==
-void drawSpriteTile(const UInt8 *sprite, char column, char row) {
+void drawSpriteTile(const UInt8 *sprite, UInt8 column, UInt8 row) {
 	// Set horizontal position for tile
 	POKE(P2_XPOS + row, PM_LEFT_MARGIN + 8 * column);
 	

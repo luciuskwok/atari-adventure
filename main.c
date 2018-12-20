@@ -126,11 +126,14 @@ void handleStick() {
 void updateStatText(void) {
 	clearTextWindow();
 
+	// Print header column
+	printString("HP:", 0, 2);
+
 	// Print character statistics
-	printCharaStats(0, "Alisa", 99, 123);
-	printCharaStats(1, "Marie", 1, 4);
-	printCharaStats(2, "Guy", 19, 67);
-	printCharaStats(3, "Nyorn", 7, 78);
+	printCharaStats(0, "Alisa", 99, 123, 255);
+	printCharaStats(1, "Marie", 1, 4, 8);
+	printCharaStats(2, "Guy", 19, 67, 72);
+	printCharaStats(3, "Nyorn", 7, 78, 180);
 
 	// Print party statistics
 	printPartyStats(64000U, 21, 1325, 891);
