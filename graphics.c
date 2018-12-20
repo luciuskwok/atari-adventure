@@ -3,80 +3,13 @@
 #include <atari.h>
 #include "atari_memmap.h"
 #include "graphics.h"
+#include "tiles.h"
 
 
 extern void __fastcall__ initVBI(void *addr);
 extern void __fastcall__ immediateUserVBI(void);
 extern void __fastcall__ displayListInterrupt(void);
 
-// Tile constants
-#define tD (0x3F)
-#define tM (0x3E)
-#define tP (0x7C)
-#define tB (0x47)
-#define tH (0x48)
-#define tF (0xA0)
-#define tS (0xFB)
-#define tW (0xFD)
-#define tC (0x41)
-#define tT (0x02)
-#define tV (0x43)
-#define tX (0x05)
-#define tY (0x06)
-#define tLV (0x1B) /*';'*/
-#define tHP (0x1D) /*'='*/
-#define tPotion (0x40)
-#define tFang (0x41)
-
-// Binary Data
-unsigned char tileBitmaps[] = { 
-tD & 0x3F,  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // Desert
-tM & 0x3F,  0xF7, 0xE3, 0xC1, 0x80, 0xFF, 0xBF, 0x1F, 0x0E, // Mountains
-tP & 0x3F,  0xFF, 0xF7, 0xFF, 0xBF, 0xFD, 0xFF, 0xEF, 0xFF, // Plains
-tB & 0x3F,  0x7E, 0x7E, 0x00, 0x7E, 0x7E, 0x00, 0x7E, 0x7E, // Bridge (east-west)
-tH & 0x3F,  0x00, 0xDB, 0xDB, 0xDB, 0xDB, 0xDB, 0xDB, 0x00, // Bridge (north-south)
-tF & 0x3F,  0xFF, 0xF7, 0xE3, 0xF7, 0xC1, 0xF7, 0x80, 0xF7, // Forest
-tS & 0x3F,  0xFE, 0xFF, 0xFB, 0xFF, 0xEF, 0xFF, 0xBF, 0xFF, // Shallow water
-tW & 0x3F,  0xCE, 0xB5, 0x5D, 0x73, 0xCE, 0xBA, 0xAD, 0x73, // Deep water
-tC & 0x3F,  0x00, 0x00, 0x22, 0x1C, 0x1C, 0x18, 0x22, 0x00, // Castle bkgnd
-tT & 0x3F,  0x00, 0x00, 0x28, 0x00, 0x28, 0x00, 0x00, 0x00, // Town bkgnd
-tV & 0x3F,  0xFF, 0xD3, 0x89, 0xC9, 0xAC, 0x93, 0xCD, 0xF7, // Village bkgnd
-tX & 0x3F,  0xFF, 0xFF, 0xFF, 0xE7, 0xE3, 0xF1, 0xF8, 0xFC, // Monument bkgnd
-tY & 0x3F,  0xFF, 0xFF, 0xFF, 0xE7, 0xE7, 0xE7, 0xFF, 0xFF, // Cave bkgnd
-tLV, 0x00, 0x00, 0x40, 0x40, 0x45, 0x45, 0x72, 0x00, // Lv (Level)
-tHP, 0x00, 0x00, 0x57, 0x55, 0x77, 0x54, 0x54, 0x00, // HP
-tPotion, 0x3C, 0x18, 0x18, 0x2C, 0x5E, 0x7E, 0x3C, 0x00, // Health Potion
-tFang, 0x04, 0x04, 0x0C, 0x0C, 0x1C, 0x7C, 0x78, 0x30, 
-};
-#define tileCount (17)
-
-// Unused tile bitmaps
-// 0x00, 0x00, 0x02, 0x04, 0x76, 0x54, 0x74, 0x00, // of (unused)
-// 0x00, 0x04, 0x0E, 0x1F, 0x04, 0x04, 0x04, 0x00, // up arrow (unused)
-
-
-unsigned char sampleMap[] = {
-tD, tD, tF, tF, tW, tW, tS, tF, tD, tD, tD,
-tD, tD, tF, tF, tW, tW, tS, tF, tD, tX, tP,
-tD, tD, tD, tF, tF, tS, tS, tF, tF, tP, tP,
-tD, tY, tM, tM, tF, tF, tF, tF, tF, tP, tP,
-tD, tM, tM, tM, tM, tF, tF, tP, tP, tV, tP,
-tM, tM, tM, tM, tF, tF, tP, tP, tP, tP, tP,
-tM, tM, tM, tM, tF, tF, tP, tP, tT, tP, tP,
-tM, tM, tM, tF, tF, tF, tF, tF, tP, tP, tP,
-tM, tF, tF, tS, tF, tF, tF, tF, tP, tP, tP,
-tF, tF, tF, tS, tF, tF, tF, tF, tP, tC, tP,
-tF, tF, tF, tS, tS, tF, tF, tF, tP, tP, tP,
-};
-
-unsigned char cursorSprite1[] = { 0x1F, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x1F };
-unsigned char cursorSprite2[] = { 0xF8, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0xF8 };
-
-unsigned char castleSprite[] = { 0x66, 0x99, 0x81, 0x42, 0x42, 0x81, 0x99, 0x66 };
-unsigned char townSprite[] = { 0xEE, 0x82, 0x82, 0x00, 0x82, 0x82, 0xEE, 0x00 };
-unsigned char villageSprite[] = { 0x00, 0x2C, 0x60, 0x06, 0x50, 0x44, 0x10, 0x00 };
-unsigned char monumentSprite[] = { 0x00, 0x00, 0x00, 0x18, 0x18, 0x00, 0x00, 0x00 };
-unsigned char caveSprite[] = { 0x00, 0x00, 0x18, 0x24, 0x24, 0x24, 0x00, 0x00 };
 
 // Player-Missile Constants
 #define PM_LEFT_MARGIN (48)
@@ -227,7 +160,6 @@ void clearScreen(void) {
 void fillScreen(void) {
 	unsigned char *screen = (unsigned char *)PEEKW(SAVMSC);
 	unsigned char x, y;
-	unsigned char debugStr[5];
 	
 	for (y = 0; y < 11; ++y) {
 		for (x = 0; x < 11; ++x) {
@@ -235,9 +167,9 @@ void fillScreen(void) {
 		}
 	}
 	
-	for (x=0; x<80; ++x) {
-		screen[220+x] = x;
-	}
+// 	for (x=0; x<80; ++x) {
+// 		screen[220+x] = x;
+// 	}
 
 	// Draw the HP and LV tiles
 	for (y=1; y<12; y+=3) {
@@ -266,18 +198,13 @@ void fillScreen(void) {
 	printString("7", 2, 13, 10); // Lv
 	printString("78", 2, 16, 10); // HP
 	
-// 	printString("$999,999", 0, 4, 12);
-// 	printString("Rep:2010", 0, 4, 14);
-// 	printString("21", 0, 14, 12);
-// 	printString("1999", 0, 14, 14);
+	printString("$999,999", 0, 4, 12);
+	printString("Rep:2010", 0, 4, 14);
+	printString("21", 0, 14, 12);
+	printString("1999", 0, 14, 14);
 
-// 	printString("DLI:", 0, 0, 11);
-// 	hexString(debugStr, (unsigned int)displayListInterrupt);
-// 	printString(debugStr, 0, 4, 11);
-// 
-// 	printString("Pg6:", 0, 10, 11);
-// 	hexString(debugStr, (unsigned int)P2_XPOS);
-// 	printString(debugStr, 0, 14, 11);
+// 	printDebugInfo("DLI:", (unsigned int)displayListInterrupt, 0);
+
 }
 
 // == drawSprite() ==
@@ -322,6 +249,17 @@ void printString(const char* s, unsigned char color, unsigned char x, unsigned c
 	}
 }
 
+// == printDebugInfo() ==
+void printDebugInfo(const char* label, unsigned int value, unsigned char position) {
+	// Prints a label and a hex value in the text box area.
+	char hexStr[5];
+	char labelLength = strlen(label);
+	
+	hexString(hexStr, value);
+	printString(label, 0, position, 11);
+	printString(hexStr, 0, position + labelLength, 11);
+}
+
 // == hexString() ==
 void hexString(char *s, unsigned int x) {
 	char i;
@@ -340,6 +278,14 @@ void hexString(char *s, unsigned int x) {
 	s[4] = 0;
 }
 
+// == strlen() ==
+unsigned char strlen(const char *s) {
+	char len = 0;
+	while (s[len] != 0 && len < 0xFF) {
+		++len;
+	}
+	return len;
+}
 
 
 

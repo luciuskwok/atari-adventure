@@ -14,7 +14,9 @@ void drawSprite(unsigned char *sprite, char spriteLength, char player, char y);
 void drawSpriteTile(unsigned char *sprite, char column, char row);
 
 void printString(const char* s, unsigned char color, unsigned char x, unsigned char y);
+void printDebugInfo(const char* label, unsigned int value, unsigned char position);
 void hexString(char *s, unsigned int x);
+unsigned char strlen(const char *s);
 
 
 #endif
