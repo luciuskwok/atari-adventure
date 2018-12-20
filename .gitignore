@@ -2,3 +2,6 @@
 *.xex
 __*
 
+# Sublime Text
+*.sublime-workspace
+

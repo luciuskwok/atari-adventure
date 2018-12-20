@@ -19,7 +19,6 @@ open adv.xex
 
 // Includes
 #include <atari.h>
-#include <conio.h>
 #include "atari_memmap.h"
 #include "graphics.h"
 #include "text.h"
@@ -30,11 +29,9 @@ open adv.xex
 // Globals
 UInt8 gQuit;
 UInt8 gMapX, gMapY;
+UInt8 *gCurrentMap;
+UInt8 gMapWidth, gMapHeight;
 
-
-// Constants
-const UInt8 mapHeight = 11;
-const UInt8 mapWidth = 11;
 
 
 // Function prototypes
@@ -54,6 +51,13 @@ int main (void) {
 	gQuit = 0;
 	gMapX = 5;
 	gMapY = 5;
+
+	// Load test map
+	decodeRleMap(testMap, rleMapWidth * rleMapHeight, rleMap);
+	gCurrentMap = testMap;
+	gMapWidth = rleMapWidth;
+	gMapHeight = rleMapHeight;
+	drawMap(gCurrentMap, gMapWidth, gMapHeight, gMapX, gMapY);
 	
 	while (gQuit == 0) {
 		//startNewGame();
@@ -76,6 +80,8 @@ void handleStick() {
 	UInt8 trigger = PEEK (STRIG0);
 	UInt8 oldX = gMapX;
 	UInt8 oldY = gMapY;
+	UInt8 mapWidth = gMapWidth;
+	UInt8 mapHeight = gMapHeight;
 	
 	switch (stick) {
 		case 0x0E: // up
@@ -103,7 +109,7 @@ void handleStick() {
 	}
 	
 	if (oldX != gMapX || oldY != gMapY) {
-		drawMap(sampleMap, mapWidth, mapHeight, gMapX, gMapY);
+		drawMap(gCurrentMap, mapWidth, mapHeight, gMapX, gMapY);
 	}
 
 }

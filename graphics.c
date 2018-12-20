@@ -18,6 +18,7 @@ extern void __fastcall__ displayListInterrupt(void);
 
 // Globals
 UInt8 spritePage;
+UInt8 testMap[256]; // holds decoded map 16x16 for testing
 
 
 // == initGraphics() ==
@@ -95,7 +96,8 @@ void initFont(UInt8 fontPage) {
 	
 	// Add our custom tiles.
 	for (tileIndex=0; tileIndex<tileCount; ++tileIndex) {
-		// Each tile bitmap has 9 bytes. First byte indicated which character it replaces. Remove the highest 2 bits because they're used for color data.
+		// Each tile bitmap has 9 bytes. First byte indicated which character it replaces. 
+		// Remove the highest 2 bits because they're used for color data.
 		tilePtr = customFontPtr + 8 * tileBitmaps[tileIndex * 9];
 		for (index=0; index<8; ++index) {
 			tilePtr[index] = tileBitmaps[tileIndex * 9 + index + 1];
@@ -135,6 +137,45 @@ void initSprites(void) {
 	GTIA_WRITE.gractl = 3; // enable both missile and player graphics
 	POKE (SDMCTL, 0x2E); // standard playfield + missile DMA + player DMA + display list DMA
 	POKE (GPRIOR, 0x01); // layer players above playfield.
+}
+
+// == decodeRleMap() ==
+void decodeRleMap(UInt8 *outMap, UInt16 mapLength, const UInt8 *inRleMap) {
+	UInt16 rowLength, rowEnd;
+	UInt16 rleIndex = 0;
+	UInt16 outIndex = 0;
+	UInt8 op, tile, count;
+
+	printDebugInfo("Len:", mapLength, 0);
+
+	while (outIndex < mapLength) {
+		rowLength = inRleMap[rleIndex];
+		++rleIndex;
+		rowEnd = rleIndex + rowLength;
+
+		while (rleIndex < rowEnd) {
+			op = inRleMap[rleIndex];
+			++rleIndex;
+
+			tile = (op & 0xF0) >> 4;
+			count = (op & 0x0F);
+
+			if (count == 15) {
+				count += inRleMap[rleIndex];
+				++rleIndex;
+			}
+
+			printDebugInfo("Tile:", tile, 0);
+			printDebugInfo("Count:", count, 10);
+
+			++count;
+			while (count > 0) {
+				outMap[outIndex] = tile;
+				++outIndex;
+				--count;
+			}
+		}
+	}
 }
 
 // == clearScreen() ==
@@ -190,9 +231,6 @@ void fillScreen(void) {
 	printString("Rep:2010", 0, 4, 14);
 	printString("21", 0, 14, 12);
 	printString("1999", 0, 14, 14);
-	
-	// == Draw Map ==
-	drawMap(sampleMap, 11, 11, 5, 5);
 
 // 	printDebugInfo("DLI:", (UInt16)displayListInterrupt, 0);
 }
@@ -221,26 +259,12 @@ void drawMap(const UInt8 *map, UInt8 mapWidth, UInt8 mapHeight, UInt8 centerX, U
 				c = map[x + mapWidth * y];
 				
 				// Add sprite tile for special tiles
-				if (0x30 <= c && c <0x39) {
-					c -= 0x30;
-					drawSpriteTile(tileSprites + 8 * c, col, row);
-					c += tCastle;
-					
-				} else {
-					// Convert ASCII char to tile value
-					switch (c) {
-						case '.': c = tPlains | PlainsColor; break; 
-						case 's': c = tShallows | WaterColor; break; 
-						case 'w': c = tWater | WaterColor; break; 
-						case 't': c = tForest | ForestColor; break; 
-						case 'M': c = tMountain; break; 
-						case 'd': c = tDesert; break; 
-						case '-': c = tBridgeH | PlainsColor; break; 
-						case '|': c = tBridgeV | PlainsColor; break; 
-						default: c = 0; break;
-					}
+				if (1 <= c && c <5) {
+					drawSpriteTile(tileSprites + 8 * (c-1), col, row);
 				}
-				
+
+				// Convert map value to character value
+				c = tileChars[c];				
 			} else {
 				c = 0;
 			}
