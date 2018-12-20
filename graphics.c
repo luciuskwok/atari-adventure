@@ -13,6 +13,7 @@ void initSprites(void);
 extern void __fastcall__ initVBI(void *addr);
 extern void __fastcall__ immediateUserVBI(void);
 extern void __fastcall__ displayListInterrupt(void);
+extern unsigned char *P2_XPOS;
 
 // Tile constants
 #define tD (0x3F)
@@ -79,6 +80,9 @@ unsigned char villageSprite[] = { 0x00, 0x2C, 0x60, 0x06, 0x50, 0x44, 0x10, 0x00
 unsigned char monumentSprite[] = { 0x00, 0x00, 0x00, 0x18, 0x18, 0x00, 0x00, 0x00 };
 unsigned char caveSprite[] = { 0x00, 0x00, 0x18, 0x24, 0x24, 0x24, 0x00, 0x00 };
 
+// Player-Missile Constants
+#define PM_LEFT_MARGIN (48)
+
 // Globals
 unsigned char spritePage;
 
@@ -130,7 +134,7 @@ void initDisplayList(void) {
 	*(++writePtr) = (unsigned int)screenMemPtr / 256;
 	
 	for (i=1; i<11; ++i) { // 11 lines of double height tiles = 176 scanlines
-		*(++writePtr) = DL_CHR20x16x2;
+		*(++writePtr) = DL_DLI(DL_CHR20x16x2); // + DLI on every tile row
 	}
 	
 	*(++writePtr) = DL_DLI(DL_BLK4); // 4 blank lines + DLI
@@ -174,8 +178,6 @@ void initSprites(void) {
 	unsigned char *pmbasePtr = (unsigned char *) ((unsigned int)spritePage * 256 + 384);
 	unsigned int i;
 	unsigned char c;
-	const unsigned char leftMargin = 48;
-	const unsigned int cursorSpriteTop = 16 + 5 * 8 - 1; // 16 for overscan area
 	
 	// Zero out memory
 	for (i=0; i<640; ++i) {
@@ -190,6 +192,11 @@ void initSprites(void) {
 	// Draw cursor sprite, which takes up 2 players because it is 10 pixels wide
 	drawSprite(cursorSprite1, 10, 0, 36, 39);
 	drawSprite(cursorSprite2, 10, 1, 44, 39);
+	
+	// Draw sprites for special tiles
+	drawSprite(monumentSprite, 8, 2, 9 * 8, 1 * 8);
+	drawSprite(villageSprite, 8, 2, 9 * 8, 4 * 8);
+	drawSprite(castleSprite, 8, 2, 9 * 8, 9 * 8);
 
 	// Set up ANTIC
 	ANTIC.pmbase = spritePage;
@@ -222,9 +229,9 @@ void fillScreen(void) {
 		}
 	}
 	
-	for (x=0; x<80; ++x) {
-		screen[220+x] = x;
-	}
+// 	for (x=0; x<80; ++x) {
+// 		screen[220+x] = x;
+// 	}
 
 	// Draw the HP and LV tiles
 	for (y=1; y<12; y+=3) {
@@ -282,19 +289,35 @@ void printString(const char* s, unsigned char color, unsigned char x, unsigned c
 void drawSprite(unsigned char *sprite, char spriteLength, char player, char x, char y) {
 	unsigned char *pmbasePtr = (unsigned char *) (spritePage * 256 + 384);
 	const unsigned int pmLength = 128;
-	const unsigned char leftMargin = 48;
-	unsigned int offset = y;
+	unsigned int offset = y + 16; // overscan area
 	unsigned int i;
 	
 	// Set X position
-	POKE(HPOSP0 + player, x + leftMargin);
+	POKE(HPOSP0 + player, x + PM_LEFT_MARGIN);
 	
 	// Copy sprite data at Y position
 	pmbasePtr += pmLength * (player + 1);
-	y += 16; // overscan area
 	for (i=0; i<spriteLength; ++i) {
-		pmbasePtr[i + y] = sprite[i];
+		pmbasePtr[i + offset] = sprite[i];
 	}
+}
+
+// == hexString() ==
+void hexString(char *s, unsigned int x) {
+	char i;
+	char c;
+	
+	for (i=0; i<4; ++i) {
+		c = x & 0x0F;
+		if (c < 10) {
+			c += 0x30;
+		} else {
+			c += 0x41 - 10;
+		}
+		s[3-i] = c;
+		x = x >> 4;
+	}
+	s[4] = 0;
 }
 
 

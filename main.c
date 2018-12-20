@@ -50,21 +50,3 @@ int main (void) {
 	return 0; // success
 }
 
-// == hexString() ==
-void hexString(char *s, unsigned int x) {
-	char i;
-	char c;
-	
-	for (i=0; i<4; ++i) {
-		c = x & 0x0F;
-		if (c < 10) {
-			c += 0x30;
-		} else {
-			c += 0x41 - 10;
-		}
-		s[3-i] = c;
-		x = x >> 4;
-	}
-	s[4] = 0;
-}
-
