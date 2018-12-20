@@ -1,7 +1,7 @@
 // main.c
 
 /* Build commands:
-/Applications/Emulation/cc65-master/bin/cl65 -O -t atari -C config.cfg main.c graphics.c interrupts.s -o adv.xex
+/Applications/Emulation/cc65-master/bin/cl65 -O -t atari -C config.cfg main.c graphics.c text.c tiles.c interrupts.s -o adv.xex
 open adv.xex
 */
 
@@ -22,6 +22,7 @@ open adv.xex
 #include <conio.h>
 #include "atari_memmap.h"
 #include "graphics.h"
+#include "text.h"
 
 
 // Globals
