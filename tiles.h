@@ -11,41 +11,60 @@
 #define PlainsColor (0x40)
 #define ForestColor (0x80)
 #define WaterColor  (0xC0)
+#define DungeonWallColor  (0x00)
+#define DungeonFloorColor (0x40)
+#define DungeonExitColor  (0x80)
+#define DungeonChestColor (0xC0)
 
 // Tile constants
-#define tCastle (0x3B)
-#define tTown (0x3C)
-#define tVillage (0x3D)
-#define tMonument (0x3E)
-#define tCave (0x3F)
+// Add 0x40 to these values to get the character value.
+// This puts them in the graphics/control character range in ATASCII.
 
-#define tPlains (0x03)
-#define tDesert (0x05)
-#define tMountain (0x06)
-#define tForest (0x07)
-#define tShallows (0x08)
-#define tWater (0x09)
-#define tBridgeH (0x0A)
-#define tBridgeV (0x0B)
+// Overworld map
+#define tCastle (1)
+#define tTown (2)
+#define tVillage (3)
+#define tMonument (4)
+#define tCave (5)
 
-#define tLV (0x1B) /*';'*/
-#define tHP (0x1D) /*'='*/
+#define tPlains (6)
+#define tBridgeH (7)
+#define tBridgeV (8)
+#define tForest (9)
+#define tShallows (10)
+#define tWater (11)
+#define tDesert (12)
+#define tMountain (13)
 
-#define tPotion (0x40)
-#define tFang (0x41)
+// Dungeon maps
+#define tBrick (14)
+#define tFloor (15)
+#define tExit (16)
+#define tChest (17)
 
-// Binary Data
-const UInt8 tileBitmaps[];
-#define tileCount (17)
+// Town maps
 
-const UInt8 cursorSprite1[];
-const UInt8 cursorSprite2[];
-const UInt8 tileSprites[];
+// Text window
+#define tPotion (0x3B)
+#define tFang (0x3D)
 
-const UInt8 tileChars[];
-const UInt8 rleMap[];
-#define rleMapWidth (16)
-#define rleMapHeight (16)
+// Bitmap Data
+extern const UInt8 tileBitmaps[];
+extern const UInt8 cursorSprite1[];
+extern const UInt8 cursorSprite2[];
+extern const UInt8 tileSprites[];
+
+// Overworld Map
+extern const UInt8 overworldRleMap[];
+extern const SizeU8 overworldMapSize;
+extern UInt8 overworldTileMap[];
+extern const UInt8 overworldColorTable[];
+
+// Dungeon Map
+extern const UInt8 dungeonRleMap[];
+extern const SizeU8 dungeonMapSize;
+extern UInt8 dungeonTileMap[];
+extern const UInt8 dungeonColorTable[];
 
 
 #endif

@@ -10,4 +10,13 @@ typedef signed char SInt8;
 typedef signed int SInt16;
 typedef signed long SInt32;
 
+typedef struct {
+	UInt8 x, y;
+} PointU8;
+
+typedef struct {
+	UInt8 width, height;
+} SizeU8;
+
+
 #endif

@@ -102,7 +102,7 @@ return:
 	
 text_color:
 	lda #$0E			; Set text window to use white on dark gray
-	sta COLPF1			; text brightness
+	sta COLPF1			; text luminance
 	lda #$04
 	sta COLPF2			; text background
 

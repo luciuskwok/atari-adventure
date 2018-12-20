@@ -13,7 +13,7 @@
 
 // == printCharaStats() ==
 void printCharaStats(UInt8 player, const UInt8 *name, UInt8 level, UInt8 hp, UInt8 maxHp) {
-	UInt8 x = player * 9 + 4;
+	UInt8 x = player * 9 + 3;
 	UInt8 s1[9], s2[6];
 
 	printString(name, x, 0);
@@ -30,24 +30,29 @@ void printCharaStats(UInt8 player, const UInt8 *name, UInt8 level, UInt8 hp, UIn
 }
 
 // == printPartyStats() ==
-void printPartyStats(UInt16 money, UInt16 potions, UInt16 fangs, UInt16 reputation) {
-	UInt8 s[10];
+void printPartyStats(SInt32 money, UInt16 potions, UInt16 fangs, SInt16 reputation) {
+	UInt8 s[16];
+	UInt8 len;
 
-	printString("$", 0, 4);
-	numberString(s, ',', money);
-	printString(s, 1, 4);
+	s[0] = '$';
+	numberString(s+1, ',', money);
+	len = strlen(s);
+	printString(s, 12-len, 4);
 
 	numberString(s, 0, potions);
-	appendString(s, "p");
-	printString(s, 12, 4);
+	appendString(s, "{");
+	len = strlen(s);
+	printString(s, 21-len, 4);
 
 	numberString(s, ',', fangs);
-	appendString(s, "f");
-	printString(s, 20, 4);
+	appendString(s, "}");
+	len = strlen(s);
+	printString(s, 30-len, 4);
 
 	numberString(s, ',', reputation);
 	appendString(s, "rep");
-	printString(s, 28, 4);
+	len = strlen(s);
+	printString(s, 40-len, 4);
 }
 
 // == clearTextWindow() ==
@@ -108,16 +113,24 @@ void printDebugInfo(const UInt8 *label, UInt16 value, UInt8 position) {
 	printString(hexStr, position + labelLength, 0);
 }
 
-void numberString(UInt8 *outString, UInt8 thousandsSeparator, UInt16 value) {
+void numberString(UInt8 *outString, UInt8 thousandsSeparator, SInt32 value) {
+	UInt8 isNegative = 0;
 	UInt8 len = 0;
 	UInt8 c, i, j;
-	if (c == 0) { // Special case for value of zero.
+
+
+	if (value == 0) { // Special case for value of zero.
 		outString[0] = '0';
 		++len;
 	} else {
+		if (value < 0) {
+			value = -value;
+			isNegative = 1;
+		}
+
 		// Add digits in reverse order, then reverse the string.
 		while (value != 0) {
-			if ((len > 0) && (len % 3 == 0) && (thousandsSeparator != 0)) {
+			if ((len >= 3) && (len % 4 == 3) && (thousandsSeparator != 0)) {
 				outString[len] = thousandsSeparator;
 				++len;
 			}
@@ -126,6 +139,14 @@ void numberString(UInt8 *outString, UInt8 thousandsSeparator, UInt16 value) {
 			++len;
 			value = value / 10;
 		}
+
+		// Add negative sign
+		if (isNegative) {
+			outString[len] = '-';
+			++len;
+		}
+
+		// Reverse the string
 		for (i=0, j=len-1; i<j; ++i, --j) {
 			c = outString[j];
 			outString[j] = outString[i];
@@ -133,6 +154,14 @@ void numberString(UInt8 *outString, UInt8 thousandsSeparator, UInt16 value) {
 		}
 	}
 	outString[len] = 0; // null terminate string
+}
+
+// == printAllTiles() ==
+void printAllTiles(void) {
+	UInt8 i;
+	for (i=0; i<40*5; ++i) {
+		textWindow[i] = i;
+	}
 }
 
 // == hexString() ==

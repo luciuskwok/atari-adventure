@@ -18,9 +18,11 @@ extern void __fastcall__ displayListInterrupt(void);
 #define SCREEN_WIDTH (24)
 
 // Globals
-UInt8 spritePage;
-UInt8 testMap[256]; // holds decoded map 16x16 for testing
 UInt8 *textWindow;
+UInt8 currentRawMap[256];
+UInt8 *currentTileMap;
+SizeU8 currentMapSize;
+UInt8 spritePage; // private global 
 
 
 // == initGraphics() ==
@@ -35,13 +37,10 @@ void initGraphics(void) {
 	POKE (PCOLR1, 0x38); // Player 1 color = red
 	POKE (PCOLR2, 0x0F); // Player 2 color = white
 	POKE (PCOLR3, 0x0F); // Player 3 color = white
-	POKE (COLOR0, 0x1C); // Playfield 0 color = yellow / desert
-	POKE (COLOR1, 0x22); // Playfield 1 color = dark brown / plains
-	POKE (COLOR2, 0xC6); // Playfield 2 color = green / forest
-	POKE (COLOR3, 0x84); // Playfield 3 color = blue / water
-	POKE (COLOR4, 0x00); // Playfield 4 color / background = black
-	
+	loadColorTable(overworldColorTable);
+
 	// == Other ==
+	clearScreen();
 	initDisplayList();
 	initSprites();
 	initFont(ramtopValue - 12);
@@ -51,9 +50,8 @@ void initGraphics(void) {
 	POKEW (VDSLST, (UInt16)displayListInterrupt);
 	ANTIC.nmien = 0xC0; // enable both DLI and VBI
 
-	// == Test Scrolling ==
+	// == Use scrolling to center the odd number of tiles ==
 	ANTIC.hscrol = 4;
-	ANTIC.vscrol = 8;
 }
 
 
@@ -99,29 +97,42 @@ void initDisplayList(void) {
 
 // == initFont() ==
 void initFont(UInt8 fontPage) {
-	UInt8 *customFontPtr = (UInt8 *) ((UInt16)fontPage * 256);
-	const UInt8 *romFontPtr = (UInt8 *)0xE000;
-	UInt8 *tilePtr;
+	const UInt8 *romFont = (UInt8 *)0xE000;
+	UInt8 *customFont = (UInt8 *) ((UInt16)fontPage * 256);
+	UInt8 *tileFont = customFont + (0x40 * 8);
 	UInt16 index;
-	UInt8 tileIndex;
+	UInt8 tileIndex, bitmapIndex;
 	
 	// Copy character set from ROM to RAM, 128 characters.
 	for (index=0; index<1024; ++index) {
-		customFontPtr[index] = romFontPtr[index];
-	}
-	
-	// Add our custom tiles.
-	for (tileIndex=0; tileIndex<tileCount; ++tileIndex) {
-		// Each tile bitmap has 9 bytes. First byte indicated which character it replaces. 
-		// Remove the highest 2 bits because they're used for color data.
-		tilePtr = customFontPtr + 8 * tileBitmaps[tileIndex * 9];
-		for (index=0; index<8; ++index) {
-			tilePtr[index] = tileBitmaps[tileIndex * 9 + index + 1];
-		}
+		customFont[index] = romFont[index];
 	}
 
-	// Switch to custom character set.
-	POKE(CHBAS, fontPage);
+	// Blank out the tile with value 0 in the graphics character area
+	for (index=0; index<8; ++index) {
+		tileFont[index] = 0;
+	}
+	
+	// Add our custom tiles into the graphics character area
+	bitmapIndex = 0;
+	while (1) {
+		// Each tile bitmap has 9 bytes. First byte indicated which character it replaces, 
+		// or nil for the end of the data.
+		tileIndex = tileBitmaps[bitmapIndex * 9];
+		if (tileIndex == 0) {
+			break;
+		}
+		for (index=0; index<8; ++index) { 
+			tileFont[tileIndex * 8 + index] = tileBitmaps[bitmapIndex * 9 + index + 1];
+		}
+		++bitmapIndex;
+	}
+
+	// Set CHBAS to point to the graphics character set area.
+	// This lets the  map tiles show in the color map part of the screen.
+	// It seems that the text window area truncates the value to a multple of 4, 
+	// neatly allowing for regular characters there.
+	POKE(CHBAS, fontPage + 2);
 }
 
 // == initSprites() ==
@@ -153,6 +164,43 @@ void initSprites(void) {
 	GTIA_WRITE.gractl = 3; // enable both missile and player graphics
 	POKE (SDMCTL, 0x2E); // standard playfield + missile DMA + player DMA + display list DMA
 	POKE (GPRIOR, 0x01); // layer players above playfield.
+}
+
+// == loadColorTable() ==
+void loadColorTable(const UInt8 colors[]) {
+	UInt8 i;
+	for (i=0; i<5; ++i) {
+		POKE(COLOR0 + i, colors[i]);
+	}
+}
+
+// == loadMap() ==
+void loadMap(UInt8 index) {
+	switch (index) {
+		case OverworldMap: // Overworld
+			decodeRleMap(currentRawMap, 256, overworldRleMap);
+			currentMapSize = overworldMapSize;
+			currentTileMap = overworldTileMap;
+			loadColorTable(overworldColorTable);
+			break;
+		case DungeonMap: // Dungeon
+			decodeRleMap(currentRawMap, 256, dungeonRleMap);
+			currentMapSize = dungeonMapSize;
+			currentTileMap = dungeonTileMap;
+			loadColorTable(dungeonColorTable);
+			break;
+	}
+
+}
+
+// == clearScreen() ==
+void clearScreen(void) {
+	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
+	UInt16 i;
+	// Screen is made up of 10 lines * 24 tiles + 5 lines * 48 tiles = 480
+	for (i=0; i<512; ++i) {
+		screen[i] = 0;
+	}
 }
 
 // == decodeRleMap() ==
@@ -192,24 +240,16 @@ void decodeRleMap(UInt8 *outMap, UInt16 mapLength, const UInt8 *inRleMap) {
 	}
 }
 
-// == clearScreen() ==
-void clearScreen(void) {
+// == drawCurrentMap() ==
+void drawCurrentMap(PointU8 *center, UInt8 sightDistance) {
 	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
-	UInt16 i;
-	// Screen is made up of 10 lines * 24 tiles + 5 lines * 48 tiles = 480
-	for (i=0; i<512; ++i) {
-		screen[i] = 0;
-	}
-}
-
-// == drawMap() ==
-void drawMap(const UInt8 *map, UInt8 mapWidth, UInt8 mapHeight, UInt8 centerX, UInt8 centerY) {
-	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
-	const int windowOriginX = (int)centerX - 9;
-	const int windowOriginY = (int)centerY - 4;
+	const int windowOriginX = (int)center->x - 9;
+	const int windowOriginY = (int)center->y - 4;
 	const UInt8 windowWidth = 19;
 	const UInt8 windowHeight = 9;
 	const UInt8 leftMargin = 2;
+	const UInt8 mapWidth = currentMapSize.width;
+	const UInt8 mapHeight = currentMapSize.height;
 	UInt8 row, col, c;
 	int x, y, screenIndex;
 	
@@ -222,17 +262,17 @@ void drawMap(const UInt8 *map, UInt8 mapWidth, UInt8 mapHeight, UInt8 centerX, U
 		
 		for (col=0; col<windowWidth; ++col) {
 			x = windowOriginX + col;
-			screenIndex = col + SCREEN_WIDTH * row + leftMargin;
+			screenIndex = leftMargin + col + SCREEN_WIDTH * row;
 			if (0 <= y && y < mapHeight && 0 <= x && x < mapWidth) {
-				c = map[x + mapWidth * y];
+				c = currentRawMap[x + mapWidth * y];
 				
 				// Add sprite tile for special tiles
-				if (1 <= c && c <= 5) {
-					drawSpriteTile(tileSprites + 8 * (c-1), col, row);
+				if (c >= 9) {
+					drawSpriteTile(tileSprites + 8 * (c-9), col, row);
 				}
 
 				// Convert map value to character value
-				c = tileChars[c];				
+				c = currentTileMap[c];				
 			} else {
 				c = 0;
 			}

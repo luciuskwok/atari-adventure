@@ -35,11 +35,8 @@ RAMTOP: 0xC0 without BASIC, 0xA0 with BASIC. Below are values with BASIC.
 
 // Globals
 UInt8 gQuit;
-UInt8 gMapX, gMapY;
-UInt8 *gCurrentMap;
-UInt8 gMapWidth, gMapHeight;
-
-
+PointU8 playerOverworldLocation;
+PointU8 playerMapLocation;
 
 // Function prototypes
 void runLoop(void);
@@ -54,18 +51,19 @@ int main (void) {
 	
 	// Start new game
 	gQuit = 0;
-	gMapX = 5;
-	gMapY = 5;
+	playerOverworldLocation.x = 9;
+	playerOverworldLocation.y = 6;
+	playerMapLocation.x = 5; // for dungeon
+	playerMapLocation.y = 3; 
 
-	// Load test map
-	decodeRleMap(testMap, rleMapWidth * rleMapHeight, rleMap);
-	gCurrentMap = testMap;
-	gMapWidth = rleMapWidth;
-	gMapHeight = rleMapHeight;
-	drawMap(gCurrentMap, gMapWidth, gMapHeight, gMapX, gMapY);
+	// Load map
+	//loadMap(OverworldMap);
+	loadMap(DungeonMap);
+	drawCurrentMap(&playerMapLocation, 0);
 
 	// Print some text
 	updateStatText();
+	//printAllTiles();
 
 	
 	while (gQuit == 0) {
@@ -87,38 +85,38 @@ void handleStick() {
 	// Only allow moves in 4 cardinal directions and not diagonals.
 	UInt8 stick = PEEK (STICK0);
 	UInt8 trigger = PEEK (STRIG0);
-	UInt8 oldX = gMapX;
-	UInt8 oldY = gMapY;
-	UInt8 mapWidth = gMapWidth;
-	UInt8 mapHeight = gMapHeight;
+	UInt8 oldX = playerMapLocation.x;
+	UInt8 oldY = playerMapLocation.y;
+	UInt8 mapWidth = currentMapSize.width;
+	UInt8 mapHeight = currentMapSize.height;
 	
 	switch (stick) {
 		case 0x0E: // up
-			if (gMapY > 0) {
-				--gMapY;
+			if (playerMapLocation.y > 0) {
+				--playerMapLocation.y;
 			}
 			break;
 		case 0x0D: // down
-			if (gMapY < mapHeight - 1) {
-				++gMapY;
+			if (playerMapLocation.y < mapHeight - 1) {
+				++playerMapLocation.y;
 			}
 			break;
 		case 0x0B: // left
-			if (gMapX > 0) {
-				--gMapX;
+			if (playerMapLocation.x > 0) {
+				--playerMapLocation.x;
 			}
 			break;
 		case 0x07: // right
-			if (gMapX < mapWidth - 1) {
-				++gMapX;
+			if (playerMapLocation.x < mapWidth - 1) {
+				++playerMapLocation.x;
 			}
 			break;
 		default:
 			break;
 	}
 	
-	if (oldX != gMapX || oldY != gMapY) {
-		drawMap(gCurrentMap, mapWidth, mapHeight, gMapX, gMapY);
+	if (oldX != playerMapLocation.x || oldY != playerMapLocation.y) {
+		drawCurrentMap(&playerMapLocation, 0);
 	}
 }
 
@@ -136,7 +134,7 @@ void updateStatText(void) {
 	printCharaStats(3, "Nyorn", 7, 78, 180);
 
 	// Print party statistics
-	printPartyStats(64000U, 21, 1325, 891);
+	printPartyStats(987123, 21, 1325, -891);
 
 }
 
