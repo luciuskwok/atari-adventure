@@ -5,20 +5,16 @@
 #include "graphics.h"
 
 
-// Function prototypes
-void initDisplayList(void);
-void initFont(unsigned char fontPage);
-void initSprites(void);
-
 extern void __fastcall__ initVBI(void *addr);
 extern void __fastcall__ immediateUserVBI(void);
 extern void __fastcall__ displayListInterrupt(void);
-extern unsigned char *P2_XPOS;
 
 // Tile constants
 #define tD (0x3F)
 #define tM (0x3E)
 #define tP (0x7C)
+#define tB (0x47)
+#define tH (0x48)
 #define tF (0xA0)
 #define tS (0xFB)
 #define tW (0xFD)
@@ -37,6 +33,8 @@ unsigned char tileBitmaps[] = {
 tD & 0x3F,  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // Desert
 tM & 0x3F,  0xF7, 0xE3, 0xC1, 0x80, 0xFF, 0xBF, 0x1F, 0x0E, // Mountains
 tP & 0x3F,  0xFF, 0xF7, 0xFF, 0xBF, 0xFD, 0xFF, 0xEF, 0xFF, // Plains
+tB & 0x3F,  0x7E, 0x7E, 0x00, 0x7E, 0x7E, 0x00, 0x7E, 0x7E, // Bridge (east-west)
+tH & 0x3F,  0x00, 0xDB, 0xDB, 0xDB, 0xDB, 0xDB, 0xDB, 0x00, // Bridge (north-south)
 tF & 0x3F,  0xFF, 0xF7, 0xE3, 0xF7, 0xC1, 0xF7, 0x80, 0xF7, // Forest
 tS & 0x3F,  0xFE, 0xFF, 0xFB, 0xFF, 0xEF, 0xFF, 0xBF, 0xFF, // Shallow water
 tW & 0x3F,  0xCE, 0xB5, 0x5D, 0x73, 0xCE, 0xBA, 0xAD, 0x73, // Deep water
@@ -50,7 +48,7 @@ tHP, 0x00, 0x00, 0x57, 0x55, 0x77, 0x54, 0x54, 0x00, // HP
 tPotion, 0x3C, 0x18, 0x18, 0x2C, 0x5E, 0x7E, 0x3C, 0x00, // Health Potion
 tFang, 0x04, 0x04, 0x0C, 0x0C, 0x1C, 0x7C, 0x78, 0x30, 
 };
-#define tileCount (15)
+#define tileCount (17)
 
 // Unused tile bitmaps
 // 0x00, 0x00, 0x02, 0x04, 0x76, 0x54, 0x74, 0x00, // of (unused)
@@ -82,6 +80,7 @@ unsigned char caveSprite[] = { 0x00, 0x00, 0x18, 0x24, 0x24, 0x24, 0x00, 0x00 };
 
 // Player-Missile Constants
 #define PM_LEFT_MARGIN (48)
+#define P2_XPOS (0x0604)
 
 // Globals
 unsigned char spritePage;
@@ -98,9 +97,9 @@ void initGraphics(void) {
 	// == Colors ==
 	POKE (PCOLR0, 0x38); // Player 0 color = red
 	POKE (PCOLR1, 0x38); // Player 1 color = red
-	POKE (PCOLR2, 0x0E); // Player 2 color = white
-	POKE (PCOLR3, 0x0E); // Player 3 color = white
-	POKE (COLOR0, 0x1E); // Playfield 0 color = yellow / desert
+	POKE (PCOLR2, 0x0F); // Player 2 color = white
+	POKE (PCOLR3, 0x0F); // Player 3 color = white
+	POKE (COLOR0, 0x1C); // Playfield 0 color = yellow / desert
 	POKE (COLOR1, 0x22); // Playfield 1 color = dark brown / plains
 	POKE (COLOR2, 0xC6); // Playfield 2 color = green / forest
 	POKE (COLOR3, 0x84); // Playfield 3 color = blue / water
@@ -129,7 +128,7 @@ void initDisplayList(void) {
 	unsigned char i;
 	
 	writePtr = displayListPtr + 3;
-	*writePtr = DL_LMS(DL_CHR20x16x2); // Antic mode 3 + LMS
+	*writePtr = DL_DLI(DL_LMS(DL_CHR20x16x2)); // Antic mode 3 + LMS + DLI
 	*(++writePtr) = (unsigned int)screenMemPtr % 256;
 	*(++writePtr) = (unsigned int)screenMemPtr / 256;
 	
@@ -137,7 +136,7 @@ void initDisplayList(void) {
 		*(++writePtr) = DL_DLI(DL_CHR20x16x2); // + DLI on every tile row
 	}
 	
-	*(++writePtr) = DL_DLI(DL_BLK4); // 4 blank lines + DLI
+	*(++writePtr) = DL_BLK4; // 4 blank lines
 	*(++writePtr) = DL_CHR40x8x1; // 2 lines of text
 	*(++writePtr) = DL_CHR40x8x1; 
 	
@@ -190,13 +189,19 @@ void initSprites(void) {
 	}
 	
 	// Draw cursor sprite, which takes up 2 players because it is 10 pixels wide
-	drawSprite(cursorSprite1, 10, 0, 36, 39);
-	drawSprite(cursorSprite2, 10, 1, 44, 39);
+	drawSprite(cursorSprite1, 10, 0, 39);
+	drawSprite(cursorSprite2, 10, 1, 39);
+	
+	// Cursor sprites are in a fixed position
+	GTIA_WRITE.hposp0 = 36 + PM_LEFT_MARGIN;
+	GTIA_WRITE.hposp1 = 44 + PM_LEFT_MARGIN;
 	
 	// Draw sprites for special tiles
-	drawSprite(monumentSprite, 8, 2, 9 * 8, 1 * 8);
-	drawSprite(villageSprite, 8, 2, 9 * 8, 4 * 8);
-	drawSprite(castleSprite, 8, 2, 9 * 8, 9 * 8);
+	drawSpriteTile(monumentSprite, 9, 1);
+	drawSpriteTile(caveSprite, 1, 3);
+	drawSpriteTile(villageSprite, 9, 4);
+	drawSpriteTile(townSprite, 8, 6);
+	drawSpriteTile(castleSprite, 9, 9);
 
 	// Set up ANTIC
 	ANTIC.pmbase = spritePage;
@@ -222,6 +227,7 @@ void clearScreen(void) {
 void fillScreen(void) {
 	unsigned char *screen = (unsigned char *)PEEKW(SAVMSC);
 	unsigned char x, y;
+	unsigned char debugStr[5];
 	
 	for (y = 0; y < 11; ++y) {
 		for (x = 0; x < 11; ++x) {
@@ -229,9 +235,9 @@ void fillScreen(void) {
 		}
 	}
 	
-// 	for (x=0; x<80; ++x) {
-// 		screen[220+x] = x;
-// 	}
+	for (x=0; x<80; ++x) {
+		screen[220+x] = x;
+	}
 
 	// Draw the HP and LV tiles
 	for (y=1; y<12; y+=3) {
@@ -264,6 +270,37 @@ void fillScreen(void) {
 // 	printString("Rep:2010", 0, 4, 14);
 // 	printString("21", 0, 14, 12);
 // 	printString("1999", 0, 14, 14);
+
+// 	printString("DLI:", 0, 0, 11);
+// 	hexString(debugStr, (unsigned int)displayListInterrupt);
+// 	printString(debugStr, 0, 4, 11);
+// 
+// 	printString("Pg6:", 0, 10, 11);
+// 	hexString(debugStr, (unsigned int)P2_XPOS);
+// 	printString(debugStr, 0, 14, 11);
+}
+
+// == drawSprite() ==
+void drawSprite(unsigned char *sprite, char spriteLength, char player, char y) {
+	unsigned char *pmbasePtr = (unsigned char *) (spritePage * 256 + 384);
+	const unsigned int pmLength = 128;
+	unsigned int offset = y + 16; // overscan area
+	unsigned int i;
+	
+	// Copy sprite data at Y position
+	pmbasePtr += pmLength * (player + 1);
+	for (i=0; i<spriteLength; ++i) {
+		pmbasePtr[i + offset] = sprite[i];
+	}
+}
+
+// == drawSpriteTile() ==
+void drawSpriteTile(unsigned char *sprite, char column, char row) {
+	// Set horizontal position for tile
+	POKE(P2_XPOS + row, PM_LEFT_MARGIN + 8 * column);
+	
+	// Draw sprite at vertical position
+	drawSprite(sprite, 8, 2, row * 8);
 }
 
 // == printString() ==
@@ -282,23 +319,6 @@ void printString(const char* s, unsigned char color, unsigned char x, unsigned c
 		screen[(unsigned int)x + 20 * (unsigned int)y] = c;
 		++x;
 		++index;
-	}
-}
-
-// == drawSprite() ==
-void drawSprite(unsigned char *sprite, char spriteLength, char player, char x, char y) {
-	unsigned char *pmbasePtr = (unsigned char *) (spritePage * 256 + 384);
-	const unsigned int pmLength = 128;
-	unsigned int offset = y + 16; // overscan area
-	unsigned int i;
-	
-	// Set X position
-	POKE(HPOSP0 + player, x + PM_LEFT_MARGIN);
-	
-	// Copy sprite data at Y position
-	pmbasePtr += pmLength * (player + 1);
-	for (i=0; i<spriteLength; ++i) {
-		pmbasePtr[i + offset] = sprite[i];
 	}
 }
 

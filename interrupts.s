@@ -7,7 +7,6 @@
 .export _initVBI
 .export _immediateUserVBI
 .export _displayListInterrupt
-.export P2_XPOS
 
 .code
 PCOLR0 = $02C0		; Player 0 color
@@ -22,7 +21,7 @@ CUR_SKIP = 10		; number of frames to skip for color cycling
 CUR_TIMER = $0600	; Cursor color cycling frame skip countdown timer
 STICK_TIMER = $0601	; Joystick countdown timer for repeating joystick moves
 DLI_ROW = $0603		; for keeping track of which scanline the DLI is on
-P2_XPOS = $0604		; array of 10 bytes for repositioning player 2
+P2_XPOS = $0604		; array of 11 bytes for repositioning player 2
 
 .proc _initVBI		; on entry: X=MSB, A=LSB
 	tay				; move LSB to Y
@@ -37,6 +36,8 @@ P2_XPOS = $0604		; array of 10 bytes for repositioning player 2
 
 	lda #0				; reset DLI_ROW
 	sta DLI_ROW
+	lda P2_XPOS			; HPOSP2 = P2_XPOS[0]
+	sta HPOSP2
 
 	lda STICK_TIMER		; sets Z flag (Z=1 if joystick_timer is zero)
 	beq update_cursor	; skip decrement if already at zero
@@ -84,21 +85,23 @@ return:
 	pha
 	
 	lda DLI_ROW			; Check DLI_ROW
-	tax
 	adc #1				; ++DLI_ROW
+	tax
 	sta DLI_ROW
-	cpx #10				; if DLI_ROW >= 10, skip to setting text color
-	bcc text_color
+	cpx #11				; if DLI_ROW >= 11, skip to setting text color
+	bcs text_color
 	
 	lda P2_XPOS,X		; HPOSP2 = P2_XPOS[DLI_ROW]
 	sta HPOSP2
+	bvc return_dli
 	
 text_color:
 	lda #$0E			; Set text window to use white on dark gray
 	sta COLPF1			; text brightness
 	lda #$04
 	sta COLPF2			; text background
-	
+
+return_dli:	
 	pla					; restore accumulator and X register from stack
 	tax
 	pla

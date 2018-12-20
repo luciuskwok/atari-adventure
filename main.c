@@ -28,7 +28,6 @@ open adv.xex
 unsigned char gQuit;
 
 // Function prototypes
-void hexString(char *s, unsigned int x);
 
 
 
@@ -45,6 +44,7 @@ int main (void) {
 	while (gQuit == 0) {
 		//startNewGame();
 		//runLoop();
+		POKE(ATRACT, 0);
 	}
 
 	return 0; // success
