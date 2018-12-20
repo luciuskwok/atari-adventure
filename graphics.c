@@ -146,8 +146,6 @@ void decodeRleMap(UInt8 *outMap, UInt16 mapLength, const UInt8 *inRleMap) {
 	UInt16 outIndex = 0;
 	UInt8 op, tile, count;
 
-	printDebugInfo("Len:", mapLength, 0);
-
 	while (outIndex < mapLength) {
 		rowLength = inRleMap[rleIndex];
 		++rleIndex;
@@ -165,8 +163,8 @@ void decodeRleMap(UInt8 *outMap, UInt16 mapLength, const UInt8 *inRleMap) {
 				++rleIndex;
 			}
 
-			printDebugInfo("Tile:", tile, 0);
-			printDebugInfo("Count:", count, 10);
+			//printDebugInfo("Tile:", tile, 0);
+			//printDebugInfo("Count:", count, 10);
 
 			++count;
 			while (count > 0) {

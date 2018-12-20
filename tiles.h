@@ -38,10 +38,6 @@
 const UInt8 tileBitmaps[];
 #define tileCount (17)
 
-const UInt8 sampleMap[];
-#define sampleMapWidth (11)
-#define sampleMapHeight (11)
-
 const UInt8 cursorSprite1[];
 const UInt8 cursorSprite2[];
 const UInt8 tileSprites[];
