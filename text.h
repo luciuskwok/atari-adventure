@@ -3,10 +3,12 @@
 #ifndef TEXT_H
 #define TEXT_H
 
-void printString(const char* s, unsigned char color, unsigned char x, unsigned char y);
-void printDebugInfo(const char* label, unsigned int value, unsigned char position);
-void hexString(char *s, unsigned int x);
-unsigned char strlen(const char *s);
+#include "types.h"
+
+void printString(const char *s, UInt8 color, UInt8 x, UInt8 y);
+void printDebugInfo(const char *label, UInt16 value, UInt8 position);
+void hexString(char *s, UInt16 x);
+UInt8 strlen(const char *s);
 
 
 #endif

@@ -1,15 +1,15 @@
 // text.c
 
 #include "text.h"
-#include <atari.h>
-#include "atari_memmap.h"
 #include "tiles.h"
+#include "atari_memmap.h"
+#include <atari.h>
 
 
 // == printString() ==
-void printString(const char* s, unsigned char color, unsigned char x, unsigned char y) {
-	unsigned char *screen = (unsigned char *)PEEKW(SAVMSC);
-	unsigned char index = 0;
+void printString(const char *s, UInt8 color, UInt8 x, UInt8 y) {
+	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
+	UInt8 index = 0;
 	char c;
 	
 	while (c = s[index]) {
@@ -19,14 +19,14 @@ void printString(const char* s, unsigned char color, unsigned char x, unsigned c
 			c -= 0x20;
 		}
 		c += (color * 64);
-		screen[(unsigned int)x + 20 * (unsigned int)y] = c;
+		screen[(UInt16)x + 20 * (UInt16)y] = c;
 		++x;
 		++index;
 	}
 }
 
 // == printDebugInfo() ==
-void printDebugInfo(const char* label, unsigned int value, unsigned char position) {
+void printDebugInfo(const char *label, UInt16 value, UInt8 position) {
 	// Prints a label and a hex value in the text box area.
 	char hexStr[5];
 	char labelLength = strlen(label);
@@ -37,7 +37,7 @@ void printDebugInfo(const char* label, unsigned int value, unsigned char positio
 }
 
 // == hexString() ==
-void hexString(char *s, unsigned int x) {
+void hexString(char *s, UInt16 x) {
 	char i;
 	char c;
 	
@@ -55,7 +55,7 @@ void hexString(char *s, unsigned int x) {
 }
 
 // == strlen() ==
-unsigned char strlen(const char *s) {
+UInt8 strlen(const char *s) {
 	char len = 0;
 	while (s[len] != 0 && len < 0xFF) {
 		++len;

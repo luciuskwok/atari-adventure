@@ -1,9 +1,10 @@
 // graphics.c
 
-#include <atari.h>
-#include "atari_memmap.h"
 #include "graphics.h"
+#include "text.h"
 #include "tiles.h"
+#include "atari_memmap.h"
+#include <atari.h>
 
 
 extern void __fastcall__ initVBI(void *addr);
@@ -16,12 +17,12 @@ extern void __fastcall__ displayListInterrupt(void);
 #define P2_XPOS (0x0604)
 
 // Globals
-unsigned char spritePage;
+UInt8 spritePage;
 
 
 // == initGraphics() ==
 void initGraphics(void) {
-	unsigned char ramtopValue = PEEK(RAMTOP);
+	UInt8 ramtopValue = PEEK(RAMTOP);
 	
 	
 	// Globals
@@ -45,7 +46,7 @@ void initGraphics(void) {
 	
 	// == Set up interrupts ==
 	initVBI(immediateUserVBI); // Safe value: 0xE45F
-	POKEW (VDSLST, (unsigned int)displayListInterrupt);
+	POKEW (VDSLST, (UInt16)displayListInterrupt);
 	ANTIC.nmien = 0xC0; // enable both DLI and VBI
 }
 
@@ -55,15 +56,15 @@ void initDisplayList(void) {
 	// == Display List ==
 	// Display list is already set up by the runtime to the equivalent of BASIC's GR.0. 
 	// We can just overwrite that DL with our own.
-	unsigned char *displayListPtr = (unsigned char *)PEEKW(SDLSTL);
-	unsigned char *screenMemPtr = (unsigned char *)PEEKW(SAVMSC);
-	unsigned char *writePtr;
-	unsigned char i;
+	UInt8 *displayListPtr = (UInt8 *)PEEKW(SDLSTL);
+	UInt8 *screenMemPtr = (UInt8 *)PEEKW(SAVMSC);
+	UInt8 *writePtr;
+	UInt8 i;
 	
 	writePtr = displayListPtr + 3;
 	*writePtr = DL_DLI(DL_LMS(DL_CHR20x16x2)); // Antic mode 3 + LMS + DLI
-	*(++writePtr) = (unsigned int)screenMemPtr % 256;
-	*(++writePtr) = (unsigned int)screenMemPtr / 256;
+	*(++writePtr) = (UInt16)screenMemPtr % 256;
+	*(++writePtr) = (UInt16)screenMemPtr / 256;
 	
 	for (i=1; i<11; ++i) { // 11 lines of double height tiles = 176 scanlines
 		*(++writePtr) = DL_DLI(DL_CHR20x16x2); // + DLI on every tile row
@@ -74,18 +75,18 @@ void initDisplayList(void) {
 	*(++writePtr) = DL_CHR40x8x1; 
 	
 	*(++writePtr) = DL_JVB; // Vertical blank + jump to beginning of display list
-	*(++writePtr) = (unsigned int)displayListPtr % 256;
-	*(++writePtr) = (unsigned int)displayListPtr / 256;
+	*(++writePtr) = (UInt16)displayListPtr % 256;
+	*(++writePtr) = (UInt16)displayListPtr / 256;
 }
 
 
 // == initFont() ==
-void initFont(unsigned char fontPage) {
-	unsigned char *customFontPtr = (unsigned char *) ((unsigned int)fontPage * 256);
-	const unsigned char *romFontPtr = (unsigned char *)0xE000;
-	unsigned char *tilePtr;
-	unsigned int index;
-	unsigned char tileIndex;
+void initFont(UInt8 fontPage) {
+	UInt8 *customFontPtr = (UInt8 *) ((UInt16)fontPage * 256);
+	const UInt8 *romFontPtr = (UInt8 *)0xE000;
+	UInt8 *tilePtr;
+	UInt16 index;
+	UInt8 tileIndex;
 	
 	// Copy char set from ROM to RAM, 128 characters.
 	for (index=0; index<1024; ++index) {
@@ -107,9 +108,9 @@ void initFont(unsigned char fontPage) {
 
 // == initSprites() ==
 void initSprites(void) {
-	unsigned char *pmbasePtr = (unsigned char *) ((unsigned int)spritePage * 256 + 384);
-	unsigned int i;
-	unsigned char c;
+	UInt8 *pmbasePtr = (UInt8 *) ((UInt16)spritePage * 256 + 384);
+	UInt16 i;
+	UInt8 c;
 	
 	// Zero out memory
 	for (i=0; i<640; ++i) {
@@ -128,13 +129,6 @@ void initSprites(void) {
 	// Cursor sprites are in a fixed position
 	GTIA_WRITE.hposp0 = 36 + PM_LEFT_MARGIN;
 	GTIA_WRITE.hposp1 = 44 + PM_LEFT_MARGIN;
-	
-	// Draw sprites for special tiles
-	drawSpriteTile(monumentSprite, 9, 1);
-	drawSpriteTile(caveSprite, 1, 3);
-	drawSpriteTile(villageSprite, 9, 4);
-	drawSpriteTile(townSprite, 8, 6);
-	drawSpriteTile(castleSprite, 9, 9);
 
 	// Set up ANTIC
 	ANTIC.pmbase = spritePage;
@@ -145,10 +139,10 @@ void initSprites(void) {
 
 // == clearScreen() ==
 void clearScreen(void) {
-	unsigned char *screen = (unsigned char *)PEEKW(SAVMSC);
-	unsigned int i;
+	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
+	UInt16 i;
 	// Screen is made up of 11 lines * 20 tiles + 2 lines * 40 tiles
-	const unsigned int max = 11 * 20 + 2 * 40;
+	const UInt16 max = 11 * 20 + 2 * 40;
 	
 	for (i=0; i<max; ++i) {
 		screen[i] = 0;
@@ -158,14 +152,8 @@ void clearScreen(void) {
 // == fillScreen() ==
 // Set the screen to show all 256 characters
 void fillScreen(void) {
-	unsigned char *screen = (unsigned char *)PEEKW(SAVMSC);
-	unsigned char x, y;
-	
-	for (y = 0; y < 11; ++y) {
-		for (x = 0; x < 11; ++x) {
-			screen[x + 20 * y] = sampleMap[x + 11 * y];
-		}
-	}
+	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
+	UInt8 y;
 	
 // 	for (x=0; x<80; ++x) {
 // 		screen[220+x] = x;
@@ -202,17 +190,72 @@ void fillScreen(void) {
 	printString("Rep:2010", 0, 4, 14);
 	printString("21", 0, 14, 12);
 	printString("1999", 0, 14, 14);
+	
+	// == Draw Map ==
+	drawMap(sampleMap, 11, 11, 5, 5);
 
-// 	printDebugInfo("DLI:", (unsigned int)displayListInterrupt, 0);
-
+// 	printDebugInfo("DLI:", (UInt16)displayListInterrupt, 0);
 }
 
+// == drawMap() ==
+void drawMap(const UInt8 *map, UInt8 mapWidth, UInt8 mapHeight, UInt8 centerX, UInt8 centerY) {
+	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
+	const UInt8 windowWidth = 11;
+	const UInt8 windowHeight = 11;
+	const int windowOriginX = (int)centerX - 5;
+	const int windowOriginY = (int)centerY - 5;
+	UInt8 row, col, c;
+	int x, y, screenIndex;
+	
+	
+	for (row=0; row<windowHeight; ++row) {
+		y = windowOriginY + row;
+		
+		// Clear the sprite tile for this row
+		POKE(P2_XPOS + row, 0);
+		
+		for (col=0; col<windowWidth; ++col) {
+			x = windowOriginX + col;
+			screenIndex = col + 20 * row;
+			if (0 <= y && y < mapHeight && 0 <= x && x < mapWidth) {
+				c = map[x + mapWidth * y];
+				
+				// Add sprite tile for special tiles
+				if (0x30 <= c && c <0x39) {
+					c -= 0x30;
+					drawSpriteTile(tileSprites + 8 * c, col, row);
+					c += tCastle;
+					
+				} else {
+					// Convert ASCII char to tile value
+					switch (c) {
+						case '.': c = tPlains | PlainsColor; break; 
+						case 's': c = tShallows | WaterColor; break; 
+						case 'w': c = tWater | WaterColor; break; 
+						case 't': c = tForest | ForestColor; break; 
+						case 'M': c = tMountain; break; 
+						case 'd': c = tDesert; break; 
+						case '-': c = tBridgeH | PlainsColor; break; 
+						case '|': c = tBridgeV | PlainsColor; break; 
+						default: c = 0; break;
+					}
+				}
+				
+			} else {
+				c = 0;
+			}
+			screen[screenIndex] = c;
+		}
+	}
+}
+
+
 // == drawSprite() ==
-void drawSprite(unsigned char *sprite, char spriteLength, char player, char y) {
-	unsigned char *pmbasePtr = (unsigned char *) (spritePage * 256 + 384);
-	const unsigned int pmLength = 128;
-	unsigned int offset = y + 16; // overscan area
-	unsigned int i;
+void drawSprite(const UInt8 *sprite, char spriteLength, char player, char y) {
+	UInt8 *pmbasePtr = (UInt8 *) (spritePage * 256 + 384);
+	const UInt16 pmLength = 128;
+	UInt16 offset = y + 16; // overscan area
+	UInt16 i;
 	
 	// Copy sprite data at Y position
 	pmbasePtr += pmLength * (player + 1);
@@ -222,7 +265,7 @@ void drawSprite(unsigned char *sprite, char spriteLength, char player, char y) {
 }
 
 // == drawSpriteTile() ==
-void drawSpriteTile(unsigned char *sprite, char column, char row) {
+void drawSpriteTile(const UInt8 *sprite, char column, char row) {
 	// Set horizontal position for tile
 	POKE(P2_XPOS + row, PM_LEFT_MARGIN + 8 * column);
 	

@@ -23,13 +23,23 @@ open adv.xex
 #include "atari_memmap.h"
 #include "graphics.h"
 #include "text.h"
+#include "tiles.h"
+#include "types.h"
 
 
 // Globals
-unsigned char gQuit;
+UInt8 gQuit;
+UInt8 gMapX, gMapY;
+
+
+// Constants
+const UInt8 mapHeight = 11;
+const UInt8 mapWidth = 11;
+
 
 // Function prototypes
-
+void runLoop(void);
+void handleStick(void);
 
 
 // == main() == 
@@ -42,12 +52,59 @@ int main (void) {
 
 	// Start new game
 	gQuit = 0;
+	gMapX = 5;
+	gMapY = 5;
+	
 	while (gQuit == 0) {
 		//startNewGame();
-		//runLoop();
+		runLoop();
 		POKE(ATRACT, 0);
 	}
 
 	return 0; // success
+}
+
+// == runLoop() ==
+void runLoop(void) {
+	handleStick();
+}
+
+// == handleStick() ==
+void handleStick() {
+	// Only allow moves in 4 cardinal directions and not diagonals.
+	UInt8 stick = PEEK (STICK0);
+	UInt8 trigger = PEEK (STRIG0);
+	UInt8 oldX = gMapX;
+	UInt8 oldY = gMapY;
+	
+	switch (stick) {
+		case 0x0E: // up
+			if (gMapY > 0) {
+				--gMapY;
+			}
+			break;
+		case 0x0D: // down
+			if (gMapY < mapHeight - 1) {
+				++gMapY;
+			}
+			break;
+		case 0x0B: // left
+			if (gMapX > 0) {
+				--gMapX;
+			}
+			break;
+		case 0x07: // right
+			if (gMapX < mapWidth - 1) {
+				++gMapX;
+			}
+			break;
+		default:
+			break;
+	}
+	
+	if (oldX != gMapX || oldY != gMapY) {
+		drawMap(sampleMap, mapWidth, mapHeight, gMapX, gMapY);
+	}
+
 }
 

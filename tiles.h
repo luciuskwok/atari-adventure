@@ -3,37 +3,44 @@
 #ifndef TILES_H
 #define TILES_H
 
+#include "types.h"
+
+
+// Color constants
+#define DesertColor (0x00)
+#define PlainsColor (0x40)
+#define ForestColor (0x80)
+#define WaterColor  (0xC0)
+
 // Tile constants
-#define tD (0x3F)
-#define tM (0x3E)
-#define tP (0x7C)
-#define tB (0x47)
-#define tH (0x48)
-#define tF (0xA0)
-#define tS (0xFB)
-#define tW (0xFD)
-#define tC (0x41)
-#define tT (0x02)
-#define tV (0x43)
-#define tX (0x05)
-#define tY (0x06)
+#define tCastle (0x3B)
+#define tTown (0x3C)
+#define tVillage (0x3D)
+#define tMonument (0x3E)
+#define tCave (0x3F)
+
+#define tPlains (0x03)
+#define tDesert (0x05)
+#define tMountain (0x06)
+#define tForest (0x07)
+#define tShallows (0x08)
+#define tWater (0x09)
+#define tBridgeH (0x0A)
+#define tBridgeV (0x0B)
+
 #define tLV (0x1B) /*';'*/
 #define tHP (0x1D) /*'='*/
+
 #define tPotion (0x40)
 #define tFang (0x41)
 
 // Binary Data
-unsigned char tileBitmaps[];
+const UInt8 tileBitmaps[];
 #define tileCount (17)
 
-unsigned char sampleMap[];
-unsigned char cursorSprite1[];
-unsigned char cursorSprite2[];
-
-unsigned char castleSprite[];
-unsigned char townSprite[];
-unsigned char villageSprite[];
-unsigned char monumentSprite[];
-unsigned char caveSprite[];
+const UInt8 sampleMap[];
+const UInt8 cursorSprite1[];
+const UInt8 cursorSprite2[];
+const UInt8 tileSprites[];
 
 #endif

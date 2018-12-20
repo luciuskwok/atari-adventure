@@ -85,6 +85,7 @@ return:
 	pha
 	
 	lda DLI_ROW			; Check DLI_ROW
+	clc
 	adc #1				; ++DLI_ROW
 	tax
 	sta DLI_ROW
