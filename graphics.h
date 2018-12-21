@@ -23,7 +23,8 @@ void decodeRunLenMap(UInt8 *outMap, UInt16 mapLength, const UInt8 *inRunLenMap);
 
 void layoutCurrentMap(UInt8 sightDistance);
 void drawCurrentMap(PointU8 *center);
-UInt8 decodeRunLenRow(UInt8 *outData, UInt8 length, const UInt8 *runLenData);
+void decodeRunLenRange(UInt8 *outData, UInt8 start, UInt8 end, const UInt8 *runLenData);
+UInt8 mapTileAt(PointU8 *pt);
 
 void drawSprite(const UInt8 *sprite, UInt8 spriteLength, UInt8 player, UInt8 y);
 void drawSpriteTile(const UInt8 *sprite, UInt8 column, UInt8 row);

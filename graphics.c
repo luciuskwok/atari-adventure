@@ -19,7 +19,6 @@ extern void __fastcall__ displayListInterrupt(void);
 
 // Globals
 UInt8 *textWindow;
-UInt8 buffer[256];
 const UInt8 *currentRunLenMap;
 UInt8 *currentTileMap;
 SizeU8 currentMapSize;
@@ -296,29 +295,36 @@ void layoutCurrentMap(UInt8 sightDistance) {
 void drawCurrentMap(PointU8 *center) {
 	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
 	UInt8 *overlay = (UInt8 *)P2_XPOS;
+	const UInt8 *runLenPtr = currentRunLenMap;
 	UInt8 screenRowSkip = SCREEN_WIDTH - mapFrameSize.width;
 	UInt8 screenIndex = mapFrameOrigin.x + SCREEN_WIDTH * mapFrameOrigin.y;
 	UInt8 mapFrameHalfWidth = mapFrameSize.width / 2;
-	UInt8 mapY = center->y - mapFrameSize.height / 2;
-	UInt8 runLenIndex = 0;
-	UInt8 row, col, leftBlank, leftSkip, c, low, hasSpriteOverlay;
+	UInt8 mapFrameHalfHeight = mapFrameSize.height / 2;
+	UInt8 row, col;
+	UInt8 leftBlank, leftSkip, decodeEnd, topBlank, topSkip;
+	UInt8 c, low, hasSpriteOverlay;
+	UInt8 buffer[20];
 
 	// Integrity check
-	if (currentRunLenMap == NULL) {
+	if (runLenPtr == NULL) {
 		return;
 	}
 
-	// Skip within RLE data to first row that is displayed.
-	if (mapY < currentMapSize.height) { // verify mapY is within bounds, negative values wrap 
-		for (c=0; c<mapY; ++c) {
-			if (currentRunLenMap[runLenIndex] == 0) { // Integrity check
-				return;
-			}
-			runLenIndex += currentRunLenMap[runLenIndex]; // skip length byte + row data
+	// Calculate number of rows to leave blank and how many to skip in the map.
+	if (center->y <= mapFrameHalfHeight) {
+		topBlank = mapFrameHalfHeight - center->y;
+		topSkip = 0;
+	} else {
+		topBlank = 0;
+		topSkip = center->y - mapFrameHalfHeight;
+
+		// Adjust runLenPtr to skip lines within run-len data.
+		for (c=0; c<topSkip; ++c) {
+			runLenPtr += runLenPtr[0];
 		}
 	}
 
-	// Calculate number of columns to leave blank and how many to skip.
+	// Calculate number of columns to leave blank and how many to skip in the map.
 	if (center->x < mapFrameHalfWidth) {
 		leftBlank = mapFrameHalfWidth - center->x;
 		leftSkip = 0;
@@ -326,24 +332,33 @@ void drawCurrentMap(PointU8 *center) {
 		leftBlank = 0;
 		leftSkip = center->x - mapFrameHalfWidth;
 	}
+	decodeEnd = leftSkip + mapFrameSize.width - leftBlank;
+	if (decodeEnd > currentMapSize.width) {
+		decodeEnd = currentMapSize.width;
+	}
+
+	// printDebugInfo("B$", leftBlank, 0);
+	// printDebugInfo("S$", leftSkip, 10);
+	// printDebugInfo("E$", decodeEnd, 20);
 
 	// Main Loop
 	for (row=0; row<mapFrameSize.height; ++row) {
 		hasSpriteOverlay = 0;
 
-		if (mapY >= currentMapSize.height) {
+		if (row < topBlank || row + topSkip >= currentMapSize.height + topBlank) {
 			// Beyond borders: fill with the default empty tile.
 			for (col=0; col<mapFrameSize.width; ++col) {
 				screen[screenIndex] = currentTileMap[0];
 				++screenIndex;
 			}
-		} else {	
-			runLenIndex += decodeRunLenRow(buffer, currentMapSize.width, currentRunLenMap + runLenIndex);
+		} else {
+			decodeRunLenRange(buffer, leftSkip, decodeEnd, runLenPtr);
+			runLenPtr += runLenPtr[0]; // Next row.
 			for (col=0; col<mapFrameSize.width; ++col) {
-				if (col < leftBlank || col + leftSkip >= currentMapSize.width) {
+				if (col < leftBlank || col + leftSkip >= currentMapSize.width + leftBlank) {
 					c = 0; // Tiles outside map bounds are set to default blank tile.			
 				} else {
-					c = buffer[col + leftSkip - leftBlank];
+					c = buffer[col - leftBlank];
 				}
 
 				// Convert decoded value to character value
@@ -367,18 +382,17 @@ void drawCurrentMap(PointU8 *center) {
 			overlay[row] = 0;
 		}
 		screenIndex += screenRowSkip;
-		++mapY;
 	}
 }
 
-// == decodeRunLenRow() ==
-UInt8 decodeRunLenRow(UInt8 *outData, UInt8 length, const UInt8 *runLenData) {
+
+void decodeRunLenRange(UInt8 *outData, UInt8 start, UInt8 end, const UInt8 *runLenData) {
 	UInt8 rowLength = runLenData[0];
 	UInt8 runLenIndex = 1;
 	UInt8 outIndex = 0;
 	UInt8 op, tile, count;
 
-	while (runLenIndex < rowLength) {
+	while (runLenIndex < rowLength && outIndex < end) {
 		op = runLenData[runLenIndex];
 		++runLenIndex;
 
@@ -391,63 +405,35 @@ UInt8 decodeRunLenRow(UInt8 *outData, UInt8 length, const UInt8 *runLenData) {
 		}
 
 		++count;
-		while (count > 0 && outIndex < length) {
-			outData[outIndex] = tile;
+		while (count > 0 && outIndex < end) {
+			if (outIndex >= start) {
+				outData[outIndex - start] = tile;
+			}
 			++outIndex;
 			--count;
 		}		
 	}
-	return rowLength;
 }
 
 
-// == drawCurrentMapOLD() ==
-// void drawCurrentMapOLD(PointU8 *center) {
-// 	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
-// 	UInt8 *overlay = (UInt8 *)P2_XPOS;
-// 	UInt8 row, col, mapX, mapY, startMapX, c, low, hasSpriteOverlay;
-// 	UInt8 rowSkip = SCREEN_WIDTH - mapFrameSize.width;
-// 	UInt8 screenIndex = mapFrameOrigin.x + SCREEN_WIDTH * mapFrameOrigin.y;
+UInt8 mapTileAt(PointU8 *pt) {
+	const UInt8 *runLenPtr = currentRunLenMap;
+	UInt8 x = pt->x;
+	UInt8 y = pt->y;
+	UInt8 tile, i;
 
-// 	startMapX = center->x - mapFrameSize.width / 2;
-// 	mapY = center->y - mapFrameSize.height / 2;
+	// Skip to row
+	for (i=0; i<y; ++i) {
+		runLenPtr += runLenPtr[0];
+	}
 
-// 	for (row=0; row<mapFrameSize.height; ++row) {
-// 		hasSpriteOverlay = 0;
-// 		mapX = startMapX;
-// 		for (col=0; col<mapFrameSize.width; ++col) {
-// 			if (mapY < currentMapSize.height && mapX < currentMapSize.width) {
-// 				c = currentRawMap[mapX + currentMapSize.width * mapY];
-// 			} else {
-// 				c = 0;
-// 			}
-
-// 			// Convert map value to character value
-// 			c = currentTileMap[c];				
-
-// 			// Add sprite tile for characters
-// 			low = (c & 0x3F);
-// 			if (low >= tCastle) {
-// 				drawSpriteTile(tileSprites + 8 * (low - tCastle), col, row);
-// 				hasSpriteOverlay = 1;
-// 			}
-
-// 			screen[screenIndex] = c;
-// 			++screenIndex;
-// 			++mapX;
-// 		}
-
-// 		if (hasSpriteOverlay == 0) {
-// 			// Clear the sprite overlay for this row
-// 			overlay[row] = 0;
-// 		}
-// 		screenIndex += rowSkip;
-// 		++mapY;
-// 	}
-// }
+	// Get tile
+	decodeRunLenRange(&tile, x, x+1, runLenPtr);
+	return tile;
+}
 
 
-// == drawSprite() ==
+
 void drawSprite(const UInt8 *sprite, UInt8 spriteLength, UInt8 player, UInt8 y) {
 	UInt8 *pmbasePtr = (UInt8 *) (spritePage * 256 + 384);
 	const UInt16 pmLength = 128;

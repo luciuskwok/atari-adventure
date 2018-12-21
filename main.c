@@ -51,7 +51,6 @@ void runLoop(void);
 void handleStick(void);
 void handleTrigger(void);
 UInt8 canMoveTo(PointU8*);
-UInt8 mapTileAt(PointU8 *pt);
 
 void exitToOverworld(void);
 void enterDungeon(PointU8 *location);
@@ -84,7 +83,7 @@ int main (void) {
 
 	// Print some text
 	updateStatText();
-	//printAllTiles();
+	// printAllTiles();
 
 	
 	while (gQuit == 0) {
@@ -197,13 +196,6 @@ UInt8 canMoveTo(PointU8 *pt) {
 	}
 
 	return 1;
-}
-
-// == mapTileAt() ==
-UInt8 mapTileAt(PointU8 *pt) {
-	//return currentRawMap[pt->x + currentMapSize.width * pt->y];
-	// TODO: rewrite to use currentRunLenMap 
-	return 0;
 }
 
 // == exitToOverworld() ==
