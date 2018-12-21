@@ -37,6 +37,7 @@ RAMTOP: 0xC0 without BASIC, 0xA0 with BASIC. Below are values with BASIC.
 UInt8 gQuit;
 PointU8 playerOverworldLocation;
 PointU8 playerMapLocation;
+UInt8 isPlayerInOverworld;
 
 // Function prototypes
 void runLoop(void);
@@ -51,14 +52,13 @@ int main (void) {
 	
 	// Start new game
 	gQuit = 0;
-	playerOverworldLocation.x = 9;
-	playerOverworldLocation.y = 6;
-	playerMapLocation.x = 5; // for dungeon
-	playerMapLocation.y = 3; 
+	isPlayerInOverworld = 0;
+	playerOverworldLocation = overworldEntryPoint;
 
 	// Load map
 	//loadMap(OverworldMap);
-	loadMap(DungeonMap);
+	loadMap(TownMap);
+	playerMapLocation = townEntryPoint;
 	drawCurrentMap(&playerMapLocation, 0);
 
 	// Print some text
@@ -87,35 +87,39 @@ void handleStick() {
 	UInt8 trigger = PEEK (STRIG0);
 	UInt8 oldX = playerMapLocation.x;
 	UInt8 oldY = playerMapLocation.y;
+	UInt8 newX = oldX;
+	UInt8 newY = oldY;
 	UInt8 mapWidth = currentMapSize.width;
 	UInt8 mapHeight = currentMapSize.height;
 	
 	switch (stick) {
 		case 0x0E: // up
-			if (playerMapLocation.y > 0) {
-				--playerMapLocation.y;
+			if (newY > 0) {
+				--newY;
 			}
 			break;
 		case 0x0D: // down
-			if (playerMapLocation.y < mapHeight - 1) {
-				++playerMapLocation.y;
+			if (newY < mapHeight - 1) {
+				++newY;
 			}
 			break;
 		case 0x0B: // left
-			if (playerMapLocation.x > 0) {
-				--playerMapLocation.x;
+			if (newX > 0) {
+				--newX;
 			}
 			break;
 		case 0x07: // right
-			if (playerMapLocation.x < mapWidth - 1) {
-				++playerMapLocation.x;
+			if (newX < mapWidth - 1) {
+				++newX;
 			}
 			break;
 		default:
 			break;
 	}
 	
-	if (oldX != playerMapLocation.x || oldY != playerMapLocation.y) {
+	if (oldX != newX || oldY != newY) {
+		playerMapLocation.x = newX;
+		playerMapLocation.y = newY;
 		drawCurrentMap(&playerMapLocation, 0);
 	}
 }

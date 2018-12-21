@@ -177,17 +177,23 @@ void loadColorTable(const UInt8 colors[]) {
 // == loadMap() ==
 void loadMap(UInt8 index) {
 	switch (index) {
-		case OverworldMap: // Overworld
+		case OverworldMap: 
 			decodeRleMap(currentRawMap, 256, overworldRleMap);
 			currentMapSize = overworldMapSize;
 			currentTileMap = overworldTileMap;
 			loadColorTable(overworldColorTable);
 			break;
-		case DungeonMap: // Dungeon
+		case DungeonMap: 
 			decodeRleMap(currentRawMap, 256, dungeonRleMap);
 			currentMapSize = dungeonMapSize;
 			currentTileMap = dungeonTileMap;
 			loadColorTable(dungeonColorTable);
+			break;
+		case TownMap: 
+			decodeRleMap(currentRawMap, 256, townRleMap);
+			currentMapSize = townMapSize;
+			currentTileMap = townTileMap;
+			loadColorTable(townColorTable);
 			break;
 	}
 
@@ -270,12 +276,11 @@ void drawCurrentMap(PointU8 *center, UInt8 sightDistance) {
 				if (c >= 9) {
 					drawSpriteTile(tileSprites + 8 * (c-9), col, row);
 				}
-
-				// Convert map value to character value
-				c = currentTileMap[c];				
 			} else {
 				c = 0;
 			}
+			// Convert map value to character value
+			c = currentTileMap[c];				
 			screen[screenIndex] = c;
 		}
 	}

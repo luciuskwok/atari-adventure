@@ -32,6 +32,7 @@ void drawSpriteTile(const UInt8 *sprite, UInt8 column, UInt8 row);
 enum MapEnum {
 	OverworldMap = 0,
 	DungeonMap = 1,
+	TownMap = 2,
 };
 
 
