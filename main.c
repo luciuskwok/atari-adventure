@@ -201,7 +201,9 @@ UInt8 canMoveTo(PointU8 *pt) {
 
 // == mapTileAt() ==
 UInt8 mapTileAt(PointU8 *pt) {
-	return currentRawMap[pt->x + currentMapSize.width * pt->y];
+	//return currentRawMap[pt->x + currentMapSize.width * pt->y];
+	// TODO: rewrite to use currentRunLenMap 
+	return 0;
 }
 
 // == exitToOverworld() ==

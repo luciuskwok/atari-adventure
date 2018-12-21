@@ -19,7 +19,8 @@ extern void __fastcall__ displayListInterrupt(void);
 
 // Globals
 UInt8 *textWindow;
-UInt8 currentRawMap[256];
+UInt8 buffer[256];
+const UInt8 *currentRunLenMap;
 UInt8 *currentTileMap;
 SizeU8 currentMapSize;
 UInt8 currentMapType;
@@ -186,17 +187,17 @@ void clearMapScreen(void) {
 void loadMap(UInt8 mapType, UInt8 variation) {
 	switch (mapType) {
 		case OverworldMapType: 
-			decodeRleMap(currentRawMap, 256, overworldRleMap);
+			currentRunLenMap = overworldRleMap;
 			currentMapSize = overworldMapSize;
 			currentTileMap = overworldTileMap;
 			break;
 		case DungeonMapType: 
-			decodeRleMap(currentRawMap, 256, dungeonRleMap);
+			currentRunLenMap = dungeonRleMap;
 			currentMapSize = dungeonMapSize;
 			currentTileMap = dungeonTileMap;
 			break;
 		case TownMapType: 
-			decodeRleMap(currentRawMap, 256, townRleMap);
+			currentRunLenMap = townRleMap;
 			currentMapSize = townMapSize;
 			currentTileMap = townTileMap;
 			break;
@@ -223,27 +224,27 @@ void loadColorTable(const UInt8 *colors) {
 	}
 }
 
-// == decodeRleMap() ==
-void decodeRleMap(UInt8 *outMap, UInt16 mapLength, const UInt8 *inRleMap) {
+// == decodeRunLenMap() ==
+void decodeRunLenMap(UInt8 *outMap, UInt16 mapLength, const UInt8 *inRunLenMap) {
 	UInt16 rowLength, rowEnd;
 	UInt16 rleIndex = 0;
 	UInt16 outIndex = 0;
 	UInt8 op, tile, count;
 
 	while (outIndex < mapLength) {
-		rowLength = inRleMap[rleIndex];
+		rowLength = inRunLenMap[rleIndex];
 		++rleIndex;
 		rowEnd = rleIndex + rowLength;
 
 		while (rleIndex < rowEnd) {
-			op = inRleMap[rleIndex];
+			op = inRunLenMap[rleIndex];
 			++rleIndex;
 
 			tile = (op & 0xF0) >> 4;
 			count = (op & 0x0F);
 
 			if (count == 15) {
-				count += inRleMap[rleIndex];
+				count += inRunLenMap[rleIndex];
 				++rleIndex;
 			}
 
@@ -296,46 +297,155 @@ void layoutCurrentMap(UInt8 sightDistance) {
 void drawCurrentMap(PointU8 *center) {
 	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
 	UInt8 *overlay = (UInt8 *)P2_XPOS;
-	UInt8 row, col, mapX, mapY, startMapX, c, low, hasSpriteOverlay;
-	UInt8 rowSkip = SCREEN_WIDTH - mapFrameSize.width;
+	UInt8 screenRowSkip = SCREEN_WIDTH - mapFrameSize.width;
 	UInt8 screenIndex = mapFrameOrigin.x + SCREEN_WIDTH * mapFrameOrigin.y;
+	UInt8 mapFrameHalfWidth = mapFrameSize.width / 2;
+	UInt8 mapY = center->y - mapFrameSize.height / 2;
+	UInt8 runLenIndex = 0;
+	UInt8 row, col, leftBlank, leftSkip, c, low, hasSpriteOverlay;
 
-	startMapX = center->x - mapFrameSize.width / 2;
-	mapY = center->y - mapFrameSize.height / 2;
+	// Integrity check
+	if (currentRunLenMap == NULL) {
+		return;
+	}
 
+	// Skip within RLE data to first row that is displayed.
+	if (mapY < currentMapSize.height) { // verify mapY is within bounds, negative values wrap 
+		for (c=0; c<mapY; ++c) {
+			if (currentRunLenMap[runLenIndex] == 0) { // Integrity check
+				return;
+			}
+			runLenIndex += currentRunLenMap[runLenIndex] + 1; // skip length byte + row data
+		}
+	}
+
+	// Calculate number of columns to leave blank and how many to skip.
+	if (center->x < mapFrameHalfWidth) {
+		leftBlank = mapFrameHalfWidth - center->x;
+		leftSkip = 0;
+	} else {
+		leftBlank = 0;
+		leftSkip = center->x - mapFrameHalfWidth;
+	}
+
+	// Main Loop
 	for (row=0; row<mapFrameSize.height; ++row) {
 		hasSpriteOverlay = 0;
-		mapX = startMapX;
-		for (col=0; col<mapFrameSize.width; ++col) {
-			if (mapY < currentMapSize.height && mapX < currentMapSize.width) {
-				c = currentRawMap[mapX + currentMapSize.width * mapY];
-			} else {
-				c = 0;
+
+		if (mapY >= currentMapSize.height) {
+			// Beyond borders: fill with the default empty tile.
+			for (col=0; col<mapFrameSize.width; ++col) {
+				screen[screenIndex] = currentTileMap[0];
+				++screenIndex;
 			}
+		} else {	
+			runLenIndex += decodeRunLenRow(buffer, currentMapSize.width, currentRunLenMap + runLenIndex);
+			for (col=0; col<mapFrameSize.width; ++col) {
+				if (col < leftBlank || col + leftSkip >= currentMapSize.width) {
+					c = 0; // Tiles outside map bounds are set to default blank tile.			
+				} else {
+					c = buffer[col + leftSkip - leftBlank];
+				}
 
-			// Convert map value to character value
-			c = currentTileMap[c];				
+				// Convert decoded value to character value
+				c = currentTileMap[c];				
 
-			// Add sprite tile for characters
-			low = (c & 0x3F);
-			if (low >= tCastle) {
-				drawSpriteTile(tileSprites + 8 * (low - tCastle), col, row);
-				hasSpriteOverlay = 1;
-			}
 
-			screen[screenIndex] = c;
-			++screenIndex;
-			++mapX;
-		}
+				// Add sprite overlay for special characters
+				low = (c & 0x3F);
+				if (low >= tCastle) {
+					drawSpriteTile(tileSprites + 8 * (low - tCastle), col, row);
+					hasSpriteOverlay = 1;
+				}
 
+				screen[screenIndex] = c;
+				++screenIndex;
+			} // end for(col)
+		} // end if
+			
 		if (hasSpriteOverlay == 0) {
 			// Clear the sprite overlay for this row
 			overlay[row] = 0;
 		}
-		screenIndex += rowSkip;
+		screenIndex += screenRowSkip;
 		++mapY;
 	}
 }
+
+// == decodeRunLenRow() ==
+UInt8 decodeRunLenRow(UInt8 *outData, UInt8 length, const UInt8 *runLenData) {
+	UInt8 rowLength = runLenData[0] + 1;
+	UInt8 runLenIndex = 1;
+	UInt8 outIndex = 0;
+	UInt8 op, tile, count;
+
+	while (runLenIndex < rowLength) {
+		op = runLenData[runLenIndex];
+		++runLenIndex;
+
+		tile = (op & 0xF0) >> 4;
+		count = (op & 0x0F);
+
+		if (count == 15) {
+			count += runLenData[runLenIndex];
+			++runLenIndex;
+		}
+
+		++count;
+		while (count > 0 && outIndex < length) {
+			outData[outIndex] = tile;
+			++outIndex;
+			--count;
+		}		
+	}
+	return rowLength;
+}
+
+
+// == drawCurrentMapOLD() ==
+// void drawCurrentMapOLD(PointU8 *center) {
+// 	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
+// 	UInt8 *overlay = (UInt8 *)P2_XPOS;
+// 	UInt8 row, col, mapX, mapY, startMapX, c, low, hasSpriteOverlay;
+// 	UInt8 rowSkip = SCREEN_WIDTH - mapFrameSize.width;
+// 	UInt8 screenIndex = mapFrameOrigin.x + SCREEN_WIDTH * mapFrameOrigin.y;
+
+// 	startMapX = center->x - mapFrameSize.width / 2;
+// 	mapY = center->y - mapFrameSize.height / 2;
+
+// 	for (row=0; row<mapFrameSize.height; ++row) {
+// 		hasSpriteOverlay = 0;
+// 		mapX = startMapX;
+// 		for (col=0; col<mapFrameSize.width; ++col) {
+// 			if (mapY < currentMapSize.height && mapX < currentMapSize.width) {
+// 				c = currentRawMap[mapX + currentMapSize.width * mapY];
+// 			} else {
+// 				c = 0;
+// 			}
+
+// 			// Convert map value to character value
+// 			c = currentTileMap[c];				
+
+// 			// Add sprite tile for characters
+// 			low = (c & 0x3F);
+// 			if (low >= tCastle) {
+// 				drawSpriteTile(tileSprites + 8 * (low - tCastle), col, row);
+// 				hasSpriteOverlay = 1;
+// 			}
+
+// 			screen[screenIndex] = c;
+// 			++screenIndex;
+// 			++mapX;
+// 		}
+
+// 		if (hasSpriteOverlay == 0) {
+// 			// Clear the sprite overlay for this row
+// 			overlay[row] = 0;
+// 		}
+// 		screenIndex += rowSkip;
+// 		++mapY;
+// 	}
+// }
 
 
 // == drawSprite() ==
