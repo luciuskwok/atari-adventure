@@ -15,37 +15,46 @@
 #define DungeonFloorColor (0x40)
 #define DungeonExitColor  (0x80)
 #define DungeonChestColor (0xC0)
-#define TownWallColor (0x00)
-#define TownPavementColor (0x40)
+#define TownGrayColor  (0x00)
+#define TownRedColor   (0x40)
+#define TownGreenColor (0x80)
+#define TownBlueColor  (0xC0)
 
 // Tile constants
 // Add 0x40 to these values to get the character value.
 // This puts them in the graphics/control character range in ATASCII.
 
 // Overworld tiles
-#define tCastle (1)
-#define tTown (2)
-#define tVillage (3)
-#define tMonument (4)
-#define tCave (5)
+enum TileValues {
+	tSolid = 1,
 
-#define tPlains (6)
-#define tBridgeH (7)
-#define tBridgeV (8)
-#define tForest (9)
-#define tShallows (10)
-#define tWater (11)
-#define tDesert (12)
-#define tMountain (13)
+	// Overworld
+	tPlains,
+	tBridgeH,
+	tBridgeV,
+	tForest, // also used in town
+	tShallows,
+	tWater,
+	tMountain,
 
-// Dungeon/Town tiles
-#define tBrick (14)
-#define tFloor (15)
-#define tExit (16)
-#define tChest (17)
-#define tHouse (18)
-#define tPavement (19)
+	// Dungeon/Town
+	tBrick,
+	tFloor,
+	tLadder,
+	tChest,
+	tHouse1,
+	tHouse2,
+	tHouse3,
+	tHouse4,
 
+	// Tiles with sprite overlays
+	tCastle = 24,
+	tTown,
+	tVillage,
+	tMonument,
+	tCave, 
+	tHouseDoor,
+};
 
 // Text window
 #define tPotion (0x3B)

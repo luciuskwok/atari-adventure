@@ -256,7 +256,7 @@ void drawCurrentMap(PointU8 *center, UInt8 sightDistance) {
 	const UInt8 leftMargin = 2;
 	const UInt8 mapWidth = currentMapSize.width;
 	const UInt8 mapHeight = currentMapSize.height;
-	UInt8 row, col, c;
+	UInt8 row, col, c, low;
 	int x, y, screenIndex;
 	
 	
@@ -271,16 +271,19 @@ void drawCurrentMap(PointU8 *center, UInt8 sightDistance) {
 			screenIndex = leftMargin + col + SCREEN_WIDTH * row;
 			if (0 <= y && y < mapHeight && 0 <= x && x < mapWidth) {
 				c = currentRawMap[x + mapWidth * y];
-				
-				// Add sprite tile for special tiles
-				if (c >= 9) {
-					drawSpriteTile(tileSprites + 8 * (c-9), col, row);
-				}
 			} else {
 				c = 0;
 			}
+
 			// Convert map value to character value
 			c = currentTileMap[c];				
+
+			// Add sprite tile for characters
+			low = (c & 0x3F);
+			if (low >= tCastle) {
+				drawSpriteTile(tileSprites + 8 * (low - tCastle), col, row);
+			}
+
 			screen[screenIndex] = c;
 		}
 	}

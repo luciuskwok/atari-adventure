@@ -56,7 +56,7 @@ int main (void) {
 	playerOverworldLocation = overworldEntryPoint;
 
 	// Load map
-	//loadMap(OverworldMap);
+	// loadMap(OverworldMap);
 	loadMap(TownMap);
 	playerMapLocation = townEntryPoint;
 	drawCurrentMap(&playerMapLocation, 0);
