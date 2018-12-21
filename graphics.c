@@ -14,7 +14,7 @@ extern void __fastcall__ displayListInterrupt(void);
 
 // Player-Missile Constants
 #define PM_LEFT_MARGIN (52)
-#define P2_XPOS (0x0604)
+#define P2_XPOS ((UInt8 *)0x0604)
 #define SCREEN_WIDTH (24)
 
 // Globals
@@ -62,38 +62,37 @@ void initDisplayList(void) {
 	// == Display List ==
 	// Display list is already set up by the runtime to the equivalent of BASIC's GR.0. 
 	// We can just overwrite that DL with our own.
-	UInt8 *displayListPtr = (UInt8 *)PEEKW(SDLSTL);
-	UInt8 *write = displayListPtr;
-	UInt8 *screenMemPtr = (UInt8 *)PEEKW(SAVMSC);
-	UInt8 i;
+	UInt8 *displayList = (UInt8 *)PEEKW(SDLSTL);
+	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
 	const UInt8 dl_Interrupt = 0x80;
 	const UInt8 dl_LMS = 0x40;
 	const UInt8 dl_VScroll = 0x20;
 	const UInt8 dl_HScroll = 0x10;
 	const UInt8 colorModeLine = (dl_Interrupt | dl_HScroll | 7);
+	UInt8 x = 3; // Skip DL instructions that are already blank rows.
+	UInt8 i;
 
 
-	write += 3; // Skip DL instructions that are already blank rows.
-	*write = colorModeLine | dl_LMS;
-	*(++write) = (UInt16)screenMemPtr % 256;
-	*(++write) = (UInt16)screenMemPtr / 256;
+	displayList[x] = colorModeLine | dl_LMS;
+	displayList[++x] = (UInt16)screen % 256;
+	displayList[++x] = (UInt16)screen / 256;
 	
 	for (i=1; i<9; ++i) { // 9 rows * 16 scanlines = 144 scanlines
-		*(++write) = colorModeLine; // DLI on every tile row
+		displayList[++x] = colorModeLine; // DLI on every tile row
 	}
 	
-	*(++write) = DL_BLK8; // 8 blank scanlines
+	displayList[++x] = DL_BLK8; // 8 blank scanlines
 
 	for (i=0; i<5; ++i) { // 5 rows of text = 40 scanlines
-		*(++write) = DL_CHR40x8x1; 
+		displayList[++x] = DL_CHR40x8x1; 
 	}
 	
-	*(++write) = DL_JVB; // Vertical blank + jump to beginning of display list
-	*(++write) = (UInt16)displayListPtr % 256;
-	*(++write) = (UInt16)displayListPtr / 256;
+	displayList[++x] = DL_JVB; // Vertical blank + jump to beginning of display list
+	displayList[++x] = (UInt16)displayList % 256;
+	displayList[++x] = (UInt16)displayList / 256;
 
 	// Set the textWindow pointer based on DL memory usage
-	textWindow = screenMemPtr + (9 * 24);
+	textWindow = screen + (9 * 24);
 }
 
 
@@ -163,9 +162,9 @@ void initSprites(void) {
 
 	// Set up ANTIC
 	ANTIC.pmbase = spritePage;
-	GTIA_WRITE.gractl = 3; // enable both missile and player graphics
 	POKE (SDMCTL, 0x2E); // standard playfield + missile DMA + player DMA + display list DMA
 	POKE (GPRIOR, 0x01); // layer players above playfield.
+	GTIA_WRITE.gractl = 3; // enable both missile and player graphics
 }
 
 
@@ -265,7 +264,6 @@ void decodeRunLenMap(UInt8 *outMap, UInt16 mapLength, const UInt8 *inRunLenMap) 
 
 // == layoutCurrentMap() ==
 void layoutCurrentMap(UInt8 sightDistance) {
-	UInt8 *overlay = (UInt8 *)P2_XPOS;
 	UInt8 x, halfWidth, halfHeight;
 
 	if (sightDistance > 3) {
@@ -284,7 +282,7 @@ void layoutCurrentMap(UInt8 sightDistance) {
 
 	// Clear out the sprite overlays
 	for (x=0; x<9; ++x) {
-		overlay[x] = 0;
+		P2_XPOS[x] = 0;
 	}
 
 	// printDebugInfo("W $", mapFrameSize.width, 40);
@@ -294,7 +292,6 @@ void layoutCurrentMap(UInt8 sightDistance) {
 // == drawCurrentMap() ==
 void drawCurrentMap(PointU8 *center) {
 	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
-	UInt8 *overlay = (UInt8 *)P2_XPOS;
 	const UInt8 *runLenPtr = currentRunLenMap;
 	UInt8 screenRowSkip = SCREEN_WIDTH - mapFrameSize.width;
 	UInt8 screenIndex = mapFrameOrigin.x + SCREEN_WIDTH * mapFrameOrigin.y;
@@ -379,7 +376,7 @@ void drawCurrentMap(PointU8 *center) {
 			
 		if (hasSpriteOverlay == 0) {
 			// Clear the sprite overlay for this row
-			overlay[row] = 0;
+			P2_XPOS[row] = 0;
 		}
 		screenIndex += screenRowSkip;
 	}
@@ -450,7 +447,7 @@ void drawSprite(const UInt8 *sprite, UInt8 spriteLength, UInt8 player, UInt8 y) 
 // == drawSpriteTile() ==
 void drawSpriteTile(const UInt8 *sprite, UInt8 column, UInt8 row) {
 	// Set horizontal position for tile
-	POKE(P2_XPOS + row, PM_LEFT_MARGIN + 8 * column);
+	P2_XPOS[row] = PM_LEFT_MARGIN + 8 * column;
 	
 	// Draw sprite at vertical position
 	drawSprite(sprite, 8, 2, row * 8);
