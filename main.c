@@ -53,7 +53,7 @@ void handleTrigger(void);
 UInt8 canMoveTo(PointU8*);
 
 void exitToOverworld(void);
-void enterDungeon(PointU8 *location);
+void enterDungeon(PointU8 *location, UInt8 tile);
 
 void updateStatText(void);
 
@@ -154,7 +154,7 @@ void handleTrigger(void) {
 			switch (currentMapType) {
 				case OverworldMapType:
 					if (tile >= 9) { // Castle or higher
-						enterDungeon(&playerMapLocation);
+						enterDungeon(&playerMapLocation, tile);
 					}
 					break;
 				case DungeonMapType:
@@ -211,7 +211,7 @@ void exitToOverworld(void) {
 }
 
 // == enterDungeon() == 
-void enterDungeon(PointU8 *location) {
+void enterDungeon(PointU8 *location, UInt8 tile) {
 	UInt8 mapType;
 	const UInt8 *colorTable;
 
@@ -226,7 +226,7 @@ void enterDungeon(PointU8 *location) {
 	// TODO: determine which dungeon/town to load based on y location,
 	// since each special tile should only exist 1 per map line.
 
-	if (location->x > 8) {
+	if (tile >= 12) {
 		mapType = DungeonMapType;
 		colorTable = dungeonColorTable;
 		playerMapLocation = dungeonEntryPoint;
