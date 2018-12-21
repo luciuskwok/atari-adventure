@@ -226,15 +226,14 @@ void loadColorTable(const UInt8 *colors) {
 
 // == decodeRunLenMap() ==
 void decodeRunLenMap(UInt8 *outMap, UInt16 mapLength, const UInt8 *inRunLenMap) {
-	UInt16 rowLength, rowEnd;
+	UInt16 rowEnd;
 	UInt16 rleIndex = 0;
 	UInt16 outIndex = 0;
 	UInt8 op, tile, count;
 
 	while (outIndex < mapLength) {
-		rowLength = inRunLenMap[rleIndex];
+		rowEnd = rleIndex + inRunLenMap[rleIndex];
 		++rleIndex;
-		rowEnd = rleIndex + rowLength;
 
 		while (rleIndex < rowEnd) {
 			op = inRunLenMap[rleIndex];
@@ -315,7 +314,7 @@ void drawCurrentMap(PointU8 *center) {
 			if (currentRunLenMap[runLenIndex] == 0) { // Integrity check
 				return;
 			}
-			runLenIndex += currentRunLenMap[runLenIndex] + 1; // skip length byte + row data
+			runLenIndex += currentRunLenMap[runLenIndex]; // skip length byte + row data
 		}
 	}
 
@@ -374,7 +373,7 @@ void drawCurrentMap(PointU8 *center) {
 
 // == decodeRunLenRow() ==
 UInt8 decodeRunLenRow(UInt8 *outData, UInt8 length, const UInt8 *runLenData) {
-	UInt8 rowLength = runLenData[0] + 1;
+	UInt8 rowLength = runLenData[0];
 	UInt8 runLenIndex = 1;
 	UInt8 outIndex = 0;
 	UInt8 op, tile, count;
