@@ -35,14 +35,32 @@ RAMTOP: 0xC0 without BASIC, 0xA0 with BASIC. Below are values with BASIC.
 
 // Globals
 UInt8 gQuit;
+UInt8 previousStick;
+UInt8 previousTrigger;
+
 PointU8 playerOverworldLocation;
 PointU8 playerMapLocation;
-UInt8 isPlayerInOverworld;
+UInt8 hasBoat;
+UInt8 hasShip;
+UInt8 hasLamp;
+UInt8 hasCrystal;
+UInt8 sightDistance;
 
 // Function prototypes
 void runLoop(void);
 void handleStick(void);
+void handleTrigger(void);
+UInt8 canMoveTo(PointU8*);
+UInt8 mapTileAt(PointU8 *pt);
+
+void exitToOverworld(void);
+void enterDungeon(PointU8 *location);
+
 void updateStatText(void);
+
+// Constants
+#define STICK_TIMER (0x0601)
+
 
 
 // == main() == 
@@ -52,14 +70,17 @@ int main (void) {
 	
 	// Start new game
 	gQuit = 0;
-	isPlayerInOverworld = 0;
+	previousStick = 0x0F;
+	previousTrigger = 1;
+	hasBoat = 0;
+	hasShip = 0;
+	hasLamp = 1;
+	hasCrystal = 1;
+	sightDistance = 0xFF;
 	playerOverworldLocation = overworldEntryPoint;
 
 	// Load map
-	// loadMap(OverworldMap);
-	loadMap(TownMap);
-	playerMapLocation = townEntryPoint;
-	drawCurrentMap(&playerMapLocation, 0);
+	exitToOverworld();
 
 	// Print some text
 	updateStatText();
@@ -78,51 +99,166 @@ int main (void) {
 // == runLoop() ==
 void runLoop(void) {
 	handleStick();
+	handleTrigger();
 }
 
 // == handleStick() ==
 void handleStick() {
 	// Only allow moves in 4 cardinal directions and not diagonals.
 	UInt8 stick = PEEK (STICK0);
-	UInt8 trigger = PEEK (STRIG0);
-	UInt8 oldX = playerMapLocation.x;
-	UInt8 oldY = playerMapLocation.y;
-	UInt8 newX = oldX;
-	UInt8 newY = oldY;
-	UInt8 mapWidth = currentMapSize.width;
-	UInt8 mapHeight = currentMapSize.height;
+	UInt8 stick_timer = PEEK (STICK_TIMER);
+	PointU8 oldLoc, newLoc;
+
+	if (stick == previousStick && stick_timer != 0) { 
+		// Handle changes in stick position immediately but delay repeating same moves.
+		return;
+	}
+	POKE(STICK_TIMER, 10); // Reset stick timer
+	previousStick = stick;
+
+	oldLoc = playerMapLocation;
+	newLoc = oldLoc;
 	
 	switch (stick) {
-		case 0x0E: // up
-			if (newY > 0) {
-				--newY;
-			}
-			break;
-		case 0x0D: // down
-			if (newY < mapHeight - 1) {
-				++newY;
-			}
-			break;
-		case 0x0B: // left
-			if (newX > 0) {
-				--newX;
-			}
-			break;
-		case 0x07: // right
-			if (newX < mapWidth - 1) {
-				++newX;
-			}
-			break;
-		default:
-			break;
+		case 0x0E: --newLoc.y; break; // up
+		case 0x0D: ++newLoc.y; break; // down
+		case 0x0B: --newLoc.x; break; // left
+		case 0x07: ++newLoc.x; break; // right
+		default: break;
 	}
 	
-	if (oldX != newX || oldY != newY) {
-		playerMapLocation.x = newX;
-		playerMapLocation.y = newY;
-		drawCurrentMap(&playerMapLocation, 0);
+	if (oldLoc != newLoc) {
+		// Check map bounds. Because newLoc is unsigned, it wraps around from 0 to 255.
+		if (newLoc.x < currentMapSize.width && newLoc.y < currentMapSize.height) {
+			if (canMoveTo(&newLoc)) {
+				playerMapLocation = newLoc;
+				drawCurrentMap(&playerMapLocation);
+			}
+		} else {
+			// Handle moving off the map for towns
+			if (currentMapType == TownMapType) {
+				exitToOverworld();
+			}
+		}
 	}
+
 }
+
+// == handleTrigger() ==
+void handleTrigger(void) {
+	// Recognize trigger only when it transitions from up to down.
+	UInt8 trigger = PEEK (STRIG0);
+	UInt8 tile;
+	if (trigger != previousTrigger) {
+		if (trigger == 0) { // trigger down
+			tile = mapTileAt(&playerMapLocation);
+			switch (currentMapType) {
+				case OverworldMapType:
+					if (tile >= 9) { // Castle or higher
+						enterDungeon(&playerMapLocation);
+					}
+					break;
+				case DungeonMapType:
+					if (tile == 3) { // Ladder
+						exitToOverworld();
+					} else if (tile == 4) { // Chest
+						// TODO
+					}
+					break;
+				case TownMapType:
+					if (tile == 13) { // House door
+						// TODO
+					}
+					break;
+			}
+
+		}
+	}
+	previousTrigger = trigger;
+
+}
+
+// == canMoveTo() ==
+UInt8 canMoveTo(PointU8 *pt) {
+	UInt8 tile = mapTileAt(pt);
+
+	switch (currentMapType) {
+		case OverworldMapType:
+			if (tile == 5) { // Shallows
+				return (hasBoat || hasShip);
+			} else if (tile == 6) {
+				return hasShip;
+			}
+			return 1;
+		case DungeonMapType:
+			return tile > 1;
+		case TownMapType:
+			return tile == 1 || tile == 3 || tile == 13;
+	}
+
+	return 1;
+}
+
+// == mapTileAt() ==
+UInt8 mapTileAt(PointU8 *pt) {
+	return currentRawMap[pt->x + currentMapSize.width * pt->y];
+}
+
+// == exitToOverworld() ==
+void exitToOverworld(void) {
+	loadColorTable(NULL);
+	clearMapScreen();
+	loadMap(OverworldMapType, 0);
+	playerMapLocation = playerOverworldLocation;
+	sightDistance = 0xFF;
+	layoutCurrentMap(sightDistance);
+	drawCurrentMap(&playerMapLocation);
+	loadColorTable(overworldColorTable);
+}
+
+// == enterDungeon() == 
+void enterDungeon(PointU8 *location) {
+	UInt8 mapType;
+	const UInt8 *colorTable;
+
+	// Also for entering towns.
+	if (currentMapType != OverworldMapType) {
+		return;
+	}
+
+	// Save player location in overworld to be restored when exiting.
+	playerOverworldLocation = playerMapLocation;
+
+	// TODO: determine which dungeon/town to load based on y location,
+	// since each special tile should only exist 1 per map line.
+
+	if (location->x > 8) {
+		mapType = DungeonMapType;
+		colorTable = dungeonColorTable;
+		playerMapLocation = dungeonEntryPoint;
+		sightDistance = 0;
+		if (hasLamp) {
+			++sightDistance;
+		}
+		if (hasCrystal) {
+			++sightDistance;
+		}
+	} else {
+		mapType = TownMapType;
+		colorTable = townColorTable;
+		playerMapLocation = townEntryPoint;
+		sightDistance = 0xFF;
+	}
+
+	loadColorTable(NULL);
+	clearMapScreen();
+	loadMap(mapType, 0);
+	layoutCurrentMap(sightDistance);
+	drawCurrentMap(&playerMapLocation);
+	loadColorTable(colorTable);
+}
+
+
 
 // == updateStatText() ==
 void updateStatText(void) {

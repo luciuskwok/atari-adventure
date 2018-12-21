@@ -133,10 +133,10 @@ const PointU8 dungeonEntryPoint = { 4, 3 };
 // == Town Map ==
 UInt8 townTileMap[] = { 
 	0,
-	tSolid    | TownRedColor, // pavement
-	tForest   | TownGreenColor, 
-	tSolid    | TownGreenColor, // grass
-	tBrick    | TownGrayColor,
+	tSolid    | TownRedColor, // pavement, passable
+	tForest   | TownGreenColor, // tree
+	tSolid    | TownGreenColor, // grass, passable
+	tBrick    | TownGrayColor, // wall
 	tHouse1   | TownRedColor,
 	tHouse2   | TownRedColor,
 	tHouse1   | TownGreenColor, 
@@ -145,7 +145,7 @@ UInt8 townTileMap[] = {
 	tHouse2   | TownBlueColor,
 	tHouse3   | TownGrayColor, 
 	tHouse4   | TownGrayColor, 
-	tHouseDoor| TownGrayColor,
+	tHouseDoor| TownGrayColor, // 13, passable
 };
 const UInt8 townColorTable[] = {
 	0x0A, // 0: gray

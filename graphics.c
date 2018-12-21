@@ -22,7 +22,12 @@ UInt8 *textWindow;
 UInt8 currentRawMap[256];
 UInt8 *currentTileMap;
 SizeU8 currentMapSize;
-UInt8 spritePage; // private global 
+UInt8 currentMapType;
+
+// Private globals 
+UInt8 spritePage; // shadow of ANTIC hardware register, which cannot be read
+PointU8 mapFrameOrigin;
+SizeU8 mapFrameSize;
 
 
 // == initGraphics() ==
@@ -35,12 +40,9 @@ void initGraphics(void) {
 	// == Colors ==
 	POKE (PCOLR0, 0x38); // Player 0 color = red
 	POKE (PCOLR1, 0x38); // Player 1 color = red
-	POKE (PCOLR2, 0x0F); // Player 2 color = white
-	POKE (PCOLR3, 0x0F); // Player 3 color = white
-	loadColorTable(overworldColorTable);
+	loadColorTable(NULL);
 
 	// == Other ==
-	clearScreen();
 	initDisplayList();
 	initSprites();
 	initFont(ramtopValue - 12);
@@ -166,46 +168,58 @@ void initSprites(void) {
 	POKE (GPRIOR, 0x01); // layer players above playfield.
 }
 
-// == loadColorTable() ==
-void loadColorTable(const UInt8 colors[]) {
-	UInt8 i;
-	for (i=0; i<5; ++i) {
-		POKE(COLOR0 + i, colors[i]);
+
+// ==========================================================================================
+
+
+// == clearMapScreen() ==
+void clearMapScreen(void) {
+	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
+	UInt16 i;
+	// Screen is made up of 9 lines * 24 tiles = 216 tiles
+	for (i=0; i<(9*24); ++i) {
+		screen[i] = 0;
 	}
 }
 
 // == loadMap() ==
-void loadMap(UInt8 index) {
-	switch (index) {
-		case OverworldMap: 
+void loadMap(UInt8 mapType, UInt8 variation) {
+	switch (mapType) {
+		case OverworldMapType: 
 			decodeRleMap(currentRawMap, 256, overworldRleMap);
 			currentMapSize = overworldMapSize;
 			currentTileMap = overworldTileMap;
-			loadColorTable(overworldColorTable);
 			break;
-		case DungeonMap: 
+		case DungeonMapType: 
 			decodeRleMap(currentRawMap, 256, dungeonRleMap);
 			currentMapSize = dungeonMapSize;
 			currentTileMap = dungeonTileMap;
-			loadColorTable(dungeonColorTable);
 			break;
-		case TownMap: 
+		case TownMapType: 
 			decodeRleMap(currentRawMap, 256, townRleMap);
 			currentMapSize = townMapSize;
 			currentTileMap = townTileMap;
-			loadColorTable(townColorTable);
 			break;
 	}
-
+	currentMapType = mapType;
 }
 
-// == clearScreen() ==
-void clearScreen(void) {
-	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
-	UInt16 i;
-	// Screen is made up of 10 lines * 24 tiles + 5 lines * 48 tiles = 480
-	for (i=0; i<512; ++i) {
-		screen[i] = 0;
+// == loadColorTable() ==
+void loadColorTable(const UInt8 *colors) {
+	UInt8 i;
+	for (i=0; i<5; ++i) {
+		if (colors == NULL) {
+			POKE(COLOR0 + i, 0);
+		} else {
+			POKE(COLOR0 + i, colors[i]);
+		}
+	}
+
+	// Also change the sprite overlay colors
+	if (colors == NULL) {
+		POKE (PCOLR2, 0x00);
+	} else {
+		POKE (PCOLR2, 0x0F);
 	}
 }
 
@@ -246,31 +260,55 @@ void decodeRleMap(UInt8 *outMap, UInt16 mapLength, const UInt8 *inRleMap) {
 	}
 }
 
+
+// ==========================================================================================
+
+
+// == layoutCurrentMap() ==
+void layoutCurrentMap(UInt8 sightDistance) {
+	UInt8 *overlay = (UInt8 *)P2_XPOS;
+	UInt8 x, halfWidth, halfHeight;
+
+	if (sightDistance > 3) {
+		mapFrameSize.width = 19;
+		mapFrameSize.height = 9;
+	} else {
+		x = sightDistance * 2 + 1;
+		mapFrameSize.width = x;
+		mapFrameSize.height = x;
+	}
+	halfWidth = mapFrameSize.width / 2;
+	halfHeight = mapFrameSize.height / 2;
+	// Map screen size is 24 wide by 9 high.
+	mapFrameOrigin.x = 11 - halfWidth;
+	mapFrameOrigin.y = 4 - halfHeight;
+
+	// Clear out the sprite overlays
+	for (x=0; x<9; ++x) {
+		overlay[x] = 0;
+	}
+
+	// printDebugInfo("W $", mapFrameSize.width, 40);
+	// printDebugInfo("H $", mapFrameSize.height, 50);
+}
+
 // == drawCurrentMap() ==
-void drawCurrentMap(PointU8 *center, UInt8 sightDistance) {
+void drawCurrentMap(PointU8 *center) {
 	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
-	const int windowOriginX = (int)center->x - 9;
-	const int windowOriginY = (int)center->y - 4;
-	const UInt8 windowWidth = 19;
-	const UInt8 windowHeight = 9;
-	const UInt8 leftMargin = 2;
-	const UInt8 mapWidth = currentMapSize.width;
-	const UInt8 mapHeight = currentMapSize.height;
-	UInt8 row, col, c, low;
-	int x, y, screenIndex;
-	
-	
-	for (row=0; row<windowHeight; ++row) {
-		y = windowOriginY + row;
-		
-		// Clear the sprite tile for this row
-		POKE(P2_XPOS + row, 0);
-		
-		for (col=0; col<windowWidth; ++col) {
-			x = windowOriginX + col;
-			screenIndex = leftMargin + col + SCREEN_WIDTH * row;
-			if (0 <= y && y < mapHeight && 0 <= x && x < mapWidth) {
-				c = currentRawMap[x + mapWidth * y];
+	UInt8 *overlay = (UInt8 *)P2_XPOS;
+	UInt8 row, col, mapX, mapY, startMapX, c, low, hasSpriteOverlay;
+	UInt8 rowSkip = SCREEN_WIDTH - mapFrameSize.width;
+	UInt8 screenIndex = mapFrameOrigin.x + SCREEN_WIDTH * mapFrameOrigin.y;
+
+	startMapX = center->x - mapFrameSize.width / 2;
+	mapY = center->y - mapFrameSize.height / 2;
+
+	for (row=0; row<mapFrameSize.height; ++row) {
+		hasSpriteOverlay = 0;
+		mapX = startMapX;
+		for (col=0; col<mapFrameSize.width; ++col) {
+			if (mapY < currentMapSize.height && mapX < currentMapSize.width) {
+				c = currentRawMap[mapX + currentMapSize.width * mapY];
 			} else {
 				c = 0;
 			}
@@ -282,10 +320,20 @@ void drawCurrentMap(PointU8 *center, UInt8 sightDistance) {
 			low = (c & 0x3F);
 			if (low >= tCastle) {
 				drawSpriteTile(tileSprites + 8 * (low - tCastle), col, row);
+				hasSpriteOverlay = 1;
 			}
 
 			screen[screenIndex] = c;
+			++screenIndex;
+			++mapX;
 		}
+
+		if (hasSpriteOverlay == 0) {
+			// Clear the sprite overlay for this row
+			overlay[row] = 0;
+		}
+		screenIndex += rowSkip;
+		++mapY;
 	}
 }
 

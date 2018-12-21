@@ -18,5 +18,6 @@ typedef struct {
 	UInt8 width, height;
 } SizeU8;
 
+#define NULL (0)
 
 #endif
