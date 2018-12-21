@@ -149,9 +149,9 @@ UInt8 townTileMap[] = {
 };
 const UInt8 townColorTable[] = {
 	0x0A, // 0: gray
-	0x12, // 1: dark red
+	0x32, // 1: dark red
 	0xC6, // 2: green
-	0x84, // 3: blue
+	0x74, // 3: blue
 	0x00, // 4: black / background
 };
 const UInt8 townRleMap[] = {
