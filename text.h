@@ -8,16 +8,13 @@
 void printCharaStats(UInt8 player, const UInt8 *name, UInt8 level, UInt8 hp, UInt8 maxHp);
 void printPartyStats(SInt32 money, UInt16 potions, UInt16 fangs, SInt16 reputation);
 void clearTextWindow(void);
+void setTextWindowColorTheme(UInt8 theme);
 
-void printColorString(const UInt8 *s, UInt8 color, UInt8 x, UInt8 y);
 void printString(const UInt8 *s, UInt8 x, UInt8 y);
 void printDebugInfo(const UInt8 *label, UInt16 value, UInt8 position);
+
+// Obsolete
+void printColorString(const UInt8 *s, UInt8 color, UInt8 x, UInt8 y);
 void printAllTiles(void);
-
-void numberString(UInt8 *outString, UInt8 thousandsSeparator, SInt32 value);
-void hexString(UInt8 *outString, UInt16 value);
-UInt8 strlen(const UInt8 *s);
-void appendString(UInt8 *ioString, const UInt8 *append);
-
 
 #endif

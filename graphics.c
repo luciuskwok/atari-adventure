@@ -12,10 +12,11 @@ extern void __fastcall__ immediateUserVBI(void);
 extern void __fastcall__ displayListInterrupt(void);
 
 
-// Player-Missile Constants
+// Constants
 #define PM_LEFT_MARGIN (52)
-#define P2_XPOS ((UInt8 *)0x0604)
 #define SCREEN_WIDTH (24)
+#define P2_XPOS ((UInt8 *)0x0610)
+#define BG_COLOR ((UInt8 *)0x0620)
 
 // Globals
 UInt8 *textWindow;
@@ -38,9 +39,9 @@ void initGraphics(void) {
 	spritePage = ramtopValue - 8;
 	
 	// == Colors ==
-	POKE (PCOLR0, 0x38); // Player 0 color = red
-	POKE (PCOLR1, 0x38); // Player 1 color = red
 	loadColorTable(NULL);
+	POKE (PCOLR0, 0x58); // Player cursor color: purple
+	POKE (PCOLR1, 0x58); 
 
 	// == Other ==
 	initDisplayList();
@@ -156,10 +157,6 @@ void initSprites(void) {
 	drawSprite(cursorSprite1, 10, 0, 31);
 	drawSprite(cursorSprite2, 10, 1, 31);
 	
-	// Cursor sprites are in a fixed position
-	GTIA_WRITE.hposp0 = PM_LEFT_MARGIN + 9 * 8 - 4;
-	GTIA_WRITE.hposp1 = PM_LEFT_MARGIN + 10 * 8 - 4;
-
 	// Set up ANTIC
 	ANTIC.pmbase = spritePage;
 	POKE (SDMCTL, 0x2E); // standard playfield + missile DMA + player DMA + display list DMA
@@ -168,16 +165,20 @@ void initSprites(void) {
 }
 
 
-// ==========================================================================================
+// ==========================================================================
 
 
 // == clearMapScreen() ==
 void clearMapScreen(void) {
 	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
-	UInt16 i;
+	UInt8 i;
 	// Screen is made up of 9 lines * 24 tiles = 216 tiles
 	for (i=0; i<(9*24); ++i) {
 		screen[i] = 0;
+	}
+	// Clear out the sprite overlays
+	for (i=0; i<9; ++i) {
+		P2_XPOS[i] = 0;
 	}
 }
 
@@ -203,66 +204,59 @@ void loadMap(UInt8 mapType, UInt8 variation) {
 	currentMapType = mapType;
 }
 
-// == loadColorTable() ==
+// ==========================================================================
+// ==== Color Table ====
+
+void blackOutColorTable(void) {
+	UInt8 x;
+	for (x=0; x<7; ++x) {
+		POKE(PCOLR2 + x, 0);
+	}
+}
+
+void loadColorTableForCurrentMap(void) {
+	switch (currentMapType) {
+		case DungeonMapType: 
+			loadColorTable(dungeonColorTable);
+			break;
+		case TownMapType: 
+			loadColorTable(townColorTable);
+			break;
+		case OverworldMapType: 
+		default:
+			loadColorTable(overworldColorTable);
+			break;
+	}
+}
+
 void loadColorTable(const UInt8 *colors) {
 	UInt8 i;
 	for (i=0; i<5; ++i) {
-		if (colors == NULL) {
-			POKE(COLOR0 + i, 0);
+		POKE(COLOR0 + i, colors[i]);
+	}
+
+	POKE (PCOLR2, 0x0F); // Sprite overlay: white
+}
+
+void setBackgroundGradient(const UInt8 *colors) {
+	UInt8 x;
+
+	// First color goes into shadow register, which the OS VBI uses.
+	POKE(COLOR4, colors[0]);
+
+	for (x=0; x<10; ++x) {
+		if (colors) {
+			BG_COLOR[x] = colors[x];
 		} else {
-			POKE(COLOR0 + i, colors[i]);
-		}
-	}
-
-	// Also change the sprite overlay colors
-	if (colors == NULL) {
-		POKE (PCOLR2, 0x00);
-	} else {
-		POKE (PCOLR2, 0x0F);
-	}
-}
-
-// == decodeRunLenMap() ==
-void decodeRunLenMap(UInt8 *outMap, UInt16 mapLength, const UInt8 *inRunLenMap) {
-	UInt16 rowEnd;
-	UInt16 rleIndex = 0;
-	UInt16 outIndex = 0;
-	UInt8 op, tile, count;
-
-	while (outIndex < mapLength) {
-		rowEnd = rleIndex + inRunLenMap[rleIndex];
-		++rleIndex;
-
-		while (rleIndex < rowEnd) {
-			op = inRunLenMap[rleIndex];
-			++rleIndex;
-
-			tile = (op & 0xF0) >> 4;
-			count = (op & 0x0F);
-
-			if (count == 15) {
-				count += inRunLenMap[rleIndex];
-				++rleIndex;
-			}
-
-			//printDebugInfo("Tile:", tile, 0);
-			//printDebugInfo("Count:", count, 10);
-
-			++count;
-			while (count > 0) {
-				outMap[outIndex] = tile;
-				++outIndex;
-				--count;
-			}
+			BG_COLOR[x] = 0;
 		}
 	}
 }
 
+// ==========================================================================
+// ==== Map Drawing ====
 
-// ==========================================================================================
 
-
-// == layoutCurrentMap() ==
 void layoutCurrentMap(UInt8 sightDistance) {
 	UInt8 x, halfWidth, halfHeight;
 
@@ -289,7 +283,7 @@ void layoutCurrentMap(UInt8 sightDistance) {
 	// printDebugInfo("H $", mapFrameSize.height, 50);
 }
 
-// == drawCurrentMap() ==
+
 void drawCurrentMap(PointU8 *center) {
 	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
 	const UInt8 *runLenPtr = currentRunLenMap;
@@ -413,24 +407,6 @@ void decodeRunLenRange(UInt8 *outData, UInt8 start, UInt8 end, const UInt8 *runL
 }
 
 
-UInt8 mapTileAt(PointU8 *pt) {
-	const UInt8 *runLenPtr = currentRunLenMap;
-	UInt8 x = pt->x;
-	UInt8 y = pt->y;
-	UInt8 tile, i;
-
-	// Skip to row
-	for (i=0; i<y; ++i) {
-		runLenPtr += runLenPtr[0];
-	}
-
-	// Get tile
-	decodeRunLenRange(&tile, x, x+1, runLenPtr);
-	return tile;
-}
-
-
-
 void drawSprite(const UInt8 *sprite, UInt8 spriteLength, UInt8 player, UInt8 y) {
 	UInt8 *pmbasePtr = (UInt8 *) (spritePage * 256 + 384);
 	const UInt16 pmLength = 128;
@@ -452,3 +428,84 @@ void drawSpriteTile(const UInt8 *sprite, UInt8 column, UInt8 row) {
 	// Draw sprite at vertical position
 	drawSprite(sprite, 8, 2, row * 8);
 }
+
+
+// ==========================================================================
+// Getting Map Info
+
+
+UInt8 mapTileAt(PointU8 *pt) {
+	const UInt8 *runLenPtr = currentRunLenMap;
+	UInt8 x = pt->x;
+	UInt8 y = pt->y;
+	UInt8 tile, i;
+
+	// Skip to row
+	for (i=0; i<y; ++i) {
+		runLenPtr += runLenPtr[0];
+	}
+
+	// Get tile
+	decodeRunLenRange(&tile, x, x+1, runLenPtr);
+
+	// Convert to character value
+	return currentTileMap[tile];
+}
+
+
+// ==========================================================================
+// Player Cursor
+
+
+void setPlayerCursorVisible(UInt8 x) {
+	if (x == 0) {
+		GTIA_WRITE.hposp0 = 0;
+		GTIA_WRITE.hposp1 = 0;		
+	} else {
+		GTIA_WRITE.hposp0 = PM_LEFT_MARGIN + (9 * 8) - 4;
+		GTIA_WRITE.hposp1 = PM_LEFT_MARGIN + (9 * 8) + 4;
+	}
+}
+
+
+
+// ==========================================================================
+// ==== Testing ====
+
+
+void decodeRunLenMap(UInt8 *outMap, UInt16 mapLength, const UInt8 *inRunLenMap) {
+	UInt16 rowEnd;
+	UInt16 rleIndex = 0;
+	UInt16 outIndex = 0;
+	UInt8 op, tile, count;
+
+	while (outIndex < mapLength) {
+		rowEnd = rleIndex + inRunLenMap[rleIndex];
+		++rleIndex;
+
+		while (rleIndex < rowEnd) {
+			op = inRunLenMap[rleIndex];
+			++rleIndex;
+
+			tile = (op & 0xF0) >> 4;
+			count = (op & 0x0F);
+
+			if (count == 15) {
+				count += inRunLenMap[rleIndex];
+				++rleIndex;
+			}
+
+			//printDebugInfo("Tile:", tile, 0);
+			//printDebugInfo("Count:", count, 10);
+
+			++count;
+			while (count > 0) {
+				outMap[outIndex] = tile;
+				++outIndex;
+				--count;
+			}
+		}
+	}
+}
+
+

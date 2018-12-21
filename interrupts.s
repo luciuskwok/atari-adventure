@@ -18,13 +18,17 @@ COLPF0 = $D016		;
 COLPF1 = $D017		; text luminance
 COLPF2 = $D018		; text background
 COLPF3 = $D019		; 
+COLPF4 = $D01A		; background
 WSYNC  = $D40A
 
 CUR_SKIP = 15		; number of frames to skip for color cycling
 CUR_TIMER = $0600	; Cursor color cycling frame skip countdown timer
 STICK_TIMER = $0601	; Joystick countdown timer for repeating joystick moves
-DLI_ROW = $0603		; for keeping track of which scanline the DLI is on
-P2_XPOS = $0604		; array of 11 bytes for repositioning player 2
+DLI_ROW = $0602		; for keeping track of which scanline the DLI is on
+TEXT_LUM = $0603	; text luminance for text window
+TEXT_BG  = $0604	; text window background color
+P2_XPOS = $0610		; array of 9 bytes for repositioning player 2
+BG_COLOR = $0620	; array of 10 bytes for changing background color, though first byte is ignored
 
 .proc _initVBI		; on entry: X=MSB, A=LSB
 	tay				; move LSB to Y
@@ -93,18 +97,22 @@ return:
 	tax
 	sta DLI_ROW
 	sta WSYNC			; wait for horizontal sync
+
+	lda BG_COLOR,X 		; set background color for each row
+	sta COLPF4
+
 	cpx #9				; if DLI_ROW >= 9, skip to setting text color
-	bcs text_color
+	bcs set_text_color
 	
 	lda P2_XPOS,X		; HPOSP2 = P2_XPOS[DLI_ROW]
 	sta HPOSP2
 	bvc return_dli
 	
-text_color:
-	lda #$0E			; Set text window to use white on dark gray
-	sta COLPF1			; text luminance
-	lda #$04
-	sta COLPF2			; text background
+set_text_color:
+	lda TEXT_LUM		; text window text luminance
+	sta COLPF1
+	lda TEXT_BG			; text window background color
+	sta COLPF2
 
 return_dli:	
 	pla					; restore accumulator and X register from stack

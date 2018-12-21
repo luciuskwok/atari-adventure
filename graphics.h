@@ -18,16 +18,26 @@ void initSprites(void);
 
 void clearMapScreen(void);
 void loadMap(UInt8 mapType, UInt8 variation);
-void loadColorTable(const UInt8 *colors);
-void decodeRunLenMap(UInt8 *outMap, UInt16 mapLength, const UInt8 *inRunLenMap);
 
+// Color Table
+void blackOutColorTable(void);
+void loadColorTableForCurrentMap(void);
+void loadColorTable(const UInt8 *colors);
+void setBackgroundGradient(const UInt8 *colors);
+
+// Map Drawing
 void layoutCurrentMap(UInt8 sightDistance);
 void drawCurrentMap(PointU8 *center);
 void decodeRunLenRange(UInt8 *outData, UInt8 start, UInt8 end, const UInt8 *runLenData);
-UInt8 mapTileAt(PointU8 *pt);
-
 void drawSprite(const UInt8 *sprite, UInt8 spriteLength, UInt8 player, UInt8 y);
 void drawSpriteTile(const UInt8 *sprite, UInt8 column, UInt8 row);
+
+// Getting Map Info
+UInt8 mapTileAt(PointU8 *pt);
+
+// Player Cursor
+void setPlayerCursorVisible(UInt8 hide);
+
 
 // Constants
 enum MapTypes {

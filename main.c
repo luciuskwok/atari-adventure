@@ -42,20 +42,24 @@ PointU8 playerOverworldLocation;
 PointU8 playerMapLocation;
 UInt8 hasBoat;
 UInt8 hasShip;
-UInt8 hasLamp;
-UInt8 hasCrystal;
+UInt8 lampStrength;
 UInt8 sightDistance;
 
 // Function prototypes
 void runLoop(void);
+void resetAttractMode(void);
 void handleStick(void);
 void handleTrigger(void);
 UInt8 canMoveTo(PointU8*);
 
 void exitToOverworld(void);
-void enterDungeon(PointU8 *location, UInt8 tile);
+void enterDungeon(void);
+void enterTown(void);
+void printStatText(void);
 
-void updateStatText(void);
+void presentDialog(void);
+void waitForAnyInput(void);
+void printDialogText(void);
 
 // Constants
 #define STICK_TIMER (0x0601)
@@ -73,35 +77,37 @@ int main (void) {
 	previousTrigger = 1;
 	hasBoat = 0;
 	hasShip = 0;
-	hasLamp = 1;
-	hasCrystal = 1;
+	lampStrength = 2;
 	sightDistance = 0xFF;
 	playerOverworldLocation = overworldEntryPoint;
 
 	// Load map
 	exitToOverworld();
-
-	// Print some text
-	updateStatText();
-	// printAllTiles();
-
+	printStatText();
+	setPlayerCursorVisible(1);
 	
 	while (gQuit == 0) {
 		//startNewGame();
 		runLoop();
-		POKE(ATRACT, 0);
+		resetAttractMode();
 	}
 
 	return 0; // success
 }
 
-// == runLoop() ==
+
+
 void runLoop(void) {
 	handleStick();
 	handleTrigger();
 }
 
-// == handleStick() ==
+
+void resetAttractMode(void) {
+	POKE(ATRACT, 0);
+}
+
+
 void handleStick() {
 	// Only allow moves in 4 cardinal directions and not diagonals.
 	UInt8 stick = PEEK (STICK0);
@@ -145,118 +151,104 @@ void handleStick() {
 
 // == handleTrigger() ==
 void handleTrigger(void) {
-	// Recognize trigger only when it transitions from up to down.
 	UInt8 trigger = PEEK (STRIG0);
 	UInt8 tile;
-	if (trigger != previousTrigger) {
-		if (trigger == 0) { // trigger down
-			tile = mapTileAt(&playerMapLocation);
-			switch (currentMapType) {
-				case OverworldMapType:
-					if (tile >= 9) { // Castle or higher
-						enterDungeon(&playerMapLocation, tile);
-					}
-					break;
-				case DungeonMapType:
-					if (tile == 3) { // Ladder
-						exitToOverworld();
-					} else if (tile == 4) { // Chest
-						// TODO
-					}
-					break;
-				case TownMapType:
-					if (tile == 13) { // House door
-						// TODO
-					}
-					break;
-			}
 
-		}
+	// Recognize trigger only when it transitions from up to down.
+	if (trigger == previousTrigger) {
+		return;
 	}
 	previousTrigger = trigger;
+	if (trigger != 0) {  // trigger == 0 when it is pressed
+		return;
+	}
 
+	// Get the tile without color info.
+	tile = mapTileAt(&playerMapLocation) & 0x3F; 
+	switch (tile) {
+		case tTown:
+			enterTown();
+			break;
+		case tVillage:
+		case tCastle:
+			presentDialog();
+			break;
+		case tMonument:
+		case tCave:
+			enterDungeon();
+			break;
+		case tHouseDoor:
+			presentDialog();
+			break;
+		case tLadder:
+			exitToOverworld();
+	}
 }
 
-// == canMoveTo() ==
+
 UInt8 canMoveTo(PointU8 *pt) {
-	UInt8 tile = mapTileAt(pt);
+	UInt8 tile = mapTileAt(pt) & 0x3F; // remove color data
 
 	switch (currentMapType) {
 		case OverworldMapType:
-			if (tile == 5) { // Shallows
+			if (tile == tShallows) { // Shallows
 				return (hasBoat || hasShip);
-			} else if (tile == 6) {
+			} else if (tile == tWater) {
 				return hasShip;
 			}
 			return 1;
 		case DungeonMapType:
-			return tile > 1;
+			return tile != tBrick;
 		case TownMapType:
-			return tile == 1 || tile == 3 || tile == 13;
+			return tile == tSolid || tile == tHouseDoor;
 	}
 
 	return 1;
 }
 
-// == exitToOverworld() ==
+
 void exitToOverworld(void) {
-	loadColorTable(NULL);
+	blackOutColorTable();
 	clearMapScreen();
 	loadMap(OverworldMapType, 0);
 	playerMapLocation = playerOverworldLocation;
 	sightDistance = 0xFF;
 	layoutCurrentMap(sightDistance);
 	drawCurrentMap(&playerMapLocation);
-	loadColorTable(overworldColorTable);
+	loadColorTableForCurrentMap();
 }
 
-// == enterDungeon() == 
-void enterDungeon(PointU8 *location, UInt8 tile) {
-	UInt8 mapType;
-	const UInt8 *colorTable;
 
-	// Also for entering towns.
-	if (currentMapType != OverworldMapType) {
-		return;
-	}
-
-	// Save player location in overworld to be restored when exiting.
+void enterDungeon(void) {
+	sightDistance = lampStrength;
 	playerOverworldLocation = playerMapLocation;
+	playerMapLocation = dungeonEntryPoint;
 
-	// TODO: determine which dungeon/town to load based on y location,
-	// since each special tile should only exist 1 per map line.
-
-	if (tile >= 12) {
-		mapType = DungeonMapType;
-		colorTable = dungeonColorTable;
-		playerMapLocation = dungeonEntryPoint;
-		sightDistance = 0;
-		if (hasLamp) {
-			++sightDistance;
-		}
-		if (hasCrystal) {
-			++sightDistance;
-		}
-	} else {
-		mapType = TownMapType;
-		colorTable = townColorTable;
-		playerMapLocation = townEntryPoint;
-		sightDistance = 0xFF;
-	}
-
-	loadColorTable(NULL);
+	blackOutColorTable();
 	clearMapScreen();
-	loadMap(mapType, 0);
+	loadMap(DungeonMapType, 0);
 	layoutCurrentMap(sightDistance);
 	drawCurrentMap(&playerMapLocation);
-	loadColorTable(colorTable);
+	loadColorTableForCurrentMap();
+}
+
+void enterTown(void) {
+	sightDistance = 0xFF;
+	playerOverworldLocation = playerMapLocation;
+	playerMapLocation = townEntryPoint;
+
+	blackOutColorTable();
+	clearMapScreen();
+	loadMap(TownMapType, 0);
+	layoutCurrentMap(sightDistance);
+	drawCurrentMap(&playerMapLocation);
+	loadColorTableForCurrentMap();
 }
 
 
-
-// == updateStatText() ==
-void updateStatText(void) {
+void printStatText(void) {
 	clearTextWindow();
+	setTextWindowColorTheme(0);
 
 	// Print header column
 	printString("HP:", 0, 2);
@@ -271,4 +263,72 @@ void updateStatText(void) {
 	printPartyStats(987123, 21, 1325, -891);
 
 }
+
+
+// ==== Dialog ====
+
+
+void presentDialog(void) {
+	UInt8 gradient[] = { 0x94, 0x96, 0x98, 0x9C, 0xC4, 0xC6, 0xC8, 0xC8, 0xCA, 0xCA };
+	UInt8 x;
+
+
+	// Set up graphics window
+	setPlayerCursorVisible(0);
+	clearMapScreen();
+	//setBackgroundGradient(gradient);
+
+
+	// Set up text window
+	clearTextWindow();
+	setTextWindowColorTheme(1);
+
+	// Print some text
+	printString("Ellie:", 0, 0);
+	printString("How are you doing today?", 8, 0);
+	printString("The teacher was totally unfair!", 8, 1);
+	printString("C'mon, let's go to the beach.", 8, 2);
+
+	// Wait for trigger
+	waitForAnyInput();
+
+	// Restore map
+	blackOutColorTable();
+	setBackgroundGradient(NULL);
+	clearMapScreen();
+	drawCurrentMap(&playerMapLocation);
+	loadColorTableForCurrentMap();
+	printStatText();
+	setPlayerCursorVisible(1);
+
+}
+
+void waitForAnyInput(void) {
+	UInt8 trigger;
+	trigger = PEEK (STRIG0);
+
+	// Wait for trigger to be released first.
+	while (PEEK(STRIG0) == 0) {
+	}
+
+	// Then wait for trigger to be pressed
+	while (PEEK(STRIG0) != 0) {
+		resetAttractMode();
+	}
+
+}
+
+void printDialogText(void) {
+	clearTextWindow();
+	setTextWindowColorTheme(1);
+
+	printString("Ellie:", 0, 0);
+
+	printString("How are you doing today?", 8, 0);
+	printString("The teacher was totally unfair!", 8, 1);
+	printString("C'mon, let's go to the beach.", 8, 2);
+
+}
+
+
 
