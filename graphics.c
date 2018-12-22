@@ -3,6 +3,7 @@
 #include "graphics.h"
 #include "text.h"
 #include "tiles.h"
+#include "map_overworld.h"
 #include "atari_memmap.h"
 #include <atari.h>
 
@@ -426,6 +427,23 @@ UInt8 mapTileAt(PointU8 *pt) {
 
 	// Convert to character value
 	return currentTileMap[tile];
+}
+
+PointU8 mapEntryPoint(UInt8 mapType) {
+	PointU8 pt = {0,0};
+
+	switch (mapType) {
+	case OverworldMapType: 
+		pt = overworldEntryPoint;
+		break;
+	case DungeonMapType: 
+		pt = dungeonEntryPoint;
+		break;
+	case TownMapType: 
+		pt = townEntryPoint;
+		break;
+	}
+	return pt;
 }
 
 

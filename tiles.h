@@ -24,7 +24,7 @@
 // Add 0x40 to these values to get the character value.
 // This puts them in the graphics/control character range in ATASCII.
 
-// Overworld tiles
+// Map Tiles
 enum TileValues {
 	tSolid = 1,
 
@@ -65,13 +65,6 @@ extern const UInt8 tileBitmaps[];
 extern const UInt8 cursorSprite1[];
 extern const UInt8 cursorSprite2[];
 extern const UInt8 tileSprites[];
-
-// Overworld Map
-extern const UInt8 overworldRleMap[];
-extern const SizeU8 overworldMapSize;
-extern UInt8 overworldTileMap[];
-extern const UInt8 overworldColorTable[];
-extern const PointU8 overworldEntryPoint;
 
 // Dungeon Map
 extern const UInt8 dungeonRleMap[];

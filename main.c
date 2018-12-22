@@ -80,7 +80,7 @@ int main (void) {
 	hasShip = 0;
 	lampStrength = 2;
 	sightDistance = 0xFF;
-	playerOverworldLocation = overworldEntryPoint;
+	playerOverworldLocation = mapEntryPoint(OverworldMapType);
 
 	// Load map
 	exitToOverworld();
@@ -224,7 +224,7 @@ void exitToOverworld(void) {
 void enterDungeon(void) {
 	sightDistance = lampStrength;
 	playerOverworldLocation = playerMapLocation;
-	playerMapLocation = dungeonEntryPoint;
+	playerMapLocation = mapEntryPoint(DungeonMapType);
 
 	blackOutColorTable();
 	clearMapScreen();
@@ -237,7 +237,7 @@ void enterDungeon(void) {
 void enterTown(void) {
 	sightDistance = 0xFF;
 	playerOverworldLocation = playerMapLocation;
-	playerMapLocation = townEntryPoint;
+	playerMapLocation = mapEntryPoint(TownMapType);
 
 	blackOutColorTable();
 	clearMapScreen();

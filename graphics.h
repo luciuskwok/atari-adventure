@@ -31,6 +31,7 @@ void decodeRunLenRange(UInt8 *outData, UInt8 start, UInt8 end, const UInt8 *runL
 
 // Getting Map Info
 UInt8 mapTileAt(PointU8 *pt);
+PointU8 mapEntryPoint(UInt8 mapType);
 
 // Sprites
 void setPlayerCursorVisible(UInt8 x);
