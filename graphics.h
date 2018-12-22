@@ -13,7 +13,8 @@ extern UInt8 *textWindow; // Pointer to screen memory for text window
 
 // Init
 void initGraphics(void);
-void initDisplayList(void);
+void initDisplayList(UInt8 startPage);
+void selectDisplayList(UInt8 index);
 void initFont(UInt8 fontPage);
 void initSprites(void);
 void clearMapScreen(void);

@@ -4,32 +4,6 @@
 // == About This Program ==
 // This program is a rogue-like game. 
 
-/*
-== Notes on Memory Usage ==
-In the config.cfg file, the reserved memory is set to 0x0820, giving us 2KB 
-of space below the display area, which itself takes 1KB. The space between 
-APPMHI and MEMTOP should be ours to use. 
-
-RAMTOP: 0xC0 without BASIC, 0xA0 with BASIC. Below are values with BASIC.
-
-0x9400: Custom character set needs 128 chars * 8 bytes = 1024 bytes.
-0x9800: PMGraphics needs 640 bytes (double-line sprites), but the data area 
-	doesn't start until 384 bytes after PMBase, which must be on 1KB boundary.
-0x9C00: Display list and screen memory have 1024 bytes allocated, so that the 
-	graphics driver can do its thing. We overwrite this area with our own 
-	display list, which takes up less space than the standard text screen.
-
-Screen memory is allocated:
-- Map View:
-	- Display List: ~25 bytes
-	- Screen memory: 24x9 = 216 bytes
-- Story View:
-	- Display LIst: ~83 bytes
-	- Screen memory: 40x72 = 2,880 bytes
-- Total: about 3,204 bytes
-
-- 3KB = 3072 bytes, or 132 bytes short. If screen memory is shared between map and story views, it should fit in 3KB. 
-*/
 
 // Includes
 #include <atari.h>
@@ -64,6 +38,7 @@ void exitToOverworld(void);
 void enterDungeon(void);
 void enterTown(void);
 void printStatText(void);
+void printDebuggingInfo(void);
 
 void presentDialog(void);
 void waitForAnyInput(void);
@@ -93,8 +68,12 @@ int main (void) {
 	// Load map
 	exitToOverworld();
 	setTextWindowColorTheme(0);
-	printStatText();
+	//printStatText();
 	setPlayerCursorVisible(1);
+
+	// Debugging
+	printDebuggingInfo();
+
 	
 	while (gQuit == 0) {
 		//startNewGame();
@@ -255,6 +234,16 @@ void printStatText(void) {
 
 	// Print party statistics
 	printPartyStats(987123, 21, 1325, -891);
+
+}
+
+void printDebuggingInfo(void) {
+	UInt16 dl = PEEKW(SDLSTL);
+	UInt16 screen = PEEKW(SAVMSC);
+
+	clearTextWindow();
+	print16bitValue("DL: ", dl, 1, 1);
+	print16bitValue("SCR:", screen, 1, 2);
 
 }
 

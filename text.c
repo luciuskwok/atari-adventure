@@ -153,14 +153,14 @@ void printStringWithLayout(const UInt8 *s, UInt8 top, UInt8 firstIndent, UInt8 l
 
 
 
-void printDebugInfo(const UInt8 *label, UInt16 value, UInt8 position) {
+void print16bitValue(const UInt8 *label, UInt16 value, UInt8 x, UInt8 y) {
 	// Prints a label and a hex value in the text box area.
 	UInt8 hexStr[5];
 	UInt8 labelLength = strlen(label);
 	
 	hexString(hexStr, value);
-	printString(label, position, 0);
-	printString(hexStr, position + labelLength, 0);
+	printString(label, x, y);
+	printString(hexStr, x + labelLength, y);
 }
 
 

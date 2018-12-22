@@ -22,14 +22,15 @@ COLPF3 = $D019		;
 COLPF4 = $D01A		; background
 WSYNC  = $D40A
 
-CUR_SKIP = 15		; number of frames to skip for color cycling
+CUR_SKIP  = 15		; number of frames to skip for color cycling
 CUR_TIMER = $0600	; Cursor color cycling frame skip countdown timer
 STICK_TIMER = $0601	; Joystick countdown timer for repeating joystick moves
-DLI_ROW = $0602		; for keeping track of which scanline the DLI is on
-TEXT_LUM = $0603	; text luminance for text window
-TEXT_BG  = $0604	; text window background color
-P3_XPOS = $0610		; array of 9 bytes for repositioning player 3
-BG_COLOR = $0620	; array of 10 bytes for changing background color, though first byte is ignored
+DLI_ROW   = $0602		; for keeping track of which scanline the DLI is on
+TEXT_LUM  = $0603	; text luminance for text window
+TEXT_BG   = $0604	; text window background color
+P3_XPOS   = $0610		; array of 9 bytes for repositioning player 3
+BG_COLOR  = $0620	; array of 72 bytes for changing background color per raster line
+
 
 .proc _initVBI		; on entry: X=MSB, A=LSB
 	tay				; move LSB to Y
@@ -40,33 +41,26 @@ BG_COLOR = $0620	; array of 10 bytes for changing background color, though first
 	rts
 .endproc
 	
+
 .proc _immediateUserVBI
-
-
 	lda #0				; reset DLI_ROW
 	sta DLI_ROW
 	lda P3_XPOS			; HPOSP2 = P3_XPOS[0]
 	sta HPOSP3
 
-	lda STICK_TIMER		; sets Z flag (Z=1 if joystick_timer is zero)
+	ldx STICK_TIMER		; sets Z flag (Z=1 if joystick_timer is zero)
 	beq update_cursor	; skip decrement if already at zero
-	dec STICK_TIMER
+	dex
+	stx STICK_TIMER
 	
 update_cursor:
-	lda CUR_TIMER
-	cmp #$00		
-	beq cycle_color		; if CUR_TIMER == 0, cycle the colors
-
-	cmp #$FF			
-	beq return 			; else if CUR_TIMER == $FF, leave the timer alone
-
-	sec 				; else --CUR_TIMER
-	sbc #1
-	sta CUR_TIMER
-	bcs return
+	ldx CUR_TIMER
+	bmi return 			; if CUR_TIMER > 127, leave the timer alone
+	dex 				; else --CUR_TIMER
+	stx CUR_TIMER
+	bne return 			; if CUR_TIMER == 0, cycle the colors
 
 cycle_color:
-
 	clv					; clear flags for unconditonal branch
 	lda #CUR_SKIP
 	sta CUR_TIMER		; reload the timer
@@ -105,12 +99,10 @@ return:
 	txa
 	pha
 	
-	lda DLI_ROW			; Check DLI_ROW
-	clc
-	adc #1				; ++DLI_ROW
-	tax
-	sta DLI_ROW
-	sta WSYNC			; wait for horizontal sync
+	ldx DLI_ROW			; increment DLI_ROW
+	inx
+	stx DLI_ROW
+	stx WSYNC			; wait for horizontal sync
 
 	cpx #9				; if DLI_ROW >= 9, skip to setting text color
 	bcs set_text_color
@@ -124,7 +116,6 @@ set_text_color:
 	sta COLPF1
 	lda TEXT_BG			; text window background color
 	sta COLPF2
-	bvc return_dli
 
 return_dli:	
 	pla					; restore accumulator and X register from stack
@@ -138,25 +129,20 @@ return_dli:
 	txa
 	pha
 	
-	lda DLI_ROW			; Check DLI_ROW
-	tax
-	clc
-	adc #1				; ++DLI_ROW
-	sta DLI_ROW
-	sta WSYNC			; wait for horizontal sync
-
+	ldx DLI_ROW			 
 	lda BG_COLOR,X 		; set background color for each row
+	stx WSYNC			; wait for horizontal sync
 	sta COLPF4
 
-	cpx #72				; if DLI_ROW >= 72, set colors for text window
-	bcc set_text_color
+	inx					; ++DLI_ROW
+
+	cpx #72		
+	bcs return_dli		; if DLI_ROW >= 72, set colors for text window
 	
-set_text_color:
 	lda TEXT_LUM		; text window text luminance
 	sta COLPF1
 	lda TEXT_BG			; text window background color
 	sta COLPF2
-	bvc return_dli
 
 return_dli:	
 	pla					; restore accumulator and X register from stack

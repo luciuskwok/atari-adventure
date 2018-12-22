@@ -1,5 +1,34 @@
 // graphics.c
 
+/*
+== Notes on Memory Usage ==
+In the config.cfg file, the reserved memory is set to 0x1020, giving us 4KB 
+of space below the 1 KB display area for a total of 5KB. The space between 
+APPMHI and MEMTOP should be ours to use. 
+
+RAMTOP: 0xC0 without BASIC, 0xA0 with BASIC. Below are values with BASIC.
+
+0x9C00: Custom character set needs 128 chars * 8 bytes = 1024 bytes.
+0x9800: PMGraphics needs 640 bytes (double-line sprites), but the data area 
+	doesn't start until 384 (0x180) bytes after PMBase, which must be on 1KB boundary.
+0x8C00: Display list and screen memory.
+
+Screen memory is allocated:
+- Map View:
+	- Display List: 32 bytes
+	- Screen memory: 24x9 = 216 bytes
+- Story View:
+	- Display List: 96 bytes
+	- Screen memory: 40x72 = 2,880 bytes
+- Total: about 3,008 bytes if screen memory is shared between the 2 views.
+- Shared text window: 40x6 = 240 bytes. Goes into memory hole at start of PMGraphics.
+
+- Display list should not cross a 1KB boundary (0x0400)
+- Screen memory should not cross a 4KB boundary (0x1000)
+
+*/
+
+
 #include "graphics.h"
 #include "text.h"
 #include "tiles.h"
@@ -21,6 +50,8 @@ extern void __fastcall__ storyViewDLI(void);
 
 // Globals
 UInt8 *textWindow;
+UInt8 *mapViewDisplayList;
+UInt8 *storyViewDisplayList;
 
 // Private globals 
 UInt8 spritePage; // shadow of ANTIC hardware register, which cannot be read
@@ -33,24 +64,19 @@ UInt8 spritePage; // shadow of ANTIC hardware register, which cannot be read
 void initGraphics(void) {
 	UInt8 ramtopValue = PEEK(RAMTOP);
 	
-	// Globals
 	spritePage = ramtopValue - 8;
-	
-	// == Colors ==
-	loadColorTable(NULL);
-	POKE (PCOLR0, 0x58); // Player cursor color: purple
-	POKE (PCOLR1, 0x58); 
 
-	// == Other ==
-	initDisplayList();
-	initSprites();
-	initFont(ramtopValue - 12);
-	
-	// == Set up interrupts ==
+	// Set up VBI 
 	initVBI(immediateUserVBI); // Safe value: 0xE45F
-	POKEW (VDSLST, (UInt16)mapViewDLI);
-	ANTIC.nmien = 0xC0; // enable both DLI and VBI
+	
+	// Set color table to all black and change the display list
+	blackOutColorTable();
+	initDisplayList(ramtopValue - 20);
+	selectDisplayList(0);
 
+	initSprites();
+	initFont(ramtopValue - 4);
+	
 	// == Use scrolling to center the odd number of tiles ==
 	ANTIC.hscrol = 4;
 
@@ -60,41 +86,103 @@ void initGraphics(void) {
 }
 
 
-void initDisplayList(void) {
-	// == Display List ==
-	// Display list is already set up by the runtime to the equivalent of BASIC's GR.0. 
-	// We can just overwrite that DL with our own.
-	UInt8 *displayList = (UInt8 *)PEEKW(SDLSTL);
-	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
+void initDisplayList(UInt8 startPage) {
+	// Create two display lists, one for map view, and the other for story view.
 	const UInt8 dl_Interrupt = 0x80;
 	const UInt8 dl_LMS = 0x40;
 	const UInt8 dl_VScroll = 0x20;
 	const UInt8 dl_HScroll = 0x10;
-	const UInt8 colorModeLine = (dl_Interrupt | dl_HScroll | 7);
-	UInt8 x = 3; // Skip DL instructions that are already blank rows.
+	const UInt8 mapTileLine = (dl_Interrupt | dl_HScroll | 7);
+	const UInt8 rasterLine = (dl_Interrupt | 13);
+	const UInt8 textWindowLine = 2;
+	UInt8 *screen = (UInt8 *)(startPage * 256 + 128);
+	UInt8 x = 0;
 	UInt8 i;
 
 
-	displayList[x] = colorModeLine | dl_LMS;
-	displayList[++x] = (UInt16)screen % 256;
-	displayList[++x] = (UInt16)screen / 256;
+	// Allocate display memory usage
+	mapViewDisplayList = (UInt8 *)(startPage * 256);
+	storyViewDisplayList = mapViewDisplayList + 32;
+	textWindow = (UInt8 *)(spritePage * 256); // Using the unused memory area below PMGraphics
+
+	// Update screen memory pointer
+	POKEW (SAVMSC, (UInt16)screen);
+
+	// == Map View DL ==
+	for (i=0; i<3; ++i) {
+		mapViewDisplayList[x++] = DL_BLK8;
+	}
+
+	mapViewDisplayList[x++] = mapTileLine | dl_LMS;
+	mapViewDisplayList[x++] = (UInt16)screen % 256;
+	mapViewDisplayList[x++] = (UInt16)screen / 256;
 	
 	for (i=1; i<9; ++i) { // 9 rows * 16 scanlines = 144 scanlines
-		displayList[++x] = colorModeLine; // DLI on every tile row
+		mapViewDisplayList[x++] = mapTileLine; // DLI on every tile row
 	}
 	
-	displayList[++x] = DL_BLK8; // 8 blank scanlines
+	mapViewDisplayList[x++] = DL_BLK8; // 8 blank scanlines
 
-	for (i=0; i<5; ++i) { // 5 rows of text = 40 scanlines
-		displayList[++x] = DL_CHR40x8x1; 
+	// Text window
+	mapViewDisplayList[x++] = textWindowLine | dl_LMS;
+	mapViewDisplayList[x++] = (UInt16)textWindow % 256;
+	mapViewDisplayList[x++] = (UInt16)textWindow / 256;
+
+	for (i=1; i<5; ++i) { // 5 rows of text = 40 scanlines
+		mapViewDisplayList[x++] = textWindowLine; 
 	}
 	
-	displayList[++x] = DL_JVB; // Vertical blank + jump to beginning of display list
-	displayList[++x] = (UInt16)displayList % 256;
-	displayList[++x] = (UInt16)displayList / 256;
+	mapViewDisplayList[x++] = DL_JVB; // Vertical blank + jump to beginning of display list
+	mapViewDisplayList[x++] = (UInt16)mapViewDisplayList % 256;
+	mapViewDisplayList[x++] = (UInt16)mapViewDisplayList / 256;
 
-	// Set the textWindow pointer based on DL memory usage
-	textWindow = screen + (9 * 24);
+	// == Story View DL ==
+	for (i=0; i<3; ++i) {
+		storyViewDisplayList[x++] = DL_BLK8;
+	}
+
+	storyViewDisplayList[x++] = rasterLine | dl_LMS;
+	storyViewDisplayList[x++] = (UInt16)screen % 256;
+	storyViewDisplayList[x++] = (UInt16)screen / 256;
+	
+	for (i=1; i<72; ++i) { // 72 rows * 2 scanlines = 144 scanlines
+		storyViewDisplayList[x++] = rasterLine; // DLI on every tile row
+	}
+	
+	storyViewDisplayList[x++] = DL_BLK8; // 8 blank scanlines
+
+	// Text window
+	storyViewDisplayList[x++] = textWindowLine | dl_LMS;
+	storyViewDisplayList[x++] = (UInt16)textWindow % 256;
+	storyViewDisplayList[x++] = (UInt16)textWindow / 256;
+
+	for (i=1; i<5; ++i) { // 5 rows of text = 40 scanlines
+		storyViewDisplayList[x++] = textWindowLine; 
+	}
+	
+	storyViewDisplayList[x++] = DL_JVB; // Vertical blank + jump to beginning of display list
+	storyViewDisplayList[x++] = (UInt16)storyViewDisplayList % 256;
+	storyViewDisplayList[x++] = (UInt16)storyViewDisplayList / 256;
+}
+
+
+void selectDisplayList(UInt8 index) {
+	POKE (SDMCTL, 0); // turn off DMA and DLI before changing pointers
+	ANTIC.nmien = 0x40;
+
+	switch (index) {
+	case 1: // Story view
+		POKEW (SDLSTL, (UInt16)storyViewDisplayList);
+		POKEW (VDSLST, (UInt16)storyViewDLI);
+		break;
+	default: // Map view
+		POKEW (SDLSTL, (UInt16)mapViewDisplayList);
+		POKEW (VDSLST, (UInt16)mapViewDLI);
+		break;
+	}
+
+	ANTIC.nmien = 0xC0; // enable both DLI and VBI
+	POKE (SDMCTL, 0x2E); // standard playfield + missile DMA + player DMA + display list DMA
 }
 
 
@@ -155,7 +243,6 @@ void initSprites(void) {
 	
 	// Set up ANTIC
 	ANTIC.pmbase = spritePage;
-	POKE (SDMCTL, 0x2E); // standard playfield + missile DMA + player DMA + display list DMA
 	POKE (GPRIOR, 0x01); // layer players above playfield.
 	GTIA_WRITE.gractl = 3; // enable both missile and player graphics
 }
@@ -175,8 +262,8 @@ void clearMapScreen(void) {
 }
 
 
-// ==========================================================================
 // ==== Color Table ====
+
 
 void blackOutColorTable(void) {
 	UInt8 *p = (UInt8*)(PCOLR0);
