@@ -65,7 +65,7 @@ extern const UInt8 tileBitmaps[];
 extern const UInt8 cursorSprite1[];
 extern const UInt8 cursorSprite2[];
 extern const UInt8 tileSprites[];
-extern const UInt8 sansSprite[];
-extern const SizeU8 sansSpriteSize;
+extern const UInt8 sansMegaSprite[];
+extern const UInt8 sansMegaSpriteLength;
 
 #endif

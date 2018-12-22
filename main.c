@@ -271,14 +271,14 @@ void printStatText(void) {
 
 void presentDialog(void) {
 	UInt8 dialogColorTable[] = {
-		0x0F, 0x0F, 0x0F, 0x0F, // white for sprites
+		0x0F, 0x0F, 0x00, 0x00, // white/black for sprites
 		0x00, 0x06, 0x0A, 0x0E, 0x94 // grayscale for playfield
 	};
 	UInt8 gradient[] = { 0x92, 0x94, 0x94, 0x96, 0xC2, 0xC4, 0xC6, 0xC6, 0xC8, 0xC8 };
-	PointU8 sansPosition = { 80, 9 * 4 + 16 };
+	PointU8 sansPosition = { 80, 16 + 42 };
 	const UInt8 msg1[] = "Sans: Why are graveyards so noisy?\n Because of all the *coffin*!";
 	const UInt8 msg2[] = "Ellie: How are you doing today?\n That teacher was totally unfair.\n C'mon, let's go to the beach!";
-	const UInt8 msg3[] = "Sans: Who was that?   And    why \n    are    you taking    over my   chat  box?     Anyone?";
+	const UInt8 msg3[] = "Papyrus: Nyeh Heh Heh!";
 	const UInt8 *messages[3];
 	UInt8 i;
 
@@ -297,7 +297,7 @@ void presentDialog(void) {
 	setTextWindowColorTheme(1);
 
 	// Add Sans
-	setMultiSprite(sansSprite, &sansSpriteSize, &sansPosition, 2);
+	setMegaSprite(sansMegaSprite, sansMegaSpriteLength, &sansPosition, 2);
 
 	// Loop through messages
 	messages[0] = msg1;
@@ -309,11 +309,8 @@ void presentDialog(void) {
 		waitForAnyInput();
 	}
 
-	// Restore map
-	for (i=1; i<=3; ++i) {
-		clearSprite(i);
-	}
 	blackOutColorTable();
+	hideAllSprites();
 	setTextWindowColorTheme(0);
 	setBackgroundGradient(NULL);
 	clearMapScreen();

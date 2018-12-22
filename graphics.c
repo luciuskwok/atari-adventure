@@ -450,14 +450,26 @@ PointU8 mapEntryPoint(UInt8 mapType) {
 
 
 // ==========================================================================
-// Player Cursor
+// Sprites
 
 
 void setPlayerCursorVisible(UInt8 visible) {
-	if (visible) {
+	// Hide sprites while making changes.
+	GTIA_WRITE.hposp0 = 0;
+	GTIA_WRITE.hposp1 = 0;
+
+	if (visible) { 
+		// Clear sprite data.
+		clearSprite(1);
+		clearSprite(2);
+
 		// Draw cursor sprite, which takes up 2 players because it is 10 pixels wide
 		drawSprite(cursorSprite1, 10, 1, 31 + 16);
 		drawSprite(cursorSprite2, 10, 2, 31 + 16);
+
+		// Set sprite sizes
+		GTIA_WRITE.sizep0 = 0;
+		GTIA_WRITE.sizep1 = 0;
 		
 		// Position sprites		
 		GTIA_WRITE.hposp0 = PM_LEFT_MARGIN + (9 * 8);
@@ -466,9 +478,6 @@ void setPlayerCursorVisible(UInt8 visible) {
 		// Enable color cycling
 		POKE (CUR_TIMER, 15);
 	} else {
-		GTIA_WRITE.hposp0 = 0;
-		GTIA_WRITE.hposp1 = 0;	
-
 		// Disable color cycling
 		POKE (CUR_TIMER, 0xFF);
 	}
@@ -478,6 +487,7 @@ void setPlayerCursorVisible(UInt8 visible) {
 void setTileOverlaySprite(const UInt8 *sprite, UInt8 column, UInt8 row) {
 	// Set horizontal position for tile
 	P3_XPOS[row] = PM_LEFT_MARGIN + 8 * column + 4;
+	GTIA_WRITE.sizep3 = 0;
 	
 	// Draw sprite at vertical position
 	drawSprite(sprite, 8, 4, row * 8 + 16);
@@ -495,31 +505,32 @@ void drawSprite(const UInt8 *sprite, UInt8 length, UInt8 player, UInt8 y) {
 	}
 }
 
-void setMultiSprite(const UInt8 *sprite, const SizeU8 *spriteSize, const PointU8 *position, UInt8 magnification) {
+void setMegaSprite(const UInt8 *sprite, const UInt8 length, const PointU8 *position, UInt8 magnification) {
 	// Sprite will be centered on position.
 	UInt8 *spritePositions = (UInt8 *)HPOSP0;
 	UInt8 *spriteSizes = (UInt8 *)SIZEP0;
-	UInt8 *pmbasePtr = (UInt8 *) (256 * spritePage + 384 + 128);
+	UInt8 *pmbasePtr = (UInt8 *) (256 * spritePage + 384);
 	UInt8 spriteIndex = 0;
-	UInt8 stripeCount = spriteSize->width / 8;
-	UInt8 x = position->x - spriteSize->width * magnification / 2;
-	UInt8 spriteHeight = spriteSize->height;
-	UInt8 yStart = position->y - spriteSize->height * magnification / 2;
-	UInt8 yEnd = yStart + spriteHeight * magnification;
+	UInt8 x = position->x - 10 * magnification + PM_LEFT_MARGIN;
+	UInt8 yStart = position->y - length * magnification / 2;
+	UInt8 yEnd = yStart + length * magnification;
+	UInt8 spriteSizeCode = magnification - 1;
 	UInt8 i, y, lineRepeat;
 
 	//printDebugInfo("Sans", (UInt16) spritePositions, 40);
 
-	for (i=0; i<stripeCount; ++i) {
-		// Hide sprites.
+	for (i=0; i<8; ++i) { // Hide sprites.
 		spritePositions[i] = 0; 
-
-		// Set sprite sizes
-		spriteSizes[i] = magnification - 1;
 	}
+	
+	for (i=0; i<4; ++i) { // Set sprite sizes
+		spriteSizes[i] = spriteSizeCode;
+	}
+	// Special case for SIZEM: all missile sizes are in one byte register
+	spriteSizes[4] = (spriteSizeCode << 6) | (spriteSizeCode << 4) | (spriteSizeCode << 2) | spriteSizeCode;
 
 	// Copy sprite data into each stripe
-	for (i=0; i<stripeCount; ++i) {
+	for (i=0; i<5; ++i) {
 		lineRepeat = magnification - 1;
 		for (y=0; y<112; ++y) {
 			if (yStart <= y && y < yEnd) {
@@ -536,19 +547,25 @@ void setMultiSprite(const UInt8 *sprite, const SizeU8 *spriteSize, const PointU8
 			}
 		}
 		pmbasePtr += 128;
-
-
 	}
-
-	
-
-
 
 	// Position sprites
-	for (i=0; i<stripeCount; ++i) {
-		spritePositions[i] = PM_LEFT_MARGIN + x;
-		x += 8 * magnification;
+	spritePositions[0] = x;
+	spritePositions[2] = x;
+	x += 8 * magnification;
+	spritePositions[1] = x;
+	spritePositions[3] = x;
+	for (i=0; i<9; ++i) {
+		P3_XPOS[i] = x;
 	}
+	x += 8 * magnification;
+	spritePositions[5] = x;
+	spritePositions[7] = x;
+	x += 2 * magnification;
+	spritePositions[4] = x;
+	spritePositions[6] = x;
+
+
 }
 
 
@@ -561,6 +578,14 @@ void clearSprite(UInt8 player) {
 	}
 }
 
+
+void hideAllSprites(void) {
+	UInt8 *spritePositions = (UInt8 *)HPOSP0;
+	UInt8 i;
+	for (i=0; i<8; ++i) {
+		spritePositions[i] = 0;
+	}
+}
 
 
 // ==========================================================================
