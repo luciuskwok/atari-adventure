@@ -21,11 +21,14 @@ RAMTOP: 0xC0 without BASIC, 0xA0 with BASIC. Below are values with BASIC.
 
 Screen memory is allocated:
 - Map View:
-	- Display List: ?? bytes
+	- Display List: ~25 bytes
 	- Screen memory: 24x9 = 216 bytes
 - Story View:
-	- Display LIst: ?? bytes
+	- Display LIst: ~83 bytes
 	- Screen memory: 40x72 = 2,880 bytes
+- Total: about 3,204 bytes
+
+- 3KB = 3072 bytes, or 132 bytes short. If screen memory is shared between map and story views, it should fit in 3KB. 
 */
 
 // Includes

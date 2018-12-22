@@ -6,6 +6,11 @@
 extern UInt8 *textWindow; // Pointer to screen memory for text window
 
 
+#define P3_XPOS ((UInt8 *)0x0610)
+#define BG_COLOR ((UInt8 *)0x0620)
+
+
+
 // Init
 void initGraphics(void);
 void initDisplayList(void);
@@ -17,11 +22,6 @@ void clearMapScreen(void);
 void blackOutColorTable(void);
 void loadColorTable(const UInt8 *colors);
 void setBackgroundGradient(const UInt8 *colors);
-
-// Map Drawing
-void layoutCurrentMap(UInt8 sightDistance);
-void drawCurrentMap(PointU8 *center);
-void decodeRunLenRange(UInt8 *outData, UInt8 start, UInt8 end, const UInt8 *runLenData);
 
 // Sprites
 void setPlayerCursorVisible(UInt8 x);
