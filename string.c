@@ -89,3 +89,13 @@ void appendString(UInt8 *ioString, const UInt8 *append) {
 	}
 	ioString[i] = 0; // null terminator
 }
+
+
+UInt8 toAtascii(UInt8 c) {
+	if (c < 0x20) {
+		c += 0x40;
+	} else if (c < 0x60) {
+		c -= 0x20;
+	}
+	return c;
+}

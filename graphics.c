@@ -15,6 +15,7 @@ extern void __fastcall__ displayListInterrupt(void);
 // Constants
 #define PM_LEFT_MARGIN (52)
 #define SCREEN_WIDTH (24)
+#define CUR_TIMER (0x0600)
 #define P2_XPOS ((UInt8 *)0x0610)
 #define BG_COLOR ((UInt8 *)0x0620)
 
@@ -31,7 +32,10 @@ PointU8 mapFrameOrigin;
 SizeU8 mapFrameSize;
 
 
-// == initGraphics() ==
+
+// Init
+
+
 void initGraphics(void) {
 	UInt8 ramtopValue = PEEK(RAMTOP);
 	
@@ -55,10 +59,13 @@ void initGraphics(void) {
 
 	// == Use scrolling to center the odd number of tiles ==
 	ANTIC.hscrol = 4;
+
+	// Debugging
+	// printDebugInfo("VBI ", (UInt16)immediateUserVBI, 0);
+
 }
 
 
-// == initDisplayList() ==
 void initDisplayList(void) {
 	// == Display List ==
 	// Display list is already set up by the runtime to the equivalent of BASIC's GR.0. 
@@ -97,7 +104,6 @@ void initDisplayList(void) {
 }
 
 
-// == initFont() ==
 void initFont(UInt8 fontPage) {
 	const UInt8 *romFont = (UInt8 *)0xE000;
 	UInt8 *customFont = (UInt8 *) ((UInt16)fontPage * 256);
@@ -137,13 +143,13 @@ void initFont(UInt8 fontPage) {
 	POKE(CHBAS, fontPage + 2);
 }
 
-// == initSprites() ==
+
 void initSprites(void) {
 	UInt8 *pmbasePtr = (UInt8 *) ((UInt16)spritePage * 256 + 384);
 	UInt16 i;
 	UInt8 c;
 	
-	// Zero out memory
+	// Zero out sprite memory area
 	for (i=0; i<640; ++i) {
 		pmbasePtr[i] = 0;
 	}
@@ -153,10 +159,6 @@ void initSprites(void) {
 		POKE (HPOSP0 + c, 0);
 	}
 	
-	// Draw cursor sprite, which takes up 2 players because it is 10 pixels wide
-	drawSprite(cursorSprite1, 10, 0, 31);
-	drawSprite(cursorSprite2, 10, 1, 31);
-	
 	// Set up ANTIC
 	ANTIC.pmbase = spritePage;
 	POKE (SDMCTL, 0x2E); // standard playfield + missile DMA + player DMA + display list DMA
@@ -165,10 +167,6 @@ void initSprites(void) {
 }
 
 
-// ==========================================================================
-
-
-// == clearMapScreen() ==
 void clearMapScreen(void) {
 	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
 	UInt8 i;
@@ -182,7 +180,7 @@ void clearMapScreen(void) {
 	}
 }
 
-// == loadMap() ==
+
 void loadMap(UInt8 mapType, UInt8 variation) {
 	switch (mapType) {
 		case OverworldMapType: 
@@ -359,7 +357,7 @@ void drawCurrentMap(PointU8 *center) {
 				// Add sprite overlay for special characters
 				low = (c & 0x3F);
 				if (low >= tCastle) {
-					drawSpriteTile(tileSprites + 8 * (low - tCastle), col, row);
+					setTileOverlaySprite(tileSprites + 8 * (low - tCastle), col, row);
 					hasSpriteOverlay = 1;
 				}
 
@@ -407,28 +405,6 @@ void decodeRunLenRange(UInt8 *outData, UInt8 start, UInt8 end, const UInt8 *runL
 }
 
 
-void drawSprite(const UInt8 *sprite, UInt8 spriteLength, UInt8 player, UInt8 y) {
-	UInt8 *pmbasePtr = (UInt8 *) (spritePage * 256 + 384);
-	const UInt16 pmLength = 128;
-	UInt16 offset = y + 16; // overscan area
-	UInt16 i;
-	
-	// Copy sprite data at Y position
-	pmbasePtr += pmLength * (player + 1);
-	for (i=0; i<spriteLength; ++i) {
-		pmbasePtr[i + offset] = sprite[i];
-	}
-}
-
-// == drawSpriteTile() ==
-void drawSpriteTile(const UInt8 *sprite, UInt8 column, UInt8 row) {
-	// Set horizontal position for tile
-	P2_XPOS[row] = PM_LEFT_MARGIN + 8 * column;
-	
-	// Draw sprite at vertical position
-	drawSprite(sprite, 8, 2, row * 8);
-}
-
 
 // ==========================================================================
 // Getting Map Info
@@ -457,13 +433,54 @@ UInt8 mapTileAt(PointU8 *pt) {
 // Player Cursor
 
 
-void setPlayerCursorVisible(UInt8 x) {
-	if (x == 0) {
-		GTIA_WRITE.hposp0 = 0;
-		GTIA_WRITE.hposp1 = 0;		
-	} else {
+void setPlayerCursorVisible(UInt8 visible) {
+	if (visible) {
+		// Draw cursor sprite, which takes up 2 players because it is 10 pixels wide
+		drawSprite(cursorSprite1, 10, 1, 31 + 16);
+		drawSprite(cursorSprite2, 10, 2, 31 + 16);
+		
+		// Position sprites		
 		GTIA_WRITE.hposp0 = PM_LEFT_MARGIN + (9 * 8) - 4;
 		GTIA_WRITE.hposp1 = PM_LEFT_MARGIN + (9 * 8) + 4;
+
+		// Enable color cycling
+		POKE (CUR_TIMER, 15);
+	} else {
+		GTIA_WRITE.hposp0 = 0;
+		GTIA_WRITE.hposp1 = 0;	
+
+		// Disable color cycling
+		POKE (CUR_TIMER, 0xFF);
+	}
+}
+
+
+void drawSprite(const UInt8 *sprite, UInt8 length, UInt8 player, UInt8 y) {
+	// player: 0=missile, 1-4=p0-p3.
+	// this simplifies the math and allows both players and missiles to be addressed
+	UInt8 *p = (UInt8 *) (384 + 256 * spritePage + 128 * player + y);
+	UInt8 i;
+	
+	for (i=0; i<length; ++i) {
+		p[i] = sprite[i];
+	}
+}
+
+
+void setTileOverlaySprite(const UInt8 *sprite, UInt8 column, UInt8 row) {
+	// Set horizontal position for tile
+	P2_XPOS[row] = PM_LEFT_MARGIN + 8 * column;
+	
+	// Draw sprite at vertical position
+	drawSprite(sprite, 8, 3, row * 8 + 16);
+}
+
+void clearSprite(UInt8 player) {
+	UInt8 *pmbasePtr = (UInt8 *) (256 * spritePage + 384 + 128 * player);
+	UInt8 i;
+
+	for (i=0; i<128; ++i) {
+		pmbasePtr[i] = 0;
 	}
 }
 

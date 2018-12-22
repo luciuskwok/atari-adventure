@@ -59,7 +59,8 @@ void printStatText(void);
 
 void presentDialog(void);
 void waitForAnyInput(void);
-void printDialogText(void);
+
+
 
 // Constants
 #define STICK_TIMER (0x0601)
@@ -83,7 +84,8 @@ int main (void) {
 
 	// Load map
 	exitToOverworld();
-	printStatText();
+	setTextWindowColorTheme(0);
+	//printStatText();
 	setPlayerCursorVisible(1);
 	
 	while (gQuit == 0) {
@@ -248,7 +250,6 @@ void enterTown(void) {
 
 void printStatText(void) {
 	clearTextWindow();
-	setTextWindowColorTheme(0);
 
 	// Print header column
 	printString("HP:", 0, 2);
@@ -270,13 +271,15 @@ void printStatText(void) {
 
 void presentDialog(void) {
 	UInt8 gradient[] = { 0x94, 0x96, 0x98, 0x9C, 0xC4, 0xC6, 0xC8, 0xC8, 0xCA, 0xCA };
-	UInt8 x;
+	UInt8 message[] = "Ellie: How are you doing today?  The teacher was totally unfair.  "
+		"C'mon, let's go to the beach!";
+	// UInt8 x;
 
 
 	// Set up graphics window
 	setPlayerCursorVisible(0);
 	clearMapScreen();
-	//setBackgroundGradient(gradient);
+	setBackgroundGradient(gradient);
 
 
 	// Set up text window
@@ -284,16 +287,14 @@ void presentDialog(void) {
 	setTextWindowColorTheme(1);
 
 	// Print some text
-	printString("Ellie:", 0, 0);
-	printString("How are you doing today?", 8, 0);
-	printString("The teacher was totally unfair!", 8, 1);
-	printString("C'mon, let's go to the beach.", 8, 2);
+	printStringWithLayout(message, 0, 0, 4, 0);
 
 	// Wait for trigger
 	waitForAnyInput();
 
 	// Restore map
 	blackOutColorTable();
+	setTextWindowColorTheme(0);
 	setBackgroundGradient(NULL);
 	clearMapScreen();
 	drawCurrentMap(&playerMapLocation);
@@ -315,18 +316,6 @@ void waitForAnyInput(void) {
 	while (PEEK(STRIG0) != 0) {
 		resetAttractMode();
 	}
-
-}
-
-void printDialogText(void) {
-	clearTextWindow();
-	setTextWindowColorTheme(1);
-
-	printString("Ellie:", 0, 0);
-
-	printString("How are you doing today?", 8, 0);
-	printString("The teacher was totally unfair!", 8, 1);
-	printString("C'mon, let's go to the beach.", 8, 2);
 
 }
 

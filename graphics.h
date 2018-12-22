@@ -10,12 +10,11 @@ extern UInt8 *textWindow; // Pointer to screen memory for text window
 extern SizeU8 currentMapSize;
 extern UInt8 currentMapType;
 
-// Functions
+// Init
 void initGraphics(void);
 void initDisplayList(void);
 void initFont(UInt8 fontPage);
 void initSprites(void);
-
 void clearMapScreen(void);
 void loadMap(UInt8 mapType, UInt8 variation);
 
@@ -29,14 +28,15 @@ void setBackgroundGradient(const UInt8 *colors);
 void layoutCurrentMap(UInt8 sightDistance);
 void drawCurrentMap(PointU8 *center);
 void decodeRunLenRange(UInt8 *outData, UInt8 start, UInt8 end, const UInt8 *runLenData);
-void drawSprite(const UInt8 *sprite, UInt8 spriteLength, UInt8 player, UInt8 y);
-void drawSpriteTile(const UInt8 *sprite, UInt8 column, UInt8 row);
 
 // Getting Map Info
 UInt8 mapTileAt(PointU8 *pt);
 
-// Player Cursor
-void setPlayerCursorVisible(UInt8 hide);
+// Sprites
+void setPlayerCursorVisible(UInt8 x);
+void drawSprite(const UInt8 *sprite, UInt8 length, UInt8 player, UInt8 y);
+void setTileOverlaySprite(const UInt8 *sprite, UInt8 column, UInt8 row);
+void clearSprite(UInt8 player);
 
 
 // Constants

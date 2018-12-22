@@ -139,7 +139,7 @@ const UInt8 overworldRleMap[] = {
 0x09,0x3F,0x00,0x12,0x64,0x15,0x2C,0x19,0x6A,
 };
 const SizeU8 overworldMapSize = { 64, 64 };
-const PointU8 overworldEntryPoint = { 52, 5 };
+const PointU8 overworldEntryPoint = { 60, 6 };
 
 // == Dungeon Map ==
 UInt8 dungeonTileMap[] = { 

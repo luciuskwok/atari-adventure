@@ -41,6 +41,7 @@ BG_COLOR = $0620	; array of 10 bytes for changing background color, though first
 	
 .proc _immediateUserVBI
 
+
 	lda #0				; reset DLI_ROW
 	sta DLI_ROW
 	lda P2_XPOS			; HPOSP2 = P2_XPOS[0]
@@ -51,11 +52,23 @@ BG_COLOR = $0620	; array of 10 bytes for changing background color, though first
 	dec STICK_TIMER
 	
 update_cursor:
-	clv					; clear overflow flag just in case
-	dec CUR_TIMER	
-	bne return			; if timer != 0, skip updating the color
-	lda #CUR_SKIP		; reset the timer to 5 ticks
+	lda CUR_TIMER
+	cmp #$00		
+	beq cycle_color		; if CUR_TIMER == 0, cycle the colors
+
+	cmp #$FF			
+	beq return 			; else if CUR_TIMER == $FF, leave the timer alone
+
+	sec 				; else --CUR_TIMER
+	sbc #1
 	sta CUR_TIMER
+	bcs return
+
+cycle_color:
+
+	clv					; clear flags for unconditonal branch
+	lda #CUR_SKIP
+	sta CUR_TIMER		; reload the timer
 						; == Cycle only the luminance of the color value ==						
 	lda PCOLR0			; get the color (Addr=3459)
 	tax					; use X register for new color value

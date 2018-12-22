@@ -9,12 +9,13 @@
 
 
 // Constants
-#define SCREEN_WIDTH (40)
+#define TEXTBOX_WIDTH (40)
+#define TEXTBOX_HEIGHT (5)
 #define TEXT_LUM ((UInt8 *)0x0603)
 #define TEXT_BG ((UInt8 *)0x0604)
 
 
-// == printCharaStats() ==
+
 void printCharaStats(UInt8 player, const UInt8 *name, UInt8 level, UInt8 hp, UInt8 maxHp) {
 	UInt8 x = player * 9 + 3;
 	UInt8 s1[9], s2[6];
@@ -32,7 +33,7 @@ void printCharaStats(UInt8 player, const UInt8 *name, UInt8 level, UInt8 hp, UIn
 	printString(s1, x, 2);
 }
 
-// == printPartyStats() ==
+
 void printPartyStats(SInt32 money, UInt16 potions, UInt16 fangs, SInt16 reputation) {
 	UInt8 s[16];
 	UInt8 len;
@@ -62,7 +63,7 @@ void printPartyStats(SInt32 money, UInt16 potions, UInt16 fangs, SInt16 reputati
 void clearTextWindow(void) {
 	UInt16 i;
 
-	for (i=0; i<5*SCREEN_WIDTH; ++i) {
+	for (i=0; i<TEXTBOX_HEIGHT*TEXTBOX_WIDTH; ++i) {
 		textWindow[i] = 0;
 	}
 }
@@ -91,19 +92,64 @@ void printString(const UInt8 *s, UInt8 x, UInt8 y) {
 	UInt8 c;
 
 	while (c = s[index]) {
-		if (c < 0x20) {
-			c += 0x40;
-		} else if (c < 0x60) {
-			c -= 0x20;
-		}
-		textWindow[(UInt16)x + SCREEN_WIDTH * (UInt16)y] = c;
+		c = toAtascii(c);
+		textWindow[x + TEXTBOX_WIDTH * y] = c;
 		++x;
 		++index;
 	}
 }
 
 
-// == printDebugInfo() ==
+void printStringWithLayout(const UInt8 *s, UInt8 top, UInt8 firstIndent, UInt8 leftMargin, UInt8 rightMargin) {
+	// firstIndent is independent of leftMargin
+	// leftMargin controls lines after the first one
+	// rightMargin controls all lines
+	// text will be broken at space characters
+
+	UInt8 i = 0;
+	UInt8 y = top;
+	UInt8 x = firstIndent;
+	UInt8 previousBreakable = 0;
+	UInt8 lineStartIndex = 0;
+	UInt8 xMax = TEXTBOX_WIDTH - rightMargin;
+	UInt8 c = s[0];
+
+	while (c != 0 && y < TEXTBOX_HEIGHT) {
+		if (c == ' ') { // space char
+			previousBreakable = i;
+		}
+		if (x >= xMax && previousBreakable > lineStartIndex) {
+			// Rewind to previous breakable character
+			while (i > previousBreakable) {
+				--i;
+				--x;
+				textWindow[x + TEXTBOX_WIDTH * y] = 0; // space char
+			}			
+			// Fast-forward past spaces
+			while (s[i] == ' ') {
+				if (s[i] == 0) {
+					return;
+				}
+				++i;
+			}
+			c = s[i];
+
+			// Start new line
+			++y;
+			x = leftMargin;
+			lineStartIndex = i;
+			previousBreakable = i;
+		}
+
+		textWindow[x + TEXTBOX_WIDTH * y] = toAtascii(c);
+		++x;
+		++i;
+		c = s[i];
+	}
+}
+
+
+
 void printDebugInfo(const UInt8 *label, UInt16 value, UInt8 position) {
 	// Prints a label and a hex value in the text box area.
 	UInt8 hexStr[5];
@@ -130,7 +176,7 @@ void printColorString(const UInt8 *s, UInt8 color, UInt8 x, UInt8 y) {
 			c -= 0x20;
 		}
 		c += (color * 64);
-		screen[(UInt16)x + SCREEN_WIDTH * (UInt16)y] = c;
+		screen[(UInt16)x + TEXTBOX_WIDTH * (UInt16)y] = c;
 		++x;
 		++index;
 	}

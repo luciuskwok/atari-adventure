@@ -11,6 +11,7 @@ void clearTextWindow(void);
 void setTextWindowColorTheme(UInt8 theme);
 
 void printString(const UInt8 *s, UInt8 x, UInt8 y);
+void printStringWithLayout(const UInt8 *s, UInt8 top, UInt8 firstIndent, UInt8 leftMargin, UInt8 rightMargin);
 void printDebugInfo(const UInt8 *label, UInt16 value, UInt8 position);
 
 // Obsolete
