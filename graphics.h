@@ -37,7 +37,7 @@ PointU8 mapEntryPoint(UInt8 mapType);
 void setPlayerCursorVisible(UInt8 x);
 void setTileOverlaySprite(const UInt8 *sprite, UInt8 column, UInt8 row);
 void drawSprite(const UInt8 *sprite, UInt8 length, UInt8 player, UInt8 y);
-void setMultiSprite(const UInt8 *sprite, const SizeU8 *spriteSize, const PointU8 *position);
+void setMultiSprite(const UInt8 *sprite, const SizeU8 *spriteSize, const PointU8 *position, UInt8 magnification);
 void clearSprite(UInt8 player);
 
 

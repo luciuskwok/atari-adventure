@@ -16,7 +16,7 @@ extern void __fastcall__ displayListInterrupt(void);
 
 
 // Constants
-#define PM_LEFT_MARGIN (52)
+#define PM_LEFT_MARGIN (48)
 #define SCREEN_WIDTH (24)
 #define CUR_TIMER (0x0600)
 #define P3_XPOS ((UInt8 *)0x0610)
@@ -460,8 +460,8 @@ void setPlayerCursorVisible(UInt8 visible) {
 		drawSprite(cursorSprite2, 10, 2, 31 + 16);
 		
 		// Position sprites		
-		GTIA_WRITE.hposp0 = PM_LEFT_MARGIN + (9 * 8) - 4;
-		GTIA_WRITE.hposp1 = PM_LEFT_MARGIN + (9 * 8) + 4;
+		GTIA_WRITE.hposp0 = PM_LEFT_MARGIN + (9 * 8);
+		GTIA_WRITE.hposp1 = PM_LEFT_MARGIN + (10 * 8);
 
 		// Enable color cycling
 		POKE (CUR_TIMER, 15);
@@ -477,7 +477,7 @@ void setPlayerCursorVisible(UInt8 visible) {
 
 void setTileOverlaySprite(const UInt8 *sprite, UInt8 column, UInt8 row) {
 	// Set horizontal position for tile
-	P3_XPOS[row] = PM_LEFT_MARGIN + 8 * column;
+	P3_XPOS[row] = PM_LEFT_MARGIN + 8 * column + 4;
 	
 	// Draw sprite at vertical position
 	drawSprite(sprite, 8, 4, row * 8 + 16);
@@ -495,43 +495,59 @@ void drawSprite(const UInt8 *sprite, UInt8 length, UInt8 player, UInt8 y) {
 	}
 }
 
-void setMultiSprite(const UInt8 *sprite, const SizeU8 *spriteSize, const PointU8 *position) {
+void setMultiSprite(const UInt8 *sprite, const SizeU8 *spriteSize, const PointU8 *position, UInt8 magnification) {
+	// Sprite will be centered on position.
 	UInt8 *spritePositions = (UInt8 *)HPOSP0;
+	UInt8 *spriteSizes = (UInt8 *)SIZEP0;
 	UInt8 *pmbasePtr = (UInt8 *) (256 * spritePage + 384 + 128);
 	UInt8 spriteIndex = 0;
 	UInt8 stripeCount = spriteSize->width / 8;
-	UInt8 x = position->x;
+	UInt8 x = position->x - spriteSize->width * magnification / 2;
 	UInt8 spriteHeight = spriteSize->height;
-	UInt8 yStart = position->y;
-	UInt8 yEnd = yStart + spriteHeight;
-	UInt8 i, y;
+	UInt8 yStart = position->y - spriteSize->height * magnification / 2;
+	UInt8 yEnd = yStart + spriteHeight * magnification;
+	UInt8 i, y, lineRepeat;
 
 	//printDebugInfo("Sans", (UInt16) spritePositions, 40);
 
-
-	// Hide sprites.
 	for (i=0; i<stripeCount; ++i) {
-		spritePositions[i] = 0;
+		// Hide sprites.
+		spritePositions[i] = 0; 
+
+		// Set sprite sizes
+		spriteSizes[i] = magnification - 1;
 	}
 
 	// Copy sprite data into each stripe
 	for (i=0; i<stripeCount; ++i) {
+		lineRepeat = magnification - 1;
 		for (y=0; y<112; ++y) {
 			if (yStart <= y && y < yEnd) {
 				pmbasePtr[y] = sprite[spriteIndex];
-				++spriteIndex;
+				if (lineRepeat > 0) {
+					--lineRepeat;
+				} else {
+					lineRepeat = magnification - 1;
+					++spriteIndex;
+				}
+				
 			} else {
 				pmbasePtr[y] = 0;
 			}
 		}
 		pmbasePtr += 128;
+
+
 	}
+
+	
+
 
 
 	// Position sprites
 	for (i=0; i<stripeCount; ++i) {
 		spritePositions[i] = PM_LEFT_MARGIN + x;
-		x += 8;
+		x += 8 * magnification;
 	}
 }
 

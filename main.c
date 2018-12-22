@@ -275,7 +275,7 @@ void presentDialog(void) {
 		0x00, 0x06, 0x0A, 0x0E, 0x94 // grayscale for playfield
 	};
 	UInt8 gradient[] = { 0x92, 0x94, 0x94, 0x96, 0xC2, 0xC4, 0xC6, 0xC6, 0xC8, 0xC8 };
-	PointU8 sansPosition = { 48, 40 };
+	PointU8 sansPosition = { 80, 9 * 4 + 16 };
 	const UInt8 msg1[] = "Sans: Why are graveyards so noisy?\n Because of all the *coffin*!";
 	const UInt8 msg2[] = "Ellie: How are you doing today?\n That teacher was totally unfair.\n C'mon, let's go to the beach!";
 	const UInt8 msg3[] = "Sans: Who was that?   And    why \n    are    you taking    over my   chat  box?     Anyone?";
@@ -297,7 +297,7 @@ void presentDialog(void) {
 	setTextWindowColorTheme(1);
 
 	// Add Sans
-	setMultiSprite(sansSprite, &sansSpriteSize, &sansPosition);
+	setMultiSprite(sansSprite, &sansSpriteSize, &sansPosition, 2);
 
 	// Loop through messages
 	messages[0] = msg1;

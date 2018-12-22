@@ -38,6 +38,7 @@
 
 // Sprites
 #define HPOSP0 (0xD000)
+#define SIZEP0 (0xD008)
 
 // Memory Management
 #define MEMTOP (0x02E5)
