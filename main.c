@@ -71,9 +71,6 @@ int main (void) {
 	//printStatText();
 	setPlayerCursorVisible(1);
 
-	// Debugging
-	printDebuggingInfo();
-
 	
 	while (gQuit == 0) {
 		//startNewGame();
@@ -253,7 +250,7 @@ void printDebuggingInfo(void) {
 
 void presentDialog(void) {
 	UInt8 dialogColorTable[] = {
-		0x0F, 0x0F, 0x00, 0x00, // white/black for sprites
+		0x0F, 0x0F, 0x00, 0x00, // white/black for mega sprite
 		0x00, 0x06, 0x0A, 0x0E, 0x94 // grayscale for playfield
 	};
 	UInt8 gradient[] = { 0x92, 0x94, 0x94, 0x96, 0xC2, 0xC4, 0xC6, 0xC6, 0xC8, 0xC8 };
@@ -264,15 +261,11 @@ void presentDialog(void) {
 	const UInt8 *messages[3];
 	UInt8 i;
 
-	// More messages
-	// "Ellie: How are you doing today?  That teacher was totally unfair.  C'mon, let's go to the beach!";
-
-
 	// Set up graphics window
 	setPlayerCursorVisible(0);
-	clearMapScreen();
 	loadColorTable(dialogColorTable);
 	setBackgroundGradient(gradient);
+	selectDisplayList(1);
 
 	// Set up text window
 	clearTextWindow();
@@ -291,16 +284,15 @@ void presentDialog(void) {
 		waitForAnyInput();
 	}
 
-	blackOutColorTable();
+	// Reload map
 	hideAllSprites();
+	blackOutColorTable();
 	setTextWindowColorTheme(0);
-	setBackgroundGradient(NULL);
-	clearMapScreen();
-	drawCurrentMap(&playerMapLocation);
-	//loadColorTableForCurrentMap();
+	selectDisplayList(0);
+	loadMap(currentMapType, sightDistance, &playerMapLocation);
+
 	printStatText();
 	setPlayerCursorVisible(1);
-
 }
 
 void waitForAnyInput(void) {

@@ -10,6 +10,7 @@ void setTextWindowColorTheme(UInt8 theme);
 void printString(const UInt8 *s, UInt8 x, UInt8 y);
 void printStringWithLayout(const UInt8 *s, UInt8 top, UInt8 firstIndent, UInt8 leftMargin, UInt8 rightMargin);
 void print16bitValue(const UInt8 *label, UInt16 value, UInt8 x, UInt8 y);
+void print8bitValue(const UInt8 *label, UInt8 value, UInt8 x, UInt8 y);
 
 // Obsolete
 void printAllTiles(void);

@@ -158,7 +158,18 @@ void print16bitValue(const UInt8 *label, UInt16 value, UInt8 x, UInt8 y) {
 	UInt8 hexStr[5];
 	UInt8 labelLength = strlen(label);
 	
-	hexString(hexStr, value);
+	hexString(hexStr, 4, value);
+	printString(label, x, y);
+	printString(hexStr, x + labelLength, y);
+}
+
+
+void print8bitValue(const UInt8 *label, UInt8 value, UInt8 x, UInt8 y) {
+	// Prints a label and a hex value in the text box area.
+	UInt8 hexStr[3];
+	UInt8 labelLength = strlen(label);
+	
+	hexString(hexStr, 2, value);
 	printString(label, x, y);
 	printString(hexStr, x + labelLength, y);
 }

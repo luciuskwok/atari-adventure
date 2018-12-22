@@ -50,19 +50,19 @@ void numberString(UInt8 *outString, UInt8 thousandsSeparator, SInt32 value) {
 }
 
 
-void hexString(UInt8 *outString, UInt16 value) {
+void hexString(UInt8 *outString, UInt8 length, UInt16 value) {
 	UInt8 i, c;	
-	for (i=0; i<4; ++i) {
+	for (i=0; i<length; ++i) {
 		c = value & 0x0F;
 		if (c < 10) {
 			c += 0x30;
 		} else {
 			c += 0x41 - 10;
 		}
-		outString[3-i] = c;
+		outString[length-1-i] = c;
 		value = value >> 4;
 	}
-	outString[4] = 0;
+	outString[length] = 0;
 }
 
 

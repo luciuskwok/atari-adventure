@@ -8,10 +8,10 @@ APPMHI and MEMTOP should be ours to use.
 
 RAMTOP: 0xC0 without BASIC, 0xA0 with BASIC. Below are values with BASIC.
 
-0x9C00: Custom character set needs 128 chars * 8 bytes = 1024 bytes.
-0x9800: PMGraphics needs 640 bytes (double-line sprites), but the data area 
+0x9C00: 1 KB: PMGraphics needs 640 bytes (double-line sprites), but the data area 
 	doesn't start until 384 (0x180) bytes after PMBase, which must be on 1KB boundary.
-0x8C00: Display list and screen memory.
+0x9000: 3 KB: Display list and screen memory, which must be on 4 KB boundary.
+0x8C00: 1 KB: Custom character set needs 128 chars * 8 bytes = 1024 bytes.
 
 Screen memory is allocated:
 - Map View:
@@ -64,24 +64,24 @@ UInt8 spritePage; // shadow of ANTIC hardware register, which cannot be read
 void initGraphics(void) {
 	UInt8 ramtopValue = PEEK(RAMTOP);
 	
-	spritePage = ramtopValue - 8;
+	spritePage = ramtopValue - 16;
 
-	// Set up VBI 
 	initVBI(immediateUserVBI); // Safe value: 0xE45F
 	
 	// Set color table to all black and change the display list
-	blackOutColorTable();
-	initDisplayList(ramtopValue - 20);
+	//blackOutColorTable();
+	initDisplayList(ramtopValue - 12);
 	selectDisplayList(0);
-
 	initSprites();
-	initFont(ramtopValue - 4);
+	initFont(ramtopValue - 20);
 	
 	// == Use scrolling to center the odd number of tiles ==
 	ANTIC.hscrol = 4;
 
 	// Debugging
-	// printDebugInfo("VBI ", (UInt16)immediateUserVBI, 0);
+	print16bitValue("Map DL: ", (UInt16)mapViewDisplayList, 1, 1);
+	print16bitValue("Story DL: ", (UInt16)storyViewDisplayList, 1, 2);
+	print16bitValue("textWindow: ", (UInt16)textWindow, 1, 3);	
 
 }
 
@@ -137,6 +137,7 @@ void initDisplayList(UInt8 startPage) {
 	mapViewDisplayList[x++] = (UInt16)mapViewDisplayList / 256;
 
 	// == Story View DL ==
+	x = 0;
 	for (i=0; i<3; ++i) {
 		storyViewDisplayList[x++] = DL_BLK8;
 	}
@@ -189,9 +190,11 @@ void selectDisplayList(UInt8 index) {
 void initFont(UInt8 fontPage) {
 	const UInt8 *romFont = (UInt8 *)0xE000;
 	UInt8 *customFont = (UInt8 *) ((UInt16)fontPage * 256);
-	UInt8 *tileFont = customFont + (0x40 * 8);
+	UInt8 *tileFont = customFont + 512;
 	UInt16 index;
 	UInt8 tileIndex, bitmapIndex;
+
+	//print8bitValue("Start Font: ", fontPage, 1, 5);
 	
 	// Copy character set from ROM to RAM, 128 characters.
 	for (index=0; index<1024; ++index) {
@@ -217,12 +220,14 @@ void initFont(UInt8 fontPage) {
 		}
 		++bitmapIndex;
 	}
-
+	
 	// Set CHBAS to point to the graphics character set area.
 	// This lets the  map tiles show in the color map part of the screen.
 	// It seems that the text window area truncates the value to a multple of 4, 
 	// neatly allowing for regular characters there.
 	POKE(CHBAS, fontPage + 2);
+
+	//print8bitValue("End Font: ", fontPage, 1, 5);
 }
 
 
@@ -287,7 +292,7 @@ void setBackgroundGradient(const UInt8 *colors) {
 	// First color goes into shadow register, which the OS VBI uses.
 	POKE(COLOR4, colors[0]);
 
-	for (x=0; x<10; ++x) {
+	for (x=0; x<72; ++x) {
 		if (colors) {
 			BG_COLOR[x] = colors[x];
 		} else {
