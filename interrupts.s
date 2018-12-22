@@ -25,10 +25,10 @@ WSYNC  = $D40A
 CUR_SKIP  = 15		; number of frames to skip for color cycling
 CUR_TIMER = $0600	; Cursor color cycling frame skip countdown timer
 STICK_TIMER = $0601	; Joystick countdown timer for repeating joystick moves
-DLI_ROW   = $0602		; for keeping track of which scanline the DLI is on
+DLI_ROW   = $0602	; for keeping track of which scanline the DLI is on
 TEXT_LUM  = $0603	; text luminance for text window
 TEXT_BG   = $0604	; text window background color
-P3_XPOS   = $0610		; array of 9 bytes for repositioning player 3
+P3_XPOS   = $0610	; array of 9 bytes for repositioning player 3
 BG_COLOR  = $0620	; array of 72 bytes for changing background color per raster line
 
 
@@ -131,10 +131,12 @@ return_dli:
 	
 	ldx DLI_ROW			 
 	lda BG_COLOR,X 		; set background color for each row
-	stx WSYNC			; wait for horizontal sync
-	sta COLPF4
 
 	inx					; ++DLI_ROW
+	stx DLI_ROW
+
+	sta WSYNC			; wait for horizontal sync
+	sta COLPF4
 
 	cpx #72		
 	bcs return_dli		; if DLI_ROW >= 72, set colors for text window

@@ -18,11 +18,11 @@ void selectDisplayList(UInt8 index);
 void initFont(UInt8 fontPage);
 void initSprites(void);
 void clearMapScreen(void);
+void hidePlayfieldAndSprites(void);
 
 // Color Table
-void blackOutColorTable(void);
 void loadColorTable(const UInt8 *colors);
-void setBackgroundGradient(const UInt8 *colors);
+void setBackgroundGradient(const UInt8 *data);
 
 // Sprites
 void setPlayerCursorVisible(UInt8 x);
@@ -30,7 +30,6 @@ void setTileOverlaySprite(const UInt8 *sprite, UInt8 column, UInt8 row);
 void drawSprite(const UInt8 *sprite, UInt8 length, UInt8 player, UInt8 y);
 void setMegaSprite(const UInt8 *sprite, const UInt8 length, const PointU8 *position, UInt8 magnification);
 void clearSprite(UInt8 player);
-void hideAllSprites(void);
 
 
 // Constants

@@ -69,7 +69,7 @@ void initGraphics(void) {
 	initVBI(immediateUserVBI); // Safe value: 0xE45F
 	
 	// Set color table to all black and change the display list
-	//blackOutColorTable();
+	//hidePlayfieldAndSprites();
 	initDisplayList(ramtopValue - 12);
 	selectDisplayList(0);
 	initSprites();
@@ -270,11 +270,17 @@ void clearMapScreen(void) {
 // ==== Color Table ====
 
 
-void blackOutColorTable(void) {
+void hidePlayfieldAndSprites(void) {
+	// This function quickly hides most display elements so that slower operations can make changes.
+	// Blacks out the color table and hides all sprites, but does not affect colors set in DLI.
 	UInt8 *p = (UInt8*)(PCOLR0);
+	UInt8 *spritePositions = (UInt8 *)HPOSP0;
 	UInt8 i;
 	for (i=0; i<9; ++i) {
 		p[i] = 0;
+	}
+	for (i=0; i<8; ++i) {
+		spritePositions[i] = 0;
 	}
 }
 
@@ -286,17 +292,27 @@ void loadColorTable(const UInt8 *colors) {
 	}
 }
 
-void setBackgroundGradient(const UInt8 *colors) {
-	UInt8 x;
+void setBackgroundGradient(const UInt8 *data) {
+	// colors: array of { length, value } tuples, with NULL terminator
+	// There should be enough for 73 color values. First one goes into VBI shadow register, and
+	// the rest changes the color at the end of each of 72 raster rows.
 
-	// First color goes into shadow register, which the OS VBI uses.
-	POKE(COLOR4, colors[0]);
+	UInt8 bgIndex = 0xFF;
+	UInt8 dataIndex = 0;
+	UInt8 length, value;
 
-	for (x=0; x<72; ++x) {
-		if (colors) {
-			BG_COLOR[x] = colors[x];
-		} else {
-			BG_COLOR[x] = 0;
+	while (length = data[dataIndex++]) {
+		value = data[dataIndex++];
+
+		while (length > 0) {
+			if (bgIndex == 0xFF) {
+				// First color goes into shadow register, which the OS VBI uses.
+				POKE(COLOR4, value);
+				bgIndex = 0;
+			} else {
+				BG_COLOR[bgIndex++] = value;
+			}
+			--length;
 		}
 	}
 }
@@ -407,9 +423,7 @@ void setMegaSprite(const UInt8 *sprite, const UInt8 length, const PointU8 *posit
 	x += 8 * magnification;
 	spritePositions[1] = x;
 	spritePositions[3] = x;
-	for (i=0; i<9; ++i) {
-		P3_XPOS[i] = x;
-	}
+	P3_XPOS[0] = x; // VBI still copies P3_XPOS[0] to HPOSP0
 	x += 8 * magnification;
 	spritePositions[5] = x;
 	spritePositions[7] = x;
@@ -427,15 +441,6 @@ void clearSprite(UInt8 player) {
 
 	for (i=0; i<128; ++i) {
 		pmbasePtr[i] = 0;
-	}
-}
-
-
-void hideAllSprites(void) {
-	UInt8 *spritePositions = (UInt8 *)HPOSP0;
-	UInt8 i;
-	for (i=0; i<8; ++i) {
-		spritePositions[i] = 0;
 	}
 }
 

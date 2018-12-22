@@ -61,7 +61,7 @@ PointU8 mapEntryPoint(UInt8 mapType) {
 void loadMap(UInt8 mapType, UInt8 sightDistance, PointU8 *location) {
 	const UInt8 *colorTable;
 
-	blackOutColorTable();
+	hidePlayfieldAndSprites();
 	clearMapScreen();
 	
 	switch (mapType) {

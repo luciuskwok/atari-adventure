@@ -253,8 +253,20 @@ void presentDialog(void) {
 		0x0F, 0x0F, 0x00, 0x00, // white/black for mega sprite
 		0x00, 0x06, 0x0A, 0x0E, 0x94 // grayscale for playfield
 	};
-	UInt8 gradient[] = { 0x92, 0x94, 0x94, 0x96, 0xC2, 0xC4, 0xC6, 0xC6, 0xC8, 0xC8 };
-	PointU8 sansPosition = { 80, 16 + 42 };
+	UInt8 gradient[] = { 
+		12, 0x92, 
+		12, 0x94,
+		 6, 0x96,
+		 3, 0x98,
+		 2, 0x9A,
+		 1, 0x9C, 
+		 1, 0xC2, 
+		 3, 0xC4,
+		 7, 0xC6,
+		21, 0xC8,
+		 5, 0xCA,
+		 0 };
+	PointU8 sansPosition = { 81, 16 + 45 };
 	const UInt8 msg1[] = "Sans: Why are graveyards so noisy?\n Because of all the *coffin*!";
 	const UInt8 msg2[] = "Ellie: How are you doing today?\n That teacher was totally unfair.\n C'mon, let's go to the beach!";
 	const UInt8 msg3[] = "Papyrus: Nyeh Heh Heh!";
@@ -262,6 +274,7 @@ void presentDialog(void) {
 	UInt8 i;
 
 	// Set up graphics window
+	hidePlayfieldAndSprites();
 	setPlayerCursorVisible(0);
 	loadColorTable(dialogColorTable);
 	setBackgroundGradient(gradient);
@@ -285,8 +298,7 @@ void presentDialog(void) {
 	}
 
 	// Reload map
-	hideAllSprites();
-	blackOutColorTable();
+	hidePlayfieldAndSprites();
 	setTextWindowColorTheme(0);
 	selectDisplayList(0);
 	loadMap(currentMapType, sightDistance, &playerMapLocation);
