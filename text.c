@@ -111,24 +111,26 @@ void printStringWithLayout(const UInt8 *s, UInt8 top, UInt8 firstIndent, UInt8 l
 	UInt8 previousBreakable = 0;
 	UInt8 lineStartIndex = 0;
 	UInt8 xMax = TEXTBOX_WIDTH - rightMargin;
-	UInt8 c = s[0];
+	UInt8 c;
 
-	while (c != 0 && y < TEXTBOX_HEIGHT) {
-		if (c == ' ') { // space char
+	while (y < TEXTBOX_HEIGHT) {
+		c = s[i];
+		if (c == ' ' || c == '\n') { // whitespace
 			previousBreakable = i;
 		}
-		if (x >= xMax && previousBreakable > lineStartIndex) {
+
+		if (x >= xMax || c == '\n') {
 			// Rewind to previous breakable character
-			while (i > previousBreakable) {
-				--i;
-				--x;
-				textWindow[x + TEXTBOX_WIDTH * y] = 0; // space char
-			}			
-			// Fast-forward past spaces
-			while (s[i] == ' ') {
-				if (s[i] == 0) {
-					return;
-				}
+			if (previousBreakable > lineStartIndex) {
+				while (i > previousBreakable + 1) {
+					--i;
+					--x;
+					textWindow[x + TEXTBOX_WIDTH * y] = 0; // space char
+				}			
+			}
+
+			// Skip past whitespace
+			while (s[i] == ' ' || s[i] == '\n') {
 				++i;
 			}
 			c = s[i];
@@ -139,6 +141,8 @@ void printStringWithLayout(const UInt8 *s, UInt8 top, UInt8 firstIndent, UInt8 l
 			lineStartIndex = i;
 			previousBreakable = i;
 		}
+
+		if (c == 0) { return; } // End of string
 
 		textWindow[x + TEXTBOX_WIDTH * y] = toAtascii(c);
 		++x;

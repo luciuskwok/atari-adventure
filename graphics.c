@@ -4,6 +4,8 @@
 #include "text.h"
 #include "tiles.h"
 #include "map_overworld.h"
+#include "map_dungeons.h"
+#include "map_towns.h"
 #include "atari_memmap.h"
 #include <atari.h>
 
@@ -17,7 +19,7 @@ extern void __fastcall__ displayListInterrupt(void);
 #define PM_LEFT_MARGIN (52)
 #define SCREEN_WIDTH (24)
 #define CUR_TIMER (0x0600)
-#define P2_XPOS ((UInt8 *)0x0610)
+#define P3_XPOS ((UInt8 *)0x0610)
 #define BG_COLOR ((UInt8 *)0x0620)
 
 // Globals
@@ -177,7 +179,7 @@ void clearMapScreen(void) {
 	}
 	// Clear out the sprite overlays
 	for (i=0; i<9; ++i) {
-		P2_XPOS[i] = 0;
+		P3_XPOS[i] = 0;
 	}
 }
 
@@ -275,7 +277,7 @@ void layoutCurrentMap(UInt8 sightDistance) {
 
 	// Clear out the sprite overlays
 	for (x=0; x<9; ++x) {
-		P2_XPOS[x] = 0;
+		P3_XPOS[x] = 0;
 	}
 
 	// printDebugInfo("W $", mapFrameSize.width, 40);
@@ -369,7 +371,7 @@ void drawCurrentMap(PointU8 *center) {
 			
 		if (hasSpriteOverlay == 0) {
 			// Clear the sprite overlay for this row
-			P2_XPOS[row] = 0;
+			P3_XPOS[row] = 0;
 		}
 		screenIndex += screenRowSkip;
 	}
@@ -473,6 +475,15 @@ void setPlayerCursorVisible(UInt8 visible) {
 }
 
 
+void setTileOverlaySprite(const UInt8 *sprite, UInt8 column, UInt8 row) {
+	// Set horizontal position for tile
+	P3_XPOS[row] = PM_LEFT_MARGIN + 8 * column;
+	
+	// Draw sprite at vertical position
+	drawSprite(sprite, 8, 4, row * 8 + 16);
+}
+
+
 void drawSprite(const UInt8 *sprite, UInt8 length, UInt8 player, UInt8 y) {
 	// player: 0=missile, 1-4=p0-p3.
 	// this simplifies the math and allows both players and missiles to be addressed
@@ -484,14 +495,46 @@ void drawSprite(const UInt8 *sprite, UInt8 length, UInt8 player, UInt8 y) {
 	}
 }
 
+void setMultiSprite(const UInt8 *sprite, const SizeU8 *spriteSize, const PointU8 *position) {
+	UInt8 *spritePositions = (UInt8 *)HPOSP0;
+	UInt8 *pmbasePtr = (UInt8 *) (256 * spritePage + 384 + 128);
+	UInt8 spriteIndex = 0;
+	UInt8 stripeCount = spriteSize->width / 8;
+	UInt8 x = position->x;
+	UInt8 spriteHeight = spriteSize->height;
+	UInt8 yStart = position->y;
+	UInt8 yEnd = yStart + spriteHeight;
+	UInt8 i, y;
 
-void setTileOverlaySprite(const UInt8 *sprite, UInt8 column, UInt8 row) {
-	// Set horizontal position for tile
-	P2_XPOS[row] = PM_LEFT_MARGIN + 8 * column;
-	
-	// Draw sprite at vertical position
-	drawSprite(sprite, 8, 3, row * 8 + 16);
+	//printDebugInfo("Sans", (UInt16) spritePositions, 40);
+
+
+	// Hide sprites.
+	for (i=0; i<stripeCount; ++i) {
+		spritePositions[i] = 0;
+	}
+
+	// Copy sprite data into each stripe
+	for (i=0; i<stripeCount; ++i) {
+		for (y=0; y<112; ++y) {
+			if (yStart <= y && y < yEnd) {
+				pmbasePtr[y] = sprite[spriteIndex];
+				++spriteIndex;
+			} else {
+				pmbasePtr[y] = 0;
+			}
+		}
+		pmbasePtr += 128;
+	}
+
+
+	// Position sprites
+	for (i=0; i<stripeCount; ++i) {
+		spritePositions[i] = PM_LEFT_MARGIN + x;
+		x += 8;
+	}
 }
+
 
 void clearSprite(UInt8 player) {
 	UInt8 *pmbasePtr = (UInt8 *) (256 * spritePage + 384 + 128 * player);

@@ -13,7 +13,7 @@ PCOLR0 = $02C0		; Player 0 color
 PCOLR1 = $02C1		; Player 1 color
 
 CHBASE = $D409		; Character set
-HPOSP2 = $D002		; Player 2 horizontal position
+HPOSP3 = $D003		; Player 2 horizontal position
 COLPF0 = $D016		; 
 COLPF1 = $D017		; text luminance
 COLPF2 = $D018		; text background
@@ -27,7 +27,7 @@ STICK_TIMER = $0601	; Joystick countdown timer for repeating joystick moves
 DLI_ROW = $0602		; for keeping track of which scanline the DLI is on
 TEXT_LUM = $0603	; text luminance for text window
 TEXT_BG  = $0604	; text window background color
-P2_XPOS = $0610		; array of 9 bytes for repositioning player 2
+P3_XPOS = $0610		; array of 9 bytes for repositioning player 3
 BG_COLOR = $0620	; array of 10 bytes for changing background color, though first byte is ignored
 
 .proc _initVBI		; on entry: X=MSB, A=LSB
@@ -44,8 +44,8 @@ BG_COLOR = $0620	; array of 10 bytes for changing background color, though first
 
 	lda #0				; reset DLI_ROW
 	sta DLI_ROW
-	lda P2_XPOS			; HPOSP2 = P2_XPOS[0]
-	sta HPOSP2
+	lda P3_XPOS			; HPOSP2 = P3_XPOS[0]
+	sta HPOSP3
 
 	lda STICK_TIMER		; sets Z flag (Z=1 if joystick_timer is zero)
 	beq update_cursor	; skip decrement if already at zero
@@ -117,8 +117,8 @@ return:
 	cpx #9				; if DLI_ROW >= 9, skip to setting text color
 	bcs set_text_color
 	
-	lda P2_XPOS,X		; HPOSP2 = P2_XPOS[DLI_ROW]
-	sta HPOSP2
+	lda P3_XPOS,X		; HPOSP2 = P3_XPOS[DLI_ROW]
+	sta HPOSP3
 	bvc return_dli
 	
 set_text_color:

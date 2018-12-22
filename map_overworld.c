@@ -23,8 +23,8 @@ UInt8 overworldTileMap[] = {
 const UInt8 overworldColorTable[] = {
 	0x58, // PM0: purple / cursor color
 	0x58, // PM1: purple / cursor color
-	0x0F, // PM2: white / tile overlay
-	0x0F, // PM3: white / unused
+	0x0F, // PM2: white / unused
+	0x0F, // PM3: white / tile overlay
 	0x1C, // 0: yellow / desert
 	0x22, // 1: dark brown / plains
 	0xC6, // 2: green / forest

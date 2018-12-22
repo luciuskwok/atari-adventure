@@ -270,29 +270,49 @@ void printStatText(void) {
 
 
 void presentDialog(void) {
-	UInt8 gradient[] = { 0x94, 0x96, 0x98, 0x9C, 0xC4, 0xC6, 0xC8, 0xC8, 0xCA, 0xCA };
-	UInt8 message[] = "Ellie: How are you doing today?  The teacher was totally unfair.  "
-		"C'mon, let's go to the beach!";
-	// UInt8 x;
+	UInt8 dialogColorTable[] = {
+		0x0F, 0x0F, 0x0F, 0x0F, // white for sprites
+		0x00, 0x06, 0x0A, 0x0E, 0x94 // grayscale for playfield
+	};
+	UInt8 gradient[] = { 0x92, 0x94, 0x94, 0x96, 0xC2, 0xC4, 0xC6, 0xC6, 0xC8, 0xC8 };
+	PointU8 sansPosition = { 48, 40 };
+	const UInt8 msg1[] = "Sans: Why are graveyards so noisy?\n Because of all the *coffin*!";
+	const UInt8 msg2[] = "Ellie: How are you doing today?\n That teacher was totally unfair.\n C'mon, let's go to the beach!";
+	const UInt8 msg3[] = "Sans: Who was that?   And    why \n    are    you taking    over my   chat  box?     Anyone?";
+	const UInt8 *messages[3];
+	UInt8 i;
+
+	// More messages
+	// "Ellie: How are you doing today?  That teacher was totally unfair.  C'mon, let's go to the beach!";
 
 
 	// Set up graphics window
 	setPlayerCursorVisible(0);
 	clearMapScreen();
+	loadColorTable(dialogColorTable);
 	setBackgroundGradient(gradient);
-
 
 	// Set up text window
 	clearTextWindow();
 	setTextWindowColorTheme(1);
 
-	// Print some text
-	printStringWithLayout(message, 0, 0, 4, 0);
+	// Add Sans
+	setMultiSprite(sansSprite, &sansSpriteSize, &sansPosition);
 
-	// Wait for trigger
-	waitForAnyInput();
+	// Loop through messages
+	messages[0] = msg1;
+	messages[1] = msg2;
+	messages[2] = msg3;
+	for (i=0; i<3; ++i) {
+		clearTextWindow();
+		printStringWithLayout(messages[i], 1, 1, 5, 0);
+		waitForAnyInput();
+	}
 
 	// Restore map
+	for (i=1; i<=3; ++i) {
+		clearSprite(i);
+	}
 	blackOutColorTable();
 	setTextWindowColorTheme(0);
 	setBackgroundGradient(NULL);
