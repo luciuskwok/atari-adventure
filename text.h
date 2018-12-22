@@ -1,8 +1,5 @@
 // text.h
 
-#ifndef TEXT_H
-#define TEXT_H
-
 #include "types.h"
 
 void printCharaStats(UInt8 player, const UInt8 *name, UInt8 level, UInt8 hp, UInt8 maxHp);
@@ -16,5 +13,3 @@ void printDebugInfo(const UInt8 *label, UInt16 value, UInt8 position);
 
 // Obsolete
 void printAllTiles(void);
-
-#endif

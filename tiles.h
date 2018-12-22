@@ -1,8 +1,5 @@
 // tiles.h
 
-#ifndef TILES_H
-#define TILES_H
-
 #include "types.h"
 
 
@@ -68,4 +65,3 @@ extern const UInt8 tileSprites[];
 extern const UInt8 sansMegaSprite[];
 extern const UInt8 sansMegaSpriteLength;
 
-#endif

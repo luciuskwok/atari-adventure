@@ -1,8 +1,5 @@
 // string.h
 
-#ifndef STRING_H
-#define STRING_H
-
 #include "types.h"
 
 void numberString(UInt8 *outString, UInt8 thousandsSeparator, SInt32 value);
@@ -12,4 +9,3 @@ void appendString(UInt8 *ioString, const UInt8 *append);
 
 UInt8 toAtascii(UInt8 c);
 
-#endif

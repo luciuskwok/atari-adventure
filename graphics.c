@@ -3,16 +3,15 @@
 #include "graphics.h"
 #include "text.h"
 #include "tiles.h"
-#include "map_overworld.h"
-#include "map_dungeons.h"
-#include "map_towns.h"
+#include "map.h"
 #include "atari_memmap.h"
 #include <atari.h>
 
 
 extern void __fastcall__ initVBI(void *addr);
 extern void __fastcall__ immediateUserVBI(void);
-extern void __fastcall__ displayListInterrupt(void);
+extern void __fastcall__ mapViewDLI(void);
+extern void __fastcall__ storyViewDLI(void);
 
 
 // Constants
@@ -24,10 +23,6 @@ extern void __fastcall__ displayListInterrupt(void);
 
 // Globals
 UInt8 *textWindow;
-const UInt8 *currentRunLenMap;
-UInt8 *currentTileMap;
-SizeU8 currentMapSize;
-UInt8 currentMapType;
 
 // Private globals 
 UInt8 spritePage; // shadow of ANTIC hardware register, which cannot be read
@@ -57,7 +52,7 @@ void initGraphics(void) {
 	
 	// == Set up interrupts ==
 	initVBI(immediateUserVBI); // Safe value: 0xE45F
-	POKEW (VDSLST, (UInt16)displayListInterrupt);
+	POKEW (VDSLST, (UInt16)mapViewDLI);
 	ANTIC.nmien = 0xC0; // enable both DLI and VBI
 
 	// == Use scrolling to center the odd number of tiles ==
@@ -184,27 +179,6 @@ void clearMapScreen(void) {
 }
 
 
-void loadMap(UInt8 mapType, UInt8 variation) {
-	switch (mapType) {
-		case OverworldMapType: 
-			currentRunLenMap = overworldRleMap;
-			currentMapSize = overworldMapSize;
-			currentTileMap = overworldTileMap;
-			break;
-		case DungeonMapType: 
-			currentRunLenMap = dungeonRleMap;
-			currentMapSize = dungeonMapSize;
-			currentTileMap = dungeonTileMap;
-			break;
-		case TownMapType: 
-			currentRunLenMap = townRleMap;
-			currentMapSize = townMapSize;
-			currentTileMap = townTileMap;
-			break;
-	}
-	currentMapType = mapType;
-}
-
 // ==========================================================================
 // ==== Color Table ====
 
@@ -213,21 +187,6 @@ void blackOutColorTable(void) {
 	UInt8 i;
 	for (i=0; i<9; ++i) {
 		p[i] = 0;
-	}
-}
-
-void loadColorTableForCurrentMap(void) {
-	switch (currentMapType) {
-		case DungeonMapType: 
-			loadColorTable(dungeonColorTable);
-			break;
-		case TownMapType: 
-			loadColorTable(townColorTable);
-			break;
-		case OverworldMapType: 
-		default:
-			loadColorTable(overworldColorTable);
-			break;
 	}
 }
 
@@ -409,44 +368,6 @@ void decodeRunLenRange(UInt8 *outData, UInt8 start, UInt8 end, const UInt8 *runL
 
 
 
-// ==========================================================================
-// Getting Map Info
-
-
-UInt8 mapTileAt(PointU8 *pt) {
-	const UInt8 *runLenPtr = currentRunLenMap;
-	UInt8 x = pt->x;
-	UInt8 y = pt->y;
-	UInt8 tile, i;
-
-	// Skip to row
-	for (i=0; i<y; ++i) {
-		runLenPtr += runLenPtr[0];
-	}
-
-	// Get tile
-	decodeRunLenRange(&tile, x, x+1, runLenPtr);
-
-	// Convert to character value
-	return currentTileMap[tile];
-}
-
-PointU8 mapEntryPoint(UInt8 mapType) {
-	PointU8 pt = {0,0};
-
-	switch (mapType) {
-	case OverworldMapType: 
-		pt = overworldEntryPoint;
-		break;
-	case DungeonMapType: 
-		pt = dungeonEntryPoint;
-		break;
-	case TownMapType: 
-		pt = townEntryPoint;
-		break;
-	}
-	return pt;
-}
 
 
 // ==========================================================================
@@ -584,46 +505,6 @@ void hideAllSprites(void) {
 	UInt8 i;
 	for (i=0; i<8; ++i) {
 		spritePositions[i] = 0;
-	}
-}
-
-
-// ==========================================================================
-// ==== Testing ====
-
-
-void decodeRunLenMap(UInt8 *outMap, UInt16 mapLength, const UInt8 *inRunLenMap) {
-	UInt16 rowEnd;
-	UInt16 rleIndex = 0;
-	UInt16 outIndex = 0;
-	UInt8 op, tile, count;
-
-	while (outIndex < mapLength) {
-		rowEnd = rleIndex + inRunLenMap[rleIndex];
-		++rleIndex;
-
-		while (rleIndex < rowEnd) {
-			op = inRunLenMap[rleIndex];
-			++rleIndex;
-
-			tile = (op & 0xF0) >> 4;
-			count = (op & 0x0F);
-
-			if (count == 15) {
-				count += inRunLenMap[rleIndex];
-				++rleIndex;
-			}
-
-			//printDebugInfo("Tile:", tile, 0);
-			//printDebugInfo("Count:", count, 10);
-
-			++count;
-			while (count > 0) {
-				outMap[outIndex] = tile;
-				++outIndex;
-				--count;
-			}
-		}
 	}
 }
 

@@ -6,7 +6,8 @@
 
 .export _initVBI
 .export _immediateUserVBI
-.export _displayListInterrupt
+.export _mapViewDLI
+.export _storyViewDLI
 
 .code
 PCOLR0 = $02C0		; Player 0 color
@@ -99,7 +100,7 @@ return:
 	jmp $E45F			; jump to the OS immediate VBI routine
 .endproc
 
-.proc _displayListInterrupt
+.proc _mapViewDLI
 	pha					; push accumulator and X register onto stack
 	txa
 	pha
@@ -110,9 +111,6 @@ return:
 	tax
 	sta DLI_ROW
 	sta WSYNC			; wait for horizontal sync
-
-	lda BG_COLOR,X 		; set background color for each row
-	sta COLPF4
 
 	cpx #9				; if DLI_ROW >= 9, skip to setting text color
 	bcs set_text_color
@@ -126,6 +124,39 @@ set_text_color:
 	sta COLPF1
 	lda TEXT_BG			; text window background color
 	sta COLPF2
+	bvc return_dli
+
+return_dli:	
+	pla					; restore accumulator and X register from stack
+	tax
+	pla
+	rti
+.endproc
+
+.proc _storyViewDLI
+	pha					; push accumulator and X register onto stack
+	txa
+	pha
+	
+	lda DLI_ROW			; Check DLI_ROW
+	tax
+	clc
+	adc #1				; ++DLI_ROW
+	sta DLI_ROW
+	sta WSYNC			; wait for horizontal sync
+
+	lda BG_COLOR,X 		; set background color for each row
+	sta COLPF4
+
+	cpx #72				; if DLI_ROW >= 72, set colors for text window
+	bcc set_text_color
+	
+set_text_color:
+	lda TEXT_LUM		; text window text luminance
+	sta COLPF1
+	lda TEXT_BG			; text window background color
+	sta COLPF2
+	bvc return_dli
 
 return_dli:	
 	pla					; restore accumulator and X register from stack
