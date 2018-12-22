@@ -29,7 +29,6 @@ UInt8 sightDistance;
 
 // Function prototypes
 void runLoop(void);
-void resetAttractMode(void);
 void handleStick(void);
 void handleTrigger(void);
 UInt8 canMoveTo(PointU8*);
@@ -45,9 +44,9 @@ void waitForAnyInput(void);
 
 
 
-// Constants
+// Constants and macros
 #define STICK_TIMER (0x0601)
-
+#define RESET_ATTRACT_MODE (POKE(ATRACT, 0))
 
 
 // == main() == 
@@ -68,29 +67,22 @@ int main (void) {
 	// Load map
 	exitToOverworld();
 	setTextWindowColorTheme(0);
-	//printStatText();
+	printStatText();
 	setPlayerCursorVisible(1);
 
 	
 	while (gQuit == 0) {
-		//startNewGame();
 		runLoop();
-		resetAttractMode();
+		RESET_ATTRACT_MODE;
 	}
 
 	return 0; // success
 }
 
 
-
 void runLoop(void) {
 	handleStick();
 	handleTrigger();
-}
-
-
-void resetAttractMode(void) {
-	POKE(ATRACT, 0);
 }
 
 
@@ -308,18 +300,14 @@ void presentDialog(void) {
 }
 
 void waitForAnyInput(void) {
-	UInt8 trigger;
-	trigger = PEEK (STRIG0);
-
 	// Wait for trigger to be released first.
 	while (PEEK(STRIG0) == 0) {
 	}
 
 	// Then wait for trigger to be pressed
 	while (PEEK(STRIG0) != 0) {
-		resetAttractMode();
+		RESET_ATTRACT_MODE;
 	}
-
 }
 
 

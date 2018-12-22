@@ -17,7 +17,6 @@ void initDisplayList(UInt8 startPage);
 void selectDisplayList(UInt8 index);
 void initFont(UInt8 fontPage);
 void initSprites(void);
-void clearMapScreen(void);
 void hidePlayfieldAndSprites(void);
 
 // Color Table
@@ -31,11 +30,4 @@ void drawSprite(const UInt8 *sprite, UInt8 length, UInt8 player, UInt8 y);
 void setMegaSprite(const UInt8 *sprite, const UInt8 length, const PointU8 *position, UInt8 magnification);
 void clearSprite(UInt8 player);
 
-
-// Constants
-enum MapTypes {
-	OverworldMapType = 0,
-	DungeonMapType = 1,
-	TownMapType = 2,
-};
 

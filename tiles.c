@@ -2,7 +2,6 @@
 
 #include "tiles.h"
 
-
 const UInt8 tileBitmaps[] = { 
 tCastle   , 0x00, 0x00, 0x22, 0x1C, 0x1C, 0x18, 0x22, 0x00, // Castle bkgnd
 tTown     , 0x00, 0x00, 0x28, 0x00, 0x28, 0x00, 0x00, 0x00, // Town bkgnd
@@ -72,6 +71,7 @@ High nybble indicates the tileChar to use.
 Low nybble stores the number of repeated tiles in addition to the first one.
 If low nybble is 0xF, the next byte contains an 8-bit value to add to the repeat.
 */
+
 
 
 

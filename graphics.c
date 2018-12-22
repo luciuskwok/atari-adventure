@@ -79,9 +79,9 @@ void initGraphics(void) {
 	ANTIC.hscrol = 4;
 
 	// Debugging
-	print16bitValue("Map DL: ", (UInt16)mapViewDisplayList, 1, 1);
-	print16bitValue("Story DL: ", (UInt16)storyViewDisplayList, 1, 2);
-	print16bitValue("textWindow: ", (UInt16)textWindow, 1, 3);	
+	// print16bitValue("Map DL: ", (UInt16)mapViewDisplayList, 1, 1);
+	// print16bitValue("Story DL: ", (UInt16)storyViewDisplayList, 1, 2);
+	// print16bitValue("textWindow: ", (UInt16)textWindow, 1, 3);	
 
 }
 
@@ -226,8 +226,6 @@ void initFont(UInt8 fontPage) {
 	// It seems that the text window area truncates the value to a multple of 4, 
 	// neatly allowing for regular characters there.
 	POKE(CHBAS, fontPage + 2);
-
-	//print8bitValue("End Font: ", fontPage, 1, 5);
 }
 
 
@@ -250,20 +248,6 @@ void initSprites(void) {
 	ANTIC.pmbase = spritePage;
 	POKE (GPRIOR, 0x01); // layer players above playfield.
 	GTIA_WRITE.gractl = 3; // enable both missile and player graphics
-}
-
-
-void clearMapScreen(void) {
-	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
-	UInt8 i;
-	// Screen is made up of 9 lines * 24 tiles = 216 tiles
-	for (i=0; i<(9*24); ++i) {
-		screen[i] = 0;
-	}
-	// Clear out the sprite overlays
-	for (i=0; i<9; ++i) {
-		P3_XPOS[i] = 0;
-	}
 }
 
 
@@ -356,8 +340,6 @@ void setTileOverlaySprite(const UInt8 *sprite, UInt8 column, UInt8 row) {
 	// Set horizontal position for tile
 	P3_XPOS[row] = PM_LEFT_MARGIN + 8 * column + 4;
 	GTIA_WRITE.sizep3 = 0;
-	
-	// Draw sprite at vertical position
 	drawSprite(sprite, 8, 4, row * 8 + 16);
 }
 
@@ -367,7 +349,6 @@ void drawSprite(const UInt8 *sprite, UInt8 length, UInt8 player, UInt8 y) {
 	// this simplifies the math and allows both players and missiles to be addressed
 	UInt8 *p = (UInt8 *) (384 + 256 * spritePage + 128 * player + y);
 	UInt8 i;
-	
 	for (i=0; i<length; ++i) {
 		p[i] = sprite[i];
 	}
@@ -430,8 +411,6 @@ void setMegaSprite(const UInt8 *sprite, const UInt8 length, const PointU8 *posit
 	x += 2 * magnification;
 	spritePositions[4] = x;
 	spritePositions[6] = x;
-
-
 }
 
 
@@ -443,5 +422,4 @@ void clearSprite(UInt8 player) {
 		pmbasePtr[i] = 0;
 	}
 }
-
 

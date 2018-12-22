@@ -92,6 +92,20 @@ void loadMap(UInt8 mapType, UInt8 sightDistance, PointU8 *location) {
 }
 
 
+void clearMapScreen(void) {
+	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
+	UInt8 i;
+	// Screen is made up of 9 lines * 24 tiles = 216 tiles
+	for (i=0; i<(9*24); ++i) {
+		screen[i] = 0;
+	}
+	// Clear out the sprite overlays
+	for (i=0; i<9; ++i) {
+		P3_XPOS[i] = 0;
+	}
+}
+
+
 void layoutCurrentMap(UInt8 sightDistance) {
 	UInt8 x, halfWidth, halfHeight;
 

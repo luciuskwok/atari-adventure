@@ -3,6 +3,10 @@
 #include "types.h"
 
 
+#ifndef TILES_H
+#define TILES_H
+
+
 // Color constants
 #define DesertColor (0x00)
 #define PlainsColor (0x40)
@@ -65,3 +69,4 @@ extern const UInt8 tileSprites[];
 extern const UInt8 sansMegaSprite[];
 extern const UInt8 sansMegaSpriteLength;
 
+#endif
