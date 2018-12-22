@@ -206,9 +206,10 @@ void loadMap(UInt8 mapType, UInt8 variation) {
 // ==== Color Table ====
 
 void blackOutColorTable(void) {
-	UInt8 x;
-	for (x=0; x<7; ++x) {
-		POKE(PCOLR2 + x, 0);
+	UInt8 *p = (UInt8*)(PCOLR0);
+	UInt8 i;
+	for (i=0; i<9; ++i) {
+		p[i] = 0;
 	}
 }
 
@@ -228,12 +229,11 @@ void loadColorTableForCurrentMap(void) {
 }
 
 void loadColorTable(const UInt8 *colors) {
+	UInt8 *p = (UInt8*)(PCOLR0);
 	UInt8 i;
-	for (i=0; i<5; ++i) {
-		POKE(COLOR0 + i, colors[i]);
+	for (i=0; i<9; ++i) {
+		p[i] = colors[i];
 	}
-
-	POKE (PCOLR2, 0x0F); // Sprite overlay: white
 }
 
 void setBackgroundGradient(const UInt8 *colors) {

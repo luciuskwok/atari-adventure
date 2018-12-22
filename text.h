@@ -15,7 +15,6 @@ void printStringWithLayout(const UInt8 *s, UInt8 top, UInt8 firstIndent, UInt8 l
 void printDebugInfo(const UInt8 *label, UInt16 value, UInt8 position);
 
 // Obsolete
-void printColorString(const UInt8 *s, UInt8 color, UInt8 x, UInt8 y);
 void printAllTiles(void);
 
 #endif

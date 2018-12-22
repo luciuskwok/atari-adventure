@@ -3,8 +3,7 @@
 #include "text.h"
 #include "graphics.h"
 #include "string.h"
-#include "tiles.h"
-#include "atari_memmap.h"
+//#include "atari_memmap.h"
 #include <atari.h>
 
 
@@ -162,25 +161,6 @@ void printDebugInfo(const UInt8 *label, UInt16 value, UInt8 position) {
 
 
 // Obsolete
-
-
-void printColorString(const UInt8 *s, UInt8 color, UInt8 x, UInt8 y) {
-	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
-	UInt8 index = 0;
-	UInt8 c;
-	
-	while (c = s[index]) {
-		if (c < 0x20) {
-			c += 0x40;
-		} else if (c < 0x60) {
-			c -= 0x20;
-		}
-		c += (color * 64);
-		screen[(UInt16)x + TEXTBOX_WIDTH * (UInt16)y] = c;
-		++x;
-		++index;
-	}
-}
 
 
 void printAllTiles(void) {

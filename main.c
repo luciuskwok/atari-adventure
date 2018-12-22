@@ -85,7 +85,7 @@ int main (void) {
 	// Load map
 	exitToOverworld();
 	setTextWindowColorTheme(0);
-	//printStatText();
+	printStatText();
 	setPlayerCursorVisible(1);
 	
 	while (gQuit == 0) {

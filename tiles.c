@@ -66,6 +66,10 @@ UInt8 overworldTileMap[] = {
 	tCave     | PlainsColor,
 };
 const UInt8 overworldColorTable[] = {
+	0x58, // PM0: purple / cursor color
+	0x58, // PM1: purple / cursor color
+	0x0F, // PM2: white / tile overlay
+	0x0F, // PM3: white / unused
 	0x1C, // 0: yellow / desert
 	0x22, // 1: dark brown / plains
 	0xC6, // 2: green / forest
@@ -150,6 +154,10 @@ UInt8 dungeonTileMap[] = {
 	tChest   | DungeonChestColor,
 };
 const UInt8 dungeonColorTable[] = {
+	0x58, // PM0: purple / cursor color
+	0x58, // PM1: purple / cursor color
+	0x0F, // PM2: white / tile overlay
+	0x0F, // PM3: white / unused
 	0x06, // 0: wall: dark grey
 	0x90, // 1: floor: dark blue
 	0xBA, // 2: exit: light green
@@ -196,6 +204,10 @@ UInt8 townTileMap[] = {
 	tHouseDoor| TownGrayColor, // 13, passable
 };
 const UInt8 townColorTable[] = {
+	0x58, // PM0: purple / cursor color
+	0x58, // PM1: purple / cursor color
+	0x0F, // PM2: white / tile overlay
+	0x0F, // PM3: white / unused
 	0x0A, // 0: gray
 	0x32, // 1: dark red
 	0xC6, // 2: green
