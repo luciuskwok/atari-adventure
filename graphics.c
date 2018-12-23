@@ -138,9 +138,9 @@ void initDisplayList(UInt8 startPage) {
 
 	// == Story View DL ==
 	x = 0;
-	for (i=0; i<3; ++i) {
-		storyViewDisplayList[x++] = DL_BLK8;
-	}
+	storyViewDisplayList[x++] = DL_BLK8;
+	storyViewDisplayList[x++] = DL_BLK8;
+	storyViewDisplayList[x++] = DL_BLK6; // 2 fewer scanlines here to allow 2 blank scanlines between raster image and text window
 
 	storyViewDisplayList[x++] = rasterLine | dl_LMS;
 	storyViewDisplayList[x++] = (UInt16)screen % 256;
@@ -150,8 +150,8 @@ void initDisplayList(UInt8 startPage) {
 		storyViewDisplayList[x++] = rasterLine; // DLI on every tile row
 	}
 	
-	// Needs at least 1 blank scanline for DLI to change text window colors in time
-	storyViewDisplayList[x++] = DL_BLK1; 
+	// Needs blank scanline for DLI to change text window colors in time
+	storyViewDisplayList[x++] = DL_BLK2; 
 
 	// Text window
 	storyViewDisplayList[x++] = textWindowLine | dl_LMS;
