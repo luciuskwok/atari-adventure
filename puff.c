@@ -17,10 +17,8 @@
 
 
 /* Profiling data */
-UInt16 profiling_bits_called = 0;
-UInt16 profiling_stored_called = 0;
-UInt16 profiling_decode_called = 0;
-UInt16 profiling_codes_called = 0;
+UInt16 profiling_checkpoint[4];
+#define SHORT_CLOCK (PEEK(20) + 256 * PEEK(19))
 
 
 
@@ -56,8 +54,6 @@ struct state {
 local UInt16 bits(struct state *s, UInt8 need)
 {
     long val;           /* bit accumulator (can use up to 20 bits) */
-
-    ++profiling_bits_called;
 
     /* load at least need bits into val */
     val = s->bitbuf;
@@ -97,8 +93,6 @@ local UInt16 bits(struct state *s, UInt8 need)
 local SInt8 stored(struct state *s)
 {
     UInt16 len;       /* length of stored block */
-
-    ++profiling_stored_called;
 
     /* discard leftover bits from current byte (assumes s->bitcnt < 8) */
     s->bitbuf = 0;
@@ -205,8 +199,6 @@ local SInt16 decode(struct state *s, const struct huffman *h)
     int bitbuf;         /* bits from stream */
     SInt8 left;           /* bits left in next or left to process */
     short *next;        /* next number of codes */
-
-	++profiling_decode_called;
 
     bitbuf = s->bitbuf;
     left = s->bitcnt;
@@ -395,8 +387,6 @@ local SInt8 codes(struct state *s,
         0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6,
         7, 7, 8, 8, 9, 9, 10, 10, 11, 11,
         12, 12, 13, 13};
-
-	++profiling_codes_called;
 
     /* decode literals and length/distance pairs */
     do {
@@ -618,6 +608,8 @@ local SInt8 dynamic(struct state *s)
     static const UInt8 order[19] =      /* permutation of code length codes */
         {16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15};
 
+    profiling_checkpoint[0] = SHORT_CLOCK;
+
     /* construct lencode and distcode */
     lencode.count = lencnt;
     lencode.symbol = dynamic_lensym;
@@ -641,6 +633,8 @@ local SInt8 dynamic(struct state *s)
     err = construct(&lencode, dynamic_lengths, 19);
     if (err != 0)               /* require complete code set here */
         return -4;
+
+    profiling_checkpoint[1] = SHORT_CLOCK;
 
     /* read length/literal and distance code length tables */
     index = 0;
@@ -676,6 +670,8 @@ local SInt8 dynamic(struct state *s)
     if (dynamic_lengths[256] == 0)
         return -9;
 
+    profiling_checkpoint[2] = SHORT_CLOCK;
+
     /* build huffman table for literal/length codes */
     err = construct(&lencode, dynamic_lengths, nlen);
     if (err && (err < 0 || nlen != lencode.count[0] + lencode.count[1]))
@@ -685,6 +681,8 @@ local SInt8 dynamic(struct state *s)
     err = construct(&distcode, dynamic_lengths + nlen, ndist);
     if (err && (err < 0 || ndist != distcode.count[0] + distcode.count[1]))
         return -8;      /* incomplete code ok only for single length 1 code */
+
+    profiling_checkpoint[3] = SHORT_CLOCK;
 
     /* decode data until end-of-block code */
     return codes(s, &lencode, &distcode);

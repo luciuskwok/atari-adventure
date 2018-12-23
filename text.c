@@ -152,8 +152,16 @@ void printStringWithLayout(const UInt8 *s, UInt8 top, UInt8 firstIndent, UInt8 l
 }
 
 
+void printDecimal16bitValue(const UInt8 *label, UInt16 value, UInt8 x, UInt8 y) {
+	UInt8 s[7];
+	UInt8 labelLength = strlen(label);	
+	numberString(s, 0, value);
+	printString(label, x, y);
+	printString(s, x + labelLength, y);
+}
 
-void print16bitValue(const UInt8 *label, UInt16 value, UInt8 x, UInt8 y) {
+
+void printHex16bitValue(const UInt8 *label, UInt16 value, UInt8 x, UInt8 y) {
 	// Prints a label and a hex value in the text box area.
 	UInt8 hexStr[5];
 	UInt8 labelLength = strlen(label);
@@ -164,7 +172,7 @@ void print16bitValue(const UInt8 *label, UInt16 value, UInt8 x, UInt8 y) {
 }
 
 
-void print8bitValue(const UInt8 *label, UInt8 value, UInt8 x, UInt8 y) {
+void printHex8bitValue(const UInt8 *label, UInt8 value, UInt8 x, UInt8 y) {
 	// Prints a label and a hex value in the text box area.
 	UInt8 hexStr[3];
 	UInt8 labelLength = strlen(label);

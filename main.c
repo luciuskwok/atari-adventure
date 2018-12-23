@@ -142,8 +142,8 @@ void printDebuggingInfo(void) {
 	UInt16 screen = PEEKW(SAVMSC);
 
 	clearTextWindow();
-	print16bitValue("DL: ", dl, 1, 1);
-	print16bitValue("SCR:", screen, 1, 2);
+	printHex16bitValue("DL: ", dl, 1, 1);
+	printHex16bitValue("SCR:", screen, 1, 2);
 
 }
 
@@ -170,17 +170,23 @@ void drawImage(const UInt8 *data, UInt16 length) {
 	UInt16 duration;
 	SInt8 result;
 
+	// Turn Antic off while drawing to test if it's any faster
+	POKE (SDMCTL, 0);
+
 	result = puff(screen, &screenLen, data, &length);
 
+	// Turn Antic back on
+	POKE (SDMCTL, 0x2E); // standard playfield + missile DMA + player DMA + display list DMA
+
 	duration = SHORT_CLOCK - startTime;
-	print16bitValue("Timing: ", duration, 1, 0);
-	print8bitValue("Result: ", result, 1, 2);
+	printDecimal16bitValue("Total: ", duration, 1, 0);
+	printHex8bitValue("Result: ", result, 1, 2);
 	printString("Press fire to continue.", 1, 4);
 
-	print16bitValue("bits(): ", profiling_bits_called, 20, 0);
-	print16bitValue("stored(): ", profiling_stored_called, 20, 1);
-	print16bitValue("decode(): ", profiling_decode_called, 20, 2);
-	print16bitValue("codes(): ", profiling_codes_called, 20, 3);
+	printDecimal16bitValue("Check 0: ", profiling_checkpoint[0] - startTime, 20, 0);
+	printDecimal16bitValue("Check 1: ", profiling_checkpoint[1] - startTime, 20, 1);
+	printDecimal16bitValue("Check 2: ", profiling_checkpoint[2] - startTime, 20, 2);
+	printDecimal16bitValue("Check 3: ", profiling_checkpoint[3] - startTime, 20, 3);
 
 	waitForAnyInput();
 
@@ -217,10 +223,9 @@ void presentDialog(void) {
 	setPlayerCursorVisible(0);
 	loadColorTable(dialogColorTable);
 	setBackgroundGradient(gradient);
-	selectDisplayList(1);
-
 	clearTextWindow();
 	setTextWindowColorTheme(1);
+	selectDisplayList(2);
 
 	drawImage(testImage, testImageLength);
 
@@ -240,7 +245,7 @@ void presentDialog(void) {
 	// Reload map
 	hidePlayfieldAndSprites();
 	setTextWindowColorTheme(0);
-	selectDisplayList(0);
+	selectDisplayList(1);
 	loadMap(currentMapType, sightDistance, &playerMapLocation);
 
 	printStatText();

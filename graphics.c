@@ -71,7 +71,7 @@ void initGraphics(void) {
 	// Set color table to all black and change the display list
 	//hidePlayfieldAndSprites();
 	initDisplayList(ramtopValue - 12);
-	selectDisplayList(0);
+	selectDisplayList(1);
 	initSprites();
 	initFont(ramtopValue - 20);
 	
@@ -172,14 +172,16 @@ void selectDisplayList(UInt8 index) {
 	ANTIC.nmien = 0x40;
 
 	switch (index) {
-	case 1: // Story view
-		POKEW (SDLSTL, (UInt16)storyViewDisplayList);
-		POKEW (VDSLST, (UInt16)storyViewDLI);
-		break;
-	default: // Map view
+	case 1: // Map view
 		POKEW (SDLSTL, (UInt16)mapViewDisplayList);
 		POKEW (VDSLST, (UInt16)mapViewDLI);
 		break;
+	case 2: // Story view
+		POKEW (SDLSTL, (UInt16)storyViewDisplayList);
+		POKEW (VDSLST, (UInt16)storyViewDLI);
+		break;
+	default: // No DL: keep everything off.
+		return;
 	}
 
 	ANTIC.nmien = 0xC0; // enable both DLI and VBI
