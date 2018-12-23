@@ -15,6 +15,15 @@
 #define MAXCODES (MAXLCODES+MAXDCODES)  /* maximum codes lengths to read */
 #define FIXLCODES 288           /* number of fixed literal/length codes */
 
+
+/* Profiling data */
+UInt16 profiling_bits_called = 0;
+UInt16 profiling_stored_called = 0;
+UInt16 profiling_decode_called = 0;
+UInt16 profiling_codes_called = 0;
+
+
+
 /* input and output state */
 struct state {
     /* output state */
@@ -47,6 +56,8 @@ struct state {
 local UInt16 bits(struct state *s, UInt8 need)
 {
     long val;           /* bit accumulator (can use up to 20 bits) */
+
+    ++profiling_bits_called;
 
     /* load at least need bits into val */
     val = s->bitbuf;
@@ -83,9 +94,11 @@ local UInt16 bits(struct state *s, UInt8 need)
  * - A stored block can have zero length.  This is sometimes used to byte-align
  *   subsets of the compressed data for random access or partial recovery.
  */
-local int stored(struct state *s)
+local SInt8 stored(struct state *s)
 {
     UInt16 len;       /* length of stored block */
+
+    ++profiling_stored_called;
 
     /* discard leftover bits from current byte (assumes s->bitcnt < 8) */
     s->bitbuf = 0;
@@ -154,13 +167,13 @@ struct huffman {
  *   in the deflate format.  See the format notes for fixed() and dynamic().
  */
 #ifdef SLOW
-local int decode(struct state *s, const struct huffman *h)
+local SInt16 decode(struct state *s, const struct huffman *h)
 {
-    int len;            /* current number of bits in code */
-    int code;           /* len bits being decoded */
-    int first;          /* first code of length len */
-    int count;          /* number of codes of length len */
-    int index;          /* index of first code of length len in symbol table */
+    UInt8 len;          /* current number of bits in code */
+    SInt16 code;        /* len bits being decoded */
+    SInt16 first;       /* first code of length len */
+    SInt16 count;       /* number of codes of length len */
+    SInt16 index;       /* index of first code of length len in symbol table */
 
     code = first = index = 0;
     for (len = 1; len <= MAXBITS; len++) {
@@ -182,16 +195,18 @@ local int decode(struct state *s, const struct huffman *h)
  * a few percent larger.
  */
 #else /* !SLOW */
-local int decode(struct state *s, const struct huffman *h)
+local SInt16 decode(struct state *s, const struct huffman *h)
 {
-    int len;            /* current number of bits in code */
+    SInt8 len;            /* current number of bits in code */
     int code;           /* len bits being decoded */
     int first;          /* first code of length len */
     int count;          /* number of codes of length len */
     int index;          /* index of first code of length len in symbol table */
     int bitbuf;         /* bits from stream */
-    int left;           /* bits left in next or left to process */
+    SInt8 left;           /* bits left in next or left to process */
     short *next;        /* next number of codes */
+
+	++profiling_decode_called;
 
     bitbuf = s->bitbuf;
     left = s->bitcnt;
@@ -199,7 +214,8 @@ local int decode(struct state *s, const struct huffman *h)
     len = 1;
     next = h->count + 1;
     while (1) {
-        while (left--) {
+        while (left) {
+        	--left;
             code |= bitbuf & 1;
             bitbuf >>= 1;
             count = *next++;
@@ -264,10 +280,10 @@ local int decode(struct state *s, const struct huffman *h)
  */
 local int construct(struct huffman *h, const short *length, int n)
 {
-    int symbol;         /* current symbol when stepping through length[] */
-    int len;            /* current length when stepping through h->count[] */
-    int left;           /* number of possible codes left of current length */
-    short offs[MAXBITS+1];      /* offsets in symbol table for each length */
+    UInt16 symbol;         /* current symbol when stepping through length[] */
+    UInt8 len;            /* current length when stepping through h->count[] */
+    SInt16 left;           /* number of possible codes left of current length */
+    SInt16 offs[MAXBITS+1];      /* offsets in symbol table for each length */
 
     /* count number of codes of each length */
     for (len = 0; len <= MAXBITS; len++)
@@ -358,27 +374,29 @@ local int construct(struct huffman *h, const short *length, int n)
  *   since though their behavior -is- defined for overlapping arrays, it is
  *   defined to do the wrong thing in this case.
  */
-local int codes(struct state *s,
+local SInt8 codes(struct state *s,
                 const struct huffman *lencode,
                 const struct huffman *distcode)
 {
-    int symbol;         /* decoded symbol */
-    int len;            /* length for copy */
-    unsigned dist;      /* distance for copy */
-    static const short lens[29] = { /* Size base for length codes 257..285 */
+    SInt16 symbol;         /* decoded symbol */
+    UInt16 len;            /* length for copy */
+    UInt16 dist;      /* distance for copy */
+    static const UInt16 lens[29] = { /* Size base for length codes 257..285 */
         3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31,
         35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258};
-    static const short lext[29] = { /* Extra bits for length codes 257..285 */
+    static const UInt8 lext[29] = { /* Extra bits for length codes 257..285 */
         0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2,
         3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 0};
-    static const short dists[30] = { /* Offset base for distance codes 0..29 */
+    static const UInt16 dists[30] = { /* Offset base for distance codes 0..29 */
         1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193,
         257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145,
         8193, 12289, 16385, 24577};
-    static const short dext[30] = { /* Extra bits for distance codes 0..29 */
+    static const UInt8 dext[30] = { /* Extra bits for distance codes 0..29 */
         0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6,
         7, 7, 8, 8, 9, 9, 10, 10, 11, 11,
         12, 12, 13, 13};
+
+	++profiling_codes_called;
 
     /* decode literals and length/distance pairs */
     do {
@@ -406,10 +424,8 @@ local int codes(struct state *s,
             if (symbol < 0)
                 return symbol;          /* invalid symbol */
             dist = dists[symbol] + bits(s, dext[symbol]);
-#ifndef INFLATE_ALLOW_INVALID_DISTANCE_TOOFAR_ARRR
             if (dist > s->outcnt)
                 return -11;     /* distance too far back */
-#endif
 
             /* copy length bytes from distance bytes back */
             if (s->out != NULL) {
@@ -417,10 +433,6 @@ local int codes(struct state *s,
                     return 1;
                 while (len--) {
                     s->out[s->outcnt] =
-#ifdef INFLATE_ALLOW_INVALID_DISTANCE_TOOFAR_ARRR
-                        dist > s->outcnt ?
-                            0 :
-#endif
                             s->out[s->outcnt - dist];
                     s->outcnt++;
                 }
@@ -463,9 +475,9 @@ short fixed_lensym[FIXLCODES];
 short fixed_distsym[MAXDCODES];
 short fixed_lengths[FIXLCODES];
 
-local int fixed(struct state *s)
+local SInt8 fixed(struct state *s)
 {
-    static int virgin = 1;
+    static UInt8 virgin = 1;
 	static short lencnt[MAXBITS+1];
 	static short distcnt[MAXBITS+1];
    	static struct huffman lencode, distcode;
@@ -595,7 +607,7 @@ local int fixed(struct state *s)
 short dynamic_lengths[MAXCODES];        /* descriptor code lengths */
 short dynamic_lensym[MAXLCODES];        /* lencode memory */
 short dynamic_distsym[MAXDCODES];       /* distcode memory */
-local int dynamic(struct state *s)
+local SInt8 dynamic(struct state *s)
 {
     int nlen, ndist, ncode;             /* number of lengths in descriptor */
     int index;                          /* index of lengths[] */
@@ -603,7 +615,7 @@ local int dynamic(struct state *s)
     short lencnt[MAXBITS+1];         /* lencode memory */
     short distcnt[MAXBITS+1];       /* distcode memory */
     struct huffman lencode, distcode;   /* length and distance codes */
-    static const short order[19] =      /* permutation of code length codes */
+    static const UInt8 order[19] =      /* permutation of code length codes */
         {16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15};
 
     /* construct lencode and distcode */
@@ -725,8 +737,8 @@ local int dynamic(struct state *s)
  */
 SInt8 puff(UInt8 *dest, UInt16 *destLen, const UInt8 *source, UInt16 *sourceLen) {
     struct state s;             /* input/output state */
-    int last, type;             /* block information */
-    int err;                    /* return value */
+    UInt8 last, type;             /* block information */
+    SInt8 err;                    /* return value */
 
     /* initialize output state */
     s.out = dest;

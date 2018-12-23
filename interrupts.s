@@ -139,7 +139,7 @@ return_dli:
 	sta COLPF4
 
 	cpx #72		
-	bcs return_dli		; if DLI_ROW >= 72, set colors for text window
+	bne return_dli		; if DLI_ROW >= 72, set colors for text window
 	
 	lda TEXT_LUM		; text window text luminance
 	sta COLPF1
