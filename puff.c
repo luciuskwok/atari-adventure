@@ -25,15 +25,15 @@ UInt16 profiling_checkpoint[4];
 struct state {
     /* output state */
     UInt8 *out;         /* output buffer */
-    unsigned long outlen;       /* available space at out */
-    unsigned long outcnt;       /* bytes written to out so far */
+    UInt16 outlen;       /* available space at out */
+    UInt16 outcnt;       /* bytes written to out so far */
 
     /* input state */
     const UInt8 *in;    /* input buffer */
-    unsigned long inlen;        /* available input at in */
-    unsigned long incnt;        /* bytes read so far */
-    int bitbuf;                 /* bit buffer */
-    int bitcnt;                 /* number of bits in bit buffer */
+    UInt16 inlen;        /* available input at in */
+    UInt16 incnt;        /* bytes read so far */
+    UInt8 bitbuf;                 /* bit buffer */
+    UInt8 bitcnt;                 /* number of bits in bit buffer */
 
     /* input limit error return state for bits() and decode() */
     jmp_buf env;
@@ -52,19 +52,19 @@ struct state {
  */
 local UInt16 bits(struct state *s, UInt8 need)
 {
-    long val;           /* bit accumulator (can use up to 20 bits) */
+    UInt32 val;           /* bit accumulator (can use up to 20 bits) */
 
     /* load at least need bits into val */
     val = s->bitbuf;
     while (s->bitcnt < need) {
         if (s->incnt == s->inlen)
             longjmp(s->env, 1);         /* out of input */
-        val |= (long)(s->in[s->incnt++]) << s->bitcnt;  /* load eight bits */
+        val |= (UInt32)(s->in[s->incnt++]) << s->bitcnt;  /* load eight bits */
         s->bitcnt += 8;
     }
 
     /* drop need bits and update buffer, always zero to seven bits left */
-    s->bitbuf = (int)(val >> need);
+    s->bitbuf = (UInt8)(val >> need);
     s->bitcnt -= need;
 
     /* return need bits, zeroing the bits above that */
@@ -132,8 +132,8 @@ local SInt8 stored(struct state *s)
  * seen in the function decode() below.
  */
 struct huffman {
-    short *count;       /* number of symbols of each length */
-    short *symbol;      /* canonically ordered symbols */
+    UInt16 *count;       /* number of symbols of each length */
+    UInt16 *symbol;      /* canonically ordered symbols */
 };
 
 /*
@@ -159,20 +159,21 @@ struct huffman {
  * - Incomplete codes are handled by this decoder, since they are permitted
  *   in the deflate format.  See the format notes for fixed() and dynamic().
  */
+//#define SLOW
 #ifdef SLOW
-local SInt16 decode(struct state *s, const struct huffman *h)
+local UInt16 decode(struct state *s, const struct huffman *h)
 {
     UInt8 len;          /* current number of bits in code */
-    SInt16 code;        /* len bits being decoded */
-    SInt16 first;       /* first code of length len */
-    SInt16 count;       /* number of codes of length len */
-    SInt16 index;       /* index of first code of length len in symbol table */
+    UInt16 code;        /* len bits being decoded */
+    UInt16 first;       /* first code of length len */
+    UInt16 count;       /* number of codes of length len */
+    UInt16 index;       /* index of first code of length len in symbol table */
 
     code = first = index = 0;
     for (len = 1; len <= MAXBITS; len++) {
         code |= bits(s, 1);             /* get next bit */
         count = h->count[len];
-        if (code - count < first)       /* if length len, return symbol */
+        if (code < first + count)       /* if length len, return symbol */
             return h->symbol[index + (code - first)];
         index += count;                 /* else update for next length */
         first += count;
@@ -188,29 +189,24 @@ local SInt16 decode(struct state *s, const struct huffman *h)
  * a few percent larger.
  */
 #else /* !SLOW */
-local SInt16 decode(struct state *s, const struct huffman *h)
+local UInt16 decode(struct state *s, const struct huffman *h)
 {
-    SInt8 len;            /* current number of bits in code */
-    int code;           /* len bits being decoded */
-    int first;          /* first code of length len */
-    int count;          /* number of codes of length len */
-    int index;          /* index of first code of length len in symbol table */
-    int bitbuf;         /* bits from stream */
-    SInt8 left;           /* bits left in next or left to process */
-    short *next;        /* next number of codes */
+    UInt8 len = 1;             /* current number of bits in code */
+    UInt16 code = 0;           /* len bits being decoded */
+    UInt16 first = 0;          /* first code of length len */
+    UInt16 index = 0;          /* index of first code of length len in symbol table */
+    UInt8 bitbuf = s->bitbuf;  /* bits from stream */
+    UInt8 left = s->bitcnt;    /* bits left in next or left to process */
+    UInt16 *next = h->count + 1;/* next number of codes */
+    UInt16 count;              /* number of codes of length len */
 
-    bitbuf = s->bitbuf;
-    left = s->bitcnt;
-    code = first = index = 0;
-    len = 1;
-    next = h->count + 1;
     while (1) {
         while (left) {
         	--left;
             code |= bitbuf & 1;
             bitbuf >>= 1;
             count = *next++;
-            if (code - count < first) { /* if length len, return symbol */
+            if (code < first + count) { /* if length len, return symbol */
                 s->bitbuf = bitbuf;
                 s->bitcnt = (s->bitcnt - len) & 7;
                 return h->symbol[index + (code - first)];
@@ -219,7 +215,7 @@ local SInt16 decode(struct state *s, const struct huffman *h)
             first += count;
             first <<= 1;
             code <<= 1;
-            len++;
+            ++len;
         }
         left = (MAXBITS+1) - len;
         if (left == 0)
@@ -269,7 +265,7 @@ local SInt16 decode(struct state *s, const struct huffman *h)
  * - Within a given code length, the symbols are kept in ascending order for
  *   the code bits definition.
  */
-local int construct(struct huffman *h, const short *length, int n)
+local int construct(struct huffman *h, const UInt16 *length, int n)
 {
     UInt16 symbol;         /* current symbol when stepping through length[] */
     UInt8 len;            /* current length when stepping through h->count[] */
@@ -277,16 +273,16 @@ local int construct(struct huffman *h, const short *length, int n)
     SInt16 offs[MAXBITS+1];      /* offsets in symbol table for each length */
 
     /* count number of codes of each length */
-    for (len = 0; len <= MAXBITS; len++)
+    for (len = 0; len <= MAXBITS; ++len)
         h->count[len] = 0;
-    for (symbol = 0; symbol < n; symbol++)
-        (h->count[length[symbol]])++;   /* assumes lengths are within bounds */
+    for (symbol = 0; symbol < n; ++symbol)
+        ++(h->count[length[symbol]]);   /* assumes lengths are within bounds */
     if (h->count[0] == n)               /* no codes! */
         return 0;                       /* complete, but decode() will fail */
 
     /* check for an over-subscribed or incomplete set of lengths */
     left = 1;                           /* one possible code of zero length */
-    for (len = 1; len <= MAXBITS; len++) {
+    for (len = 1; len <= MAXBITS; ++len) {
         left <<= 1;                     /* one more bit, double codes left */
         left -= h->count[len];          /* deduct count from possible codes */
         if (left < 0)
@@ -295,14 +291,14 @@ local int construct(struct huffman *h, const short *length, int n)
 
     /* generate offsets into symbol table for each length for sorting */
     offs[1] = 0;
-    for (len = 1; len < MAXBITS; len++)
+    for (len = 1; len < MAXBITS; ++len)
         offs[len + 1] = offs[len] + h->count[len];
 
     /*
      * put symbols in table sorted by length, by symbol order within each
      * length
      */
-    for (symbol = 0; symbol < n; symbol++)
+    for (symbol = 0; symbol < n; ++symbol)
         if (length[symbol] != 0)
             h->symbol[offs[length[symbol]]++] = symbol;
 
@@ -369,9 +365,6 @@ local SInt8 codes(struct state *s,
                 const struct huffman *lencode,
                 const struct huffman *distcode)
 {
-    SInt16 symbol;         /* decoded symbol */
-    UInt16 len;            /* length for copy */
-    UInt16 dist;      /* distance for copy */
     static const UInt16 lens[29] = { /* Size base for length codes 257..285 */
         3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31,
         35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258};
@@ -386,12 +379,15 @@ local SInt8 codes(struct state *s,
         0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6,
         7, 7, 8, 8, 9, 9, 10, 10, 11, 11,
         12, 12, 13, 13};
-
+ 	UInt16 symbol;         /* decoded symbol */
+    UInt16 len;            /* length for copy */
+    UInt16 dist;      /* distance for copy */
+ 
     /* decode literals and length/distance pairs */
     do {
         symbol = decode(s, lencode);
-        if (symbol < 0)
-            return symbol;              /* invalid symbol */
+        if (symbol > 288)
+            return -10;              /* invalid symbol */
         if (symbol < 256) {             /* literal: symbol is the byte */
             /* write out the literal */
             if (s->out != NULL) {
@@ -399,7 +395,7 @@ local SInt8 codes(struct state *s,
                     return 1;
                 s->out[s->outcnt] = symbol;
             }
-            s->outcnt++;
+            ++s->outcnt;
         }
         else if (symbol > 256) {        /* length */
             /* get and compute length */
@@ -410,8 +406,8 @@ local SInt8 codes(struct state *s,
 
             /* get and check distance */
             symbol = decode(s, distcode);
-            if (symbol < 0)
-                return symbol;          /* invalid symbol */
+            if (symbol > 288)
+                return -10;          /* invalid symbol */
             dist = dists[symbol] + bits(s, dext[symbol]);
             if (dist > s->outcnt)
                 return -11;     /* distance too far back */
@@ -423,7 +419,7 @@ local SInt8 codes(struct state *s,
                 while (len--) {
                     s->out[s->outcnt] =
                             s->out[s->outcnt - dist];
-                    s->outcnt++;
+                    ++s->outcnt;
                 }
             }
             else
@@ -460,20 +456,20 @@ local SInt8 codes(struct state *s,
  *   length, this can be implemented as an incomplete code.  Then the invalid
  *   codes are detected while decoding.
  */
-short fixed_lensym[FIXLCODES];
-short fixed_distsym[MAXDCODES];
-short fixed_lengths[FIXLCODES];
+UInt16 fixed_lensym[FIXLCODES];
+UInt16 fixed_distsym[MAXDCODES];
+UInt16 fixed_lengths[FIXLCODES];
 
 local SInt8 fixed(struct state *s)
 {
     static UInt8 virgin = 1;
-	static short lencnt[MAXBITS+1];
-	static short distcnt[MAXBITS+1];
+	static UInt16 lencnt[MAXBITS+1];
+	static UInt16 distcnt[MAXBITS+1];
    	static struct huffman lencode, distcode;
 
     /* build fixed huffman tables if first call (may not be thread safe) */
     if (virgin) {
-        int symbol;
+        UInt16 symbol;
 
         /* construct lencode and distcode */
         lencode.count = lencnt;
@@ -482,18 +478,18 @@ local SInt8 fixed(struct state *s)
         distcode.symbol = fixed_distsym;
 
         /* literal/length table */
-        for (symbol = 0; symbol < 144; symbol++)
+        for (symbol = 0; symbol < 144; ++symbol)
             fixed_lengths[symbol] = 8;
-        for (; symbol < 256; symbol++)
+        for (; symbol < 256; ++symbol)
             fixed_lengths[symbol] = 9;
-        for (; symbol < 280; symbol++)
+        for (; symbol < 280; ++symbol)
             fixed_lengths[symbol] = 7;
-        for (; symbol < FIXLCODES; symbol++)
+        for (; symbol < FIXLCODES; ++symbol)
             fixed_lengths[symbol] = 8;
         construct(&lencode, fixed_lengths, FIXLCODES);
 
         /* distance table */
-        for (symbol = 0; symbol < MAXDCODES; symbol++)
+        for (symbol = 0; symbol < MAXDCODES; ++symbol)
             fixed_lengths[symbol] = 5;
         construct(&distcode, fixed_lengths, MAXDCODES);
 
@@ -593,21 +589,21 @@ local SInt8 fixed(struct state *s)
  * - For reference, a "typical" size for the code description in a dynamic
  *   block is around 80 bytes.
  */
-short dynamic_lengths[MAXCODES];        /* descriptor code lengths */
-short dynamic_lensym[MAXLCODES];        /* lencode memory */
-short dynamic_distsym[MAXDCODES];       /* distcode memory */
+UInt16 dynamic_lengths[MAXCODES];        /* descriptor code lengths */
+UInt16 dynamic_lensym[MAXLCODES];        /* lencode memory */
+UInt16 dynamic_distsym[MAXDCODES];       /* distcode memory */
 local SInt8 dynamic(struct state *s)
 {
     int nlen, ndist, ncode;             /* number of lengths in descriptor */
     int index;                          /* index of lengths[] */
     int err;                            /* construct() return value */
-    short lencnt[MAXBITS+1];         /* lencode memory */
-    short distcnt[MAXBITS+1];       /* distcode memory */
+    UInt16 lencnt[MAXBITS+1];         /* lencode memory */
+    UInt16 distcnt[MAXBITS+1];       /* distcode memory */
     struct huffman lencode, distcode;   /* length and distance codes */
     static const UInt8 order[19] =      /* permutation of code length codes */
         {16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15};
 
-    profiling_checkpoint[0] = SHORT_CLOCK;
+    // profiling_checkpoint[0] = SHORT_CLOCK;
 
     /* construct lencode and distcode */
     lencode.count = lencnt;
@@ -633,7 +629,7 @@ local SInt8 dynamic(struct state *s)
     if (err != 0)               /* require complete code set here */
         return -4;
 
-    profiling_checkpoint[1] = SHORT_CLOCK;
+    // profiling_checkpoint[1] = SHORT_CLOCK;
 
     /* read length/literal and distance code length tables */
     index = 0;
@@ -669,7 +665,7 @@ local SInt8 dynamic(struct state *s)
     if (dynamic_lengths[256] == 0)
         return -9;
 
-    profiling_checkpoint[2] = SHORT_CLOCK;
+    // profiling_checkpoint[2] = SHORT_CLOCK;
 
     /* build huffman table for literal/length codes */
     err = construct(&lencode, dynamic_lengths, nlen);
@@ -681,7 +677,7 @@ local SInt8 dynamic(struct state *s)
     if (err && (err < 0 || ndist != distcode.count[0] + distcode.count[1]))
         return -8;      /* incomplete code ok only for single length 1 code */
 
-    profiling_checkpoint[3] = SHORT_CLOCK;
+    // profiling_checkpoint[3] = SHORT_CLOCK;
 
     /* decode data until end-of-block code */
     return codes(s, &lencode, &distcode);

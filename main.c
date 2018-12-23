@@ -183,10 +183,10 @@ void drawImage(const UInt8 *data, UInt16 length) {
 	printHex8bitValue("Result: ", result, 1, 2);
 	printString("Press fire to continue.", 1, 4);
 
-	printDecimal16bitValue("Check 0: ", profiling_checkpoint[0] - startTime, 20, 0);
-	printDecimal16bitValue("Check 1: ", profiling_checkpoint[1] - startTime, 20, 1);
-	printDecimal16bitValue("Check 2: ", profiling_checkpoint[2] - startTime, 20, 2);
-	printDecimal16bitValue("Check 3: ", profiling_checkpoint[3] - startTime, 20, 3);
+	// printDecimal16bitValue("Check 0: ", profiling_checkpoint[0] - startTime, 20, 0);
+	// printDecimal16bitValue("Check 1: ", profiling_checkpoint[1] - startTime, 20, 1);
+	// printDecimal16bitValue("Check 2: ", profiling_checkpoint[2] - startTime, 20, 2);
+	// printDecimal16bitValue("Check 3: ", profiling_checkpoint[3] - startTime, 20, 3);
 
 	waitForAnyInput();
 
