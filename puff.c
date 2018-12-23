@@ -18,8 +18,7 @@
 
 /* Profiling data */
 UInt16 profiling_checkpoint[4];
-#define SHORT_CLOCK (PEEK(20) + 256 * PEEK(19))
-
+#define SHORT_CLOCK (*(unsigned char*)(20) + 256 * *(unsigned char*)(19))
 
 
 /* input and output state */
