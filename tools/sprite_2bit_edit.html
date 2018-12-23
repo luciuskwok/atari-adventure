@@ -1,0 +1,297 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Sprite 2-Bit Edit</title>
+  <style>
+  	table#editor {
+  		border-collapse: collapse;
+  		user-select: none;
+  		margin-bottom: 20px;
+  	}
+  	table#palette {
+  		border-collapse: none;
+  		user-select: none;
+  		margin-bottom: 20px;
+  	}
+  	td.tile {
+  		border: 1px solid #666;
+  		width: 16px;
+  		height: 16px;
+  		color: #FFF;
+  	}
+  	td.rightColumn {
+  		vertical-align: top;
+  	}
+  	div.p {
+  		margin-top: 20px;
+  	}
+  	body {
+  		font-family: "Andale Mono", Courier, fixed;
+  		font-size: 12pt;
+  	}
+  
+  </style>
+</head>
+
+<script>
+
+var tileMap;
+var mapWidth, mapHeight;
+var isMouseDown = false;
+var selectedColor = 0;
+var paletteTileCount = 3;
+
+function initTableCells() {
+	// Default size
+	resizeMap(20, 32);
+	
+	// Add mousedown and mouseup handlers
+	document.onmousedown = function() {
+		isMouseDown = true;
+	}
+	
+	document.onmouseup = function() {
+		isMouseDown = false;
+	}
+
+	// Add table cells to the empty "palette" table element
+	var paletteTable = document.getElementById("palette");
+	var paletteRow = paletteTable.insertRow(0);
+	for (var x=0; x<paletteTileCount; ++x) {
+		var cell = paletteRow.insertCell(x);
+		cell.classList.add("tile");
+		cell.style.backgroundColor = colorForTile(x);
+		cell.onmousedown = (function() {
+			var localX = x;
+			return function() {
+				selectColor(localX); 
+			}
+		})();
+	}
+	
+	// Initial setup
+	updateEditor();
+	selectColor(1);
+}
+
+function resizeMap(width, height) {
+
+	// Update internal variables
+	tileMap = Array();
+	for (var i=0; i<width*height; ++i) {
+		tileMap.push(0);
+	}
+	mapWidth = width;
+	mapHeight = height;
+
+	// Update UI
+	var table = document.getElementById("editor");
+
+	// Remove old table cells
+	table.innerHTML = "";
+
+	// Add table cells to the empty "editor" table element
+	var x, y;
+	for (y=0; y<mapHeight; ++y) {
+		var row = table.insertRow(y);
+		for (x=0; x<mapWidth; ++x) {
+			var cell = row.insertCell(x);
+			cell.classList.add("tile");
+			cell.onmousedown = (function() {
+				var localX = x;
+				var localY = y
+				return function() {
+					changeTile(localX, localY); 
+				}
+			})();
+			cell.onmouseenter = (function() {
+				var localX = x;
+				var localY = y
+				return function() {
+					if (isMouseDown) {
+						changeTile(localX, localY); 
+					}
+				}
+			})();
+		}
+	}
+
+	updateEditor();
+}
+
+function selectColor(x) {
+	// Change the selected cell in the palette table.
+	var paletteTable = document.getElementById("palette");
+	var previousCell = paletteTable.rows[0].cells[selectedColor];
+	previousCell.style.borderWidth = "1px";
+	var newCell = paletteTable.rows[0].cells[x];
+	newCell.style.borderWidth = "3px";
+
+	// Update global var
+	selectedColor = x;
+}
+
+function changeTile(x, y) {
+	var index = x + mapWidth * y;
+	tileMap[index] = selectedColor;
+	updateEditor();
+	updateTextOutput();
+	//console.log("Change x:"+x+", y:"+y+", value:"+tileMap[index]);
+}
+
+function colorForTile(x) {
+	switch (x) {
+	case 1: // White
+		return "#FFFFFF";
+	case 2: // Black
+		return "#000000";
+	case 3: // Blue
+		return "#0000c0";
+	case 0: 
+	default: // Clear/empty
+		return "#808080";
+	}
+}
+
+
+function updateEditor() {
+	var x, y;
+	var color;
+	var table = document.getElementById("editor");
+	for (y=0; y<mapHeight; ++y) {
+		for (x=0; x<mapWidth; ++x) {
+			color = colorForTile(tileMap[x + mapWidth * y]);			
+			table.rows[y].cells[x].style.backgroundColor = color;
+		}
+	}
+}
+
+function updateFromTextInput() {
+	var textInput = document.getElementById("textInput");
+	var textValues = textInput.value.split(",");
+	if (textValues.length < mapHeight * 5) {
+		return;
+	}
+
+	// Convert sprite array to tileMap
+	for (var row=0; row<mapHeight; ++row) {
+		var missile = parseInt(textValues[row + mapHeight * 0]);
+		var player0 = parseInt(textValues[row + mapHeight * 1]);
+		var player1 = parseInt(textValues[row + mapHeight * 2]);
+		var player2 = parseInt(textValues[row + mapHeight * 3]);
+		var player3 = parseInt(textValues[row + mapHeight * 4]);
+
+		var plane0 = (player0 << 12) | (player1 << 4) | (missile & 0x0F);
+		var plane1 = (player2 << 12) | (player3 << 4) | ((missile & 0xF0) >> 4);
+
+		for (var column=mapWidth-1; column>=0; --column) {
+			tileMap[row * mapWidth + column] = (plane0 & 1) + 2 * (plane1 & 1);
+			plane0 = plane0 >> 1;
+			plane1 = plane1 >> 1;
+		}
+	}
+	
+	updateEditor();
+	updateTextOutput();
+}
+
+function updateTextOutput() {
+	var sprites = Array();
+	for (var i=0; i<5; ++i) {
+		sprites.push(Array());
+	}
+
+	for (var row = 0; row < mapHeight; ++row) {
+		// Separate tileMap row into bitplanes
+		var plane0 = 0;
+		var plane1 = 0;
+		for (var column = 0; column < mapWidth; ++column) {
+			var tile = tileMap[row * mapWidth + column];
+			plane0 = (plane0 << 1) | (tile & 1);
+			plane1 = (plane1 << 1) | ((tile >> 1) && 1);
+		}
+
+		// Put each plane into sprite data
+		sprites[1].push((plane0 >> 12) & 0xFF);
+		sprites[2].push((plane0 >>  4) & 0xFF);
+		sprites[3].push((plane1 >> 12) & 0xFF);
+		sprites[4].push((plane1 >>  4) & 0xFF);
+		sprites[0].push((plane0 & 0x0F) | ((plane1 & 0x0F) << 4));
+	}
+
+	// Convert UInt8 data into a string.
+	var outputString = "";
+	for (var i=0; i<5; ++i) {
+		var sprite = sprites[i];
+		for (var j in sprite) {
+			var c = sprite[j];
+			outputString += "0x"+hexString(c)+", ";
+		}
+		outputString += "<br>";
+	}
+	
+	var textOutput = document.getElementById("textOutput");
+	textOutput.innerHTML = outputString;
+}
+
+function hexString(x) {
+	var s = x.toString(16).toUpperCase();
+	if (s.length % 2) {
+		s = "0" + s;
+	}
+	return s;
+}
+
+function clearMap() {
+	fillMapWithValue(0);
+}
+
+function fillMap() {
+	fillMapWithValue(selectedColor);
+}
+
+function fillMapWithValue(value) {
+	for (var x=0; x<tileMap.length; ++x) {
+		tileMap[x] = value;
+	}
+	updateEditor();
+	updateTextOutput();
+}
+
+</script>
+
+<body onload="initTableCells()">
+
+<div>
+	<table id="layout">
+		<tr><td>
+			<table id="editor"></table>
+			<table id="palette"></table>
+		</td>
+		<td class="rightColumn">
+			<button type="button" onclick="clearMap();">Clear</button><br>
+			<button type="button" onclick="fillMap();">Fill</button><br>
+			<div>Resize:</div>
+			<button type="button" onclick="resizeMap(16, 32);">16x32</button><br>
+			<button type="button" onclick="resizeMap(20, 32);">20x32</button><br>
+		</td></tr>
+	</table>
+</div>
+
+<div class="p"><b>Input:</b>
+	<form>
+		<input type="text" size=72" id="textInput"></input>
+		<button type="button" onclick="updateFromTextInput();">Update</button>
+	</form>
+</div>
+
+<div class="p"><b>Sprite:</b><br>
+	<span id="textOutput"></span>
+</div>
+
+
+</table>  	
+</body>
+</html>

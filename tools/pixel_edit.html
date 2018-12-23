@@ -1,0 +1,378 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Pixel Edit</title>
+  <style>
+  	table#editor {
+  		border-collapse: collapse;
+  		user-select: none;
+  	}
+  	td.pixel {
+  		border: 1px solid #666;
+  		width: 16px;
+  		height: 16px;
+  		color: #FFF;
+  	}
+  	td.rightColumn {
+  		vertical-align: top;
+  	}
+  	div.p {
+  		margin-top: 20px;
+  	}
+  	span#textOutput {
+  	}
+  	body {
+  		font-family: "Andale Mono", Courier, fixed;
+  		font-size: 12pt;
+  	}
+  
+  </style>
+</head>
+
+<script>
+
+var pixelMap = Array();
+var isMouseDown = false;
+
+function initTableCells() {
+	var x, y;
+
+	// Create an array for pixelMap
+	for (x=0; x<8*16; ++x) {
+		pixelMap.push(0);
+	}
+	
+	// Add onclick handlers to every pixel
+	var table = document.getElementById("editor");
+	for (y=0; y<table.rows.length; ++y) {
+		var row = table.rows[y];
+		for (x=0; x<row.cells.length; ++x) {
+			var cell = row.cells[x];
+			cell.onmousedown = (function() {
+				var localX = x;
+				var localY = y
+				return function() {
+					changePixel(localX, localY); 
+				}
+			})();
+			cell.onmouseenter = (function() {
+				var localX = x;
+				var localY = y
+				return function() {
+					if (isMouseDown) {
+						changePixel(localX, localY); 
+					}
+				}
+			})();
+		}
+	}
+	
+	// Add mousedown and mouseup handlers
+	document.onmousedown = function() {
+		isMouseDown = true;
+	}
+	
+	document.onmouseup = function() {
+		isMouseDown = false;
+	}
+}
+
+function changePixel(x, y) {
+	var index = x + 8 * y;
+	var color;
+	//console.log("Change x:"+x+", y:"+y+", value:"+pixelMap[index]);
+	if (pixelMap[index] != 0) {
+		pixelMap[index] = 0;
+		color = "white";
+	} else {
+		pixelMap[index] = 1;
+		color = "black";
+	}
+	updateEditor();
+	updateTextOutput();
+}
+
+function updateEditor() {
+	var x, y;
+	var color;
+	var table = document.getElementById("editor");
+	for (y=0; y<16; ++y) {
+		for (x=0; x<8; ++x) {
+			if (pixelMap[x + 8 * y] != 0) {
+				color = "black";
+			} else {
+				color = "white";
+			}
+			table.rows[y].cells[x].style.backgroundColor = color;
+		}
+	}
+}
+
+function updateFromTextInput() {
+	var textInput = document.getElementById("textInput");
+	var values = textInput.value.split(",");
+	var x, y;
+	
+	if (values.length > 0) {
+		for (y=0; y<Math.min(16, values.length); ++y) {
+			var value = values[y];
+			console.log("value: "+value);
+			for (x=7; x>=0; --x) {
+				pixelMap[x + 8 * y] = value % 2;
+				value = Math.floor(value / 2);
+			}
+		}
+	}
+	updateEditor();
+	updateTextOutput();
+	return false;
+}
+
+function updateTextOutput() {
+	var x, y, value, valueStr;
+	var result = "";
+	for (y=0; y<16; ++y) {
+		value = 0;
+		for (x=0; x<8; ++x) {
+			value = value * 2;
+			if (pixelMap[x + 8 * y] != 0) {
+				value += 1;
+			}
+		}
+		valueStr = hexString(value);
+		valueStr = "0x"+valueStr+", ";
+		result = result + valueStr;
+	}
+	
+	var textOutput = document.getElementById("textOutput");
+	textOutput.innerText = result;
+}
+
+function hexString(x) {
+	var s = x.toString(16).toUpperCase();
+	if (s.length % 2) {
+		s = "0" + s;
+	}
+	return s;
+}
+
+function clearPixelMap() {
+	fillPixelMapWithValue(0);
+}
+
+function fillPixelMap() {
+	fillPixelMapWithValue(1);
+}
+
+function fillPixelMapWithValue(value) {
+	for (var x=0; x<pixelMap.length; ++x) {
+		pixelMap[x] = value;
+	}
+	updateEditor();
+	updateTextOutput();
+}
+
+function invertPixelMap() {
+	for (var x=0; x<pixelMap.length; ++x) {
+		pixelMap[x] = 1 - pixelMap[x];
+	}
+	updateEditor();
+	updateTextOutput();
+}
+	
+
+</script>
+
+<body onload="initTableCells()">
+
+<div>
+	<table id="layout">
+		<tr><td>
+			<table id="editor">
+				<tr class="pixel">
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+				</tr>  	
+				<tr class="pixel">
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+				</tr>  	
+				<tr class="pixel">
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+				</tr>  	
+				<tr class="pixel">
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+				</tr>  	
+				<tr class="pixel">
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+				</tr>  	
+				<tr class="pixel">
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+				</tr>  	
+				<tr class="pixel">
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+				</tr>  	
+				<tr class="pixel">
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+				</tr>  	
+				<tr class="pixel">
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+				</tr>  	
+				<tr class="pixel">
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+				</tr>  	
+				<tr class="pixel">
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+				</tr>  	
+				<tr class="pixel">
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+				</tr>  	
+				<tr class="pixel">
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+				</tr>  	
+				<tr class="pixel">
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+				</tr>  	
+				<tr class="pixel">
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+				</tr>  	
+				<tr class="pixel">
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+					<td class="pixel"></td>
+				</tr>
+			</table>
+		</td>
+		<td class="rightColumn">
+			<button type="button" onclick="clearPixelMap();">Clear</button><br>
+			<button type="button" onclick="fillPixelMap();">Fill All</button><br>
+			<button type="button" onclick="invertPixelMap();">Invert</button><br>
+		</td></tr>
+	</table>
+</div>
+
+<div class="p"><b>Input:</b>
+	<form>
+		<input type="text" size=72" id="textInput"></input>
+		<button type="button" onclick="updateFromTextInput();">Update</button>
+	</form>
+</div>
+
+<div class="p"><b>Output:</b><br>
+	<span id="textOutput"></span>
+</div>
+
+
+</table>  	
+</body>
+</html>

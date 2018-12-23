@@ -138,8 +138,8 @@ return_dli:
 	sta WSYNC			; wait for horizontal sync
 	sta COLPF4
 
-	cpx #72		
-	bne return_dli		; if DLI_ROW >= 72, set colors for text window
+	cpx #72
+	bne return_dli		; if DLI_ROW == 72, set colors for text window
 	
 	lda TEXT_LUM		; text window text luminance
 	sta COLPF1

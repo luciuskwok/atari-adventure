@@ -1,0 +1,368 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Map Edit</title>
+  <style>
+  	table#editor {
+  		border-collapse: collapse;
+  		user-select: none;
+  		margin-bottom: 20px;
+  	}
+  	table#palette {
+  		border-collapse: none;
+  		user-select: none;
+  		margin-bottom: 20px;
+  	}
+  	td.tile {
+  		border: 1px solid #666;
+  		width: 16px;
+  		height: 16px;
+  		color: #000;
+  		font-size: 8pt;
+  		text-align: center;
+  	}
+  	td.rightColumn {
+  		vertical-align: top;
+  	}
+  	div.p {
+  		margin-top: 20px;
+  	}
+  	body {
+  		font-family: "Andale Mono", Courier, fixed;
+  		font-size: 12pt;
+  	}
+  
+  </style>
+</head>
+
+<script>
+
+var tileMap;
+var mapWidth, mapHeight;
+var isMouseDown = false;
+var selectedTile = 0;
+var paletteTileCount = 14;
+
+
+function initTableCells() {
+	// Default size is 16x16
+	resizeMap(16, 16);
+
+	// Add table cells to the empty "palette" table element
+	var paletteTable = document.getElementById("palette");
+	var paletteRow = paletteTable.insertRow(0);
+	for (var x=0; x<paletteTileCount; ++x) {
+		var cell = paletteRow.insertCell(x);
+		cell.classList.add("tile");
+		cell.style.backgroundColor = colorForTile(x);
+		cell.innerHTML = innerTextForTile(x);		
+		cell.onmousedown = (function() {
+			var localX = x;
+			return function() {
+				selectTile(localX); 
+			}
+		})();
+	}
+	
+	// Add mousedown and mouseup handlers
+	document.onmousedown = function() {
+		isMouseDown = true;
+	}
+	
+	document.onmouseup = function() {
+		isMouseDown = false;
+	}
+
+	// Initial setup
+	updateEditor();
+	selectTile(1);
+}
+
+function resizeMap(width, height) {
+
+	// Update internal variables
+	tileMap = Array();
+	for (var i=0; i<width*height; ++i) {
+		tileMap.push(0);
+	}
+	mapWidth = width;
+	mapHeight = height;
+
+	// Update UI
+	var x, y;
+	var table = document.getElementById("editor");
+
+	// Remove old table cells
+	table.innerHTML = "";
+
+	// Add table cells to the empty "editor" table element
+	for (y=0; y<mapHeight; ++y) {
+		var row = table.insertRow(y);
+		for (x=0; x<mapWidth; ++x) {
+			var cell = row.insertCell(x);
+			cell.classList.add("tile");
+			cell.onmousedown = (function() {
+				var localX = x;
+				var localY = y
+				return function() {
+					changeTile(localX, localY); 
+				}
+			})();
+			cell.onmouseenter = (function() {
+				var localX = x;
+				var localY = y
+				return function() {
+					if (isMouseDown) {
+						changeTile(localX, localY); 
+					}
+				}
+			})();
+		}
+	}
+
+	updateEditor();
+}
+
+function changeTile(x, y) {
+	var index = x + mapWidth * y;
+	//console.log("Change x:"+x+", y:"+y+", value:"+tileMap[index]);
+	tileMap[index] = selectedTile;
+	updateEditor();
+	updateTextOutput();
+}
+
+function selectTile(x) {
+	var paletteTable = document.getElementById("palette");
+	var cell = paletteTable.rows[0].cells[selectedTile];
+
+	// deselect old tile
+	cell.style.borderWidth = "1px";
+
+	selectedTile = x;
+
+	// Select new tile
+	cell = paletteTable.rows[0].cells[selectedTile];
+	cell.style.borderWidth = "3px";
+
+}
+
+function colorForTile(x) {
+	switch (x) {
+		case 1: // Plains
+			return "#ad4600";
+		case 2: // Forest
+			return "#005a22";
+		case 3: // Desert
+			return "#f9c017";
+		case 4: // Mountain
+			return "#a69563";
+		case 5: // Shallows
+			return "#5f7bfc";
+		case 6: // Deep water
+			return "#0027db";
+		case 7: // Bridge
+		case 8: // Bridge
+			return "#c65022";
+		case 9: // Castle
+		case 10: // Town
+		case 11: // Village
+		case 12: // Monument
+		case 13: // Cave
+			return "#FFF"; 
+		case 0: 
+		default: // Unknown
+			return "#000";
+	}
+}
+
+function innerTextForTile(x) {
+	switch (x) {
+		case 7: return "--";
+		case 8: return "|";
+		case 9: return "0";
+		case 10: return "T";
+		case 11: return "v";
+		case 12: return "i";
+		case 13: return ".";
+		default: return "";
+	}
+}
+
+function updateEditor() {
+	var x, y, cell, tile;
+	var table = document.getElementById("editor");
+	for (y=0; y<mapHeight; ++y) {
+		for (x=0; x<mapWidth; ++x) {
+			tile = tileMap[x + mapWidth * y];
+			cell = table.rows[y].cells[x];
+			cell.innerHTML = innerTextForTile(tile);
+			cell.style.backgroundColor = colorForTile(tile);			
+		}
+	}
+}
+
+function updateFromTextInput() {
+	var textInput = document.getElementById("textInput");
+	var values = textInput.value.split(",");
+	var vIndex = 0;
+	var x = 0;
+	var y = 0;
+	var rowEnd, op, tile, count;
+
+	if (values.length == 0) {
+		return;
+	}
+
+	while (y < mapHeight && vIndex < values.length) {
+		rowEnd = vIndex + parseInt(values[vIndex]);
+		++vIndex;
+		
+		x = 0;
+		while (vIndex < rowEnd) {
+			op = parseInt(values[vIndex]);
+			++vIndex;
+
+			tile = ((op & 0xF0) / 16);
+			count = (op & 0x0F);
+
+			if (count == 15) {
+				count += parseInt(values[vIndex]);
+				++vIndex;
+			}
+
+			++count;
+			while (count > 0) {
+				tileMap[x + mapWidth * y] = tile;
+				--count;
+				++x;
+			}
+		}
+
+		++y;
+	}
+	
+	updateEditor();
+	updateTextOutput();
+	return;
+}
+
+function updateTextOutput() {
+	var y, offset;
+	var result = "";
+	for (y=0; y<mapHeight; ++y) {
+		offset = y * mapWidth;
+		var encodedRow = encodeRow(tileMap.slice(offset, offset+mapWidth))
+		result = result + stringFromArray(encodedRow) + "<br>";
+	}
+
+	var textOutput = document.getElementById("textOutput");
+	textOutput.innerHTML = result;
+}
+
+function encodeRow(a) {
+	// a: array of numbers 0-15
+	// returns: run-length encoded data
+	var result = Array();
+	var previously = -1;
+	var count = 0;
+	result.push(0); // length to be determined
+	for (var index in a) {
+		var element = a[index];
+		if (previously != element) {
+			if (previously != -1) {
+				// Add entry to result
+				pushEncodedEntry(result, previously, count);
+			}
+			// Start a new run
+			previously = element;
+			count = 0;
+		} else {
+			count += 1;
+		}
+	}
+	// Push last entry
+	pushEncodedEntry(result, previously, count);
+	result[0] = result.length;
+	return result;
+}
+
+function pushEncodedEntry(a, tile, repeatCount) {
+	if (repeatCount < 15) {
+		a.push( tile * 16 + repeatCount );
+	} else {
+		a.push( tile * 16 + 15 );
+		a.push( repeatCount - 15 );
+	}
+}
+
+function stringFromArray(a) {
+	var s = "";
+	for (var element in a) {
+		s = s + "0x" + hexString(a[element]) + ",";
+	}
+	return s;
+}
+
+function hexString(x) {
+	var s = x.toString(16).toUpperCase();
+	if (s.length % 2) {
+		s = "0" + s;
+	}
+	return s;
+}
+
+function clearMap() {
+	fillMapWithValue(0);
+}
+
+function fillMap() {
+	fillMapWithValue(selectedTile);
+}
+
+function fillMapWithValue(value) {
+	for (var x=0; x<tileMap.length; ++x) {
+		tileMap[x] = value;
+	}
+	updateEditor();
+	updateTextOutput();
+}
+	
+
+</script>
+
+<body onload="initTableCells()">
+
+<div>
+	<table id="layout">
+		<tr><td>
+			<table id="editor"></table>
+			<table id="palette"></table>			
+		</td>
+		<td class="rightColumn">
+			<button type="button" onclick="clearMap();">Clear</button><br>
+			<button type="button" onclick="fillMap();">Fill</button><br>
+			<div>Resize:</div>
+			<button type="button" onclick="resizeMap(16, 16);">16x16</button><br>
+			<button type="button" onclick="resizeMap(64, 64);">64x64</button><br>
+			<button type="button" onclick="resizeMap(19, 9);">19x9 screen</button><br>
+		</td></tr>
+	</table>
+</div>
+
+<div class="p"><b>Input RLE:</b>
+	<form>
+		<input type="text" size=72" id="textInput"></input>
+		<button type="button" onclick="updateFromTextInput();">Update</button>
+	</form>
+</div>
+
+<div class="p"><b>Output RLE:</b><br>
+	<span id="textOutput"></span>
+</div>
+
+
+</table>  	
+</body>
+</html>

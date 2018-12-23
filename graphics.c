@@ -150,14 +150,15 @@ void initDisplayList(UInt8 startPage) {
 		storyViewDisplayList[x++] = rasterLine; // DLI on every tile row
 	}
 	
-	storyViewDisplayList[x++] = DL_BLK8; // 8 blank scanlines
+	// Needs at least 1 blank scanline for DLI to change text window colors in time
+	storyViewDisplayList[x++] = DL_BLK1; 
 
 	// Text window
 	storyViewDisplayList[x++] = textWindowLine | dl_LMS;
 	storyViewDisplayList[x++] = (UInt16)textWindow % 256;
 	storyViewDisplayList[x++] = (UInt16)textWindow / 256;
 
-	for (i=1; i<5; ++i) { // 5 rows of text = 40 scanlines
+	for (i=1; i<6; ++i) { // 6 rows of text = 48 scanlines
 		storyViewDisplayList[x++] = textWindowLine; 
 	}
 	

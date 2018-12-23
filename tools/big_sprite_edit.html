@@ -1,0 +1,265 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Big Sprite Edit</title>
+  <style>
+  	table#editor {
+  		border-collapse: collapse;
+  		user-select: none;
+  	}
+  	td.tile {
+  		border: 1px solid #666;
+  		width: 16px;
+  		height: 16px;
+  		color: #FFF;
+  	}
+  	td.rightColumn {
+  		vertical-align: top;
+  	}
+  	div.p {
+  		margin-top: 20px;
+  	}
+  	span#textOutput {
+  	}
+  	body {
+  		font-family: "Andale Mono", Courier, fixed;
+  		font-size: 12pt;
+  	}
+  
+  </style>
+</head>
+
+<script>
+
+var tileMap;
+var mapWidth, mapHeight;
+var isMouseDown = false;
+var selectedColor = 0;
+
+function initTableCells() {
+	// Default size
+	resizeMap(24, 32);
+	
+	// Add mousedown and mouseup handlers
+	document.onmousedown = function() {
+		isMouseDown = true;
+	}
+	
+	document.onmouseup = function() {
+		isMouseDown = false;
+	}
+
+	// Initial setup
+	updateEditor();
+	selectColor(1);
+}
+
+function resizeMap(width, height) {
+
+	// Update internal variables
+	tileMap = Array();
+	for (var i=0; i<width*height; ++i) {
+		tileMap.push(0);
+	}
+	mapWidth = width;
+	mapHeight = height;
+
+	// Update UI
+	var table = document.getElementById("editor");
+
+	// Remove old table cells
+	table.innerHTML = "";
+
+	// Add table cells to the empty "editor" table element
+	var x, y;
+	for (y=0; y<mapHeight; ++y) {
+		var row = table.insertRow(y);
+		for (x=0; x<mapWidth; ++x) {
+			var cell = row.insertCell(x);
+			cell.classList.add("tile");
+			cell.onmousedown = (function() {
+				var localX = x;
+				var localY = y
+				return function() {
+					if (tileMap[localX + mapWidth * localY] == 0) {
+						selectColor(1);
+					} else {
+						selectColor(0);
+					}
+					changeTile(localX, localY); 
+				}
+			})();
+			cell.onmouseenter = (function() {
+				var localX = x;
+				var localY = y
+				return function() {
+					if (isMouseDown) {
+						changeTile(localX, localY); 
+					}
+				}
+			})();
+		}
+	}
+
+	updateEditor();
+}
+
+function selectColor(x) {
+	selectedColor = x;
+}
+
+function changeTile(x, y) {
+	var index = x + mapWidth * y;
+	tileMap[index] = selectedColor;
+	updateEditor();
+	updateTextOutput();
+	//console.log("Change x:"+x+", y:"+y+", value:"+tileMap[index]);
+}
+
+function colorForTile(x) {
+	switch (x) {
+	case 1: // White
+		return "#FFF";
+	case 2: // Red
+		return "#c00000";
+	case 3: // Blue
+		return "#0000c0";
+	case 0: 
+	default: // Unknown
+		return "#000";
+	}
+}
+
+
+function updateEditor() {
+	var x, y;
+	var color;
+	var table = document.getElementById("editor");
+	for (y=0; y<mapHeight; ++y) {
+		for (x=0; x<mapWidth; ++x) {
+			color = colorForTile(tileMap[x + mapWidth * y]);			
+			table.rows[y].cells[x].style.backgroundColor = color;
+		}
+	}
+}
+
+function updateFromTextInput() {
+	var textInput = document.getElementById("textInput");
+	var values = textInput.value.split(",");
+	var column = 0;
+	var row = 0;
+	var valueIndex = 0;
+
+
+	if (values.length == 0) {
+		return;
+	}
+
+	while (column < mapWidth / 8 && valueIndex < values.length) {
+		row = 0;
+		while (row < mapHeight && valueIndex < values.length) {
+			var c = values[valueIndex];
+			++valueIndex;
+			for (var bit=7; bit>=0; --bit) {
+				tileMap[bit + 8 * column + row * mapWidth] = c % 2;
+				c = Math.floor(c/2);
+			}
+			++row;
+		}
+		++column;
+	}
+	
+	updateEditor();
+	updateTextOutput();
+}
+
+function updateTextOutput() {
+	var outputString = "";
+
+	for (var column = 0; column < mapWidth / 8; ++column) {
+		for (var row = 0; row < mapHeight; ++row) {
+			var c = 0;
+			for (var bit = 0; bit < 8; ++bit) {
+				c *= 2;
+				c += (tileMap[bit + column * 8 + row * mapWidth] & 0x01);
+			}
+			outputString += "0x"+hexString(c)+", ";
+		}
+		outputString += "<br>";
+	}
+	
+	var textOutput = document.getElementById("textOutput");
+	textOutput.innerHTML = outputString;
+}
+
+function hexString(x) {
+	var s = x.toString(16).toUpperCase();
+	if (s.length % 2) {
+		s = "0" + s;
+	}
+	return s;
+}
+
+function clearMap() {
+	fillMapWithValue(0);
+}
+
+function fillMap() {
+	fillMapWithValue(1);
+}
+
+function fillMapWithValue(value) {
+	for (var x=0; x<tileMap.length; ++x) {
+		tileMap[x] = value;
+	}
+	updateEditor();
+	updateTextOutput();
+}
+
+function invertMap() {
+	for (var x=0; x<tileMap.length; ++x) {
+		tileMap[x] = 1 - tileMap[x];
+	}
+	updateEditor();
+	updateTextOutput();
+}
+	
+
+</script>
+
+<body onload="initTableCells()">
+
+<div>
+	<table id="layout">
+		<tr><td>
+			<table id="editor"></table>
+		</td>
+		<td class="rightColumn">
+			<button type="button" onclick="clearMap();">Clear</button><br>
+			<button type="button" onclick="fillMap();">Fill All</button><br>
+			<button type="button" onclick="invertMap();">Invert</button><br>
+			<div>Resize:</div>
+			<button type="button" onclick="resizeMap(16, 32);">16x32</button><br>
+			<button type="button" onclick="resizeMap(24, 32);">24x32</button><br>
+			<button type="button" onclick="resizeMap(32, 32);">32x32</button><br>
+		</td></tr>
+	</table>
+</div>
+
+<div class="p"><b>Input:</b>
+	<form>
+		<input type="text" size=72" id="textInput"></input>
+		<button type="button" onclick="updateFromTextInput();">Update</button>
+	</form>
+</div>
+
+<div class="p"><b>Output:</b><br>
+	<span id="textOutput"></span>
+</div>
+
+
+</table>  	
+</body>
+</html>
