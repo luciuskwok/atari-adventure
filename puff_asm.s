@@ -103,7 +103,8 @@ return:
 	rts 					; return bits
 
 error_jmp:
-	pla						; remove the 2 bytes that were reserved on the stack for the return value
+	pla						; remove local variables from stack, 3 bytes
+	pla
 	pla
 	lda     #<(STATE_ENV)	; longjmp(puff_state.env, 1);
 	ldx     #>(STATE_ENV)

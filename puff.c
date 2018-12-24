@@ -8,7 +8,7 @@
 // Function Prototypes
 extern UInt16 __fastcall__ bits_asm(UInt8 count);
 local UInt16 decode(const struct huffman *h);
-local int construct(struct huffman *h, const UInt16 *length, int n);
+local int construct(struct huffman *h, const UInt8 *length, int n);
 local SInt8 codes(const struct huffman *lencode, const struct huffman *distcode);
 local SInt8 fixed(void);
 local SInt8 dynamic(void);
@@ -60,7 +60,7 @@ struct {
  * seen in the function decode() below.
  */
 struct huffman {
-    UInt16 *count;       /* number of symbols of each length */
+    UInt8 *count;       /* number of symbols of each length */
     UInt16 *symbol;      /* canonically ordered symbols */
 };
 
@@ -117,8 +117,6 @@ local UInt16 decode(const struct huffman *h)
  * a few percent larger.
  */
 #else /* !SLOW */
-static UInt16 *decode_huffman_count;
-static UInt16 *decode_huffman_symbol;
 local UInt16 decode(const struct huffman *h)
 {
     UInt8 len = 1;             /* current number of bits in code */
@@ -127,15 +125,16 @@ local UInt16 decode(const struct huffman *h)
     UInt16 index = 0;          /* index of first code of length len in symbol table */
     UInt8 bitbuf = puff_state.bitbuf;  /* bits from stream */
     UInt8 left = puff_state.bitcnt;    /* bits left in next or left to process */
-    UInt16 *next = h->count + 1;/* next number of codes */
+    UInt8 *huffman_counts = h->count;
+    UInt8 nextCountIndex = 1;
     UInt16 count;              /* number of codes of length len */
 
     while (1) {
         while (left) {
             code |= bitbuf & 1;
             bitbuf >>= 1;
-            count = *next;
-            if (code < first + count) { /* if length len, return symbol */
+            count = huffman_counts[nextCountIndex];
+            if (first + count > code) { /* if length len, return symbol */
                 puff_state.bitbuf = bitbuf;
                 puff_state.bitcnt = (puff_state.bitcnt - len) & 7;
                 return h->symbol[index + (code - first)];
@@ -145,7 +144,7 @@ local UInt16 decode(const struct huffman *h)
             first <<= 1;
             code <<= 1;
             ++len;
-            ++next;
+            ++nextCountIndex;
         	--left;
         }
         left = (MAXBITS+1) - len;
@@ -196,7 +195,7 @@ local UInt16 decode(const struct huffman *h)
  * - Within a given code length, the symbols are kept in ascending order for
  *   the code bits definition.
  */
-local int construct(struct huffman *h, const UInt16 *length, int n)
+local int construct(struct huffman *h, const UInt8 *length, int n)
 {
     UInt16 symbol;         /* current symbol when stepping through length[] */
     UInt8 len;            /* current length when stepping through h->count[] */
@@ -388,13 +387,13 @@ local SInt8 codes(const struct huffman *lencode,
  */
 UInt16 fixed_lensym[FIXLCODES];
 UInt16 fixed_distsym[MAXDCODES];
-UInt16 fixed_lengths[FIXLCODES];
+UInt8 fixed_lengths[FIXLCODES];
 
 local SInt8 fixed()
 {
     static UInt8 virgin = 1;
-	static UInt16 lencnt[MAXBITS+1];
-	static UInt16 distcnt[MAXBITS+1];
+	static UInt8 lencnt[MAXBITS+1];
+	static UInt8 distcnt[MAXBITS+1];
    	static struct huffman lencode, distcode;
 
     /* build fixed huffman tables if first call (may not be thread safe) */
@@ -522,7 +521,7 @@ local SInt8 fixed()
  * - For reference, a "typical" size for the code description in a dynamic
  *   block is around 80 bytes.
  */
-UInt16 dynamic_lengths[MAXCODES];        /* descriptor code lengths */
+UInt8 dynamic_lengths[MAXCODES];        /* descriptor code lengths */
 UInt16 dynamic_lensym[MAXLCODES];        /* lencode memory */
 UInt16 dynamic_distsym[MAXDCODES];       /* distcode memory */
 local SInt8 dynamic()
@@ -530,8 +529,8 @@ local SInt8 dynamic()
     int nlen, ndist, ncode;             /* number of lengths in descriptor */
     int index;                          /* index of lengths[] */
     int err;                            /* construct() return value */
-    UInt16 lencnt[MAXBITS+1];         /* lencode memory */
-    UInt16 distcnt[MAXBITS+1];       /* distcode memory */
+    UInt8 lencnt[MAXBITS+1];         /* lencode memory */
+    UInt8 distcnt[MAXBITS+1];       /* distcode memory */
     struct huffman lencode, distcode;   /* length and distance codes */
     static const UInt8 order[19] =      /* permutation of code length codes */
         {16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15};
