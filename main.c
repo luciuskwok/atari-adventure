@@ -63,7 +63,7 @@ void printStatText(void) {
 #ifdef DEBUGGING
 void printDebuggingInfo(void) {
 	clearTextWindow();
-	printHex16bitValue("bits_asm(): ", (UInt16)bits_asm, 1, 1);
+	//printHex16bitValue("bits_asm(): ", (UInt16)bits_asm, 1, 1);
 
 	//printInterruptVectors();
 	// Print location of drawImage() and puff() for debugging
@@ -99,18 +99,18 @@ void drawImage(const UInt8 *data, UInt16 length) {
 	// Turn Antic off while drawing, which makes it twice as fast.
 	POKE (SDMCTL, 0);
 
-	startTime = SHORT_CLOCK;
+	startTime = SHORT_CLOCK; // Debugging
 	//profiling_checkpoint[0] = 0;
 
 	result = puff(screen, &screenLen, data, &length);
 
-	duration = SHORT_CLOCK - startTime;
+	duration = SHORT_CLOCK - startTime; // Debugging
 
 	// Turn Antic back on.
 	POKE (SDMCTL, 0x2E); // standard playfield + missile DMA + player DMA + display list DMA
 
 	clearTextWindow();
-	printDecimal16bitValue("Total: ", duration, 1, 1);
+	printDecimal16bitValue("Total: ", duration, 1, 1); // Debugging
 	if (result) {
 		printHex8bitValue("puff() error ", result, 20, 1);
 	}

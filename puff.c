@@ -5,8 +5,8 @@
 
 #define local static            /* for local function definitions */
 
-// Function Prototypes (to help compiler)
-//local UInt16 bits(UInt8 need);
+// Function Prototypes
+extern UInt16 __fastcall__ bits_asm(UInt8 count);
 local UInt16 decode(const struct huffman *h);
 local int construct(struct huffman *h, const UInt16 *length, int n);
 local SInt8 codes(const struct huffman *lencode, const struct huffman *distcode);
@@ -50,40 +50,6 @@ struct {
     /* input limit error return state for bits() and decode() */
     jmp_buf env;
 } puff_state;
-
-/*
- * Return need bits from the input stream.  This always leaves less than
- * eight bits in the buffer.  bits() works properly for need == 0.
- *
- * Format notes:
- *
- * - Bits are stored in bytes from the least significant bit to the most
- *   significant bit.  Therefore bits are dropped from the bottom of the bit
- *   buffer, using shift right, and new bytes are appended to the top of the
- *   bit buffer, using shift left.
- */
-// The "need" parameter value can be up to 13.
-local UInt16 bits_old(UInt8 need)
-{
-    UInt32 val;           /* bit accumulator (can use up to 20 bits) */
-
-    /* load at least need bits into val */
-    val = puff_state.bitbuf;
-    while (puff_state.bitcnt < need) {
-        if (puff_state.incnt == puff_state.inlen)
-            longjmp(puff_state.env, 1);         /* out of input */
-        val |= (UInt32)(puff_state.in[puff_state.incnt++]) << puff_state.bitcnt;  /* load eight bits */
-        puff_state.bitcnt += 8;
-    }
-
-    /* drop need bits and update buffer, always zero to seven bits left */
-    puff_state.bitbuf = (UInt8)(val >> need);
-    puff_state.bitcnt -= need;
-
-    /* return need bits, zeroing the bits above that */
-    val = (val & ((1L << need) - 1));
-    return (UInt16)val;
-}
 
 
 /*
@@ -151,6 +117,8 @@ local UInt16 decode(const struct huffman *h)
  * a few percent larger.
  */
 #else /* !SLOW */
+static UInt16 *decode_huffman_count;
+static UInt16 *decode_huffman_symbol;
 local UInt16 decode(const struct huffman *h)
 {
     UInt8 len = 1;             /* current number of bits in code */
@@ -164,10 +132,9 @@ local UInt16 decode(const struct huffman *h)
 
     while (1) {
         while (left) {
-        	--left;
             code |= bitbuf & 1;
             bitbuf >>= 1;
-            count = *next++;
+            count = *next;
             if (code < first + count) { /* if length len, return symbol */
                 puff_state.bitbuf = bitbuf;
                 puff_state.bitcnt = (puff_state.bitcnt - len) & 7;
@@ -178,6 +145,8 @@ local UInt16 decode(const struct huffman *h)
             first <<= 1;
             code <<= 1;
             ++len;
+            ++next;
+        	--left;
         }
         left = (MAXBITS+1) - len;
         if (left == 0)
