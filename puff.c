@@ -14,6 +14,9 @@ local SInt8 fixed(void);
 local SInt8 dynamic(void);
 local SInt8 stored(void);
 
+extern void __fastcall__ bits_asm(UInt8 need);
+
+
 /*
  * Maximums for allocations and loops.  It is not useful to change these --
  * they are fixed by the deflate format.
@@ -59,6 +62,7 @@ struct {
  *   buffer, using shift right, and new bytes are appended to the top of the
  *   bit buffer, using shift left.
  */
+// The "need" parameter value can be up to 13.
 local UInt16 bits(UInt8 need)
 {
     UInt32 val;           /* bit accumulator (can use up to 20 bits) */
