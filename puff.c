@@ -6,7 +6,7 @@
 #define local static            /* for local function definitions */
 
 // Function Prototypes (to help compiler)
-local UInt16 bits(UInt8 need);
+//local UInt16 bits(UInt8 need);
 local UInt16 decode(const struct huffman *h);
 local int construct(struct huffman *h, const UInt16 *length, int n);
 local SInt8 codes(const struct huffman *lencode, const struct huffman *distcode);
@@ -14,7 +14,6 @@ local SInt8 fixed(void);
 local SInt8 dynamic(void);
 local SInt8 stored(void);
 
-extern void __fastcall__ bits_asm(UInt8 need);
 
 
 /*
@@ -63,7 +62,7 @@ struct {
  *   bit buffer, using shift left.
  */
 // The "need" parameter value can be up to 13.
-local UInt16 bits(UInt8 need)
+local UInt16 bits_old(UInt8 need)
 {
     UInt32 val;           /* bit accumulator (can use up to 20 bits) */
 
@@ -362,13 +361,13 @@ local SInt8 codes(const struct huffman *lencode,
             symbol -= 257;
             if (symbol >= 29)
                 return -10;             /* invalid fixed code */
-            len = lens[symbol] + bits(lext[symbol]);
+            len = lens[symbol] + bits_asm(lext[symbol]);
 
             /* get and check distance */
             symbol = decode(distcode);
             if (symbol > 288)
                 return -10;          /* invalid symbol */
-            dist = dists[symbol] + bits(dext[symbol]);
+            dist = dists[symbol] + bits_asm(dext[symbol]);
             if (dist > puff_state.outcnt)
                 return -11;     /* distance too far back */
 
@@ -430,6 +429,9 @@ local SInt8 fixed()
     /* build fixed huffman tables if first call (may not be thread safe) */
     if (virgin) {
         UInt16 symbol;
+
+        // Debugging
+        profiling_checkpoint[0] = 1;
 
         /* construct lencode and distcode */
         lencode.count = lencnt;
@@ -572,15 +574,15 @@ local SInt8 dynamic()
     distcode.symbol = dynamic_distsym;
 
     /* get number of lengths in each table, check lengths */
-    nlen = bits(5) + 257;
-    ndist = bits(5) + 1;
-    ncode = bits(4) + 4;
+    nlen = bits_asm(5) + 257;
+    ndist = bits_asm(5) + 1;
+    ncode = bits_asm(4) + 4;
     if (nlen > MAXLCODES || ndist > MAXDCODES)
         return -3;                      /* bad counts */
 
     /* read code length code lengths (really), missing lengths are zero */
     for (index = 0; index < ncode; index++)
-        dynamic_lengths[order[index]] = bits(3);
+        dynamic_lengths[order[index]] = bits_asm(3);
     for (; index < 19; index++)
         dynamic_lengths[order[index]] = 0;
 
@@ -606,12 +608,12 @@ local SInt8 dynamic()
                 if (index == 0)
                     return -5;          /* no last length! */
                 len = dynamic_lengths[index - 1];       /* last length */
-                symbol = 3 + bits(2);
+                symbol = 3 + bits_asm(2);
             }
             else if (symbol == 17)      /* repeat zero 3..10 times */
-                symbol = 3 + bits(3);
+                symbol = 3 + bits_asm(3);
             else                        /* == 18, repeat zero 11..138 times */
-                symbol = 11 + bits(7);
+                symbol = 11 + bits_asm(7);
             if (index + symbol > nlen + ndist)
                 return -6;              /* too many lengths! */
             while (symbol--)            /* repeat last or zero symbol times */
@@ -761,8 +763,8 @@ SInt8 puff(UInt8 *dest, UInt16 *destLen, const UInt8 *source, UInt16 *sourceLen)
     } else {
         /* process blocks until last block or error */
         do {
-            last = bits(1);         /* one if last block */
-            type = bits(2);         /* block type 0..3 */
+            last = bits_asm(1);         /* one if last block */
+            type = bits_asm(2);         /* block type 0..3 */
             err = type == 0 ?
                     stored() :
                     (type == 1 ?

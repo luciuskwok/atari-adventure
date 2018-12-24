@@ -9,7 +9,7 @@ This version of Puff is not re-entrant, because it uses globals for state in ord
 
 SInt8 puff(UInt8 *dest, UInt16 *destLen, const UInt8 *source, UInt16 *sourceLen);
 
-//extern struct puff_state; // used by puff_asm
+extern UInt16 __fastcall__ bits_asm(UInt8 need);
 
 /* Profiling data */
 extern UInt16 profiling_checkpoint[];

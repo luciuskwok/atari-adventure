@@ -63,7 +63,13 @@ void printStatText(void) {
 #ifdef DEBUGGING
 void printDebuggingInfo(void) {
 	clearTextWindow();
-	printInterruptVectors();
+	printHex16bitValue("bits_asm(): ", (UInt16)bits_asm, 1, 1);
+
+	//printInterruptVectors();
+	// Print location of drawImage() and puff() for debugging
+	// printHex16bitValue("drawImage() = ", (UInt16)drawImage, 1, 1);
+	// printHex16bitValue("puff() = ", (UInt16)puff, 1, 3);
+	// waitForAnyInput();
 }
 #endif
 
@@ -90,15 +96,11 @@ void drawImage(const UInt8 *data, UInt16 length) {
 	UInt16 duration;
 	SInt8 result;
 
-	// Print location of this function and puff() for debugging
-	printHex16bitValue("drawImage() = ", (UInt16)drawImage, 1, 1);
-	printHex16bitValue("puff() = ", (UInt16)puff, 1, 3);
-	waitForAnyInput();
-
 	// Turn Antic off while drawing, which makes it twice as fast.
 	POKE (SDMCTL, 0);
 
 	startTime = SHORT_CLOCK;
+	profiling_checkpoint[0] = 0;
 
 	result = puff(screen, &screenLen, data, &length);
 
