@@ -21,14 +21,15 @@ COLPF2 = $D018		; text background
 COLPF3 = $D019		; 
 COLPF4 = $D01A		; background
 WSYNC  = $D40A
+VCOUNT = $D40B		; vertical line counter
 
 CUR_SKIP  = 15		; number of frames to skip for color cycling
-CUR_TIMER = $0600	; Cursor color cycling frame skip countdown timer
-STICK_TIMER = $0601	; Joystick countdown timer for repeating joystick moves
-DLI_ROW   = $0602	; for keeping track of which scanline the DLI is on
-TEXT_LUM  = $0603	; text luminance for text window
-TEXT_BG   = $0604	; text window background color
-P3_XPOS   = $0610	; array of 9 bytes for repositioning player 3
+CUR_TIMER = $0600	; cursor color cycling frame skip countdown timer
+STICK_TIMER = $0601	; joystick countdown timer for repeating joystick moves
+DLI_ROW   = $0610	; for keeping track of which row the DLI is on. Easier to use this for iterating through P3_XPOS and BG_COLOR arrays than to use VCOUNT.
+TEXT_LUM  = $0611	; text luminance for text window
+TEXT_BG   = $0612	; text window background color
+P3_XPOS   = $0613	; array of 9 bytes for repositioning player 3
 BG_COLOR  = $0620	; array of 72 bytes for changing background color per raster line
 
 
@@ -45,7 +46,7 @@ BG_COLOR  = $0620	; array of 72 bytes for changing background color per raster l
 .proc _immediateUserVBI
 	lda #0				; reset DLI_ROW
 	sta DLI_ROW
-	lda P3_XPOS			; HPOSP2 = P3_XPOS[0]
+	lda P3_XPOS			; HPOSP3 = P3_XPOS[0]
 	sta HPOSP3
 
 	ldx STICK_TIMER		; sets Z flag (Z=1 if joystick_timer is zero)
@@ -64,35 +65,36 @@ cycle_color:
 	clv					; clear flags for unconditonal branch
 	lda #CUR_SKIP
 	sta CUR_TIMER		; reload the timer
-						; == Cycle only the luminance of the color value ==						
+						; == Cycle only the luminance of the color value ==	
 	lda PCOLR0			; get the color (Addr=3459)
 	tax					; use X register for new color value
 	and #$0F			; isolate the luminance in A
 	cmp #$01			; if luminance is 1
-	bne skip_1
+	bne color_to_max
 	dex					; set luminance to 0
 	bvc write_color		; unconditional branch 
-skip_1:						
+color_to_max:						
 	cmp #$0E			; if luminance is E
-	bne skip_2
+	bne color_odd_even
 	inx					; set luminance to F
 	bvc write_color		; unconditional branch 
-skip_2:
+color_odd_even:
 	and #$01			; odd or even
-	beq skip_3
+	beq color_inc
 	dex 				; if odd, subtract 2
 	dex
 	bvc write_color		; unconditional branch 
-skip_3:
+color_inc:
 	inx					; else if even, add 2
 	inx
 write_color:
 	stx PCOLR0			; store new color value in players 0 and 1
 	stx PCOLR1
-	
+
 return:
 	jmp $E45F			; jump to the OS immediate VBI routine
 .endproc
+
 
 .proc _mapViewDLI
 	pha					; push accumulator and X register onto stack

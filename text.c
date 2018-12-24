@@ -10,8 +10,6 @@
 // Constants
 #define TEXTBOX_WIDTH (40)
 #define TEXTBOX_HEIGHT (6)
-#define TEXT_LUM ((UInt8 *)0x0603)
-#define TEXT_BG ((UInt8 *)0x0604)
 
 
 

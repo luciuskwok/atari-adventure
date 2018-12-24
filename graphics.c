@@ -426,3 +426,9 @@ void clearSprite(UInt8 player) {
 	}
 }
 
+
+void printInterruptVectors(void) {
+	printHex16bitValue("VBI: ", (UInt16)immediateUserVBI, 1, 1);
+	printHex16bitValue("Map DLI: ", (UInt16)mapViewDLI, 1, 2);
+	printHex16bitValue("Story DLI: ", (UInt16)storyViewDLI, 1, 3);
+}

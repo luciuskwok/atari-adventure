@@ -5,6 +5,15 @@
 
 #define local static            /* for local function definitions */
 
+// Function Prototypes (to help compiler)
+local UInt16 bits(UInt8 need);
+local UInt16 decode(const struct huffman *h);
+local int construct(struct huffman *h, const UInt16 *length, int n);
+local SInt8 codes(const struct huffman *lencode, const struct huffman *distcode);
+local SInt8 fixed(void);
+local SInt8 dynamic(void);
+local SInt8 stored(void);
+
 /*
  * Maximums for allocations and loops.  It is not useful to change these --
  * they are fixed by the deflate format.
@@ -22,7 +31,7 @@ UInt16 profiling_checkpoint[4];
 
 
 /* input and output state */
-struct state {
+struct {
     /* output state */
     UInt8 *out;         /* output buffer */
     UInt16 outlen;       /* available space at out */
@@ -37,7 +46,7 @@ struct state {
 
     /* input limit error return state for bits() and decode() */
     jmp_buf env;
-};
+} puff_state;
 
 /*
  * Return need bits from the input stream.  This always leaves less than
@@ -50,79 +59,27 @@ struct state {
  *   buffer, using shift right, and new bytes are appended to the top of the
  *   bit buffer, using shift left.
  */
-local UInt16 bits(struct state *s, UInt8 need)
+local UInt16 bits(UInt8 need)
 {
     UInt32 val;           /* bit accumulator (can use up to 20 bits) */
 
     /* load at least need bits into val */
-    val = s->bitbuf;
-    while (s->bitcnt < need) {
-        if (s->incnt == s->inlen)
-            longjmp(s->env, 1);         /* out of input */
-        val |= (UInt32)(s->in[s->incnt++]) << s->bitcnt;  /* load eight bits */
-        s->bitcnt += 8;
+    val = puff_state.bitbuf;
+    while (puff_state.bitcnt < need) {
+        if (puff_state.incnt == puff_state.inlen)
+            longjmp(puff_state.env, 1);         /* out of input */
+        val |= (UInt32)(puff_state.in[puff_state.incnt++]) << puff_state.bitcnt;  /* load eight bits */
+        puff_state.bitcnt += 8;
     }
 
     /* drop need bits and update buffer, always zero to seven bits left */
-    s->bitbuf = (UInt8)(val >> need);
-    s->bitcnt -= need;
+    puff_state.bitbuf = (UInt8)(val >> need);
+    puff_state.bitcnt -= need;
 
     /* return need bits, zeroing the bits above that */
     return (UInt16)(val & ((1L << need) - 1));
 }
 
-
-/*
- * Process a stored block.
- *
- * Format notes:
- *
- * - After the two-bit stored block type (00), the stored block length and
- *   stored bytes are byte-aligned for fast copying.  Therefore any leftover
- *   bits in the byte that has the last bit of the type, as many as seven, are
- *   discarded.  The value of the discarded bits are not defined and should not
- *   be checked against any expectation.
- *
- * - The second inverted copy of the stored block length does not have to be
- *   checked, but it's probably a good idea to do so anyway.
- *
- * - A stored block can have zero length.  This is sometimes used to byte-align
- *   subsets of the compressed data for random access or partial recovery.
- */
-local SInt8 stored(struct state *s)
-{
-    UInt16 len;       /* length of stored block */
-
-    /* discard leftover bits from current byte (assumes s->bitcnt < 8) */
-    s->bitbuf = 0;
-    s->bitcnt = 0;
-
-    /* get length and check against its one's complement */
-    if (s->incnt + 4 > s->inlen)
-        return 2;                               /* not enough input */
-    len = s->in[s->incnt++];
-    len |= s->in[s->incnt++] << 8;
-    if (s->in[s->incnt++] != (~len & 0xff) ||
-        s->in[s->incnt++] != ((~len >> 8) & 0xff))
-        return -2;                              /* didn't match complement! */
-
-    /* copy len bytes from in to out */
-    if (s->incnt + len > s->inlen)
-        return 2;                               /* not enough input */
-    if (s->out != NULL) {
-        if (s->outcnt + len > s->outlen)
-            return 1;                           /* not enough output space */
-        while (len--)
-            s->out[s->outcnt++] = s->in[s->incnt++];
-    }
-    else {                                      /* just scanning */
-        s->outcnt += len;
-        s->incnt += len;
-    }
-
-    /* done with a valid stored block */
-    return 0;
-}
 
 /*
  * Huffman code decoding tables.  count[1..MAXBITS] is the number of symbols of
@@ -161,7 +118,7 @@ struct huffman {
  */
 //#define SLOW
 #ifdef SLOW
-local UInt16 decode(struct state *s, const struct huffman *h)
+local UInt16 decode(const struct huffman *h)
 {
     UInt8 len;          /* current number of bits in code */
     UInt16 code;        /* len bits being decoded */
@@ -171,7 +128,7 @@ local UInt16 decode(struct state *s, const struct huffman *h)
 
     code = first = index = 0;
     for (len = 1; len <= MAXBITS; len++) {
-        code |= bits(s, 1);             /* get next bit */
+        code |= bits(1);             /* get next bit */
         count = h->count[len];
         if (code < first + count)       /* if length len, return symbol */
             return h->symbol[index + (code - first)];
@@ -189,14 +146,14 @@ local UInt16 decode(struct state *s, const struct huffman *h)
  * a few percent larger.
  */
 #else /* !SLOW */
-local UInt16 decode(struct state *s, const struct huffman *h)
+local UInt16 decode(const struct huffman *h)
 {
     UInt8 len = 1;             /* current number of bits in code */
     UInt16 code = 0;           /* len bits being decoded */
     UInt16 first = 0;          /* first code of length len */
     UInt16 index = 0;          /* index of first code of length len in symbol table */
-    UInt8 bitbuf = s->bitbuf;  /* bits from stream */
-    UInt8 left = s->bitcnt;    /* bits left in next or left to process */
+    UInt8 bitbuf = puff_state.bitbuf;  /* bits from stream */
+    UInt8 left = puff_state.bitcnt;    /* bits left in next or left to process */
     UInt16 *next = h->count + 1;/* next number of codes */
     UInt16 count;              /* number of codes of length len */
 
@@ -207,8 +164,8 @@ local UInt16 decode(struct state *s, const struct huffman *h)
             bitbuf >>= 1;
             count = *next++;
             if (code < first + count) { /* if length len, return symbol */
-                s->bitbuf = bitbuf;
-                s->bitcnt = (s->bitcnt - len) & 7;
+                puff_state.bitbuf = bitbuf;
+                puff_state.bitcnt = (puff_state.bitcnt - len) & 7;
                 return h->symbol[index + (code - first)];
             }
             index += count;             /* else update for next length */
@@ -220,9 +177,9 @@ local UInt16 decode(struct state *s, const struct huffman *h)
         left = (MAXBITS+1) - len;
         if (left == 0)
             break;
-        if (s->incnt == s->inlen)
-            longjmp(s->env, 1);         /* out of input */
-        bitbuf = s->in[s->incnt++];
+        if (puff_state.incnt == puff_state.inlen)
+            longjmp(puff_state.env, 1);         /* out of input */
+        bitbuf = puff_state.in[puff_state.incnt++];
         if (left > 8)
             left = 8;
     }
@@ -361,8 +318,7 @@ local int construct(struct huffman *h, const UInt16 *length, int n)
  *   since though their behavior -is- defined for overlapping arrays, it is
  *   defined to do the wrong thing in this case.
  */
-local SInt8 codes(struct state *s,
-                const struct huffman *lencode,
+local SInt8 codes(const struct huffman *lencode,
                 const struct huffman *distcode)
 {
     static const UInt16 lens[29] = { /* Size base for length codes 257..285 */
@@ -385,45 +341,45 @@ local SInt8 codes(struct state *s,
  
     /* decode literals and length/distance pairs */
     do {
-        symbol = decode(s, lencode);
+        symbol = decode(lencode);
         if (symbol > 288)
             return -10;              /* invalid symbol */
         if (symbol < 256) {             /* literal: symbol is the byte */
             /* write out the literal */
-            if (s->out != NULL) {
-                if (s->outcnt == s->outlen)
+            if (puff_state.out != NULL) {
+                if (puff_state.outcnt == puff_state.outlen)
                     return 1;
-                s->out[s->outcnt] = symbol;
+                puff_state.out[puff_state.outcnt] = symbol;
             }
-            ++s->outcnt;
+            ++puff_state.outcnt;
         }
         else if (symbol > 256) {        /* length */
             /* get and compute length */
             symbol -= 257;
             if (symbol >= 29)
                 return -10;             /* invalid fixed code */
-            len = lens[symbol] + bits(s, lext[symbol]);
+            len = lens[symbol] + bits(lext[symbol]);
 
             /* get and check distance */
-            symbol = decode(s, distcode);
+            symbol = decode(distcode);
             if (symbol > 288)
                 return -10;          /* invalid symbol */
-            dist = dists[symbol] + bits(s, dext[symbol]);
-            if (dist > s->outcnt)
+            dist = dists[symbol] + bits(dext[symbol]);
+            if (dist > puff_state.outcnt)
                 return -11;     /* distance too far back */
 
             /* copy length bytes from distance bytes back */
-            if (s->out != NULL) {
-                if (s->outcnt + len > s->outlen)
+            if (puff_state.out != NULL) {
+                if (puff_state.outcnt + len > puff_state.outlen)
                     return 1;
                 while (len--) {
-                    s->out[s->outcnt] =
-                            s->out[s->outcnt - dist];
-                    ++s->outcnt;
+                    puff_state.out[puff_state.outcnt] =
+                            puff_state.out[puff_state.outcnt - dist];
+                    ++puff_state.outcnt;
                 }
             }
             else
-                s->outcnt += len;
+                puff_state.outcnt += len;
         }
     } while (symbol != 256);            /* end of block symbol */
 
@@ -460,7 +416,7 @@ UInt16 fixed_lensym[FIXLCODES];
 UInt16 fixed_distsym[MAXDCODES];
 UInt16 fixed_lengths[FIXLCODES];
 
-local SInt8 fixed(struct state *s)
+local SInt8 fixed()
 {
     static UInt8 virgin = 1;
 	static UInt16 lencnt[MAXBITS+1];
@@ -498,7 +454,7 @@ local SInt8 fixed(struct state *s)
     }
 
     /* decode data until end-of-block code */
-    return codes(s, &lencode, &distcode);
+    return codes(&lencode, &distcode);
 }
 
 
@@ -592,7 +548,7 @@ local SInt8 fixed(struct state *s)
 UInt16 dynamic_lengths[MAXCODES];        /* descriptor code lengths */
 UInt16 dynamic_lensym[MAXLCODES];        /* lencode memory */
 UInt16 dynamic_distsym[MAXDCODES];       /* distcode memory */
-local SInt8 dynamic(struct state *s)
+local SInt8 dynamic()
 {
     int nlen, ndist, ncode;             /* number of lengths in descriptor */
     int index;                          /* index of lengths[] */
@@ -603,7 +559,7 @@ local SInt8 dynamic(struct state *s)
     static const UInt8 order[19] =      /* permutation of code length codes */
         {16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15};
 
-    // profiling_checkpoint[0] = SHORT_CLOCK;
+    profiling_checkpoint[0] = SHORT_CLOCK;
 
     /* construct lencode and distcode */
     lencode.count = lencnt;
@@ -612,15 +568,15 @@ local SInt8 dynamic(struct state *s)
     distcode.symbol = dynamic_distsym;
 
     /* get number of lengths in each table, check lengths */
-    nlen = bits(s, 5) + 257;
-    ndist = bits(s, 5) + 1;
-    ncode = bits(s, 4) + 4;
+    nlen = bits(5) + 257;
+    ndist = bits(5) + 1;
+    ncode = bits(4) + 4;
     if (nlen > MAXLCODES || ndist > MAXDCODES)
         return -3;                      /* bad counts */
 
     /* read code length code lengths (really), missing lengths are zero */
     for (index = 0; index < ncode; index++)
-        dynamic_lengths[order[index]] = bits(s, 3);
+        dynamic_lengths[order[index]] = bits(3);
     for (; index < 19; index++)
         dynamic_lengths[order[index]] = 0;
 
@@ -629,15 +585,13 @@ local SInt8 dynamic(struct state *s)
     if (err != 0)               /* require complete code set here */
         return -4;
 
-    // profiling_checkpoint[1] = SHORT_CLOCK;
-
     /* read length/literal and distance code length tables */
     index = 0;
     while (index < nlen + ndist) {
         int symbol;             /* decoded value */
         int len;                /* last length to repeat */
 
-        symbol = decode(s, &lencode);
+        symbol = decode(&lencode);
         if (symbol < 0)
             return symbol;          /* invalid symbol */
         if (symbol < 16)                /* length in 0..15 */
@@ -648,12 +602,12 @@ local SInt8 dynamic(struct state *s)
                 if (index == 0)
                     return -5;          /* no last length! */
                 len = dynamic_lengths[index - 1];       /* last length */
-                symbol = 3 + bits(s, 2);
+                symbol = 3 + bits(2);
             }
             else if (symbol == 17)      /* repeat zero 3..10 times */
-                symbol = 3 + bits(s, 3);
+                symbol = 3 + bits(3);
             else                        /* == 18, repeat zero 11..138 times */
-                symbol = 11 + bits(s, 7);
+                symbol = 11 + bits(7);
             if (index + symbol > nlen + ndist)
                 return -6;              /* too many lengths! */
             while (symbol--)            /* repeat last or zero symbol times */
@@ -680,7 +634,60 @@ local SInt8 dynamic(struct state *s)
     // profiling_checkpoint[3] = SHORT_CLOCK;
 
     /* decode data until end-of-block code */
-    return codes(s, &lencode, &distcode);
+    return codes(&lencode, &distcode);
+}
+
+
+/*
+ * Process a stored block.
+ *
+ * Format notes:
+ *
+ * - After the two-bit stored block type (00), the stored block length and
+ *   stored bytes are byte-aligned for fast copying.  Therefore any leftover
+ *   bits in the byte that has the last bit of the type, as many as seven, are
+ *   discarded.  The value of the discarded bits are not defined and should not
+ *   be checked against any expectation.
+ *
+ * - The second inverted copy of the stored block length does not have to be
+ *   checked, but it's probably a good idea to do so anyway.
+ *
+ * - A stored block can have zero length.  This is sometimes used to byte-align
+ *   subsets of the compressed data for random access or partial recovery.
+ */
+local SInt8 stored()
+{
+    UInt16 len;       /* length of stored block */
+
+    /* discard leftover bits from current byte (assumes puff_state.bitcnt < 8) */
+    puff_state.bitbuf = 0;
+    puff_state.bitcnt = 0;
+
+    /* get length and check against its one's complement */
+    if (puff_state.incnt + 4 > puff_state.inlen)
+        return 2;                               /* not enough input */
+    len = puff_state.in[puff_state.incnt++];
+    len |= puff_state.in[puff_state.incnt++] << 8;
+    if (puff_state.in[puff_state.incnt++] != (~len & 0xff) ||
+        puff_state.in[puff_state.incnt++] != ((~len >> 8) & 0xff))
+        return -2;                              /* didn't match complement! */
+
+    /* copy len bytes from in to out */
+    if (puff_state.incnt + len > puff_state.inlen)
+        return 2;                               /* not enough input */
+    if (puff_state.out != NULL) {
+        if (puff_state.outcnt + len > puff_state.outlen)
+            return 1;                           /* not enough output space */
+        while (len--)
+            puff_state.out[puff_state.outcnt++] = puff_state.in[puff_state.incnt++];
+    }
+    else {                                      /* just scanning */
+        puff_state.outcnt += len;
+        puff_state.incnt += len;
+    }
+
+    /* done with a valid stored block */
+    return 0;
 }
 
 
@@ -729,36 +736,35 @@ local SInt8 dynamic(struct state *s)
  *   expected values to check.
  */
 SInt8 puff(UInt8 *dest, UInt16 *destLen, const UInt8 *source, UInt16 *sourceLen) {
-    struct state s;             /* input/output state */
     UInt8 last, type;             /* block information */
     SInt8 err;                    /* return value */
 
     /* initialize output state */
-    s.out = dest;
-    s.outlen = *destLen;                /* ignored if dest is NULL */
-    s.outcnt = 0;
+    puff_state.out = dest;
+    puff_state.outlen = *destLen;                /* ignored if dest is NULL */
+    puff_state.outcnt = 0;
 
     /* initialize input state */
-    s.in = source;
-    s.inlen = *sourceLen;
-    s.incnt = 0;
-    s.bitbuf = 0;
-    s.bitcnt = 0;
+    puff_state.in = source;
+    puff_state.inlen = *sourceLen;
+    puff_state.incnt = 0;
+    puff_state.bitbuf = 0;
+    puff_state.bitcnt = 0;
 
     /* return if bits() or decode() tries to read past available input */
-    if (setjmp(s.env) != 0) {           /* if came back here via longjmp() */
+    if (setjmp(puff_state.env) != 0) {           /* if came back here via longjmp() */
         err = 2;                        /* then skip do-loop, return error */
     } else {
         /* process blocks until last block or error */
         do {
-            last = bits(&s, 1);         /* one if last block */
-            type = bits(&s, 2);         /* block type 0..3 */
+            last = bits(1);         /* one if last block */
+            type = bits(2);         /* block type 0..3 */
             err = type == 0 ?
-                    stored(&s) :
+                    stored() :
                     (type == 1 ?
-                        fixed(&s) :
+                        fixed() :
                         (type == 2 ?
-                            dynamic(&s) :
+                            dynamic() :
                             -1));       /* type == 3, invalid */
             if (err != 0)
                 break;                  /* return with error */
@@ -767,8 +773,8 @@ SInt8 puff(UInt8 *dest, UInt16 *destLen, const UInt8 *source, UInt16 *sourceLen)
 
     /* update the lengths and return */
     if (err <= 0) {
-        *destLen = s.outcnt;
-        *sourceLen = s.incnt;
+        *destLen = puff_state.outcnt;
+        *sourceLen = puff_state.incnt;
     }
     return err;
 }

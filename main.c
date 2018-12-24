@@ -31,7 +31,7 @@ UInt8 sightDistance;
 
 
 // Constants and macros
-#define STICK_TIMER (0x0601)
+#define DEBUGGING
 #define RESET_ATTRACT_MODE (POKE(ATRACT, 0))
 #define SCREEN_LENGTH (40 * 72)
 #define SHORT_CLOCK (PEEK(20) + 256 * PEEK(19))
@@ -60,15 +60,12 @@ void printStatText(void) {
 
 }
 
+#ifdef DEBUGGING
 void printDebuggingInfo(void) {
-	UInt16 dl = PEEKW(SDLSTL);
-	UInt16 screen = PEEKW(SAVMSC);
-
 	clearTextWindow();
-	printHex16bitValue("DL: ", dl, 1, 1);
-	printHex16bitValue("SCR:", screen, 1, 2);
-
+	printInterruptVectors();
 }
+#endif
 
 
 // Dialog functions
@@ -89,22 +86,32 @@ void waitForAnyInput(void) {
 void drawImage(const UInt8 *data, UInt16 length) {
 	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
 	UInt16 screenLen = SCREEN_LENGTH;
-	UInt16 startTime = SHORT_CLOCK;
+	UInt16 startTime;
 	UInt16 duration;
 	SInt8 result;
 
-	// Turn Antic off while drawing to test if it's any faster
+	// Print location of this function and puff() for debugging
+	printHex16bitValue("drawImage() = ", (UInt16)drawImage, 1, 1);
+	printHex16bitValue("puff() = ", (UInt16)puff, 1, 3);
+	waitForAnyInput();
+
+	// Turn Antic off while drawing, which makes it twice as fast.
 	POKE (SDMCTL, 0);
+
+	startTime = SHORT_CLOCK;
 
 	result = puff(screen, &screenLen, data, &length);
 
-	// Turn Antic back on
+	duration = SHORT_CLOCK - startTime;
+
+	// Turn Antic back on.
 	POKE (SDMCTL, 0x2E); // standard playfield + missile DMA + player DMA + display list DMA
 
-	duration = SHORT_CLOCK - startTime;
-	printDecimal16bitValue("Total: ", duration, 1, 0);
-	printHex8bitValue("Result: ", result, 1, 2);
-	printString("Press fire to continue.", 1, 4);
+	clearTextWindow();
+	printDecimal16bitValue("Total: ", duration, 1, 1);
+	if (result) {
+		printHex8bitValue("puff() error ", result, 20, 1);
+	}
 
 	// printDecimal16bitValue("Check 0: ", profiling_checkpoint[0] - startTime, 20, 0);
 	// printDecimal16bitValue("Check 1: ", profiling_checkpoint[1] - startTime, 20, 1);
@@ -226,14 +233,14 @@ UInt8 canMoveTo(PointU8 *pt) {
 void handleStick() {
 	// Only allow moves in 4 cardinal directions and not diagonals.
 	UInt8 stick = PEEK (STICK0);
-	UInt8 stick_timer = PEEK (STICK_TIMER);
+	UInt8 stick_timer = *STICK_TIMER;
 	PointU8 oldLoc, newLoc;
 
 	if (stick == previousStick && stick_timer != 0) { 
 		// Handle changes in stick position immediately but delay repeating same moves.
 		return;
 	}
-	POKE(STICK_TIMER, 10); // Reset stick timer
+	*STICK_TIMER = 10; // Reset stick timer
 	previousStick = stick;
 
 	oldLoc = playerMapLocation;
@@ -327,6 +334,10 @@ int main (void) {
 	printStatText();
 	setPlayerCursorVisible(1);
 
+	// Debugging
+#ifdef DEBUGGING
+	printDebuggingInfo();
+#endif
 	
 	while (gQuit == 0) {
 		runLoop();

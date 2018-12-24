@@ -1,12 +1,19 @@
 // graphics.h
 
+#ifndef GRAPHICS_H
+#define GRAPHICS_H
+
 #include "types.h"
 
 // Globals
 extern UInt8 *textWindow; // Pointer to screen memory for text window
 
 
-#define P3_XPOS ((UInt8 *)0x0610)
+// VBI and DLI registers
+#define STICK_TIMER ((UInt8 *)0x0601)
+#define TEXT_LUM ((UInt8 *)0x0611)
+#define TEXT_BG ((UInt8 *)0x0612)
+#define P3_XPOS ((UInt8 *)0x0613)
 #define BG_COLOR ((UInt8 *)0x0620)
 
 
@@ -30,4 +37,8 @@ void drawSprite(const UInt8 *sprite, UInt8 length, UInt8 player, UInt8 y);
 void setMegaSprite(const UInt8 *sprite, const UInt8 length, const PointU8 *position, UInt8 magnification);
 void clearSprite(UInt8 player);
 
+// Debugging
+void printInterruptVectors(void);
 
+
+#endif
