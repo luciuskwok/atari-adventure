@@ -100,7 +100,7 @@ void drawImage(const UInt8 *data, UInt16 length) {
 	POKE (SDMCTL, 0);
 
 	startTime = SHORT_CLOCK;
-	profiling_checkpoint[0] = 0;
+	//profiling_checkpoint[0] = 0;
 
 	result = puff(screen, &screenLen, data, &length);
 

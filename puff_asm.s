@@ -1,10 +1,11 @@
 ; puff_asm.s
 
 
-.export _bits_asm		; extern UInt16 __fastcall__ bits_asm(UInt8 need);
-.import _puff_state
-.import _longjmp
-.import pushax
+.export 	_bits_asm ; extern UInt16 __fastcall__ bits_asm(UInt8 count);
+.import 	_puff_state
+.import 	_longjmp
+.import 	pushax
+.importzp 	tmp1, tmp2, tmp3, tmp4, ptr1, ptr2, ptr3, ptr4
 
 ; puff_state struct fields
 STATE_OUT = _puff_state
@@ -20,85 +21,85 @@ STATE_ENV = _puff_state+14
 
 .code
 
-.proc _bits_asm				; fastcall: "need" parameter is passed in A. 
-	cmp #0
-	bne set_up_locals
+.proc _bits_asm
+	cmp #0					; count parameter is passed in A. 
+	bne set_up_locals		; if count == 0, return 0
 	ldx #0
-	rts   					; if "need" == 0, return 0
+	rts   			
 
 set_up_locals:
-	pha 					; save "need" for later
-	tay						; use Y as decrementing index
-	lda #0					; set return value = 0
-	pha 					; up to 15 bytes are needed, so use 2 bytes on stack
-	pha
-	beq while_need 			; do while (need != 0)
+	tay						; count -> Y, used as decrementing index
+	lda #0					; local var result = UInt16(0)
+	pha 					; 
+	pha 					; reserve 2 bytes, because count <= 15
+	tya
+	pha 					; save count parameter for later
+	bne while_need 			; do while (Y != 0)
 
 do_need:		
-	ldx STATE_INCNT			; if STATE_INCNT == STATE_INLEN:
-	cpx STATE_INLEN 		;     error: out of input
-	bne load_bitbuf;
-	ldx STATE_INCNT+1		; must check both bytes of 16-bit values
-	cpx STATE_INLEN+1
+	lda STATE_BITCNT		; if STATE_BITCNT == 0:
+	bne get_bit				;     load new byte into STATE_BITBUF	
+
+	lda STATE_INCNT			; if STATE_INCNT == STATE_INLEN:
+	cmp STATE_INLEN 		;     error: out of input
+	bne load_bitbuf
+	lda STATE_INCNT+1		; must check both bytes of 16-bit values
+	cmp STATE_INLEN+1
 	beq error_jmp
 
 load_bitbuf:
-	ldx STATE_BITCNT		; if STATE_BITCNT == 0:
-	bne skip_load			;     load new byte into STATE_BITBUF	
-
-	clc						; add STATE_IN + STATE_INCNT
+	clc						; ptr1 = STATE_IN + STATE_INCNT
 	lda STATE_IN
 	adc STATE_INCNT
-	tax
+	sta ptr1
 	lda STATE_IN+1
 	adc STATE_INCNT+1
-	pha 					; push result of addition onto stack to be used as address
-	txa 
-	pha
-	tsx						; get the stack pointer
-	lda $0101,X 			; load the next input byte (STATE_IN[STATE_INT])
+	sta ptr1+1
+	ldx #0
+	lda (ptr1,X)			; A = *ptr1, the next input byte
 	sta STATE_BITBUF		; store the byte in STATE_BITBUF
+
 	lda #8
 	sta STATE_BITCNT		; set STATE_BITCNT = 8
-	pla						; pop the temp address off the stack
-	pla
 
-skip_load:					; DEFLATE format specifies that bits come off the right side
+	inc STATE_INCNT 		; ++STATE_INCNT
+	bne get_bit
+	inc STATE_INCNT+1
+
+get_bit:					; DEFLATE format specifies that bits come off the right side
 	lsr STATE_BITBUF		; shift right, 0->(bit 7), (bit 0)->carry
 	tsx						; get the stack pointer
-	ror $0101,X 			; MSB: carry->(bit 7), (bit 0)->carry
-	ror $0102,X 			; LSB: carry->(bit 7), (bit 0)->carry(discarded)
+	ror $0102,X 			; MSB: carry->(bit 7), (bit 0)->carry
+	ror $0103,X 			; LSB: carry->(bit 7), (bit 0)->carry(discarded)
 	dec STATE_BITCNT		; STATE_BITCNT -= 1
-	dey						; need -= 1
+	dey						; Y -= 1
 while_need:
-	cpy #0					; while (need != 0)
+	cpy #0					; while (Y != 0)
 	bne do_need
 
 ; At this point the return value is on the stack as two bytes, but the bits are left-justified
 ; and need to be right justified.
-	tsx 					; get the stack pointer
-	lda $0103,X 			; load "need" parameter (3rd byte on stack)
+	tsx
+	lda $0101,X 			; load count
 	sec 					; set carry so it doesn't affect subtraction
-	sbc #16 				; Y = "need" - 16 = negative number of bit shifts
+	sbc #16 				; Y = count - 16 = negative number of bit shifts
 	tay 					; use Y as index register to count number of bit shifts
 	clc
 	bcc while_bit_shifter	; always branch
 
 do_bit_shifter:
-	lsr $0101,X 			; MSB: 0->(bit 7), (bit 0)->carry
-	ror $0102,X 			; LSB: carry->(bit y), (bit 0)->carry(discarded)
+	lsr $0102,X 			; MSB: 0->(bit 7), (bit 0)->carry
+	ror $0103,X 			; LSB: carry->(bit y), (bit 0)->carry(discarded)
 	iny 					; Y += 1
 while_bit_shifter:
 	cpy #0 					; while (Y != 0)
 	bne do_bit_shifter
 
 return:
+	pla ; count
 	pla	; MSB -> X
 	tax 
-	pla ; LSB -> Y
-	tay
-	pla ; discard to put stack pointer in correct place for return
-	txa ; MSB -> A
+	pla ; LSB -> A
 	rts 					; return bits
 
 error_jmp:

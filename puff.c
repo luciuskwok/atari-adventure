@@ -28,7 +28,8 @@ local SInt8 stored(void);
 
 
 /* Profiling data */
-UInt16 profiling_checkpoint[4];
+// UInt16 debugging_data[8];
+// static UInt8 debugging_index = 0;
 #define SHORT_CLOCK (*(unsigned char*)(20) + 256 * *(unsigned char*)(19))
 
 
@@ -80,7 +81,8 @@ local UInt16 bits_old(UInt8 need)
     puff_state.bitcnt -= need;
 
     /* return need bits, zeroing the bits above that */
-    return (UInt16)(val & ((1L << need) - 1));
+    val = (val & ((1L << need) - 1));
+    return (UInt16)val;
 }
 
 
@@ -431,7 +433,7 @@ local SInt8 fixed()
         UInt16 symbol;
 
         // Debugging
-        profiling_checkpoint[0] = 1;
+        //profiling_checkpoint[0] = 1;
 
         /* construct lencode and distcode */
         lencode.count = lencnt;
@@ -565,7 +567,7 @@ local SInt8 dynamic()
     static const UInt8 order[19] =      /* permutation of code length codes */
         {16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15};
 
-    profiling_checkpoint[0] = SHORT_CLOCK;
+    //profiling_checkpoint[0] = SHORT_CLOCK;
 
     /* construct lencode and distcode */
     lencode.count = lencnt;
