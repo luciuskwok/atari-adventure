@@ -94,21 +94,23 @@ struct huffman {
 #ifdef SLOW
 local UInt16 decode_c(const struct huffman *h)
 {
-    UInt8 len;          /* current number of bits in code */
-    UInt8 count;        /* number of codes of length len */
+	// UInt8 *h_count = h->count;
+	// UInt16 *h_symbol_index = h->symbol;
     UInt16 code = 0;    /* len bits being decoded */
     UInt16 first = 0;   /* first code of length len */
     UInt16 index = 0;   /* index of first code of length len in symbol table */
+    UInt8 len;          /* current number of bits in code */
+    UInt8 count;        /* number of codes of length len */
 
     for (len = 1; len <= MAXBITS; len++) {
-        code |= get_one_bit();             /* get next bit */
+        code = (code << 1) | get_one_bit();			/* get next bit */
         count = h->count[len];
-        if (first + count > code)       /* if length len, return symbol */
-            return h->symbol[index + (code - first)];
-        index += count;                 /* else update for next length */
-        first += count;
+        if (first + count > code) {		/* if length len, return symbol */
+            return h->symbol[index + code - first];
+        }
+        first += count;					/* else update for next length */
         first <<= 1;
-        code <<= 1;
+		index += count;
     }
     return -10;                         /* ran out of codes */
 }
