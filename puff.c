@@ -35,8 +35,6 @@ local SInt8 stored(void);
 #define FIXLCODES 288           /* number of fixed literal/length codes */
 
 
-
-
 /* input and output state */
 struct {
     /* output state */
@@ -55,18 +53,6 @@ struct {
     jmp_buf env;
 } puff_state;
 
-
-/*
- * Huffman code decoding tables.  count[1..MAXBITS] is the number of symbols of
- * each length, which for a canonical code are stepped through in order.
- * symbol[] are the symbol values in canonical order, where the number of
- * entries is the sum of the counts in count[].  The decoding process can be
- * seen in the function decode() below.
- */
-struct huffman {
-    UInt8 *count;       /* number of symbols of each length */
-    UInt16 *symbol;      /* canonically ordered symbols */
-};
 
 /*
  * Decode a code from the stream s using huffman table h.  Return the symbol or
@@ -93,7 +79,6 @@ struct huffman {
  */
 
 // decode() was replaced by decode_asm()
-
 
 
 /*
@@ -168,6 +153,7 @@ local int construct(struct huffman *h, const UInt8 *length, int n)
     /* return zero for complete set, positive for incomplete set */
     return left;
 }
+
 
 /*
  * Decode literal/length and distance codes until an end-of-block code.
@@ -318,42 +304,68 @@ local SInt8 codes(const struct huffman *lencode,
  *   length, this can be implemented as an incomplete code.  Then the invalid
  *   codes are detected while decoding.
  */
+const UInt8 fixed_lengths[FIXLCODES] = {
+8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
+8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
+8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
+8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
+9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,
+9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,
+9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,
+9,9,9,9,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,8,8,8,8,8,8,8,8
+};
 UInt16 fixed_lensym[FIXLCODES];
 UInt16 fixed_distsym[MAXDCODES];
-UInt8 fixed_lengths[FIXLCODES];
+UInt8 fixed_lencnt[MAXBITS+1];
+UInt8 fixed_distcnt[MAXBITS+1];
+const UInt8 fixed_dist_lengths[MAXDCODES] = { 5,5,5,5,5, 5,5,5,5,5, 5,5,5,5,5, 5,5,5,5,5, 5,5,5,5,5, 5,5,5,5,5 };
 
-local SInt8 fixed()
+int verify_fixed_tables(struct huffman *lencode, struct huffman *distcode) 
+{
+	UInt16 symbol;
+
+	for (symbol = 0; symbol < 144; ++symbol) {
+		if (fixed_lengths[symbol] != 8) return -1;
+	}
+	for (; symbol < 256; ++symbol) {
+		if (fixed_lengths[symbol] != 9) return -1;
+	}
+	for (; symbol < 280; ++symbol) {
+		if (fixed_lengths[symbol] != 7) return -1;
+	}
+	for (; symbol < FIXLCODES; ++symbol) {
+		if (fixed_lengths[symbol] != 8) return -1;
+	}
+
+
+
+	return 0;
+}
+
+void build_fixed_tables(struct huffman *lencode, struct huffman *distcode) 
+{
+
+	/* construct lencode and distcode */
+	lencode->count = fixed_lencnt;
+	lencode->symbol = fixed_lensym;
+	distcode->count = fixed_distcnt;
+	distcode->symbol = fixed_distsym;
+
+	/* literal/length table */
+	construct(lencode, fixed_lengths, FIXLCODES);
+
+	/* distance table */
+	construct(distcode, fixed_dist_lengths, MAXDCODES);
+}
+
+local SInt8 fixed(void)
 {
     static UInt8 virgin = 1;
-	static UInt8 lencnt[MAXBITS+1];
-	static UInt8 distcnt[MAXBITS+1];
    	static struct huffman lencode, distcode;
 
     /* build fixed huffman tables if first call (may not be thread safe) */
     if (virgin) {
-        UInt16 symbol;
-
-        /* construct lencode and distcode */
-        lencode.count = lencnt;
-        lencode.symbol = fixed_lensym;
-        distcode.count = distcnt;
-        distcode.symbol = fixed_distsym;
-
-        /* literal/length table */
-        for (symbol = 0; symbol < 144; ++symbol)
-            fixed_lengths[symbol] = 8;
-        for (; symbol < 256; ++symbol)
-            fixed_lengths[symbol] = 9;
-        for (; symbol < 280; ++symbol)
-            fixed_lengths[symbol] = 7;
-        for (; symbol < FIXLCODES; ++symbol)
-            fixed_lengths[symbol] = 8;
-        construct(&lencode, fixed_lengths, FIXLCODES);
-
-        /* distance table */
-        for (symbol = 0; symbol < MAXDCODES; ++symbol)
-            fixed_lengths[symbol] = 5;
-        construct(&distcode, fixed_lengths, MAXDCODES);
+		build_fixed_tables(&lencode, &distcode);
 
         /* do this just once */
         virgin = 0;
@@ -454,7 +466,7 @@ local SInt8 fixed()
 UInt8  dynamic_lengths[MAXCODES];        /* descriptor code lengths */
 UInt16 dynamic_lensym[MAXLCODES];        /* lencode memory */
 UInt16 dynamic_distsym[MAXDCODES];       /* distcode memory */
-local SInt8 dynamic()
+local SInt8 dynamic(void)
 {
     int nlen, ndist, ncode;             /* number of lengths in descriptor */
     int index;                          /* index of lengths[] */
@@ -567,7 +579,7 @@ local SInt8 dynamic()
  * - A stored block can have zero length.  This is sometimes used to byte-align
  *   subsets of the compressed data for random access or partial recovery.
  */
-local SInt8 stored()
+local SInt8 stored(void)
 {
     UInt16 len;       /* length of stored block */
 

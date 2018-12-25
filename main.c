@@ -64,11 +64,18 @@ void printStatText(void) {
 
 #ifdef DEBUGGING
 void printDebuggingInfo(void) {
+ 	struct huffman lencode, distcode;
+ 	UInt8 err;
+
+ 	build_fixed_tables(&lencode, &distcode);
+ 	err = verify_fixed_tables(&lencode, &distcode);
+
 	clearTextWindow();
-	printHex16bitValue("drawImage(): ", (UInt16)drawImage, 1, 1);
-	printHex16bitValue("puff(): ", (UInt16)puff, 1, 2);
-	printHex16bitValue("decode_asm(): ", (UInt16)decode_asm, 1, 3);
-	printHex16bitValue("get_one_bit(): ", (UInt16)get_one_bit, 1, 4);
+	printHex16bitValue("fixed_lengths: ", (UInt16)fixed_lengths, 1, 0);
+	printHex16bitValue("lencode: ", (UInt16)lencode, 1, 1);
+	printHex16bitValue("distcode: ", (UInt16)distcode, 1, 2);
+	printDecimal16bitValue("err: ", err, 1, 3);
+
 }
 #endif
 
