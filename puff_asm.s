@@ -69,16 +69,14 @@ do_loop:
 	sta COUNT 			; 3
 
 	; if (code < first + count) aka (code - (first + count) < 0)
-	clc 				; 2 ; ptr1 = first + count
-	adc FIRST	 		; 3 ; ptr1.LSB = first.LSB + count
-	sta ptr1	 		; 3 ;
-	lda #0 				; 2 ; ptr1.MSB = carry + first.MSB
+	clc 				; 2 ; XA = first + count
+	adc FIRST	 		; 3 ; X = first.LSB + count
+	tax			 		; 2 ;
+	lda #0 				; 2 ; A = carry + first.MSB
 	adc FIRST+1 		; 3 ; 
-	sta ptr1+1 			; 3 ; 
 
 	; if ptr1 > code: return symbol
-	lda ptr1+1			; 3 ; if ptr1.MSB > code.MSB, C=0, Z=0
-	cmp CODE+1			; 3 ;
+	cmp CODE+1			; 3 ; if A > code.MSB, C=0, Z=0
 	beq compare_lsb		; 2/3
 	bcs return_symbol  	; 2
 
@@ -88,8 +86,7 @@ do_loop:
 	;bne continue_loop 	; 2/3 ; 
 
 compare_lsb:
-	lda ptr1			; 3 ; if ptr1.LSB > code.MSB, C=0, Z=0
-	cmp CODE			; 3
+	cpx CODE			; 3 ; if X > code.MSB, C=0, Z=0
 	beq continue_loop	; 3
 	bcs return_symbol	; 3
 
@@ -102,11 +99,8 @@ compare_lsb:
 	; new code:
 
 continue_loop:
-	clc 				; 2 ; first = ptr1
-	lda ptr1 			; 3 ;   (was first = first + count)
-	sta FIRST			; 3 ; 
-	lda ptr1+1			; 3 ; 
-	sta FIRST+1			; 3 ; 
+	stx FIRST			; 3 ; first = XA
+	sta FIRST+1			; 3 ;
 
 	asl FIRST 			; 5 ; first <<= 1
 	rol FIRST+1			; 5 ; 
