@@ -60,10 +60,9 @@ do_loop:
 	jsr _get_one_bit		; A = _get_one_bit()
 
 	; code = code << 1 | A
-	asl CODE 			; 5 ; code.LSB: carry->bit0, bit7->carry
-	rol CODE+1	 		; 5 ; code.MSB
-	ora CODE	 		; 3 ; 
-	sta CODE	 		; 3 ; 
+	cmp #1				; 2 ; sets carry if A >= 1
+	rol CODE			; 5 ; code.LSB
+	rol CODE+1			; 5 ; code.MSB
 
 	; A = count = h->count[len]
 	lda (H_COUNT),Y		; 5 ;
