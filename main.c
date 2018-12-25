@@ -37,6 +37,8 @@ UInt8 sightDistance;
 #define SHORT_CLOCK (PEEK(20) + 256 * PEEK(19))
 
 
+// Debugging
+
 
 
 
@@ -63,7 +65,7 @@ void printStatText(void) {
 #ifdef DEBUGGING
 void printDebuggingInfo(void) {
 	clearTextWindow();
-	//printHex16bitValue("bits_asm(): ", (UInt16)bits_asm, 1, 1);
+	printHex16bitValue("decode_asm(): ", (UInt16)decode_asm, 1, 1);
 
 	//printInterruptVectors();
 	// Print location of drawImage() and puff() for debugging
