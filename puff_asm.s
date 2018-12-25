@@ -74,17 +74,18 @@ do_loop:
 	clc 			; ptr1 = first + count
 	adc FIRST	 	; ptr1.LSB = first.LSB + count
 	sta ptr1
+	lda #0
 	adc FIRST+1 	; ptr1.MSB = carry + first.MSB
 	sta ptr1+1
 
-	sec 			; if code < tmp(3,4)
+	sec 			; if code < ptr1: return symbol
 	lda CODE
 	cmp ptr1
 	lda CODE+1
 	cmp ptr1+1
-	bcc return_symbol ; if result < 0 (C=0): return symbol
+	bcc return_symbol ; if result < 0 (C=0)
 
-	clc 			; first = tmp(3,4)
+	clc 			; first = ptr1
 	lda ptr1 		;   (was first = first + count)
 	sta FIRST
 	lda ptr1+1
@@ -107,7 +108,7 @@ continue_loop:
 	iny						; len += 1
 
 while_loop:
-	cpy #MAXBITS
+	cpy #MAXBITS+1 			; if Y <= MAXBITS
 	bne do_loop
 
 return_error:

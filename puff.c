@@ -4,6 +4,8 @@
 #include <setjmp.h>             /* for setjmp(), longjmp(), and jmp_buf */
 
 #define local static            /* for local function definitions */
+#define DECODE decode_asm 		/* for switching between C and ASM versions */
+
 
 // Function Prototypes
 extern UInt16 __fastcall__ bits_asm(UInt8 count);
@@ -17,6 +19,11 @@ local SInt8 fixed(void);
 local SInt8 dynamic(void);
 local SInt8 stored(void);
 
+// Debugging
+#define debugging_length (32)
+UInt16 debugging[debugging_length];
+UInt8 debugging_index = 0;
+//#define SHORT_CLOCK (*(unsigned char*)(20) + 256 * *(unsigned char*)(19))
 
 
 /*
@@ -30,10 +37,6 @@ local SInt8 stored(void);
 #define FIXLCODES 288           /* number of fixed literal/length codes */
 
 
-/* Profiling data */
-// UInt16 debugging_data[8];
-// static UInt8 debugging_index = 0;
-#define SHORT_CLOCK (*(unsigned char*)(20) + 256 * *(unsigned char*)(19))
 
 
 /* input and output state */
@@ -94,23 +97,24 @@ struct huffman {
 #ifdef SLOW
 local UInt16 decode_c(const struct huffman *h)
 {
-	// UInt8 *h_count = h->count;
-	// UInt16 *h_symbol_index = h->symbol;
+	UInt8 *h_count = h->count;
+	UInt16 *h_symbol_index = h->symbol; // h->symbol + index
     UInt16 code = 0;    /* len bits being decoded */
     UInt16 first = 0;   /* first code of length len */
-    UInt16 index = 0;   /* index of first code of length len in symbol table */
+    //UInt16 index = 0;   /* index of first code of length len in symbol table */
     UInt8 len;          /* current number of bits in code */
     UInt8 count;        /* number of codes of length len */
 
     for (len = 1; len <= MAXBITS; len++) {
         code = (code << 1) | get_one_bit();			/* get next bit */
-        count = h->count[len];
+        count = h_count[len];
         if (first + count > code) {		/* if length len, return symbol */
-            return h->symbol[index + code - first];
+            return h_symbol_index[code - first];
         }
         first += count;					/* else update for next length */
         first <<= 1;
-		index += count;
+		//index += count;
+		h_symbol_index = h_symbol_index + count;
     }
     return -10;                         /* ran out of codes */
 }
@@ -318,8 +322,8 @@ local SInt8 codes(const struct huffman *lencode,
  
     /* decode literals and length/distance pairs */
     do {
-        symbol = decode_asm(lencode);
-        if (symbol > 288)
+        symbol = DECODE(lencode);
+        if (symbol > MAXCODES)
             return -10;              /* invalid symbol */
         if (symbol < 256) {             /* literal: symbol is the byte */
             /* write out the literal */
@@ -338,8 +342,8 @@ local SInt8 codes(const struct huffman *lencode,
             len = lens[symbol] + bits_asm(lext[symbol]);
 
             /* get and check distance */
-            symbol = decode_asm(distcode);
-            if (symbol > 288)
+            symbol = DECODE(distcode);
+            if (symbol > MAXCODES)
                 return -10;          /* invalid symbol */
             dist = dists[symbol] + bits_asm(dext[symbol]);
             if (dist > puff_state.outcnt)
@@ -525,7 +529,7 @@ local SInt8 fixed()
  * - For reference, a "typical" size for the code description in a dynamic
  *   block is around 80 bytes.
  */
-UInt8 dynamic_lengths[MAXCODES];        /* descriptor code lengths */
+UInt8  dynamic_lengths[MAXCODES];        /* descriptor code lengths */
 UInt16 dynamic_lensym[MAXLCODES];        /* lencode memory */
 UInt16 dynamic_distsym[MAXDCODES];       /* distcode memory */
 local SInt8 dynamic()
@@ -568,11 +572,17 @@ local SInt8 dynamic()
     /* read length/literal and distance code length tables */
     index = 0;
     while (index < nlen + ndist) {
-        int symbol;             /* decoded value */
-        int len;                /* last length to repeat */
+        UInt16 symbol;            /* decoded value */
+        UInt8 len;                /* last length to repeat */
 
-        symbol = decode_asm(&lencode);
-        if (symbol < 0)
+        symbol = DECODE(&lencode);
+
+        // Debugging
+        if (debugging_index < debugging_length) {
+        	debugging[debugging_index++] = symbol;
+        }
+
+        if (symbol > MAXCODES)
             return symbol;          /* invalid symbol */
         if (symbol < 16)                /* length in 0..15 */
             dynamic_lengths[index++] = symbol;

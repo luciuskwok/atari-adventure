@@ -150,7 +150,7 @@ void printStringWithLayout(const UInt8 *s, UInt8 top, UInt8 firstIndent, UInt8 l
 }
 
 
-void printDecimal16bitValue(const UInt8 *label, UInt16 value, UInt8 x, UInt8 y) {
+void printDecimal16bitValue(const UInt8 *label, SInt16 value, UInt8 x, UInt8 y) {
 	UInt8 s[7];
 	UInt8 labelLength = strlen(label);	
 	numberString(s, 0, value);

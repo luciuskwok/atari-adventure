@@ -12,6 +12,7 @@
 #include "images.h"
 #include "map.h"
 #include "puff.h"
+#include "string.h"
 #include "text.h"
 #include "tiles.h"
 #include "types.h"
@@ -67,12 +68,6 @@ void printDebuggingInfo(void) {
 	clearTextWindow();
 	printHex16bitValue("decode_asm(): ", (UInt16)decode_asm, 1, 1);
 	printHex16bitValue("bits_asm(): ", (UInt16)bits_asm, 1, 3);
-
-	//printInterruptVectors();
-	// Print location of drawImage() and puff() for debugging
-	// printHex16bitValue("drawImage() = ", (UInt16)drawImage, 1, 1);
-	// printHex16bitValue("puff() = ", (UInt16)puff, 1, 3);
-	// waitForAnyInput();
 }
 #endif
 
@@ -91,6 +86,17 @@ void waitForAnyInput(void) {
 	}
 }
 
+void printPuffDebugging(void) {
+	UInt8 s[5];
+	UInt8 i;
+	UInt16 x;
+
+	for (i=0; i<32; ++i) {
+		x = debugging[i];
+		hexString(s, 2, x);
+		printString(s, (i % 8) * 3 + 14, (i / 8) + 1);
+	}
+}
 
 void drawImage(const UInt8 *data, UInt16 length) {
 	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
@@ -113,18 +119,13 @@ void drawImage(const UInt8 *data, UInt16 length) {
 	POKE (SDMCTL, 0x2E); // standard playfield + missile DMA + player DMA + display list DMA
 
 	clearTextWindow();
-	printDecimal16bitValue("Total: ", duration, 1, 1); // Debugging
+	printDecimal16bitValue("Time: ", duration, 1, 1); // Debugging
 	if (result) {
-		printHex8bitValue("puff() error ", result, 20, 1);
+		printDecimal16bitValue("Err: ", result, 1, 3);
 	}
-
-	// printDecimal16bitValue("Check 0: ", profiling_checkpoint[0] - startTime, 20, 0);
-	// printDecimal16bitValue("Check 1: ", profiling_checkpoint[1] - startTime, 20, 1);
-	// printDecimal16bitValue("Check 2: ", profiling_checkpoint[2] - startTime, 20, 2);
-	// printDecimal16bitValue("Check 3: ", profiling_checkpoint[3] - startTime, 20, 3);
+	printPuffDebugging();
 
 	waitForAnyInput();
-
 }
 
 
