@@ -76,14 +76,30 @@ do_loop:
 	adc FIRST+1 		; 3 ; 
 	sta ptr1+1 			; 3 ; 
 
-	lda CODE+1			; 3 ; if code < ptr1: return symbol
-	cmp ptr1+1			; 3 ; compare MSB first
-	bcc return_symbol 	;   ; 
-	bne continue_loop 	;   ; 
+	; if ptr1 > code: return symbol
+	lda ptr1+1			; 3 ; if ptr1.MSB > code.MSB, C=0, Z=0
+	cmp CODE+1			; 3 ;
+	beq compare_lsb		; 2/3
+	bcs return_symbol  	; 2
 
-	lda CODE 			; 3 ; if MSB are equal, compare LSB
-	cmp ptr1			; 3 ; 
-	bcc return_symbol 	;   ; if result < 0 (C=0)
+	;lda CODE+1			; 3 ; if code < ptr1: return symbol
+	;cmp ptr1+1			; 3 ; compare MSB first
+	;bcc return_symbol 	; 2 ; 
+	;bne continue_loop 	; 2/3 ; 
+
+compare_lsb:
+	lda ptr1			; 3 ; if ptr1.LSB > code.MSB, C=0, Z=0
+	cmp CODE			; 3
+	beq continue_loop	; 3
+	bcs return_symbol	; 3
+
+	;lda CODE 			; 3 ; if MSB are equal, compare LSB
+	;cmp ptr1			; 3 ; 
+	;bcc return_symbol 	; 2 ; if result < 0 (C=0)
+
+	; Timing from if() above:
+	; old code: 32
+	; new code:
 
 continue_loop:
 	clc 				; 2 ; first = ptr1
