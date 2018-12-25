@@ -44,9 +44,8 @@ H_SYMBOL_INDEX = ptr3
 	iny
 	lda (ptr1),Y
 	sta H_SYMBOL_INDEX+1
-COUNT = tmp1
-	lda #0					; var count:UInt8 = 0 
-	sta COUNT 				; // number of codes of length len
+COUNT = tmp1				; // number of codes of length len
+	lda #0
 CODE = tmp3
 	sta CODE 				; var code:UInt16 = 0 
 	sta CODE+1 				; // len bits being decoded
@@ -61,56 +60,56 @@ do_loop:
 	jsr _get_one_bit		; A = _get_one_bit()
 
 	; code = code << 1 | A
-	asl CODE 		; code.LSB: carry->bit0, bit7->carry
-	rol CODE+1	 	; code.MSB
-	ora CODE
-	sta CODE
+	asl CODE 			; 5 ; code.LSB: carry->bit0, bit7->carry
+	rol CODE+1	 		; 5 ; code.MSB
+	ora CODE	 		; 3 ; 
+	sta CODE	 		; 3 ; 
 
 	; A = count = h->count[len]
-	lda (H_COUNT),Y
-	sta COUNT
+	lda (H_COUNT),Y		; 5 ;
+	sta COUNT 			; 3
 
 	; if (code < first + count) aka (code - (first + count) < 0)
-	clc 			; ptr1 = first + count
-	adc FIRST	 	; ptr1.LSB = first.LSB + count
-	sta ptr1
-	lda #0 			; ptr1.MSB = carry + first.MSB
-	adc FIRST+1
-	sta ptr1+1
+	clc 				; 2 ; ptr1 = first + count
+	adc FIRST	 		; 3 ; ptr1.LSB = first.LSB + count
+	sta ptr1	 		; 3 ;
+	lda #0 				; 2 ; ptr1.MSB = carry + first.MSB
+	adc FIRST+1 		; 3 ; 
+	sta ptr1+1 			; 3 ; 
 
-	lda CODE+1		; if code < ptr1: return symbol
-	cmp ptr1+1		; compare MSB first
-	bcc return_symbol
-	bne continue_loop
+	lda CODE+1			; 3 ; if code < ptr1: return symbol
+	cmp ptr1+1			; 3 ; compare MSB first
+	bcc return_symbol 	;   ; 
+	bne continue_loop 	;   ; 
 
-	lda CODE 		; if MSB are equal, compare LSB
-	cmp ptr1
-	bcc return_symbol ; if result < 0 (C=0)
+	lda CODE 			; 3 ; if MSB are equal, compare LSB
+	cmp ptr1			; 3 ; 
+	bcc return_symbol 	;   ; if result < 0 (C=0)
 
 continue_loop:
-	clc 			; first = ptr1
-	lda ptr1 		;   (was first = first + count)
-	sta FIRST
-	lda ptr1+1
-	sta FIRST+1
+	clc 				; 2 ; first = ptr1
+	lda ptr1 			; 3 ;   (was first = first + count)
+	sta FIRST			; 3 ; 
+	lda ptr1+1			; 3 ; 
+	sta FIRST+1			; 3 ; 
 
-	asl FIRST 		; first <<= 1
-	rol FIRST+1
+	asl FIRST 			; 5 ; first <<= 1
+	rol FIRST+1			; 5 ; 
 
-	asl COUNT 		; count *= 2
+	asl COUNT 			; 5 ; count *= 2
 
-	clc 			; h_symbol_index += count
-	lda H_SYMBOL_INDEX 		; index.LSB += count
-	adc COUNT
-	sta H_SYMBOL_INDEX
-	lda H_SYMBOL_INDEX+1 	; index.MSB += carry
-	adc #0
-	sta H_SYMBOL_INDEX+1
+	clc 					; 2 ; h_symbol_index += count
+	lda H_SYMBOL_INDEX  	; 3 ; index.LSB += count
+	adc COUNT	 			; 3 ; 
+	sta H_SYMBOL_INDEX		; 3 ; 
+	lda H_SYMBOL_INDEX+1 	; 3 ; index.MSB += carry
+	adc #0	 				; 2 ; 
+	sta H_SYMBOL_INDEX+1	; 3 ; 
 
-	iny						; len += 1
+	iny						; 2 ; len += 1
 
 while_loop:
-	cpy #MAXBITS+1 			; if Y <= MAXBITS
+	cpy #MAXBITS+1 			; 2 ; if Y <= MAXBITS
 	bne do_loop
 
 return_error:
@@ -223,9 +222,9 @@ load_bitbuf:
 
 get_bit:					; DEFLATE specifies that bits come off the right
 	dec STATE_BITCNT		; STATE_BITCNT -= 1
-	lda #0					; X was always 0
 	lsr STATE_BITBUF		; shift right, 0->(bit 7), (bit 0)->carry
-	rol a 					; put bit into A
+	lda #0					; X was always 0
+	rol a 					; put carry bit into A
 	rts 					; return bits
 
 .endproc

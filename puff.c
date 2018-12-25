@@ -4,7 +4,6 @@
 #include <setjmp.h>             /* for setjmp(), longjmp(), and jmp_buf */
 
 #define local static            /* for local function definitions */
-#define DECODE decode_asm 		/* for switching between C and ASM versions */
 
 
 // Function Prototypes
@@ -12,7 +11,6 @@ extern UInt16 __fastcall__ bits_asm(UInt8 count);
 extern UInt16 __fastcall__ decode_asm(const struct huffman *h);
 extern UInt16 __fastcall__ get_one_bit(void);
 
-local UInt16 decode_c(const struct huffman *h);
 local int construct(struct huffman *h, const UInt8 *length, int n);
 local SInt8 codes(const struct huffman *lencode, const struct huffman *distcode);
 local SInt8 fixed(void);
@@ -20,9 +18,9 @@ local SInt8 dynamic(void);
 local SInt8 stored(void);
 
 // Debugging
-#define debugging_length (32)
-UInt16 debugging[debugging_length];
-UInt8 debugging_index = 0;
+// #define debugging_length (32)
+// UInt16 debugging[debugging_length];
+// UInt8 debugging_index = 0;
 //#define SHORT_CLOCK (*(unsigned char*)(20) + 256 * *(unsigned char*)(19))
 
 
@@ -93,81 +91,8 @@ struct huffman {
  * - Incomplete codes are handled by this decoder, since they are permitted
  *   in the deflate format.  See the format notes for fixed() and dynamic().
  */
-#define SLOW
-#ifdef SLOW
-local UInt16 decode_c(const struct huffman *h)
-{
-	UInt8 *h_count = h->count;
-	UInt16 *h_symbol_index = h->symbol; // h->symbol + index
-    UInt16 code = 0;    /* len bits being decoded */
-    UInt16 first = 0;   /* first code of length len */
-    //UInt16 index = 0;   /* index of first code of length len in symbol table */
-    UInt8 len;          /* current number of bits in code */
-    UInt8 count;        /* number of codes of length len */
 
-    for (len = 1; len <= MAXBITS; len++) {
-        code = (code << 1) | get_one_bit();			/* get next bit */
-        count = h_count[len];
-        if (first + count > code) {		/* if length len, return symbol */
-            return h_symbol_index[code - first];
-        }
-        first += count;					/* else update for next length */
-        first <<= 1;
-		//index += count;
-		h_symbol_index = h_symbol_index + count;
-    }
-    return -10;                         /* ran out of codes */
-}
-
-/*
- * A faster version of decode() for real applications of this code.   It's not
- * as readable, but it makes puff() twice as fast.  And it only makes the code
- * a few percent larger.
- */
-#else /* !SLOW */
-local UInt16 decode_c(const struct huffman *h)
-{
-    UInt8 len = 1;             /* current number of bits in code */
-    UInt16 code = 0;           /* len bits being decoded */
-    UInt16 first = 0;          /* first code of length len */
-    UInt16 index = 0;          /* index of first code of length len in symbol table */
-    UInt8 bitbuf = puff_state.bitbuf;  /* bits from stream */
-    UInt8 left = puff_state.bitcnt;    /* bits left in next or left to process */
-    UInt8 *huffman_counts = h->count;
-    UInt8 nextCountIndex = 1;
-    UInt16 count;              /* number of codes of length len */
-
-    while (1) {
-        while (left) {
-            code |= bitbuf & 1;
-            bitbuf >>= 1;
-            count = huffman_counts[nextCountIndex];
-            if (first + count > code) { /* if length len, return symbol */
-                puff_state.bitbuf = bitbuf;
-                puff_state.bitcnt = (puff_state.bitcnt - len) & 7;
-                return h->symbol[index + (code - first)];
-            }
-            index += count;             /* else update for next length */
-            first += count;
-            first <<= 1;
-            code <<= 1;
-            ++len;
-            ++nextCountIndex;
-        	--left;
-        }
-        left = (MAXBITS+1) - len;
-        if (left == 0)
-            break;
-        if (puff_state.incnt == puff_state.inlen)
-            longjmp(puff_state.env, 1);         /* out of input */
-        bitbuf = puff_state.in[puff_state.incnt++];
-        if (left > 8)
-            left = 8;
-    }
-    return -10;                         /* ran out of codes */
-}
-#endif /* SLOW */
-
+// decode() was replaced by decode_asm()
 
 
 
@@ -322,7 +247,7 @@ local SInt8 codes(const struct huffman *lencode,
  
     /* decode literals and length/distance pairs */
     do {
-        symbol = DECODE(lencode);
+        symbol = decode_asm(lencode);
         if (symbol > MAXCODES)
             return -10;              /* invalid symbol */
         if (symbol < 256) {             /* literal: symbol is the byte */
@@ -342,7 +267,7 @@ local SInt8 codes(const struct huffman *lencode,
             len = lens[symbol] + bits_asm(lext[symbol]);
 
             /* get and check distance */
-            symbol = DECODE(distcode);
+            symbol = decode_asm(distcode);
             if (symbol > MAXCODES)
                 return -10;          /* invalid symbol */
             dist = dists[symbol] + bits_asm(dext[symbol]);
@@ -407,9 +332,6 @@ local SInt8 fixed()
     /* build fixed huffman tables if first call (may not be thread safe) */
     if (virgin) {
         UInt16 symbol;
-
-        // Debugging
-        //profiling_checkpoint[0] = 1;
 
         /* construct lencode and distcode */
         lencode.count = lencnt;
@@ -575,12 +497,12 @@ local SInt8 dynamic()
         UInt16 symbol;            /* decoded value */
         UInt8 len;                /* last length to repeat */
 
-        symbol = DECODE(&lencode);
+        symbol = decode_asm(&lencode);
 
         // Debugging
-        if (debugging_index < debugging_length) {
-        	debugging[debugging_index++] = symbol;
-        }
+        // if (debugging_index < debugging_length) {
+        // 	debugging[debugging_index++] = symbol;
+        // }
 
         if (symbol > MAXCODES)
             return symbol;          /* invalid symbol */

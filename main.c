@@ -86,17 +86,17 @@ void waitForAnyInput(void) {
 	}
 }
 
-void printPuffDebugging(void) {
-	UInt8 s[5];
-	UInt8 i;
-	UInt16 x;
+// void printPuffDebugging(void) {
+// 	UInt8 s[5];
+// 	UInt8 i;
+// 	UInt16 x;
 
-	for (i=0; i<32; ++i) {
-		x = debugging[i];
-		hexString(s, 2, x);
-		printString(s, (i % 8) * 3 + 14, (i / 8) + 1);
-	}
-}
+// 	for (i=0; i<32; ++i) {
+// 		x = debugging[i];
+// 		hexString(s, 2, x);
+// 		printString(s, (i % 8) * 3 + 14, (i / 8) + 1);
+// 	}
+// }
 
 void drawImage(const UInt8 *data, UInt16 length) {
 	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
@@ -105,25 +105,25 @@ void drawImage(const UInt8 *data, UInt16 length) {
 	UInt16 duration;
 	SInt8 result;
 
-	// Turn Antic off while drawing, which makes it twice as fast.
-	POKE (SDMCTL, 0);
+	// Turn Antic+DLI off while drawing, which makes it twice as fast.
+	// POKE (SDMCTL, 0);   // turn off Antic
+	// ANTIC.nmien = 0x40; // turn off DLI
 
 	startTime = SHORT_CLOCK; // Debugging
-	//profiling_checkpoint[0] = 0;
 
 	result = puff(screen, &screenLen, data, &length);
 
 	duration = SHORT_CLOCK - startTime; // Debugging
-
-	// Turn Antic back on.
-	POKE (SDMCTL, 0x2E); // standard playfield + missile DMA + player DMA + display list DMA
+	
+	// POKE (SDMCTL, 0x2E); // turn on Antic
+	// ANTIC.nmien = 0xC0;  // turn on DLI
 
 	clearTextWindow();
 	printDecimal16bitValue("Time: ", duration, 1, 1); // Debugging
 	if (result) {
 		printDecimal16bitValue("Err: ", result, 1, 3);
 	}
-	printPuffDebugging();
+	//printPuffDebugging();
 
 	waitForAnyInput();
 }
