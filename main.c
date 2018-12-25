@@ -38,13 +38,12 @@ UInt8 sightDistance;
 #define SHORT_CLOCK (PEEK(20) + 256 * PEEK(19))
 
 
-// Debugging
-
-
-
+// Function prototypes
+void drawImage(const UInt8 *data, UInt16 length);
 
 
 // Text functions
+
 
 void printStatText(void) {
 	clearTextWindow();
@@ -66,8 +65,10 @@ void printStatText(void) {
 #ifdef DEBUGGING
 void printDebuggingInfo(void) {
 	clearTextWindow();
-	printHex16bitValue("decode_asm(): ", (UInt16)decode_asm, 1, 1);
-	printHex16bitValue("bits_asm(): ", (UInt16)bits_asm, 1, 3);
+	printHex16bitValue("drawImage(): ", (UInt16)drawImage, 1, 1);
+	printHex16bitValue("puff(): ", (UInt16)puff, 1, 2);
+	printHex16bitValue("decode_asm(): ", (UInt16)decode_asm, 1, 3);
+	printHex16bitValue("get_one_bit(): ", (UInt16)get_one_bit, 1, 4);
 }
 #endif
 
@@ -86,17 +87,6 @@ void waitForAnyInput(void) {
 	}
 }
 
-// void printPuffDebugging(void) {
-// 	UInt8 s[5];
-// 	UInt8 i;
-// 	UInt16 x;
-
-// 	for (i=0; i<32; ++i) {
-// 		x = debugging[i];
-// 		hexString(s, 2, x);
-// 		printString(s, (i % 8) * 3 + 14, (i / 8) + 1);
-// 	}
-// }
 
 void drawImage(const UInt8 *data, UInt16 length) {
 	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
@@ -106,8 +96,8 @@ void drawImage(const UInt8 *data, UInt16 length) {
 	SInt8 result;
 
 	// Turn Antic+DLI off while drawing, which makes it twice as fast.
-	// POKE (SDMCTL, 0);   // turn off Antic
-	// ANTIC.nmien = 0x40; // turn off DLI
+	POKE (SDMCTL, 0);   // turn off Antic
+	ANTIC.nmien = 0x40; // turn off DLI
 
 	startTime = SHORT_CLOCK; // Debugging
 
@@ -115,8 +105,8 @@ void drawImage(const UInt8 *data, UInt16 length) {
 
 	duration = SHORT_CLOCK - startTime; // Debugging
 	
-	// POKE (SDMCTL, 0x2E); // turn on Antic
-	// ANTIC.nmien = 0xC0;  // turn on DLI
+	POKE (SDMCTL, 0x2E); // turn on Antic
+	ANTIC.nmien = 0xC0;  // turn on DLI
 
 	clearTextWindow();
 	printDecimal16bitValue("Time: ", duration, 1, 1); // Debugging

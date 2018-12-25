@@ -13,6 +13,7 @@ SInt8 puff(UInt8 *dest, UInt16 *destLen, const UInt8 *source, UInt16 *sourceLen)
 /* Debugging */
 extern UInt16 __fastcall__ bits_asm(UInt8 count);
 extern UInt16 __fastcall__ decode_asm(const struct huffman *h);
+extern UInt16 __fastcall__ get_one_bit(void);
 
 // extern UInt16 debugging[];
 

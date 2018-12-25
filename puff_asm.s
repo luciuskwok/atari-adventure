@@ -96,7 +96,7 @@ compare_lsb:
 
 	; Timing from if() above:
 	; old code: 32
-	; new code:
+	; new code: 24
 
 continue_loop:
 	stx FIRST			; 3 ; first = XA
