@@ -318,7 +318,7 @@ local SInt8 codes(const struct huffman *lencode,
  
     /* decode literals and length/distance pairs */
     do {
-        symbol = decode_c(lencode);
+        symbol = decode_asm(lencode);
         if (symbol > 288)
             return -10;              /* invalid symbol */
         if (symbol < 256) {             /* literal: symbol is the byte */
@@ -338,7 +338,7 @@ local SInt8 codes(const struct huffman *lencode,
             len = lens[symbol] + bits_asm(lext[symbol]);
 
             /* get and check distance */
-            symbol = decode_c(distcode);
+            symbol = decode_asm(distcode);
             if (symbol > 288)
                 return -10;          /* invalid symbol */
             dist = dists[symbol] + bits_asm(dext[symbol]);
@@ -571,7 +571,7 @@ local SInt8 dynamic()
         int symbol;             /* decoded value */
         int len;                /* last length to repeat */
 
-        symbol = decode_c(&lencode);
+        symbol = decode_asm(&lencode);
         if (symbol < 0)
             return symbol;          /* invalid symbol */
         if (symbol < 16)                /* length in 0..15 */

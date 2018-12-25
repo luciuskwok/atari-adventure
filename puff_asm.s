@@ -8,6 +8,7 @@
 .import 	_longjmp
 .import 	pushax
 .importzp 	tmp1, tmp2, tmp3, tmp4, ptr1, ptr2, ptr3, ptr4
+.importzp 	sreg
 
 ; puff_state struct fields
 STATE_OUT = _puff_state
@@ -27,176 +28,120 @@ MAXBITS = 15
 .code
 
 .proc _decode_asm
-	sta ptr1 				; ptr1 = h
+	sta ptr1 				; ptr1 = h, temporarily
 	stx ptr1+1
+H_COUNT = ptr2
 	ldy #0 					; ptr2 = (UInt8*) h->count
-	lda (ptr1),Y 			; this is incremented instead of using var len
-	sta ptr2				; because: count = h->count[len]
+	lda (ptr1),Y 			
+	sta H_COUNT			
 	iny
 	lda (ptr1),Y
-	sta ptr2+1
+	sta H_COUNT+1
+H_SYMBOL_INDEX = ptr3
 	iny 					; ptr3 = (Uint16*) h->symbol
-	lda (ptr1),Y 			; 
-	sta ptr3 				; 
+	lda (ptr1),Y			;     plus index * 2
+	sta H_SYMBOL_INDEX
 	iny
 	lda (ptr1),Y
-	sta ptr3+1
-							; Local Variables
-LEN = $0108
-	lda #MAXBITS 			; var len:UInt8 = 15
-	pha 					; sp+$0108
-COUNT = $0107
-	lda #0					; var count:UInt8 = 0 // number of codes of length len
-	pha 	 				; 
-CODE = $0105
-	pha 					; var code:UInt16 = 0 // len bits being decoded
-	pha  					; 
-FIRST = $0103
-	pha 					; var first:UInt16 = 0 // first code of length len
-	pha 					; sp+$0103
-INDEX = $0101
-	pha 					; var index:UInt16 = 0 // index of first code of length len in symbol table
-	pha 					; sp+$0101
-	tsx 					; X = stack pointer
+	sta H_SYMBOL_INDEX+1
+COUNT = tmp1
+	lda #0					; var count:UInt8 = 0 
+	sta COUNT 				; // number of codes of length len
+CODE = tmp3
+	sta CODE 				; var code:UInt16 = 0 
+	sta CODE+1 				; // len bits being decoded
+FIRST = ptr4
+	sta FIRST 				; var first:UInt16 = 0 
+	sta FIRST+1				; // first code of length len
+
+	ldy #1					; for len in 1...15 (use Y for len)
 	jmp while_loop
 
 do_loop:
-	inc ptr2 				; ptr2 += 1 
-	bne load_byte 			;   (was len++ and h->count[len])
-	inc ptr2+1
+	jsr _get_one_bit		; A = _get_one_bit()
 
-load_byte:
-	lda STATE_BITCNT 	; if bitcnt == 0: load byte
-	bne get_bit
+	; code = code << 1 | A
+	asl CODE 		; code.LSB: carry->bit0, bit7->carry
+	rol CODE+1	 	; code.MSB
+	ora CODE
+	sta CODE
 
-	clc				; ptr4 = STATE_IN + STATE_INCNT
-	lda STATE_IN
-	adc STATE_INCNT
-	sta ptr4
-	lda STATE_IN+1
-	adc STATE_INCNT+1
-	sta ptr4+1
-	ldy #0
-	lda (ptr4),Y	; A = *ptr4, the next input byte
-	sta STATE_BITBUF ; store the byte in STATE_BITBUF
-
-	lda #8 			; STATE_BITCNT = 8
-	sta STATE_BITCNT		
-
-	inc STATE_INCNT ; STATE_INCNT += 1
-	bne get_bit
-	inc STATE_INCNT+1
-
-get_bit:
-	; STATE_BITCNT -= 1
-	dec STATE_BITCNT
-
-	; code = (code << 1) | (bitbuf & 1); bitbuf >>= 1
-	lsr STATE_BITBUF ; bitbuf: bit0->carry
-	rol CODE,X 		; code.LSB: carry->bit0, bit7->carry
-	rol CODE+1,X 	; code.MSB
-
-	; count = *ptr2 (was count = h->count[len])
-	ldy #0
-	lda (ptr2),Y
-	sta COUNT,X
+	; A = count = h->count[len]
+	lda (H_COUNT),Y
+	sta COUNT
 
 	; if (code < first + count) aka (code - (first + count) < 0)
-	clc 			; tmp = first + count
-	lda FIRST,X 	; tmp1 = first.LSB + count
-	adc COUNT,X
-	sta tmp1
-	lda FIRST+1,X 	; tmp2 = carry + first.MSB
-	adc #0
-	sta tmp2
-	sec 			; subtract tmp from code
-	lda CODE,X
-	sbc tmp1 		; rearranging the terms: (code < first + count) :: (code - (first + count) < 0)
-	lda CODE+1,X
-	sbc tmp2
+	clc 			; ptr1 = first + count
+	adc FIRST	 	; ptr1.LSB = first.LSB + count
+	sta ptr1
+	adc FIRST+1 	; ptr1.MSB = carry + first.MSB
+	sta ptr1+1
+
+	sec 			; if code < tmp(3,4)
+	lda CODE
+	cmp ptr1
+	lda CODE+1
+	cmp ptr1+1
 	bcc return_symbol ; if result < 0 (C=0): return symbol
 
-	clc 			; first = tmp 
-	lda tmp1 		;   (was first = first + count)
-	sta FIRST,X
-	lda tmp2
-	sta FIRST+1,X
+	clc 			; first = tmp(3,4)
+	lda ptr1 		;   (was first = first + count)
+	sta FIRST
+	lda ptr1+1
+	sta FIRST+1
 
-	clc 			; index += count
-	lda INDEX,X 	;   index.LSB += count
-	adc COUNT,X
-	sta INDEX,X
-	lda INDEX+1,X 	;   index.MSB += carry
+	asl FIRST 		; first <<= 1
+	rol FIRST+1
+
+	asl COUNT 		; count *= 2
+
+	clc 			; h_symbol_index += count
+	lda H_SYMBOL_INDEX 		; index.LSB += count
+	adc COUNT
+	sta H_SYMBOL_INDEX
+	lda H_SYMBOL_INDEX+1 	; index.MSB += carry
 	adc #0
-	sta INDEX+1,X
+	sta H_SYMBOL_INDEX+1
 
-	asl FIRST,X 	; first <<= 1
-	rol FIRST+1,X
-
-	asl CODE,X 		; code <<= 1
-	rol CODE+1,X
-
-decrement_len:
-	dec LEN,X 		; len -= 1		
+continue_loop:
+	iny						; len += 1
 
 while_loop:
-	lda LEN,X
-	beq return_error ; while len != 0
-	jmp do_loop
-
-return_symbol:
-	clc 			; tmp = index + code
-	lda INDEX,X
-	adc INDEX+1,X
-	sta tmp1
-	lda CODE,X
-	adc CODE+1,X
-	sta tmp2
-
-	sec  			; tmp -= first
-	lda tmp1
-	sbc FIRST,X
-	sta tmp1
-	lda tmp2
-	sbc FIRST+1,X
-	sta tmp2
-	
-	asl tmp1 		; tmp *= 2
-	rol tmp2,X
-
-	clc 			; ptr3 += tmp
-	lda ptr3
-	adc tmp1
-	sta ptr3
-	lda ptr3+1
-	adc tmp2
-	sta ptr3+1
-
-	tsx 	; pop 8 bytes off stack to remove local vars
-	txa 	; 2
-	clc 	; 2
-	adc #8 	; 2
-	tax 	; 2
-	txs 	; 2 cycles
-		
-	ldy #1 			; return *ptr3 
-	lda (ptr3),Y 	;    (was h->symbol[index + (code - first)])
-	tax
-	ldy #0
-	lda (ptr3),Y
-	rts
+	cpy #MAXBITS
+	bne do_loop
 
 return_error:
-	tsx 	; 2 ; pop local vars
-	txa 	; 2 ; this is faster than using pla which is 4 cycles each instruction
-	clc 	; 2
-	adc #8 	; 2
-	tax 	; 2
-	txs 	; 2 cycles
-
-	lda #$F6 ; return -10
+	lda #$F6 				; return -10
 	ldx #$FF 
 	rts
+
+return_symbol:
+	sec  					; code -= first
+	lda CODE
+	sbc FIRST
+	sta CODE
+	lda CODE+1
+	sbc FIRST+1
+	sta CODE+1
+	
+	asl CODE 				; code *= 2
+	rol CODE+1
+
+	clc 					; h_symbol_index += code
+	lda H_SYMBOL_INDEX
+	adc CODE
+	sta H_SYMBOL_INDEX
+	lda H_SYMBOL_INDEX+1
+	adc CODE+1
+	sta H_SYMBOL_INDEX+1
+
+	ldy #1 					; return h->symbol[index + code - first]
+	lda (H_SYMBOL_INDEX),Y
+	tax
+	ldy #0
+	lda (H_SYMBOL_INDEX),Y
+	rts
+
 .endproc
 
 .proc _bits_asm
