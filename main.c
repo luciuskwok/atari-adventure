@@ -66,6 +66,7 @@ void printStatText(void) {
 void printDebuggingInfo(void) {
 	clearTextWindow();
 	printHex16bitValue("decode_asm(): ", (UInt16)decode_asm, 1, 1);
+	printHex16bitValue("bits_asm(): ", (UInt16)bits_asm, 1, 3);
 
 	//printInterruptVectors();
 	// Print location of drawImage() and puff() for debugging

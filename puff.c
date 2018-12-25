@@ -8,6 +8,8 @@
 // Function Prototypes
 extern UInt16 __fastcall__ bits_asm(UInt8 count);
 extern UInt16 __fastcall__ decode_asm(const struct huffman *h);
+extern UInt16 __fastcall__ get_one_bit(void);
+
 local UInt16 decode_c(const struct huffman *h);
 local int construct(struct huffman *h, const UInt8 *length, int n);
 local SInt8 codes(const struct huffman *lencode, const struct huffman *distcode);
@@ -90,7 +92,7 @@ struct huffman {
  */
 #define SLOW
 #ifdef SLOW
-local UInt16 decode(const struct huffman *h)
+local UInt16 decode_c(const struct huffman *h)
 {
     UInt8 len;          /* current number of bits in code */
     UInt8 count;        /* number of codes of length len */
@@ -99,7 +101,7 @@ local UInt16 decode(const struct huffman *h)
     UInt16 index = 0;   /* index of first code of length len in symbol table */
 
     for (len = 1; len <= MAXBITS; len++) {
-        code |= bits_asm(1);             /* get next bit */
+        code |= get_one_bit();             /* get next bit */
         count = h->count[len];
         if (first + count > code)       /* if length len, return symbol */
             return h->symbol[index + (code - first)];
@@ -314,7 +316,7 @@ local SInt8 codes(const struct huffman *lencode,
  
     /* decode literals and length/distance pairs */
     do {
-        symbol = decode_asm(lencode);
+        symbol = decode_c(lencode);
         if (symbol > 288)
             return -10;              /* invalid symbol */
         if (symbol < 256) {             /* literal: symbol is the byte */
@@ -334,7 +336,7 @@ local SInt8 codes(const struct huffman *lencode,
             len = lens[symbol] + bits_asm(lext[symbol]);
 
             /* get and check distance */
-            symbol = decode_asm(distcode);
+            symbol = decode_c(distcode);
             if (symbol > 288)
                 return -10;          /* invalid symbol */
             dist = dists[symbol] + bits_asm(dext[symbol]);
@@ -567,7 +569,7 @@ local SInt8 dynamic()
         int symbol;             /* decoded value */
         int len;                /* last length to repeat */
 
-        symbol = decode_asm(&lencode);
+        symbol = decode_c(&lencode);
         if (symbol < 0)
             return symbol;          /* invalid symbol */
         if (symbol < 16)                /* length in 0..15 */

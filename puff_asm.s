@@ -1,8 +1,9 @@
 ; puff_asm.s
 
 
-.export 	_bits_asm ; extern UInt16 __fastcall__ bits_asm(UInt8 count);
 .export 	_decode_asm ; extern UInt16 __fastcall__ bits_decode(const struct huffman *h);
+.export 	_bits_asm ; extern UInt16 __fastcall__ bits_asm(UInt8 count);
+.export 	_get_one_bit ; extern UInt16 __fastcall__ get_one_bit(void);
 .import 	_puff_state
 .import 	_longjmp
 .import 	pushax
@@ -199,30 +200,60 @@ return_error:
 .endproc
 
 .proc _bits_asm
-	cmp #0					; count parameter is passed in A. 
-	bne set_up_locals		; if count == 0, return 0
-	ldx #0
-	rts   			
+	sta tmp1				; let tmp1 = count
+	lda #0					; 
+	sta tmp2				; var tmp2/tmp3: return result
+	sta tmp3
+	ldy #0					; var index = 0
+	beq while_count
 
-set_up_locals:
-	tay						; count -> Y, used as decrementing index
-	lda #0					; local var result = UInt16(0)
-	pha 					; 
-	pha 					; reserve 2 bytes, because count <= 15
-	tya
-	pha 					; save count parameter for later
-	bne while_need 			; do while (Y != 0)
+do_count:
+	lsr tmp3 				; tmp.MSB >>= 1
+	ror tmp2 				; tmp.LSB >>= 1 with carry
 
-do_need:		
+	cpy tmp1				; if index < count:
+	bcs continue_count
+
+	jsr _get_one_bit		; A = get_one_bit()
+	cmp #0
+	beq continue_count		; if A != 0:
+	lda #$80				; set high bit of tmp2
+	ora tmp3
+	sta tmp3
+
+continue_count:
+	iny						; index += 1
+
+while_count:
+	cpy #16					; while index != 16
+	bne do_count
+
+return:
+	lda tmp2				; LSB -> A
+	ldx tmp3 				; MSB -> X
+	rts 					; return bits
+
+.endproc
+
+.proc _get_one_bit			; Returns 0 or 1 in the A/X register
+							; Uses ptr1, A, X. Does not use Y.
+	ldx #0 					; X is always 0
 	lda STATE_BITCNT		; if STATE_BITCNT == 0:
 	bne get_bit				;     load new byte into STATE_BITBUF	
 
 	lda STATE_INCNT			; if STATE_INCNT == STATE_INLEN:
-	cmp STATE_INLEN 		;     error: out of input
+	cmp STATE_INLEN
 	bne load_bitbuf
 	lda STATE_INCNT+1		; must check both bytes of 16-bit values
 	cmp STATE_INLEN+1
-	beq error_jmp
+	bne load_bitbuf
+
+	lda #<(STATE_ENV) 		; error: out of input
+	ldx #>(STATE_ENV)
+	jsr pushax
+	ldx #$00
+	lda #$01
+	jsr _longjmp			; longjmp(puff_state.env, 1);
 
 load_bitbuf:
 	clc						; ptr1 = STATE_IN + STATE_INCNT
@@ -232,61 +263,21 @@ load_bitbuf:
 	lda STATE_IN+1
 	adc STATE_INCNT+1
 	sta ptr1+1
-	ldx #0
 	lda (ptr1,X)			; A = *ptr1, the next input byte
 	sta STATE_BITBUF		; store the byte in STATE_BITBUF
 
 	lda #8 					; STATE_BITCNT = 8
 	sta STATE_BITCNT		
 
-	inc STATE_INCNT 		; ++STATE_INCNT
+	inc STATE_INCNT 		; STATE_INCNT += 1
 	bne get_bit
 	inc STATE_INCNT+1
 
-get_bit:					; DEFLATE format specifies that bits come off the right side
-	lsr STATE_BITBUF		; shift right, 0->(bit 7), (bit 0)->carry
-	tsx						; get the stack pointer
-	ror $0102,X				; MSB: carry->(bit 7), (bit 0)->carry
-	ror $0103,X 			; LSB: carry->(bit 7), (bit 0)->carry(discarded)
+get_bit:					; DEFLATE specifies that bits come off the right
 	dec STATE_BITCNT		; STATE_BITCNT -= 1
-	dey						; Y -= 1
-while_need:
-	cpy #0					; while (Y != 0)
-	bne do_need
-
-; At this point the return value is on the stack as two bytes, but the bits are left-justified
-; and need to be right justified.
-	tsx
-	lda $0101,X 			; load count
-	sec 					; set carry so it doesn't affect subtraction
-	sbc #16 				; Y = count - 16 = negative number of bit shifts
-	tay 					; use Y as index register to count number of bit shifts
-	clc
-	bcc while_bit_shifter	; always branch
-
-do_bit_shifter:
-	lsr $0102,X 			; MSB: 0->(bit 7), (bit 0)->carry
-	ror $0103,X 			; LSB: carry->(bit y), (bit 0)->carry(discarded)
-	iny 					; Y += 1
-while_bit_shifter:
-	cpy #0 					; while (Y != 0)
-	bne do_bit_shifter
-
-return:
-	pla ; count
-	pla	; MSB -> X
-	tax 
-	pla ; LSB -> A
+	lda #0					; X was always 0
+	lsr STATE_BITBUF		; shift right, 0->(bit 7), (bit 0)->carry
+	rol a 					; put bit into A
 	rts 					; return bits
 
-error_jmp:
-	pla						; remove local variables from stack, 3 bytes
-	pla
-	pla
-	lda     #<(STATE_ENV)	; longjmp(puff_state.env, 1);
-	ldx     #>(STATE_ENV)
-	jsr     pushax
-	ldx     #$00
-	lda     #$01
-	jsr     _longjmp	
 .endproc
