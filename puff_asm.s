@@ -74,17 +74,20 @@ do_loop:
 	clc 			; ptr1 = first + count
 	adc FIRST	 	; ptr1.LSB = first.LSB + count
 	sta ptr1
-	lda #0
-	adc FIRST+1 	; ptr1.MSB = carry + first.MSB
+	lda #0 			; ptr1.MSB = carry + first.MSB
+	adc FIRST+1
 	sta ptr1+1
 
-	sec 			; if code < ptr1: return symbol
-	lda CODE
+	lda CODE+1		; if code < ptr1: return symbol
+	cmp ptr1+1		; compare MSB first
+	bcc return_symbol
+	bne continue_loop
+
+	lda CODE 		; if MSB are equal, compare LSB
 	cmp ptr1
-	lda CODE+1
-	cmp ptr1+1
 	bcc return_symbol ; if result < 0 (C=0)
 
+continue_loop:
 	clc 			; first = ptr1
 	lda ptr1 		;   (was first = first + count)
 	sta FIRST
@@ -104,7 +107,6 @@ do_loop:
 	adc #0
 	sta H_SYMBOL_INDEX+1
 
-continue_loop:
 	iny						; len += 1
 
 while_loop:
