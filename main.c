@@ -78,6 +78,41 @@ void printDebuggingInfo(void) {
 
 // Dialog functions
 
+void fadeOut(void) {
+	UInt8 *colors = (UInt8*)(PCOLR0);
+	UInt8 count;
+	UInt8 i, x;
+
+	// Disable player color cycling to avoid conflicts
+	setPlayerCursorVisible(0);
+
+	for (count=0; count<15; ++count) {
+		*VB_TIMER = 1;
+
+		for (i=0; i<9; ++i) {
+			x = colors[i];
+			if ((x & 0x0F) != 0) {
+				--x;
+			} else {
+				x = 0;
+			}
+			colors[i] = x;
+		}
+		for (i=0; i<72; ++i) {
+			x = BG_COLOR[i];
+			if ((x & 0x0F) != 0) {
+				--x;
+			} else {
+				x = 0;
+			}
+			BG_COLOR[i] = x;
+		}
+
+		// Delay 
+		while (*VB_TIMER) {
+		}
+	}
+}
 
 void waitForAnyInput(void) {
 	// Wait for trigger to be released first.
@@ -94,23 +129,23 @@ void waitForAnyInput(void) {
 void drawImage(const UInt8 *data, UInt16 length) {
 	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
 	UInt16 screenLen = SCREEN_LENGTH;
-	UInt16 startTime;
+#if DEBUGGING
+	UInt16 startTime = SHORT_CLOCK;  // Debugging
 	UInt16 duration;
+#endif
 	SInt8 result;
 
 	// Turn Antic+DLI off while drawing, which makes it twice as fast.
 	// POKE (SDMCTL, 0);   // turn off Antic
 	ANTIC.nmien = 0x40; // turn off DLI
 
-	startTime = SHORT_CLOCK; // Debugging
-
 	result = puff(screen, &screenLen, data, &length);
-
-	duration = SHORT_CLOCK - startTime; // Debugging
 	
 	// POKE (SDMCTL, 0x2E); // turn on Antic
 	ANTIC.nmien = 0xC0;  // turn on DLI
 
+#if DEBUGGING
+	duration = SHORT_CLOCK - startTime; // Debugging
 	clearTextWindow();
 	printDecimal16bitValue("Time: ", duration, 1, 1); // Debugging
 	if (result) {
@@ -118,8 +153,9 @@ void drawImage(const UInt8 *data, UInt16 length) {
 		printDecimal16bitValue("In Count:  ", length, 20, 1);
 		printDecimal16bitValue("Out Count: ", screenLen, 20, 3);
 	}
-
 	waitForAnyInput();
+#endif
+
 }
 
 
@@ -149,6 +185,7 @@ void presentDialog(void) {
 	UInt8 i;
 
 	// Set up graphics window
+	fadeOut();
 	hidePlayfieldAndSprites();
 	setPlayerCursorVisible(0);
 	loadColorTable(dialogColorTable);
@@ -172,6 +209,9 @@ void presentDialog(void) {
 		waitForAnyInput();
 	}
 
+	// Fade out
+	fadeOut();
+
 	// Reload map
 	hidePlayfieldAndSprites();
 	setTextWindowColorTheme(0);
@@ -186,6 +226,7 @@ void presentDialog(void) {
 
 
 void exitToOverworld(void) {
+	fadeOut();
 	playerMapLocation = playerOverworldLocation;
 	sightDistance = 0xFF;
 	loadMap(OverworldMapType, sightDistance, &playerMapLocation);
@@ -193,6 +234,7 @@ void exitToOverworld(void) {
 
 
 void enterDungeon(void) {
+	fadeOut();
 	sightDistance = lampStrength;
 	playerOverworldLocation = playerMapLocation;
 	playerMapLocation = mapEntryPoint(DungeonMapType);
@@ -201,6 +243,7 @@ void enterDungeon(void) {
 
 
 void enterTown(void) {
+	fadeOut();
 	sightDistance = 0xFF;
 	playerOverworldLocation = playerMapLocation;
 	playerMapLocation = mapEntryPoint(TownMapType);
