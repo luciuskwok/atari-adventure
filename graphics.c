@@ -69,7 +69,7 @@ void initGraphics(void) {
 	initVBI(immediateUserVBI); // Safe value: 0xE45F
 	
 	// Set color table to all black and change the display list
-	//hidePlayfieldAndSprites();
+	POKE (SDMCTL, 0x2E); // standard playfield + missile DMA + player DMA + display list DMA
 	initDisplayList(ramtopValue - 12);
 	selectDisplayList(1);
 	initSprites();
@@ -169,6 +169,8 @@ void initDisplayList(UInt8 startPage) {
 
 
 void selectDisplayList(UInt8 index) {
+	UInt8 oldSdmctl = PEEK(SDMCTL);
+
 	POKE (SDMCTL, 0); // turn off DMA and DLI before changing pointers
 	ANTIC.nmien = 0x40;
 
@@ -186,7 +188,7 @@ void selectDisplayList(UInt8 index) {
 	}
 
 	ANTIC.nmien = 0xC0; // enable both DLI and VBI
-	POKE (SDMCTL, 0x2E); // standard playfield + missile DMA + player DMA + display list DMA
+	POKE (SDMCTL, oldSdmctl);
 }
 
 
@@ -251,25 +253,12 @@ void initSprites(void) {
 	ANTIC.pmbase = spritePage;
 	POKE (GPRIOR, 0x01); // layer players above playfield.
 	GTIA_WRITE.gractl = 3; // enable both missile and player graphics
+	//POKE (SDMCTL, 0x2E);
 }
 
 
 // ==== Color Table ====
 
-
-void hidePlayfieldAndSprites(void) {
-	// This function quickly hides most display elements so that slower operations can make changes.
-	// Blacks out the color table and hides all sprites, but does not affect colors set in DLI.
-	UInt8 *p = (UInt8*)(PCOLR0);
-	UInt8 *spritePositions = (UInt8 *)HPOSP0;
-	UInt8 i;
-	for (i=0; i<9; ++i) {
-		p[i] = 0;
-	}
-	for (i=0; i<8; ++i) {
-		spritePositions[i] = 0;
-	}
-}
 
 void loadColorTable(const UInt8 *colors) {
 	UInt8 *p = (UInt8*)(PCOLR0);
@@ -315,8 +304,8 @@ void setPlayerCursorVisible(UInt8 visible) {
 
 	if (visible) { 
 		// Clear sprite data.
-		clearSprite(1);
-		clearSprite(2);
+		clearSpriteData(1);
+		clearSpriteData(2);
 
 		// Draw cursor sprite, which takes up 2 players because it is 10 pixels wide
 		drawSprite(cursorSprite1, 10, 1, 31 + 16);
@@ -329,12 +318,15 @@ void setPlayerCursorVisible(UInt8 visible) {
 		// Position sprites		
 		GTIA_WRITE.hposp0 = PM_LEFT_MARGIN + (9 * 8);
 		GTIA_WRITE.hposp1 = PM_LEFT_MARGIN + (10 * 8);
+	}
+}
 
-		// Enable color cycling
-		POKE (CUR_TIMER, 15);
+
+void setPlayerCursorColorCycling(UInt8 cycle) {
+	if (cycle) {
+		POKE (CUR_TIMER, 15); // on
 	} else {
-		// Disable color cycling
-		POKE (CUR_TIMER, 0xFF);
+		POKE (CUR_TIMER, 0xFF); // off
 	}
 }
 
@@ -417,13 +409,27 @@ void setMegaSprite(const UInt8 *sprite, const UInt8 length, const PointU8 *posit
 }
 
 
-void clearSprite(UInt8 player) {
+void clearSpriteData(UInt8 player) {
 	UInt8 *pmbasePtr = (UInt8 *) (256 * spritePage + 384 + 128 * player);
 	UInt8 i;
 
 	for (i=0; i<128; ++i) {
 		pmbasePtr[i] = 0;
 	}
+}
+
+
+void hideSprites(void) {
+	UInt8 *spritePositions = (UInt8 *)HPOSP0;
+	UInt8 i;
+
+	for (i=0; i<8; ++i) {
+		spritePositions[i] = 0;
+	}
+	for (i=0; i<9; ++i) {
+		P3_XPOS[i] = 0;
+	}
+
 }
 
 

@@ -78,34 +78,40 @@ void printDebuggingInfo(void) {
 
 // Dialog functions
 
-void fadeOut(void) {
+UInt8 applyFade(UInt8 color) {
+	if ((color & 0x0F) != 0) {
+		return color - 1;
+	} else {
+		return 0;
+	}
+}
+
+enum FadeOptions {
+	FadeGradient = 1, FadeTextBox = 2
+};
+
+void fadeOut(UInt8 fadeOptions) {
 	UInt8 *colors = (UInt8*)(PCOLR0);
 	UInt8 count;
-	UInt8 i, x;
+	UInt8 i;
 
 	// Disable player color cycling to avoid conflicts
-	setPlayerCursorVisible(0);
+	setPlayerCursorColorCycling(0);
 
 	for (count=0; count<15; ++count) {
 		*VB_TIMER = 1;
 
 		for (i=0; i<9; ++i) {
-			x = colors[i];
-			if ((x & 0x0F) != 0) {
-				--x;
-			} else {
-				x = 0;
-			}
-			colors[i] = x;
+			colors[i] = applyFade(colors[i]);			
 		}
-		for (i=0; i<72; ++i) {
-			x = BG_COLOR[i];
-			if ((x & 0x0F) != 0) {
-				--x;
-			} else {
-				x = 0;
+		if (fadeOptions & FadeGradient) {
+			for (i=0; i<72; ++i) {
+				BG_COLOR[i] = applyFade(BG_COLOR[i]);				
 			}
-			BG_COLOR[i] = x;
+		}
+		if (fadeOptions & FadeTextBox) {
+			*TEXT_LUM = applyFade(*TEXT_LUM);
+			*TEXT_BG = applyFade(*TEXT_BG);
 		}
 
 		// Delay 
@@ -125,6 +131,16 @@ void waitForAnyInput(void) {
 	}
 }
 
+void setScreenVisible(UInt8 visible) {
+	if (visible) {
+		POKE (SDMCTL, 0x2E); // turn on Antic
+		ANTIC.nmien = 0xC0;  // turn on DLI
+	} else {
+		POKE (SDMCTL, 0);   // turn off Antic
+		ANTIC.nmien = 0x40; // turn off DLI but leave VBI running
+	}	
+}
+
 
 void drawImage(const UInt8 *data, UInt16 length) {
 	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
@@ -135,14 +151,7 @@ void drawImage(const UInt8 *data, UInt16 length) {
 #endif
 	SInt8 result;
 
-	// Turn Antic+DLI off while drawing, which makes it twice as fast.
-	// POKE (SDMCTL, 0);   // turn off Antic
-	ANTIC.nmien = 0x40; // turn off DLI
-
 	result = puff(screen, &screenLen, data, &length);
-	
-	// POKE (SDMCTL, 0x2E); // turn on Antic
-	ANTIC.nmien = 0xC0;  // turn on DLI
 
 #if DEBUGGING
 	duration = SHORT_CLOCK - startTime; // Debugging
@@ -185,19 +194,21 @@ void presentDialog(void) {
 	UInt8 i;
 
 	// Set up graphics window
-	fadeOut();
-	hidePlayfieldAndSprites();
-	setPlayerCursorVisible(0);
-	loadColorTable(dialogColorTable);
-	setBackgroundGradient(gradient);
+	fadeOut(FadeTextBox);
+	setScreenVisible(0);
 	clearTextWindow();
-	setTextWindowColorTheme(1);
-	selectDisplayList(2);
 
 	drawImage(testImage, testImageLength);
 
 	// Add Sans
 	setMegaSprite(sansMegaSprite, sansMegaSpriteLength, &sansPosition, 2);
+
+	// Turn on screen
+	setTextWindowColorTheme(1);
+	loadColorTable(dialogColorTable);
+	setBackgroundGradient(gradient);
+	selectDisplayList(2);
+	setScreenVisible(1);
 
 	// Loop through messages
 	messages[0] = msg1;
@@ -210,13 +221,16 @@ void presentDialog(void) {
 	}
 
 	// Fade out
-	fadeOut();
+	fadeOut(FadeGradient | FadeTextBox);
+	setScreenVisible(0);
 
 	// Reload map
-	hidePlayfieldAndSprites();
-	setTextWindowColorTheme(0);
-	selectDisplayList(1);
+	clearSpriteData(4);
+	hideSprites();
 	loadMap(currentMapType, sightDistance, &playerMapLocation);
+	selectDisplayList(1);
+	setTextWindowColorTheme(0);
+	setScreenVisible(1);
 
 	printStatText();
 }
@@ -224,30 +238,31 @@ void presentDialog(void) {
 
 // Movement functions
 
+void transitionToMap(UInt8 mapType) {
+	fadeOut(0);
+	loadMap(mapType, sightDistance, &playerMapLocation);
+}
 
 void exitToOverworld(void) {
-	fadeOut();
 	playerMapLocation = playerOverworldLocation;
 	sightDistance = 0xFF;
-	loadMap(OverworldMapType, sightDistance, &playerMapLocation);
+	transitionToMap(OverworldMapType);
 }
 
 
 void enterDungeon(void) {
-	fadeOut();
 	sightDistance = lampStrength;
 	playerOverworldLocation = playerMapLocation;
 	playerMapLocation = mapEntryPoint(DungeonMapType);
-	loadMap(DungeonMapType, sightDistance, &playerMapLocation);
+	transitionToMap(DungeonMapType);
 }
 
 
 void enterTown(void) {
-	fadeOut();
 	sightDistance = 0xFF;
 	playerOverworldLocation = playerMapLocation;
 	playerMapLocation = mapEntryPoint(TownMapType);
-	loadMap(TownMapType, sightDistance, &playerMapLocation);
+	transitionToMap(TownMapType);
 }
 
 
@@ -374,7 +389,6 @@ int main (void) {
 	exitToOverworld();
 	setTextWindowColorTheme(0);
 	printStatText();
-	setPlayerCursorVisible(1);
 
 	// Debugging
 #ifdef DEBUGGING

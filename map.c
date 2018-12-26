@@ -59,7 +59,6 @@ PointU8 mapEntryPoint(UInt8 mapType) {
 void loadMap(UInt8 mapType, UInt8 sightDistance, PointU8 *location) {
 	const UInt8 *colorTable;
 
-	hidePlayfieldAndSprites();
 	clearMapScreen();
 	
 	switch (mapType) {
@@ -87,7 +86,10 @@ void loadMap(UInt8 mapType, UInt8 sightDistance, PointU8 *location) {
 	layoutCurrentMap(sightDistance);
 	drawCurrentMap(location);
 	loadColorTable(colorTable);
+
+	// Show player cursor
 	setPlayerCursorVisible(1);
+	setPlayerCursorColorCycling(1);
 }
 
 
