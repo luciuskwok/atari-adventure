@@ -16,6 +16,7 @@ UInt8 mapTileAt(PointU8 *pt);
 PointU8 mapEntryPoint(UInt8 mapType);
 
 void loadMap(UInt8 mapType, UInt8 sightDistance, PointU8 *location);
+const UInt8 *colorTableForMap(UInt8 mapType);
 void clearMapScreen(void);
 
 void layoutCurrentMap(UInt8 sightDistance);

@@ -62,34 +62,42 @@ void loadMap(UInt8 mapType, UInt8 sightDistance, PointU8 *location) {
 	clearMapScreen();
 	
 	switch (mapType) {
-		case OverworldMapType: 
-			currentRunLenMap = overworldRleMap;
-			currentMapSize = overworldMapSize;
-			currentTileMap = overworldTileMap;
-			colorTable = overworldColorTable;
-			break;
-		case DungeonMapType: 
-			currentRunLenMap = dungeonRleMap;
-			currentMapSize = dungeonMapSize;
-			currentTileMap = dungeonTileMap;
-			colorTable = dungeonColorTable;
-			break;
-		case TownMapType: 
-			currentRunLenMap = townRleMap;
-			currentMapSize = townMapSize;
-			currentTileMap = townTileMap;
-			colorTable = townColorTable;
-			break;
+	case OverworldMapType: 
+		currentRunLenMap = overworldRleMap;
+		currentMapSize = overworldMapSize;
+		currentTileMap = overworldTileMap;
+		colorTable = overworldColorTable;
+		break;
+	case DungeonMapType: 
+		currentRunLenMap = dungeonRleMap;
+		currentMapSize = dungeonMapSize;
+		currentTileMap = dungeonTileMap;
+		colorTable = dungeonColorTable;
+		break;
+	case TownMapType: 
+		currentRunLenMap = townRleMap;
+		currentMapSize = townMapSize;
+		currentTileMap = townTileMap;
+		colorTable = townColorTable;
+		break;
 	}
 	currentMapType = mapType;
 
 	layoutCurrentMap(sightDistance);
 	drawCurrentMap(location);
-	loadColorTable(colorTable);
+}
 
-	// Show player cursor
-	setPlayerCursorVisible(1);
-	setPlayerCursorColorCycling(1);
+
+const UInt8 *colorTableForMap(UInt8 mapType) {
+	switch (mapType) {
+	case OverworldMapType: 
+		return overworldColorTable;
+	case DungeonMapType: 
+		return dungeonColorTable;
+	case TownMapType: 
+		return townColorTable;
+	}
+	return overworldColorTable;
 }
 
 

@@ -76,7 +76,11 @@ void printDebuggingInfo(void) {
 #endif
 
 
-// Dialog functions
+// Screen functions
+
+enum FadeOptions {
+	FadeGradient = 1, FadeTextBox = 2
+};
 
 UInt8 applyFade(UInt8 color) {
 	if ((color & 0x0F) != 0) {
@@ -85,10 +89,6 @@ UInt8 applyFade(UInt8 color) {
 		return 0;
 	}
 }
-
-enum FadeOptions {
-	FadeGradient = 1, FadeTextBox = 2
-};
 
 void fadeOut(UInt8 fadeOptions) {
 	UInt8 *colors = (UInt8*)(PCOLR0);
@@ -120,15 +120,22 @@ void fadeOut(UInt8 fadeOptions) {
 	}
 }
 
-void waitForAnyInput(void) {
-	// Wait for trigger to be released first.
-	while (PEEK(STRIG0) == 0) {
+void transitionToMap(UInt8 mapType, UInt8 shouldFadeOut) {
+	const UInt8 *colorTable = colorTableForMap(mapType);
+
+	if (shouldFadeOut) {
+		fadeOut(0);
 	}
 
-	// Then wait for trigger to be pressed
-	while (PEEK(STRIG0) != 0) {
-		RESET_ATTRACT_MODE;
-	}
+	loadMap(mapType, sightDistance, &playerMapLocation);
+	
+	// TODO: fade in here
+
+	loadColorTable(colorTable);
+
+	// Show player cursor
+	setPlayerCursorVisible(1);
+	setPlayerCursorColorCycling(1);
 }
 
 void setScreenVisible(UInt8 visible) {
@@ -141,6 +148,19 @@ void setScreenVisible(UInt8 visible) {
 	}	
 }
 
+
+// Dialog functions
+
+void waitForAnyInput(void) {
+	// Wait for trigger to be released first.
+	while (PEEK(STRIG0) == 0) {
+	}
+
+	// Then wait for trigger to be pressed
+	while (PEEK(STRIG0) != 0) {
+		RESET_ATTRACT_MODE;
+	}
+}
 
 void drawImage(const UInt8 *data, UInt16 length) {
 	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
@@ -227,9 +247,12 @@ void presentDialog(void) {
 	// Reload map
 	clearSpriteData(4);
 	hideSprites();
-	loadMap(currentMapType, sightDistance, &playerMapLocation);
+
 	selectDisplayList(1);
 	setTextWindowColorTheme(0);
+
+	transitionToMap(currentMapType, 0);
+
 	setScreenVisible(1);
 
 	printStatText();
@@ -238,15 +261,10 @@ void presentDialog(void) {
 
 // Movement functions
 
-void transitionToMap(UInt8 mapType) {
-	fadeOut(0);
-	loadMap(mapType, sightDistance, &playerMapLocation);
-}
-
 void exitToOverworld(void) {
 	playerMapLocation = playerOverworldLocation;
 	sightDistance = 0xFF;
-	transitionToMap(OverworldMapType);
+	transitionToMap(OverworldMapType, 1);
 }
 
 
@@ -254,7 +272,7 @@ void enterDungeon(void) {
 	sightDistance = lampStrength;
 	playerOverworldLocation = playerMapLocation;
 	playerMapLocation = mapEntryPoint(DungeonMapType);
-	transitionToMap(DungeonMapType);
+	transitionToMap(DungeonMapType, 1);
 }
 
 
@@ -262,7 +280,7 @@ void enterTown(void) {
 	sightDistance = 0xFF;
 	playerOverworldLocation = playerMapLocation;
 	playerMapLocation = mapEntryPoint(TownMapType);
-	transitionToMap(TownMapType);
+	transitionToMap(TownMapType, 1);
 }
 
 
