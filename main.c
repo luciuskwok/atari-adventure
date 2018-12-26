@@ -38,10 +38,6 @@ UInt8 sightDistance;
 #define SHORT_CLOCK (PEEK(20) + 256 * PEEK(19))
 
 
-// Function prototypes
-void drawImage(const UInt8 *data, UInt16 length);
-
-
 // Text functions
 
 
@@ -69,8 +65,6 @@ void printDebuggingInfo(void) {
  	// err = verify_fixed_tables();
 
 	// clearTextWindow();
-	// printHex16bitValue("lencnt:  ", (UInt16)fixed_lencnt, 1, 0);
-	// printHex16bitValue("lensym:  ", (UInt16)fixed_lensym, 1, 1);
 	// printHex16bitValue("distcnt: ", (UInt16)fixed_distcnt, 1, 2);
 	// printHex16bitValue("distsym: ", (UInt16)fixed_distsym, 1, 3);
 	// printDecimal16bitValue("err: ", err, 1, 4);
@@ -119,7 +113,6 @@ void drawImage(const UInt8 *data, UInt16 length) {
 	if (result) {
 		printDecimal16bitValue("Err: ", result, 1, 3);
 	}
-	//printPuffDebugging();
 
 	waitForAnyInput();
 }
@@ -128,7 +121,7 @@ void drawImage(const UInt8 *data, UInt16 length) {
 void presentDialog(void) {
 	UInt8 dialogColorTable[] = {
 		0x0F, 0x0F, 0x00, 0x00, // white/black for mega sprite
-		0x22, 0x28, 0x2E, 0x5A, 0x92 // grayscale for playfield
+		0x22, 0x28, 0x2E, 0x5A, 0x92 // playfield
 	};
 	UInt8 gradient[] = { 
 		12, 0x92, 
@@ -181,7 +174,6 @@ void presentDialog(void) {
 	loadMap(currentMapType, sightDistance, &playerMapLocation);
 
 	printStatText();
-	setPlayerCursorVisible(1);
 }
 
 

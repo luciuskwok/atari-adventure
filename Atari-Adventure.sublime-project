@@ -9,7 +9,7 @@
 	[
 		{
 			"name": "CC65",
-			"shell_cmd": "/Applications/Emulation/cc65-master/bin/cl65 -O -t atari -C config.cfg main.c graphics.c images.c map.c map_overworld.c map_dungeons.c map_towns.c puff.c puff_asm.s string.c text.c tiles.c interrupts.s -o adv.xex"
+			"shell_cmd": "/Applications/Emulation/cc65-master/bin/cl65 -O -t atari -C config.cfg -m linker_map.txt main.c graphics.c images.c map.c map_overworld.c map_dungeons.c map_towns.c puff.c puff_asm.s string.c text.c tiles.c interrupts.s -o adv.xex"
 
 		}
 	]

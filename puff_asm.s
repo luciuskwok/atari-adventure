@@ -22,7 +22,11 @@ STATE_BITCNT = _puff_state+13
 STATE_ENV = _puff_state+14
 
 ; constants
-MAXBITS = 15
+MAXBITS   = 15
+MAXLCODES = 286				; maximum number of literal/length codes
+MAXDCODES = 30            	; maximum number of distance codes
+MAXCODES  = MAXLCODES+MAXDCODES  ; maximum codes lengths to read
+FIXLCODES = 288           	; number of fixed literal/length codes
 
 
 .code

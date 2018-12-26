@@ -89,6 +89,7 @@ void loadMap(UInt8 mapType, UInt8 sightDistance, PointU8 *location) {
 	layoutCurrentMap(sightDistance);
 	drawCurrentMap(location);
 	loadColorTable(colorTable);
+	setPlayerCursorVisible(1);
 }
 
 

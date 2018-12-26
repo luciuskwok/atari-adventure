@@ -11,18 +11,12 @@ extern UInt16 __fastcall__ bits_asm(UInt8 count);
 extern UInt16 __fastcall__ decode_asm(const struct huffman *h);
 extern UInt16 __fastcall__ get_one_bit(void);
 
+
 local int construct(struct huffman *h, const UInt8 *length, int n);
 local SInt8 codes(const struct huffman *lencode, const struct huffman *distcode);
 local SInt8 fixed(void);
 local SInt8 dynamic(void);
 local SInt8 stored(void);
-
-// Debugging
-// #define debugging_length (32)
-// UInt16 debugging[debugging_length];
-// UInt8 debugging_index = 0;
-//#define SHORT_CLOCK (*(unsigned char*)(20) + 256 * *(unsigned char*)(19))
-
 
 /*
  * Maximums for allocations and loops.  It is not useful to change these --
@@ -126,7 +120,7 @@ struct huffman {
  * - Within a given code length, the symbols are kept in ascending order for
  *   the code bits definition.
  */
-local int construct(struct huffman *h, const UInt8 *length, int n)
+int construct(struct huffman *h, const UInt8 *length, int n)
 {
     UInt16 symbol;         /* current symbol when stepping through length[] */
     UInt8 len;            /* current length when stepping through h->count[] */
@@ -240,9 +234,9 @@ local SInt8 codes(const struct huffman *lencode,
         0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6,
         7, 7, 8, 8, 9, 9, 10, 10, 11, 11,
         12, 12, 13, 13};
- 	UInt16 symbol;         /* decoded symbol */
-    UInt16 len;            /* length for copy */
-    UInt16 dist;      /* distance for copy */
+ 	UInt16 symbol;   	/* decoded symbol */
+    UInt16 len;      	/* length for copy */
+    UInt16 dist;    	/* distance for copy */
  
     /* decode literals and length/distance pairs */
     do {
