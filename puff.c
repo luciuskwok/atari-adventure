@@ -3,8 +3,6 @@
 #include "puff.h"
 #include <setjmp.h>             /* for setjmp(), longjmp(), and jmp_buf */
 
-#define local static            /* for local function definitions */
-
 
 // Function Prototypes
 extern UInt16 __fastcall__ bits_asm(UInt8 count);
@@ -12,11 +10,6 @@ extern UInt16 __fastcall__ decode_asm(const struct huffman *h);
 extern UInt16 __fastcall__ get_one_bit(void);
 
 
-local int construct(struct huffman *h, const UInt8 *length, int n);
-local SInt8 codes(const struct huffman *lencode, const struct huffman *distcode);
-local SInt8 fixed(void);
-local SInt8 dynamic(void);
-local SInt8 stored(void);
 
 /*
  * Maximums for allocations and loops.  It is not useful to change these --
@@ -217,7 +210,7 @@ int construct(struct huffman *h, const UInt8 *length, int n)
  *   since though their behavior -is- defined for overlapping arrays, it is
  *   defined to do the wrong thing in this case.
  */
-local SInt8 codes(const struct huffman *lencode,
+SInt8 codes(const struct huffman *lencode,
                 const struct huffman *distcode)
 {
     static const UInt16 lens[29] = { /* Size base for length codes 257..285 */
@@ -362,7 +355,7 @@ UInt8  fixed_distcnt[MAXBITS+1] = {
 };
 
 
-local SInt8 fixed(void)
+SInt8 fixed(void)
 {
    	struct huffman l, d;
 
@@ -532,7 +525,7 @@ int verify_fixed_tables(void)
 UInt8  dynamic_lengths[MAXCODES];        /* descriptor code lengths */
 UInt16 dynamic_lensym[MAXLCODES];        /* lencode memory */
 UInt16 dynamic_distsym[MAXDCODES];       /* distcode memory */
-local SInt8 dynamic(void)
+SInt8 dynamic(void)
 {
     int nlen, ndist, ncode;             /* number of lengths in descriptor */
     int index;                          /* index of lengths[] */
@@ -645,7 +638,7 @@ local SInt8 dynamic(void)
  * - A stored block can have zero length.  This is sometimes used to byte-align
  *   subsets of the compressed data for random access or partial recovery.
  */
-local SInt8 stored(void)
+SInt8 stored(void)
 {
     UInt16 len;       /* length of stored block */
 

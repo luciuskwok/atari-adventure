@@ -63,12 +63,16 @@ void printDebuggingInfo(void) {
  	// int err;
 
  	// err = verify_fixed_tables();
-
-	// clearTextWindow();
+	clearTextWindow();
 	// printHex16bitValue("distcnt: ", (UInt16)fixed_distcnt, 1, 2);
-	// printHex16bitValue("distsym: ", (UInt16)fixed_distsym, 1, 3);
 	// printDecimal16bitValue("err: ", err, 1, 4);
 
+	// Force export of symbols from puff
+	printHex16bitValue("construct: ", (UInt16)construct, 1, 0);
+	printHex16bitValue("codes:     ", (UInt16)codes, 1, 1);
+	printHex16bitValue("fixed:     ", (UInt16)fixed, 1, 2);
+	printHex16bitValue("dynamic:   ", (UInt16)dynamic, 1, 3);
+	printHex16bitValue("stored:    ", (UInt16)stored, 1, 4);
 }
 #endif
 
