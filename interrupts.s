@@ -25,7 +25,7 @@ VCOUNT = $D40B		; vertical line counter
 
 CUR_SKIP  = 15		; number of frames to skip for color cycling
 CUR_TIMER = $0600	; cursor color cycling frame skip countdown timer
-STICK_TIMER = $0601	; joystick countdown timer for repeating joystick moves
+VB_TIMER = $0601	; general countdown timer that decrements every VBI
 DLI_ROW   = $0610	; for keeping track of which row the DLI is on. Easier to use this for iterating through P3_XPOS and BG_COLOR arrays than to use VCOUNT.
 TEXT_LUM  = $0611	; text luminance for text window
 TEXT_BG   = $0612	; text window background color
@@ -49,10 +49,10 @@ BG_COLOR  = $0620	; array of 72 bytes for changing background color per raster l
 	lda P3_XPOS			; HPOSP3 = P3_XPOS[0]
 	sta HPOSP3
 
-	ldx STICK_TIMER		; 4 ;sets Z flag (Z=1 if joystick_timer is zero)
-	beq update_cursor	; 2 ;skip decrement if already at zero
+	ldx VB_TIMER		; 4 ; sets Z flag if zero
+	beq update_cursor	; 2 ; skip decrement if already at zero
 	dex					; 2 
-	stx STICK_TIMER		; 4
+	stx VB_TIMER		; 4
 	
 update_cursor:
 	ldx CUR_TIMER
@@ -62,32 +62,33 @@ update_cursor:
 	bne return 			; if cur_timer == 0, cycle the colors
 
 cycle_color:
-	clv
 	lda #CUR_SKIP		; reset cur_timer to cur_skip
-	sta CUR_TIMER		; reload the timer
-						; == Cycle only the luminance of the color value ==	
-	lda PCOLR0			; get the color (Addr=3459)
-	tax					; use X register for new color value
-	and #$0F			; isolate the luminance in A
-	cmp #$01			; if luminance is 1
-	bne color_to_max
-	dex					; set luminance to 0
-	bvc write_color		; unconditional branch 
-color_to_max:						
-	cmp #$0E			; if luminance is E
-	bne color_odd_even
-	inx					; set luminance to F
-	bvc write_color		; unconditional branch 
-color_odd_even:
-	and #$01			; odd or even
-	beq color_inc
-	dex 				; if odd, subtract 2
+	sta CUR_TIMER		; 
+	
+	; == Cycle luminance of the player ==	
+	; if color is even, add 2 
+	; if color is odd, subtract 2
+	; 0 2 4 6 8 A C E . F D B 9 7 5 3 1
+
+	lda PCOLR0			; 
+	tax					; copy color -> X
+	and #$0F			; isolate the lum in A
+	lsr a				; if lum is odd: set carry
+
+	bcc color_is_even  	
+	dex					; lum is odd: X -= 1
+	cmp #$01 			; if lum != 1, X -= 1 again
+	beq set_player_color
 	dex
-	bvc write_color		; unconditional branch 
-color_inc:
-	inx					; else if even, add 2
-	inx
-write_color:
+	jmp set_player_color
+
+color_is_even:
+	inx					; lum is even: X += 1
+	cmp #$07			; if lum != 7, X += 1 again
+	beq set_player_color
+	inx 
+
+set_player_color:
 	stx PCOLR0			; store new color value in players 0 and 1
 	stx PCOLR1
 

@@ -232,14 +232,14 @@ UInt8 canMoveTo(PointU8 *pt) {
 void handleStick() {
 	// Only allow moves in 4 cardinal directions and not diagonals.
 	UInt8 stick = PEEK (STICK0);
-	UInt8 stick_timer = *STICK_TIMER;
+	UInt8 vb_timer = *VB_TIMER;
 	PointU8 oldLoc, newLoc;
 
-	if (stick == previousStick && stick_timer != 0) { 
+	if (stick == previousStick && vb_timer != 0) { 
 		// Handle changes in stick position immediately but delay repeating same moves.
 		return;
 	}
-	*STICK_TIMER = 10; // Reset stick timer
+	*VB_TIMER = 10; // Reset stick timer
 	previousStick = stick;
 
 	oldLoc = playerMapLocation;
