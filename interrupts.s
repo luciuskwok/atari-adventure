@@ -49,21 +49,21 @@ BG_COLOR  = $0620	; array of 72 bytes for changing background color per raster l
 	lda P3_XPOS			; HPOSP3 = P3_XPOS[0]
 	sta HPOSP3
 
-	ldx STICK_TIMER		; sets Z flag (Z=1 if joystick_timer is zero)
-	beq update_cursor	; skip decrement if already at zero
-	dex
-	stx STICK_TIMER
+	ldx STICK_TIMER		; 4 ;sets Z flag (Z=1 if joystick_timer is zero)
+	beq update_cursor	; 2 ;skip decrement if already at zero
+	dex					; 2 
+	stx STICK_TIMER		; 4
 	
 update_cursor:
 	ldx CUR_TIMER
-	bmi return 			; if CUR_TIMER > 127, leave the timer alone
-	dex 				; else --CUR_TIMER
+	bmi return 			; if cur_timer > 127, leave the timer alone
+	dex 				; else --cur_timer
 	stx CUR_TIMER
-	bne return 			; if CUR_TIMER == 0, cycle the colors
+	bne return 			; if cur_timer == 0, cycle the colors
 
 cycle_color:
-	clv					; clear flags for unconditonal branch
-	lda #CUR_SKIP
+	clv
+	lda #CUR_SKIP		; reset cur_timer to cur_skip
 	sta CUR_TIMER		; reload the timer
 						; == Cycle only the luminance of the color value ==	
 	lda PCOLR0			; get the color (Addr=3459)

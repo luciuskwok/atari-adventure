@@ -11,6 +11,9 @@ extern UInt16 __fastcall__ bits_asm(UInt8 count);
 extern UInt16 __fastcall__ get_one_bit(void);
 
 
+// Define for including old code that has asm replacements
+//#define OLD_CODE
+
 
 /*
  * Maximums for allocations and loops.  It is not useful to change these --
@@ -211,7 +214,8 @@ int construct(struct huffman *h, const UInt8 *length, int n)
  *   since though their behavior -is- defined for overlapping arrays, it is
  *   defined to do the wrong thing in this case.
  */
-SInt16 codes(const struct huffman *lencode,
+#ifdef OLD_CODE
+SInt16 codes_old(const struct huffman *lencode,
                 const struct huffman *distcode)
 {
     static const UInt16 lens[29] = { /* Size base for length codes 257..285 */
@@ -277,6 +281,7 @@ SInt16 codes(const struct huffman *lencode,
     /* done with a valid fixed or dynamic block */
     return 0;
 }
+#endif /* OLD_CODE */
 
 
 /*
@@ -364,7 +369,7 @@ SInt16 fixed(void)
 	d.symbol = fixed_distsym;
 
     /* decode data until end-of-block code */
-    return codes(&l, &d);
+    return codes_asm(&l, &d);
 }
 
 /*

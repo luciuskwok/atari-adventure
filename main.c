@@ -32,7 +32,7 @@ UInt8 sightDistance;
 
 
 // Constants and macros
-#define DEBUGGING
+//#define DEBUGGING
 #define RESET_ATTRACT_MODE (POKE(ATRACT, 0))
 #define SCREEN_LENGTH (40 * 72)
 #define SHORT_CLOCK (PEEK(20) + 256 * PEEK(19))
@@ -63,16 +63,15 @@ void printDebuggingInfo(void) {
  	// int err;
 
  	// err = verify_fixed_tables();
-	clearTextWindow();
+	// clearTextWindow();
 	// printHex16bitValue("distcnt: ", (UInt16)fixed_distcnt, 1, 2);
 	// printDecimal16bitValue("err: ", err, 1, 4);
 
 	// Force export of symbols from puff
-	printHex16bitValue("construct: ", (UInt16)construct, 1, 0);
-	printHex16bitValue("codes:     ", (UInt16)codes, 1, 1);
-	printHex16bitValue("fixed:     ", (UInt16)fixed, 1, 2);
-	printHex16bitValue("dynamic:   ", (UInt16)dynamic, 1, 3);
-	printHex16bitValue("stored:    ", (UInt16)stored, 1, 4);
+	// printHex16bitValue("construct: ", (UInt16)construct, 1, 0);
+	// printHex16bitValue("fixed:     ", (UInt16)fixed, 1, 2);
+	// printHex16bitValue("dynamic:   ", (UInt16)dynamic, 1, 3);
+	// printHex16bitValue("stored:    ", (UInt16)stored, 1, 4);
 }
 #endif
 
@@ -100,7 +99,7 @@ void drawImage(const UInt8 *data, UInt16 length) {
 	SInt8 result;
 
 	// Turn Antic+DLI off while drawing, which makes it twice as fast.
-	POKE (SDMCTL, 0);   // turn off Antic
+	// POKE (SDMCTL, 0);   // turn off Antic
 	ANTIC.nmien = 0x40; // turn off DLI
 
 	startTime = SHORT_CLOCK; // Debugging
@@ -109,7 +108,7 @@ void drawImage(const UInt8 *data, UInt16 length) {
 
 	duration = SHORT_CLOCK - startTime; // Debugging
 	
-	POKE (SDMCTL, 0x2E); // turn on Antic
+	// POKE (SDMCTL, 0x2E); // turn on Antic
 	ANTIC.nmien = 0xC0;  // turn on DLI
 
 	clearTextWindow();
@@ -170,7 +169,7 @@ void presentDialog(void) {
 	for (i=0; i<3; ++i) {
 		clearTextWindow();
 		printStringWithLayout(messages[i], 1, 1, 5, 0);
-		// waitForAnyInput();
+		waitForAnyInput();
 	}
 
 	// Reload map
