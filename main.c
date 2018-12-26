@@ -64,17 +64,16 @@ void printStatText(void) {
 
 #ifdef DEBUGGING
 void printDebuggingInfo(void) {
- 	struct huffman lencode, distcode;
- 	UInt8 err;
+ 	// int err;
 
- 	build_fixed_tables(&lencode, &distcode);
- 	err = verify_fixed_tables(&lencode, &distcode);
+ 	// err = verify_fixed_tables();
 
-	clearTextWindow();
-	printHex16bitValue("fixed_lengths: ", (UInt16)fixed_lengths, 1, 0);
-	printHex16bitValue("lencode: ", (UInt16)lencode, 1, 1);
-	printHex16bitValue("distcode: ", (UInt16)distcode, 1, 2);
-	printDecimal16bitValue("err: ", err, 1, 3);
+	// clearTextWindow();
+	// printHex16bitValue("lencnt:  ", (UInt16)fixed_lencnt, 1, 0);
+	// printHex16bitValue("lensym:  ", (UInt16)fixed_lensym, 1, 1);
+	// printHex16bitValue("distcnt: ", (UInt16)fixed_distcnt, 1, 2);
+	// printHex16bitValue("distsym: ", (UInt16)fixed_distsym, 1, 3);
+	// printDecimal16bitValue("err: ", err, 1, 4);
 
 }
 #endif
