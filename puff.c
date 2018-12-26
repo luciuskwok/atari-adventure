@@ -27,15 +27,15 @@ extern UInt16 __fastcall__ get_one_bit(void);
 struct {
     /* output state */
     UInt8 *out;         /* output buffer */
-    UInt16 outlen;       /* available space at out */
-    UInt16 outcnt;       /* bytes written to out so far */
+    UInt16 outlen;      /* available space at out */
+    UInt16 outcnt;      /* bytes written to out so far */
 
     /* input state */
     const UInt8 *in;    /* input buffer */
-    UInt16 inlen;        /* available input at in */
-    UInt16 incnt;        /* bytes read so far */
-    UInt8 bitbuf;                 /* bit buffer */
-    UInt8 bitcnt;                 /* number of bits in bit buffer */
+    UInt16 inlen;       /* available input at in */
+    UInt16 incnt;       /* bytes read so far */
+    UInt8 bitbuf;       /* bit buffer */
+    UInt8 bitcnt;       /* number of bits in bit buffer */
 
     /* input limit error return state for bits() and decode() */
     jmp_buf env;
@@ -235,7 +235,7 @@ SInt16 codes(const struct huffman *lencode,
     /* decode literals and length/distance pairs */
     do {
         symbol = decode_asm(lencode);
-        if (symbol > MAXCODES)
+        if (symbol > MAXLCODES)
             return -10;              /* invalid symbol */
         if (symbol < 256) {             /* literal: symbol is the byte */
             /* write out the literal */
@@ -248,14 +248,12 @@ SInt16 codes(const struct huffman *lencode,
         }
         else if (symbol > 256) {        /* length */
             /* get and compute length */
-            symbol -= 257;
-            if (symbol >= 29)
-                return -10;             /* invalid fixed code */
+        	symbol -= 257;
             len = lens[symbol] + bits_asm(lext[symbol]);
 
             /* get and check distance */
             symbol = decode_asm(distcode);
-            if (symbol > MAXCODES)
+            if (symbol >= MAXDCODES)
                 return -10;          /* invalid symbol */
             dist = dists[symbol] + bits_asm(dext[symbol]);
             if (dist > puff_state.outcnt)
@@ -618,7 +616,7 @@ SInt16 dynamic(void)
     // profiling_checkpoint[3] = SHORT_CLOCK;
 
     /* decode data until end-of-block code */
-    return codes(&lencode, &distcode);
+    return codes_asm(&lencode, &distcode);
 }
 
 
@@ -687,11 +685,6 @@ SInt16 stored(void)
  * inflate data (a negative error), the dest and source pointers are updated to
  * facilitate the debugging of deflators.
  *
- * puff() also has a mode to determine the size of the uncompressed output with
- * no output written.  For this dest must be (unsigned char *)0.  In this case,
- * the input value of *destlen is ignored, and on return *destlen is set to the
- * size of the uncompressed output.
- *
  * The return codes are:
  *
  *   2:  available inflate data did not terminate
@@ -723,9 +716,13 @@ SInt16 puff(UInt8 *dest, UInt16 *destLen, const UInt8 *source, UInt16 *sourceLen
     UInt8 last, type;             /* block information */
     SInt16 err;                    /* return value */
 
+    if (dest == NULL) {
+    	return 1;
+    }
+
     /* initialize output state */
     puff_state.out = dest;
-    puff_state.outlen = *destLen;                /* ignored if dest is NULL */
+    puff_state.outlen = *destLen;
     puff_state.outcnt = 0;
 
     /* initialize input state */

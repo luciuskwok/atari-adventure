@@ -33,7 +33,7 @@ FIXLCODES = 288           	; number of fixed literal/length codes
 
 
 .proc _codes_asm			; returns error code or 0 on A/X
-							; uses all ptr and tmp registers
+							; uses AXY, sreg, and all ptr/tmp registers
 
 .rodata
 LEN_BASES:
@@ -50,51 +50,168 @@ DIST_EXTRA_BITS:
 	jsr pushax				; push distcode onto parameter stack
 DISTCODE = $00
 LENCODE = $02 				; on parameter stack
-LEN = ptr1
-DIST = ptr2
-SYMBOL = ptr3
+LEN = sreg
+DIST = ptr3
+SYMBOL = tmp4				; 1 byte
 
-loop:
-	; symbol = decode_asm(lencode);
-	ldy LENCODE+1 			; get lencode from parameter stack
+loop:				; symbol = decode_asm(lencode);
+	ldy #LENCODE+1 			; get lencode from parameter stack
 	lda (sp),Y
 	tax
-	dey
+	ldy #LENCODE
 	lda (sp),Y
-	jsr _decode_asm 		; AX = decode_asm(lencode)
+	jsr _decode_asm 		; decode_asm(lencode) -> symbol in AX
 
-	jsr _validate_symbol 	; sets carry if symbol is invalid.
-	bcc error_invalid_symbol
+	jsr _validate_symbol
+	bcs error_invalid_symbol
 
-	sta SYMBOL 				; symbol = AX
-	stx SYMBOL+1
+	cpx #0 					; if symbol < 256: literal; symbol is the byte
+	bne if_end_symbol
 
-	; if (symbol < 256) // literal: symbol is the byte
-	cpx #0
-	bne length_symbol
+	jsr _write_out_symbol
+	cmp #1
+	bne loop 				; continue loop
 
-	jsr write_out_symbol
+	jmp error_output_full
 
+error_invalid_symbol: 		; return error -10: invalid symbol
+	jsr incsp4
+	ldx #$FF
+	lda #$F6
+	rts
 
-
-
-
-length_symbol:
-
-
-
-continue_loop:
-	lda #$00
-	cmp SYMBOL
-	bne loop
-	lda #$01
-	cmp SYMBOL+1
-	bne loop
-
-return_zero:
+if_end_symbol:
+	cmp #0 					; if symbol == 256: end of block signal
+	bne if_length_symbol
 	jsr incsp4
 	ldx #0
 	lda #0
+	rts
+
+if_length_symbol:
+	tax 					; get and compute length
+	dex 					; symbol -= 257 (A -= 1, X = discarded)
+	stx SYMBOL
+
+	lda LEN_EXTRA_BITS,X 	; len = bits_asm(lext[symbol])
+	jsr _bits_asm
+	sta LEN
+	ldx #0
+	stx LEN+1
+
+	lda SYMBOL 				; len += lens[symbol]
+	asl a
+	tax
+	clc
+	lda LEN
+	adc LEN_BASES,X
+	sta LEN
+	lda LEN+1
+	adc LEN_BASES+1,X
+	sta LEN+1
+							; get and check distance					
+	ldy #DISTCODE+1 		; symbol = decode_asm(distcode)
+	lda (sp),Y 				; get distcode from parameter stack
+	tax
+	ldy #DISTCODE
+	lda (sp),Y
+	jsr _decode_asm 		; decode_asm(distcode) -> symbol in AX
+
+	cpx #0					; guard symbol < MAXDCODES
+	bne error_invalid_symbol
+	cmp #MAXDCODES
+	bcs error_invalid_symbol
+
+	tax 					
+	stx SYMBOL
+
+	lda DIST_EXTRA_BITS,X 	; dist = bits_asm(dext[symbol])
+	jsr _bits_asm
+	sta DIST
+	ldx #0
+	stx DIST+1
+
+	lda SYMBOL 				; dist += dists[symbol]
+	asl a
+	tax
+	clc
+	lda DIST
+	adc DIST_BASES,X
+	sta DIST
+	lda DIST+1
+	adc DIST_BASES+1,X
+	sta DIST+1
+
+	; if state.outcnt < dist: error -11: distance too far back */
+	ldx STATE_OUTCNT+1
+	cpx DIST+1
+	bcc error_distance_too_far
+	bne check_output_space
+	lda STATE_OUTCNT
+	cpx DIST
+	bcc error_distance_too_far
+
+check_output_space: 				
+	sec 					; check for enough output space
+	lda STATE_OUTLEN+1	 	; if state.outlen - len < state.outcnt 
+	adc LEN+1
+	cmp STATE_OUTCNT+1
+	bcc error_output_full	;     error 1: output full
+	bne copy_bytes
+	lda STATE_OUTLEN
+	adc LEN
+	cmp STATE_OUTCNT
+	bcc error_output_full
+ 
+copy_bytes: 		; copy length bytes from distance bytes back
+	sec 					; dist = state.outcnt - dist
+	lda STATE_OUTCNT+1		; use dist as a source pointer for the copy
+	sbc DIST+1
+	sta DIST+1
+	lda STATE_OUTCNT
+	sbc DIST
+	sta DIST
+	jmp while_copy
+
+do_copy:
+	clc 					; ptr1 = state.out + state.outcnt
+	lda STATE_OUT+1
+	adc STATE_OUTCNT+1
+	sta ptr1+1
+	lda STATE_OUT
+	adc STATE_OUTCNT
+	sta ptr1
+
+	ldy #0 					; *dist = *ptr1
+	lda (DIST),Y
+	sta (ptr1),Y
+
+	inc STATE_OUTCNT 		; state.outcnt += 1
+	bne inc_dist
+	inc STATE_OUTCNT+1
+
+inc_dist:
+	inc DIST 				; dist += 1
+	bne inc_len
+	inc DIST+1
+
+inc_len:
+	dec LEN
+	cmp #$FF
+	bne while_copy
+	dec LEN+1
+
+while_copy:
+	lda LEN
+	bne do_copy
+	lda LEN+1
+	bne do_copy
+	jmp loop
+
+error_output_full:
+	jsr incsp4
+	ldx #$00
+	lda #$01
 	rts
 
 error_distance_too_far:
@@ -103,31 +220,41 @@ error_distance_too_far:
 	lda #$F5
 	rts
 
-error_invalid_symbol:
-	jsr incsp4
-	ldx #$FF
-	lda #$F6
-	rts
+
 .endproc
 
 
-.proc _write_out_symbol 	; adds byte in A to puff_state.out
-.code						; uses ptr1, X, Y
-	tax 					; save A in X
+.proc _write_out_symbol 	; appends A to puff_state.out
+.code						; uses ptr1, Y
+	ldy STATE_OUTCNT		; if STATE_OUTCNT == STATE_OUTLEN: output is full
+	cpy STATE_OUTLEN
+	bne set_ptr1
+	ldy STATE_OUTCNT+1		; must check both bytes of 16-bit values
+	cpy STATE_OUTLEN+1
+	bne set_ptr1
 
-	lda STATE_INCNT			; if STATE_OUTCNT == STATE_OUTLEN: output is full
-	cmp STATE_INLEN
-	bne load_bitbuf
-	lda STATE_INCNT+1		; must check both bytes of 16-bit values
-	cmp STATE_INLEN+1
-	bne load_bitbuf
+	lda #1					; return 1 for output full
+	rts
 
+set_ptr1:
+	tay
+	clc
+	lda STATE_OUT
+	adc STATE_OUTCNT
+	sta ptr1
+	lda STATE_OUT+1
+	adc STATE_OUTCNT+1
+	sta ptr1+1
+	tya
 
-
-	tax
 	ldy #0
 	sta (ptr1),Y
 
+	inc STATE_OUTCNT 		; STATE_OUTCNT += 1
+	bne return
+	inc STATE_OUTCNT+1
+
+return:
 	lda #0 					; return 0 for success
 	rts
 .endproc
@@ -135,11 +262,11 @@ error_invalid_symbol:
 
 .proc _validate_symbol 		; sets carry flag if symbol in AX is invalid
 .code
-	cpx #>(MAXCODES)		; carry flag is set if MSB in X is >= maxcodes.msb
+	cpx #>(MAXLCODES)		; carry flag is set if MSB in X is >= maxcodes.msb
 	beq check_symbol_lsb
 	rts 
 check_symbol_lsb:
-	cmp #<(MAXCODES)
+	cmp #<(MAXLCODES)
 	rts
 .endproc
 
@@ -260,7 +387,9 @@ return_symbol:
 
 .endproc
 
-.proc _bits_asm
+.proc _bits_asm 	; Input: A = count, Output: A = bits, right justified
+.code 				; Uses AXY, ptr1, tmp1/2/3. Calls _get_one_bit, 
+					; which uses ptr1 and X.
 	sta tmp1				; let tmp1 = count
 	lda #0					; 
 	sta tmp2				; var tmp2/tmp3: return result
