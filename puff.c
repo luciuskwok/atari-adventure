@@ -753,7 +753,7 @@ SInt16 puff(UInt8 *dest, UInt16 *destLen, const UInt8 *source, UInt16 *sourceLen
     }
 
     /* update the lengths and return */
-    if (err <= 0) {
+    if (err != 0) {
         *destLen = puff_state.outcnt;
         *sourceLen = puff_state.incnt;
     }

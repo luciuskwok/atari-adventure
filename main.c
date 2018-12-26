@@ -115,7 +115,9 @@ void drawImage(const UInt8 *data, UInt16 length) {
 	clearTextWindow();
 	printDecimal16bitValue("Time: ", duration, 1, 1); // Debugging
 	if (result) {
-		printDecimal16bitValue("Err: ", result, 1, 3);
+		printDecimal16bitValue("Err:  ", result, 1, 3);
+		printDecimal16bitValue("In Count:  ", length, 20, 1);
+		printDecimal16bitValue("Out Count: ", screenLen, 20, 3);
 	}
 
 	waitForAnyInput();
@@ -168,7 +170,7 @@ void presentDialog(void) {
 	for (i=0; i<3; ++i) {
 		clearTextWindow();
 		printStringWithLayout(messages[i], 1, 1, 5, 0);
-		waitForAnyInput();
+		// waitForAnyInput();
 	}
 
 	// Reload map
