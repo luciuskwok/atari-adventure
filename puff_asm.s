@@ -128,7 +128,6 @@ if_length_symbol:
 	lda DIST_EXTRA_BITS,X 	; dist = bits_asm(dext[symbol])
 	jsr _bits_asm
 	sta DIST
-	ldx #0
 	stx DIST+1
 
 	lda SYMBOL 				; dist += dists[symbol]
@@ -143,70 +142,48 @@ if_length_symbol:
 	sta DIST+1
 
 	; if state.outcnt < dist: error -11: distance too far back */
-	ldx STATE_OUTCNT+1
-	cpx DIST+1
+	lda STATE_OUTCNT+1
+	cmp DIST+1
 	bcc error_distance_too_far
 	bne check_output_space
 	lda STATE_OUTCNT
-	cpx DIST
+	cmp DIST
 	bcc error_distance_too_far
 
 check_output_space: 				
 	sec 					; check for enough output space
-	lda STATE_OUTLEN+1	 	; if state.outlen - len < state.outcnt 
-	adc LEN+1
-	cmp STATE_OUTCNT+1
+	lda STATE_OUTLEN		; ptr1 = state.outlen - len
+	sbc LEN
+	sta ptr1
+	lda STATE_OUTLEN+1
+	sbc LEN+1
+	sta ptr1+1
+
+	cmp STATE_OUTCNT+1	 	; if ptr1 < state.outcnt:
 	bcc error_output_full	;     error 1: output full
-	bne copy_bytes
-	lda STATE_OUTLEN
-	adc LEN
+	bne set_dist_ptr
+	lda ptr1
 	cmp STATE_OUTCNT
 	bcc error_output_full
  
-copy_bytes: 		; copy length bytes from distance bytes back
+set_dist_ptr: 				; copy length bytes from distance bytes back
 	sec 					; dist = state.outcnt - dist
-	lda STATE_OUTCNT+1		; use dist as a source pointer for the copy
-	sbc DIST+1
-	sta DIST+1
-	lda STATE_OUTCNT
+	lda STATE_OUTCNT		
 	sbc DIST
 	sta DIST
+	lda STATE_OUTCNT+1
+	sbc DIST+1
+	sta DIST+1
+
+	clc						; use dist as a source pointer for the copy
+	lda DIST				; dist += state.out
+	adc STATE_OUT
+	sta DIST
+	lda DIST+1
+	adc STATE_OUT+1
+	sta DIST+1
+
 	jmp while_copy
-
-do_copy:
-	clc 					; ptr1 = state.out + state.outcnt
-	lda STATE_OUT+1
-	adc STATE_OUTCNT+1
-	sta ptr1+1
-	lda STATE_OUT
-	adc STATE_OUTCNT
-	sta ptr1
-
-	ldy #0 					; *dist = *ptr1
-	lda (DIST),Y
-	sta (ptr1),Y
-
-	inc STATE_OUTCNT 		; state.outcnt += 1
-	bne inc_dist
-	inc STATE_OUTCNT+1
-
-inc_dist:
-	inc DIST 				; dist += 1
-	bne inc_len
-	inc DIST+1
-
-inc_len:
-	dec LEN
-	cmp #$FF
-	bne while_copy
-	dec LEN+1
-
-while_copy:
-	lda LEN
-	bne do_copy
-	lda LEN+1
-	bne do_copy
-	jmp loop
 
 error_output_full:
 	jsr incsp4
@@ -220,6 +197,40 @@ error_distance_too_far:
 	lda #$F5
 	rts
 
+do_copy:
+	clc 					; ptr1 = state.out + state.outcnt
+	lda STATE_OUT
+	adc STATE_OUTCNT
+	sta ptr1
+	lda STATE_OUT+1
+	adc STATE_OUTCNT+1
+	sta ptr1+1
+
+	ldy #0 					; *dist = *ptr1
+	lda (DIST),Y
+	sta (ptr1),Y
+
+	inc STATE_OUTCNT 		; state.outcnt += 1
+	bne inc_dist
+	inc STATE_OUTCNT+1
+
+inc_dist:
+	inc DIST 				; dist += 1
+	bne dec_len
+	inc DIST+1
+
+dec_len:
+	dec LEN
+	cmp #$FF
+	bne while_copy
+	dec LEN+1
+
+while_copy:
+	lda LEN
+	bne do_copy
+	lda LEN+1
+	bne do_copy
+	jmp loop
 
 .endproc
 
