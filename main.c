@@ -100,7 +100,7 @@ void drawImage(const UInt8 *data, UInt16 length) {
 	SInt8 result;
 
 	// Turn Antic+DLI off while drawing, which makes it twice as fast.
-	// POKE (SDMCTL, 0);   // turn off Antic
+	POKE (SDMCTL, 0);   // turn off Antic
 	ANTIC.nmien = 0x40; // turn off DLI
 
 	startTime = SHORT_CLOCK; // Debugging
@@ -109,7 +109,7 @@ void drawImage(const UInt8 *data, UInt16 length) {
 
 	duration = SHORT_CLOCK - startTime; // Debugging
 	
-	// POKE (SDMCTL, 0x2E); // turn on Antic
+	POKE (SDMCTL, 0x2E); // turn on Antic
 	ANTIC.nmien = 0xC0;  // turn on DLI
 
 	clearTextWindow();

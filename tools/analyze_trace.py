@@ -91,6 +91,7 @@ with open(sys.argv[1], "r") as traceFile:
 
 	# Print out top 20 addresses sorted by value
 	for key, value in sorted(addressDictionary.iteritems(), key = lambda (k,v): (v,k), reverse=True)[:48]:
-		print "%s: %s" % (key, value)
+		print "{1:>10,} {0}".format(key, value)
+		#print "%s: %s" % (key, value)
 
 # == End Script ==

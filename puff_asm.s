@@ -64,8 +64,8 @@ loop:				; symbol = decode_asm(lencode);
 	lda (sp),Y
 	jsr _decode_asm 		; decode_asm(lencode) -> symbol in AX
 
-	jsr _validate_symbol
-	bcs error_invalid_symbol
+	cpx #2					; validate symbol: MSB can only be 0 or 1
+	bcs error_invalid_symbol ; if X >= 2, return error
 
 	cpx #0 					; if symbol < 256: literal; symbol is the byte
 	bne if_end_symbol
@@ -93,6 +93,10 @@ if_end_symbol:
 if_length_symbol:
 	tax 					; get and compute length
 	dex 					; symbol -= 257 (A -= 1, X = discarded)
+	
+	cpx #29					; if X >= 29, return error
+	bcs error_invalid_symbol
+
 	stx SYMBOL
 
 	lda LEN_EXTRA_BITS,X 	; len = bits_asm(lext[symbol])
@@ -277,17 +281,6 @@ return:
 
 return_error:
 	lda #1					; return 1 for output full
-	rts
-.endproc
-
-
-.proc _validate_symbol 		; sets carry flag if symbol in AX is invalid
-.code
-	cpx #>(MAXLCODES)		; carry flag is set if MSB in X is >= maxcodes.msb
-	beq check_symbol_lsb
-	rts 
-check_symbol_lsb:
-	cmp #<(MAXLCODES)
 	rts
 .endproc
 

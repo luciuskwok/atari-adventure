@@ -613,7 +613,8 @@ SInt16 dynamic(void)
     if (err && (err < 0 || ndist != distcode.count[0] + distcode.count[1]))
         return -8;      /* incomplete code ok only for single length 1 code */
 
-    // profiling_checkpoint[3] = SHORT_CLOCK;
+    // Debugging
+	//return 1;
 
     /* decode data until end-of-block code */
     return codes_asm(&lencode, &distcode);
