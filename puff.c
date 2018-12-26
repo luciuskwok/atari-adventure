@@ -5,8 +5,9 @@
 
 
 // Function Prototypes
-extern UInt16 __fastcall__ bits_asm(UInt8 count);
+extern SInt16 __fastcall__ codes_asm(const struct huffman *lencode, const struct huffman *distcode);
 extern UInt16 __fastcall__ decode_asm(const struct huffman *h);
+extern UInt16 __fastcall__ bits_asm(UInt8 count);
 extern UInt16 __fastcall__ get_one_bit(void);
 
 
@@ -210,7 +211,7 @@ int construct(struct huffman *h, const UInt8 *length, int n)
  *   since though their behavior -is- defined for overlapping arrays, it is
  *   defined to do the wrong thing in this case.
  */
-SInt8 codes(const struct huffman *lencode,
+SInt16 codes(const struct huffman *lencode,
                 const struct huffman *distcode)
 {
     static const UInt16 lens[29] = { /* Size base for length codes 257..285 */
@@ -355,7 +356,7 @@ UInt8  fixed_distcnt[MAXBITS+1] = {
 };
 
 
-SInt8 fixed(void)
+SInt16 fixed(void)
 {
    	struct huffman l, d;
 
@@ -525,7 +526,7 @@ int verify_fixed_tables(void)
 UInt8  dynamic_lengths[MAXCODES];        /* descriptor code lengths */
 UInt16 dynamic_lensym[MAXLCODES];        /* lencode memory */
 UInt16 dynamic_distsym[MAXDCODES];       /* distcode memory */
-SInt8 dynamic(void)
+SInt16 dynamic(void)
 {
     int nlen, ndist, ncode;             /* number of lengths in descriptor */
     int index;                          /* index of lengths[] */
@@ -638,7 +639,7 @@ SInt8 dynamic(void)
  * - A stored block can have zero length.  This is sometimes used to byte-align
  *   subsets of the compressed data for random access or partial recovery.
  */
-SInt8 stored(void)
+SInt16 stored(void)
 {
     UInt16 len;       /* length of stored block */
 
@@ -718,9 +719,9 @@ SInt8 stored(void)
  *   block (if it was a fixed or dynamic block) are undefined and have no
  *   expected values to check.
  */
-SInt8 puff(UInt8 *dest, UInt16 *destLen, const UInt8 *source, UInt16 *sourceLen) {
+SInt16 puff(UInt8 *dest, UInt16 *destLen, const UInt8 *source, UInt16 *sourceLen) {
     UInt8 last, type;             /* block information */
-    SInt8 err;                    /* return value */
+    SInt16 err;                    /* return value */
 
     /* initialize output state */
     puff_state.out = dest;

@@ -1,14 +1,17 @@
 ; puff_asm.s
 
 
-.export 	_decode_asm ; extern UInt16 __fastcall__ bits_decode(const struct huffman *h);
+.export 	_codes_asm ; extern SInt16 __fastcall__ codes_asm(const struct huffman *lencode, const struct huffman *distcode);
+.export 	_decode_asm ; extern UInt16 __fastcall__ decode_asm(const struct huffman *h);
 .export 	_bits_asm ; extern UInt16 __fastcall__ bits_asm(UInt8 count);
 .export 	_get_one_bit ; extern UInt16 __fastcall__ get_one_bit(void);
 .import 	_puff_state
 .import 	_longjmp
 .import 	pushax
+.import		incsp4
+.importzp 	sp, sreg
 .importzp 	tmp1, tmp2, tmp3, tmp4, ptr1, ptr2, ptr3, ptr4
-.importzp 	sreg
+
 
 ; puff_state struct fields
 STATE_OUT = _puff_state
@@ -29,9 +32,120 @@ MAXCODES  = MAXLCODES+MAXDCODES  ; maximum codes lengths to read
 FIXLCODES = 288           	; number of fixed literal/length codes
 
 
-.code
+.proc _codes_asm			; returns error code or 0 on A/X
+							; uses all ptr and tmp registers
 
-.proc _decode_asm
+.rodata
+LEN_BASES:
+	.word $0003, $0004, $0005, $0006, $0007, $0008, $0009, $000A, $000B, $000D, $000F, $0011, $0013, $0017, $001B, $001F, $0023, $002B, $0033, $003B, $0043, $0053, $0063, $0073, $0083, $00A3, $00C3, $00E3, $0102
+LEN_EXTRA_BITS:
+	.byte $00, $00, $00, $00, $00, $00, $00, $00, $01, $01, $01, $01, $02, $02, $02, $02, $03, $03, $03, $03, $04, $04, $04, $04, $05, $05, $05, $05, $00
+DIST_BASES:
+	.word $0001, $0002, $0003, $0004, $0005, $0007, $0009, $000D, $0011, $0019, $0021, $0031, $0041, $0061, $0081, $00C1, $0101, $0181, $0201, $0301, $0401, $0601, $0801, $0C01, $1001, $1801, $2001, $3001, $4001, $6001
+DIST_EXTRA_BITS:
+	.byte $00, $00, $00, $00, $01, $01, $02, $02, $03, $03, $04, $04, $05, $05, $06, $06, $07, $07, $08, $08, $09, $09, $0A, $0A, $0B, $0B, $0C, $0C, $0D, $0D
+
+.code
+; parameters: *lencode is on parameter stack, *distcode is on A/X.
+	jsr pushax				; push distcode onto parameter stack
+DISTCODE = $00
+LENCODE = $02 				; on parameter stack
+LEN = ptr1
+DIST = ptr2
+SYMBOL = ptr3
+
+loop:
+	; symbol = decode_asm(lencode);
+	ldy LENCODE+1 			; get lencode from parameter stack
+	lda (sp),Y
+	tax
+	dey
+	lda (sp),Y
+	jsr _decode_asm 		; AX = decode_asm(lencode)
+
+	jsr _validate_symbol 	; sets carry if symbol is invalid.
+	bcc error_invalid_symbol
+
+	sta SYMBOL 				; symbol = AX
+	stx SYMBOL+1
+
+	; if (symbol < 256) // literal: symbol is the byte
+	cpx #0
+	bne length_symbol
+
+	jsr write_out_symbol
+
+
+
+
+
+length_symbol:
+
+
+
+continue_loop:
+	lda #$00
+	cmp SYMBOL
+	bne loop
+	lda #$01
+	cmp SYMBOL+1
+	bne loop
+
+return_zero:
+	jsr incsp4
+	ldx #0
+	lda #0
+	rts
+
+error_distance_too_far:
+	jsr incsp4
+	ldx #$FF
+	lda #$F5
+	rts
+
+error_invalid_symbol:
+	jsr incsp4
+	ldx #$FF
+	lda #$F6
+	rts
+.endproc
+
+
+.proc _write_out_symbol 	; adds byte in A to puff_state.out
+.code						; uses ptr1, X, Y
+	tax 					; save A in X
+
+	lda STATE_INCNT			; if STATE_OUTCNT == STATE_OUTLEN: output is full
+	cmp STATE_INLEN
+	bne load_bitbuf
+	lda STATE_INCNT+1		; must check both bytes of 16-bit values
+	cmp STATE_INLEN+1
+	bne load_bitbuf
+
+
+
+	tax
+	ldy #0
+	sta (ptr1),Y
+
+	lda #0 					; return 0 for success
+	rts
+.endproc
+
+
+.proc _validate_symbol 		; sets carry flag if symbol in AX is invalid
+.code
+	cpx #>(MAXCODES)		; carry flag is set if MSB in X is >= maxcodes.msb
+	beq check_symbol_lsb
+	rts 
+check_symbol_lsb:
+	cmp #<(MAXCODES)
+	rts
+.endproc
+
+
+.proc _decode_asm			; returns symbol or error -10 ($F6)
+.code						; uses AXY & all ptr registers & tmp1, tmp3, tmp4 registers.
 	sta ptr1 				; ptr1 = h, temporarily
 	stx ptr1+1
 H_COUNT = ptr2
@@ -84,23 +198,10 @@ do_loop:
 	beq compare_lsb		; 2/3
 	bcs return_symbol  	; 2
 
-	;lda CODE+1			; 3 ; if code < ptr1: return symbol
-	;cmp ptr1+1			; 3 ; compare MSB first
-	;bcc return_symbol 	; 2 ; 
-	;bne continue_loop 	; 2/3 ; 
-
 compare_lsb:
 	cpx CODE			; 3 ; if X > code.MSB, C=0, Z=0
 	beq continue_loop	; 3
 	bcs return_symbol	; 3
-
-	;lda CODE 			; 3 ; if MSB are equal, compare LSB
-	;cmp ptr1			; 3 ; 
-	;bcc return_symbol 	; 2 ; if result < 0 (C=0)
-
-	; Timing from if() above:
-	; old code: 32
-	; new code: 24
 
 continue_loop:
 	stx FIRST			; 3 ; first = XA
