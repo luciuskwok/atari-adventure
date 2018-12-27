@@ -216,6 +216,89 @@ void initFont(UInt8 fontPage) {
 	POKE(CHBAS, fontPage + 2);
 }
 
+// Transition Effects
+
+UInt8 applyFade(UInt8 color, UInt8 amount) {
+	UInt8 lum = color & 0x0F;
+	if (amount > lum) {
+		color = 0;
+	} else {
+		color -= amount;
+	}
+	return color;
+}
+
+void fadeOutColorTable(UInt8 fadeOptions) {
+	UInt8 *colors = (UInt8*)(PCOLR0);
+	UInt8 count;
+	UInt8 i;
+
+	// Disable player color cycling to avoid conflicts
+	setPlayerCursorColorCycling(0);
+
+	for (count=0; count<15; ++count) {
+		*VB_TIMER = 1;
+
+		for (i=0; i<9; ++i) {
+			colors[i] = applyFade(colors[i], 1);			
+		}
+		if (fadeOptions & FadeGradient) {
+			for (i=0; i<72; ++i) {
+				BG_COLOR[i] = applyFade(BG_COLOR[i], 1);				
+			}
+		}
+		if (fadeOptions & FadeTextBox) {
+			*TEXT_LUM = applyFade(*TEXT_LUM, 1);
+			*TEXT_BG = applyFade(*TEXT_BG, 1);
+		}
+
+		// Delay 
+		while (*VB_TIMER) {
+		}
+	}
+}
+
+void fadeInColorTable(UInt8 fadeOptions, const UInt8 *colorTable) {
+	UInt8 *colors = (UInt8*)(PCOLR0);
+	SInt8 amount;
+	UInt8 i;
+
+	for (amount=15; amount>=0; --amount) {
+		*VB_TIMER = 1;
+
+		for (i=0; i<9; ++i) {
+			colors[i] = applyFade(colorTable[i], amount);			
+		}
+		if (fadeOptions & FadeGradient) {
+			for (i=0; i<72; ++i) {
+				//BG_COLOR[i] = applyFade(BG_COLOR[i]);				
+			}
+		}
+		if (fadeOptions & FadeTextBox) {
+			// *TEXT_LUM = applyFade(*TEXT_LUM);
+			// *TEXT_BG = applyFade(*TEXT_BG);
+		}
+
+		// Delay 
+		while (*VB_TIMER) {
+		}
+	}
+}
+
+void setScreenVisible(UInt8 options) {
+	UInt8 dma = 0;
+	UInt8 nmi = 0x40; // enable VBI
+
+	if (options & ScreenOn) {
+		dma = 0x2E; // various Antic DMA options
+		if (options & EnableDLI) {
+			nmi |= 0x80; // enable DLI
+		}
+	}
+	POKE (SDMCTL, dma);
+	ANTIC.nmien = nmi;
+}
+
 // Color Table
 
 void loadColorTable(const UInt8 *colors) {

@@ -44,18 +44,18 @@ extern const UInt8 tileBitmaps[];
 extern const UInt8 cursorSprite1[];
 extern const UInt8 cursorSprite2[];
 extern const UInt8 tileSprites[];
-extern const UInt8 sansMegaSprite[];
-extern const UInt8 sansMegaSpriteLength;
+// extern const UInt8 sansMegaSpriteLength;
+// extern const UInt8 sansMegaSprite[];
 
 // Raster Data
-extern const UInt8 testImage[];
 extern const UInt16 testImageLength;
+extern const UInt8 testImage[];
 
-extern const UInt8 temShopImage[];
 extern const UInt16 temShopImageLength;
+extern const UInt8 temShopImage[];
 
-extern const UInt8 temFaceSprite[];
 extern const UInt8 temFaceSpriteHeight;
+extern const UInt8 temFaceSprite[];
 
-extern const UInt8 selectionCursorSprite[];
 extern const UInt8 selectionCursorSpriteHeight;
+extern const UInt8 selectionCursorSprite[];

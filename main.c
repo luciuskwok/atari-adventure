@@ -7,6 +7,7 @@
 
 // Includes
 #include "atari_memmap.h"
+#include "cursor.h"
 #include "graphics.h"
 #include "images.h"
 #include "image_data.h"
@@ -20,29 +21,11 @@
 #include <string.h>
 
 
-// Callbacks
-typedef void (*CursorEventHandlerCallbackType)(UInt8 eventType);
-enum CursorEventType {
-	CursorNone = 0,
-	CursorClick = 1,
-	CursorUp,
-	CursorDown,
-	CursorLeft,
-	CursorRight
-};
-CursorEventHandlerCallbackType gCursorEventHandler;
 
 
 // Globals
 UInt8 isQuitting;
-UInt8 previousStick;
-UInt8 previousTrigger;
 
-PointU8 playerOverworldLocation;
-PointU8 playerMapLocation;
-UInt8 shipType;
-UInt8 lampStrength;
-UInt8 sightDistance;
 
 
 // Constants and macros
@@ -56,14 +39,6 @@ UInt8 sightDistance;
 UInt16 startTime;
 UInt16 duration;
 #endif
-
-
-// Cursor functions
-
-void registerCursorEventHandler(CursorEventHandlerCallbackType handler) {
-	gCursorEventHandler = handler;
-}
-
 
 
 // Text functions
@@ -80,121 +55,6 @@ void printStatText(void) {
 	// Print party statistics
 	printPartyStats(987123, 21, 1325, -891);
 }
-
-
-// Screen functions
-
-enum FadeOptions {
-	FadeGradient = 1, FadeTextBox = 2
-};
-
-UInt8 applyFade(UInt8 color, UInt8 amount) {
-	UInt8 lum = color & 0x0F;
-	if (amount > lum) {
-		color = 0;
-	} else {
-		color -= amount;
-	}
-	return color;
-}
-
-void fadeOut(UInt8 fadeOptions) {
-	UInt8 *colors = (UInt8*)(PCOLR0);
-	UInt8 count;
-	UInt8 i;
-
-	// Disable player color cycling to avoid conflicts
-	setPlayerCursorColorCycling(0);
-
-	for (count=0; count<15; ++count) {
-		*VB_TIMER = 1;
-
-		for (i=0; i<9; ++i) {
-			colors[i] = applyFade(colors[i], 1);			
-		}
-		if (fadeOptions & FadeGradient) {
-			for (i=0; i<72; ++i) {
-				BG_COLOR[i] = applyFade(BG_COLOR[i], 1);				
-			}
-		}
-		if (fadeOptions & FadeTextBox) {
-			*TEXT_LUM = applyFade(*TEXT_LUM, 1);
-			*TEXT_BG = applyFade(*TEXT_BG, 1);
-		}
-
-		// Delay 
-		while (*VB_TIMER) {
-		}
-	}
-}
-
-void fadeIn(UInt8 fadeOptions, const UInt8 *colorTable) {
-	UInt8 *colors = (UInt8*)(PCOLR0);
-	SInt8 amount;
-	UInt8 i;
-
-	for (amount=15; amount>=0; --amount) {
-		*VB_TIMER = 1;
-
-		for (i=0; i<9; ++i) {
-			colors[i] = applyFade(colorTable[i], amount);			
-		}
-		if (fadeOptions & FadeGradient) {
-			for (i=0; i<72; ++i) {
-				//BG_COLOR[i] = applyFade(BG_COLOR[i]);				
-			}
-		}
-		if (fadeOptions & FadeTextBox) {
-			// *TEXT_LUM = applyFade(*TEXT_LUM);
-			// *TEXT_BG = applyFade(*TEXT_BG);
-		}
-
-		// Delay 
-		while (*VB_TIMER) {
-		}
-	}
-}
-
-void transitionToMap(UInt8 mapType, UInt8 shouldFade) {
-	const UInt8 *colorTable = colorTableForMap(mapType);
-
-	if (shouldFade) {
-		fadeOut(0);
-	}
-
-	loadMap(mapType, sightDistance, &playerMapLocation);
-	
-	if (shouldFade) {	
-		fadeIn(0, colorTable);
-	} else {
-		loadColorTable(colorTable);
-	}
-
-	// Show player cursor
-	setPlayerCursorVisible(1);
-	setPlayerCursorColorCycling(1);
-}
-
-enum ScreenOptions {
-	ScreenOff = 0x00,
-	ScreenOn = 0x01,
-	EnableDLI = 0x80
-};
-
-void setScreenVisible(UInt8 options) {
-	UInt8 dma = 0;
-	UInt8 nmi = 0x40; // enable VBI running
-
-	if (options & ScreenOn) {
-		dma = 0x2E; // various Antic DMA options
-		if (options & EnableDLI) {
-			nmi |= 0x80; // enable DLI
-		}
-	}
-	POKE (SDMCTL, dma);
-	ANTIC.nmien = nmi;
-}
-
 
 // Dialog functions
 
@@ -259,7 +119,7 @@ void presentDialog(void) {
 	UInt8 i;
 
 	// Set up graphics window
-	fadeOut(FadeTextBox);
+	fadeOutColorTable(FadeTextBox);
 	setScreenVisible(0);
 	clearTextWindow();
 	clearRasterScreen();
@@ -312,7 +172,7 @@ void presentDialog(void) {
 	waitForAnyInput();
 
 	// Fade out
-	fadeOut(FadeGradient | FadeTextBox);
+	fadeOutColorTable(FadeGradient | FadeTextBox);
 	clearSpriteData(4);
 	hideSprites();
 	setScreenVisible(0);
@@ -328,148 +188,6 @@ void presentDialog(void) {
 }
 
 
-// Map Movement functions
-
-void exitToOverworld(void) {
-	playerMapLocation = playerOverworldLocation;
-	sightDistance = 0xFF;
-	transitionToMap(OverworldMapType, 1);
-}
-
-void enterDungeon(void) {
-	sightDistance = lampStrength;
-	playerOverworldLocation = playerMapLocation;
-	playerMapLocation = mapEntryPoint(DungeonMapType);
-	transitionToMap(DungeonMapType, 1);
-}
-
-void enterTown(void) {
-	sightDistance = 0xFF;
-	playerOverworldLocation = playerMapLocation;
-	playerMapLocation = mapEntryPoint(TownMapType);
-	transitionToMap(TownMapType, 1);
-}
-
-UInt8 canMoveTo(PointU8 *pt) {
-	UInt8 tile = mapTileAt(pt) & 0x3F; // remove color data
-
-	switch (currentMapType) {
-		case OverworldMapType:
-			if (tile == tShallows) { // Shallows
-				return shipType >= 1;
-			} else if (tile == tWater) {
-				return shipType >= 2;
-			}
-			return 1;
-		case DungeonMapType:
-			return tile != tBrick;
-		case TownMapType:
-			return tile == tSolid || tile == tHouseDoor;
-	}
-
-	return 1;
-}
-
-void mapCursorHandler(UInt8 event) {
-	UInt8 tile;
-	PointU8 oldLoc, newLoc;
-
-	oldLoc = playerMapLocation;
-	newLoc = oldLoc;
-	
-	switch (event) {
-	case CursorClick:
-		// Get the tile without color info.
-		tile = mapTileAt(&playerMapLocation) & 0x3F; 
-		switch (tile) {
-			case tTown:
-				enterTown();
-				break;
-			case tVillage:
-			case tCastle:
-				presentDialog();
-				break;
-			case tMonument:
-			case tCave:
-				enterDungeon();
-				break;
-			case tHouseDoor:
-				presentDialog();
-				break;
-			case tLadder:
-				exitToOverworld();
-		}
-		break;
-
-	case CursorUp:    --newLoc.y; break; // up
-	case CursorDown:  ++newLoc.y; break; // down
-	case CursorLeft:  --newLoc.x; break; // left
-	case CursorRight: ++newLoc.x; break; // right
-	}
-
-		{
-			UInt8 s[16];
-			sprintf(s, "Event=%u", event);
-			printString(s, 40-strlen(s), 6);
-		}
-
-	if (newLoc != oldLoc) {
-		// Check map bounds. Because newLoc is unsigned, it wraps around from 0 to 255.
-		if (newLoc.x < currentMapSize.width && newLoc.y < currentMapSize.height) {
-			if (canMoveTo(&newLoc)) {
-				playerMapLocation = newLoc;
-				drawCurrentMap(&playerMapLocation);
-			}
-		} else {
-			// Handle moving off the map for towns
-			if (currentMapType == TownMapType) {
-				exitToOverworld();
-			}
-		}
-	}
-}
-
-void handleStick() {
-	// Only allow moves in 4 cardinal directions and not diagonals.
-	UInt8 stick = PEEK (STICK0);
-	UInt8 vb_timer = *VB_TIMER;
-	UInt8 cursorEvent = CursorNone;
-
-	if (stick == previousStick && vb_timer != 0) { 
-		// Handle changes in stick position immediately but delay repeating same moves.
-		return;
-	}
-	*VB_TIMER = 10; // Reset stick timer
-	previousStick = stick;
-
-	switch (stick) {
-		case 0x0E: cursorEvent = CursorUp; break; 
-		case 0x0D: cursorEvent = CursorDown; break; 
-		case 0x0B: cursorEvent = CursorLeft; break;
-		case 0x07: cursorEvent = CursorRight; break;
-		default: break;
-	}
-	
-	if (cursorEvent != CursorNone && gCursorEventHandler) {
-		gCursorEventHandler(cursorEvent);
-	}
-}
-
-void handleTrigger(void) {
-	UInt8 trigger = PEEK (STRIG0);
-
-	// Recognize trigger only when it transitions from up to down.
-	if (trigger == previousTrigger) {
-		return;
-	}
-	previousTrigger = trigger;
-	if (trigger != 0) {  // trigger == 0 when it is pressed
-		return;
-	}
-	if (gCursorEventHandler) {
-		gCursorEventHandler(CursorClick);
-	}
-}
 
 void runLoop(void) {
 	handleTrigger();
@@ -477,17 +195,16 @@ void runLoop(void) {
 }
 
 int main (void) {
-	// Graphics
+	// Init
 	initGraphics();
+	initCursor();
 	
 	// Start new game
 	isQuitting = 0;
-	previousStick = 0x0F;
-	previousTrigger = 1;
-	shipType = 0;
-	lampStrength = 2;
-	sightDistance = 0xFF;
-	playerOverworldLocation = mapEntryPoint(OverworldMapType);
+	mapShipType = 0;
+	mapLampStrength = 2;
+	mapSightDistance = 0xFF;
+	mapOverworldLocation = mapEntryPoint(OverworldMapType);
 
 	// Load map
 	exitToOverworld();

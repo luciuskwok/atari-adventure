@@ -25,6 +25,20 @@ void selectDisplayList(UInt8 index);
 void initFont(UInt8 fontPage);
 void hidePlayfieldAndSprites(void);
 
+// Transition Effects
+enum FadeOptions {
+	FadeGradient = 1, FadeTextBox = 2
+};
+UInt8 applyFade(UInt8 color, UInt8 amount);
+void fadeOutColorTable(UInt8 fadeOptions);
+void fadeInColorTable(UInt8 fadeOptions, const UInt8 *colorTable);
+enum ScreenOptions {
+	ScreenOff = 0x00,
+	ScreenOn = 0x01,
+	EnableDLI = 0x80
+};
+void setScreenVisible(UInt8 options);
+
 // Color Table
 void loadColorTable(const UInt8 *colors);
 void setBackgroundGradient(const UInt8 *data);

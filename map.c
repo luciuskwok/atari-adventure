@@ -1,6 +1,7 @@
 // map.c
 
 #include "map.h"
+#include "cursor.h"
 #include "graphics.h"
 #include "map_data.h"
 #include "sprites.h"
@@ -10,6 +11,14 @@
 
 
 // Globals
+PointU8 mapOverworldLocation;
+PointU8 mapCurrentLocation;
+UInt8 mapShipType;
+UInt8 mapLampStrength;
+UInt8 mapSightDistance;
+
+
+// Private Globals
 const UInt8 *currentRunLenMap;
 const UInt8 *currentTileMap;
 SizeU8 currentMapSize;
@@ -19,6 +28,126 @@ SizeU8 mapFrameSize;
 
 #define SCREEN_WIDTH (24)
 
+// Assembly routine
+extern void __fastcall__ decodeRunLenRange(UInt8 *outData, UInt8 start, UInt8 end, const UInt8 *runLenData);
+
+
+// Map Movement
+
+void transitionToMap(UInt8 mapType, UInt8 shouldFade) {
+	const UInt8 *colorTable = colorTableForMap(mapType);
+
+	if (shouldFade) {
+		fadeOutColorTable(0);
+	}
+
+	loadMap(mapType, mapSightDistance, &mapCurrentLocation);
+	
+	if (shouldFade) {	
+		fadeInColorTable(0, colorTable);
+	} else {
+		loadColorTable(colorTable);
+	}
+
+	// Show player cursor
+	setPlayerCursorVisible(1);
+	setPlayerCursorColorCycling(1);
+}
+
+void exitToOverworld(void) {
+	mapCurrentLocation = mapOverworldLocation;
+	mapSightDistance = 0xFF;
+	transitionToMap(OverworldMapType, 1);
+}
+
+void enterDungeon(void) {
+	mapSightDistance = mapLampStrength;
+	mapOverworldLocation = mapCurrentLocation;
+	mapCurrentLocation = mapEntryPoint(DungeonMapType);
+	transitionToMap(DungeonMapType, 1);
+}
+
+void enterTown(void) {
+	mapSightDistance = 0xFF;
+	mapOverworldLocation = mapCurrentLocation;
+	mapCurrentLocation = mapEntryPoint(TownMapType);
+	transitionToMap(TownMapType, 1);
+}
+
+UInt8 canMoveTo(PointU8 *pt) {
+	UInt8 tile = mapTileAt(pt) & 0x3F; // remove color data
+
+	switch (currentMapType) {
+		case OverworldMapType:
+			if (tile == tShallows) { // Shallows
+				return mapShipType >= 1;
+			} else if (tile == tWater) {
+				return mapShipType >= 2;
+			}
+			return 1;
+		case DungeonMapType:
+			return tile != tBrick;
+		case TownMapType:
+			return tile == tSolid || tile == tHouseDoor;
+	}
+
+	return 1;
+}
+
+void mapCursorHandler(UInt8 event) {
+	UInt8 tile;
+	PointU8 oldLoc, newLoc;
+
+	oldLoc = mapCurrentLocation;
+	newLoc = oldLoc;
+	
+	switch (event) {
+	case CursorClick:
+		// Get the tile without color info.
+		tile = mapTileAt(&mapCurrentLocation) & 0x3F; 
+		switch (tile) {
+			case tTown:
+				enterTown();
+				break;
+			case tVillage:
+			case tCastle:
+				//presentDialog();
+				break;
+			case tMonument:
+			case tCave:
+				enterDungeon();
+				break;
+			case tHouseDoor:
+				//presentDialog();
+				break;
+			case tLadder:
+				exitToOverworld();
+		}
+		break;
+
+	case CursorUp:    --newLoc.y; break; // up
+	case CursorDown:  ++newLoc.y; break; // down
+	case CursorLeft:  --newLoc.x; break; // left
+	case CursorRight: ++newLoc.x; break; // right
+	}
+
+	if (newLoc != oldLoc) {
+		// Check map bounds. Because newLoc is unsigned, it wraps around from 0 to 255.
+		if (newLoc.x < currentMapSize.width && newLoc.y < currentMapSize.height) {
+			if (canMoveTo(&newLoc)) {
+				mapCurrentLocation = newLoc;
+				drawCurrentMap(&mapCurrentLocation);
+			}
+		} else {
+			// Handle moving off the map for towns
+			if (currentMapType == TownMapType) {
+				exitToOverworld();
+			}
+		}
+	}
+}
+
+// Map Info
 
 UInt8 mapTileAt(PointU8 *pt) {
 	const UInt8 *runLenPtr = currentRunLenMap;
@@ -38,7 +167,6 @@ UInt8 mapTileAt(PointU8 *pt) {
 	return currentTileMap[tile];
 }
 
-
 PointU8 mapEntryPoint(UInt8 mapType) {
 	PointU8 pt = {0,0};
 
@@ -56,8 +184,9 @@ PointU8 mapEntryPoint(UInt8 mapType) {
 	return pt;
 }
 
+// Map Drawing
 
-void loadMap(UInt8 mapType, UInt8 sightDistance, PointU8 *location) {
+void loadMap(UInt8 mapType, UInt8 mapSightDistance, PointU8 *location) {
 	const UInt8 *colorTable;
 
 	clearMapScreen();
@@ -84,10 +213,9 @@ void loadMap(UInt8 mapType, UInt8 sightDistance, PointU8 *location) {
 	}
 	currentMapType = mapType;
 
-	layoutCurrentMap(sightDistance);
+	layoutCurrentMap(mapSightDistance);
 	drawCurrentMap(location);
 }
-
 
 const UInt8 *colorTableForMap(UInt8 mapType) {
 	switch (mapType) {
@@ -101,7 +229,6 @@ const UInt8 *colorTableForMap(UInt8 mapType) {
 	return overworldColorTable;
 }
 
-
 void clearMapScreen(void) {
 	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
 
@@ -109,15 +236,14 @@ void clearMapScreen(void) {
 	memset(P3_XPOS, 0, 9);
 }
 
-
-void layoutCurrentMap(UInt8 sightDistance) {
+void layoutCurrentMap(UInt8 mapSightDistance) {
 	UInt8 x, halfWidth, halfHeight;
 
-	if (sightDistance > 3) {
+	if (mapSightDistance > 3) {
 		mapFrameSize.width = 19;
 		mapFrameSize.height = 9;
 	} else {
-		x = sightDistance * 2 + 1;
+		x = mapSightDistance * 2 + 1;
 		mapFrameSize.width = x;
 		mapFrameSize.height = x;
 	}
@@ -131,7 +257,6 @@ void layoutCurrentMap(UInt8 sightDistance) {
 	for (x=0; x<9; ++x) {
 		P3_XPOS[x] = 0;
 	}
-
 }
 
 void drawCurrentMap(PointU8 *center) {
