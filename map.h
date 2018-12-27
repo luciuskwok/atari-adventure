@@ -21,7 +21,9 @@ void clearMapScreen(void);
 
 void layoutCurrentMap(UInt8 sightDistance);
 void drawCurrentMap(PointU8 *center);
-void decodeRunLenRange(UInt8 *outData, UInt8 start, UInt8 end, const UInt8 *runLenData);
+
+// Assembly routine
+extern void __fastcall__ decodeRunLenRange(UInt8 *outData, UInt8 start, UInt8 end, const UInt8 *runLenData);
 
 // Constants
 enum MapTypes {

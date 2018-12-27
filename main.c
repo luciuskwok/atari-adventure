@@ -32,11 +32,16 @@ UInt8 sightDistance;
 
 
 // Constants and macros
-//#define DEBUGGING
+#define DEBUGGING
 #define RESET_ATTRACT_MODE (POKE(ATRACT, 0))
 #define SCREEN_LENGTH (40 * 72)
 #define SHORT_CLOCK (PEEK(20) + 256 * PEEK(19))
 
+// Debugging
+#ifdef DEBUGGING
+UInt16 startTime;
+UInt16 duration;
+#endif
 
 // Text functions
 
@@ -67,8 +72,8 @@ void printDebuggingInfo(void) {
 	// printHex16bitValue("distcnt: ", (UInt16)fixed_distcnt, 1, 2);
 	// printDecimal16bitValue("err: ", err, 1, 4);
 
-	// Force export of symbols from puff
-	// printHex16bitValue("construct: ", (UInt16)construct, 1, 0);
+	// Force export of symbols from map.c
+	//printHex16bitValue("decodeRunLenRange: ", (UInt16)decodeRunLenRange, 1, 0);
 	// printHex16bitValue("fixed:     ", (UInt16)fixed, 1, 2);
 	// printHex16bitValue("dynamic:   ", (UInt16)dynamic, 1, 3);
 	// printHex16bitValue("stored:    ", (UInt16)stored, 1, 4);
@@ -82,12 +87,14 @@ enum FadeOptions {
 	FadeGradient = 1, FadeTextBox = 2
 };
 
-UInt8 applyFade(UInt8 color) {
-	if ((color & 0x0F) != 0) {
-		return color - 1;
+UInt8 applyFade(UInt8 color, UInt8 amount) {
+	UInt8 lum = color & 0x0F;
+	if (amount > lum) {
+		color = 0;
 	} else {
-		return 0;
+		color -= amount;
 	}
+	return color;
 }
 
 void fadeOut(UInt8 fadeOptions) {
@@ -102,16 +109,16 @@ void fadeOut(UInt8 fadeOptions) {
 		*VB_TIMER = 1;
 
 		for (i=0; i<9; ++i) {
-			colors[i] = applyFade(colors[i]);			
+			colors[i] = applyFade(colors[i], 1);			
 		}
 		if (fadeOptions & FadeGradient) {
 			for (i=0; i<72; ++i) {
-				BG_COLOR[i] = applyFade(BG_COLOR[i]);				
+				BG_COLOR[i] = applyFade(BG_COLOR[i], 1);				
 			}
 		}
 		if (fadeOptions & FadeTextBox) {
-			*TEXT_LUM = applyFade(*TEXT_LUM);
-			*TEXT_BG = applyFade(*TEXT_BG);
+			*TEXT_LUM = applyFade(*TEXT_LUM, 1);
+			*TEXT_BG = applyFade(*TEXT_BG, 1);
 		}
 
 		// Delay 
@@ -120,18 +127,47 @@ void fadeOut(UInt8 fadeOptions) {
 	}
 }
 
-void transitionToMap(UInt8 mapType, UInt8 shouldFadeOut) {
+void fadeIn(UInt8 fadeOptions, const UInt8 *colorTable) {
+	UInt8 *colors = (UInt8*)(PCOLR0);
+	SInt8 amount;
+	UInt8 i;
+
+	for (amount=15; amount>=0; --amount) {
+		*VB_TIMER = 1;
+
+		for (i=0; i<9; ++i) {
+			colors[i] = applyFade(colorTable[i], amount);			
+		}
+		if (fadeOptions & FadeGradient) {
+			for (i=0; i<72; ++i) {
+				//BG_COLOR[i] = applyFade(BG_COLOR[i]);				
+			}
+		}
+		if (fadeOptions & FadeTextBox) {
+			// *TEXT_LUM = applyFade(*TEXT_LUM);
+			// *TEXT_BG = applyFade(*TEXT_BG);
+		}
+
+		// Delay 
+		while (*VB_TIMER) {
+		}
+	}
+}
+
+void transitionToMap(UInt8 mapType, UInt8 shouldFade) {
 	const UInt8 *colorTable = colorTableForMap(mapType);
 
-	if (shouldFadeOut) {
+	if (shouldFade) {
 		fadeOut(0);
 	}
 
 	loadMap(mapType, sightDistance, &playerMapLocation);
 	
-	// TODO: fade in here
-
-	loadColorTable(colorTable);
+	if (shouldFade) {	
+		fadeIn(0, colorTable);
+	} else {
+		loadColorTable(colorTable);
+	}
 
 	// Show player cursor
 	setPlayerCursorVisible(1);
@@ -165,26 +201,14 @@ void waitForAnyInput(void) {
 void drawImage(const UInt8 *data, UInt16 length) {
 	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
 	UInt16 screenLen = SCREEN_LENGTH;
-#if DEBUGGING
-	UInt16 startTime = SHORT_CLOCK;  // Debugging
-	UInt16 duration;
-#endif
 	SInt8 result;
 
 	result = puff(screen, &screenLen, data, &length);
 
-#if DEBUGGING
-	duration = SHORT_CLOCK - startTime; // Debugging
-	clearTextWindow();
-	printDecimal16bitValue("Time: ", duration, 1, 1); // Debugging
 	if (result) {
-		printDecimal16bitValue("Err:  ", result, 1, 3);
-		printDecimal16bitValue("In Count:  ", length, 20, 1);
-		printDecimal16bitValue("Out Count: ", screenLen, 20, 3);
+		printDecimal16bitValue("puff() error:  ", result, 1, 3);
+		waitForAnyInput();
 	}
-	waitForAnyInput();
-#endif
-
 }
 
 
@@ -242,17 +266,15 @@ void presentDialog(void) {
 
 	// Fade out
 	fadeOut(FadeGradient | FadeTextBox);
+	clearSpriteData(4);
+	hideSprites();
 	setScreenVisible(0);
 
 	// Reload map
-	clearSpriteData(4);
-	hideSprites();
+	transitionToMap(currentMapType, 0);
 
 	selectDisplayList(1);
 	setTextWindowColorTheme(0);
-
-	transitionToMap(currentMapType, 0);
-
 	setScreenVisible(1);
 
 	printStatText();
@@ -334,7 +356,15 @@ void handleStick() {
 		if (newLoc.x < currentMapSize.width && newLoc.y < currentMapSize.height) {
 			if (canMoveTo(&newLoc)) {
 				playerMapLocation = newLoc;
+#ifdef DEBUGGING
+				startTime = SHORT_CLOCK;
+#endif				
 				drawCurrentMap(&playerMapLocation);
+#ifdef DEBUGGING
+				duration = SHORT_CLOCK - startTime;
+				clearTextWindow();
+				printDecimal16bitValue("Time: ", duration, 1, 1); 
+#endif
 			}
 		} else {
 			// Handle moving off the map for towns

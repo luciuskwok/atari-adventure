@@ -19,6 +19,35 @@ SizeU8 mapFrameSize;
 #define SCREEN_WIDTH (24)
 
 
+void OLD_decodeRunLenRange(UInt8 *outData, UInt8 skip, UInt8 length, const UInt8 *inData) {
+	UInt8 inLength = inData[0];
+	UInt8 inIndex = 1;
+	UInt8 outIndex = 0;
+	UInt8 outLength = length;
+	UInt8 op, tile, count;
+
+	while (inIndex < inLength && outIndex < length) {
+		op = inData[inIndex++];
+
+		tile = (op & 0xF0) >> 4;
+		count = (op & 0x0F);
+
+		if (count == 15) {
+			count += inData[inIndex++];
+		}
+
+		count += 1;
+		while (count > 0 && outIndex < outLength) {
+			if (skip != 0) {
+				skip -= 1;
+			} else {
+				outData[outIndex++] = tile;
+			}
+			--count;
+		}		
+	}
+}
+
 UInt8 mapTileAt(PointU8 *pt) {
 	const UInt8 *runLenPtr = currentRunLenMap;
 	UInt8 x = pt->x;
@@ -31,7 +60,7 @@ UInt8 mapTileAt(PointU8 *pt) {
 	}
 
 	// Get tile
-	decodeRunLenRange(&tile, x, x+1, runLenPtr);
+	OLD_decodeRunLenRange(&tile, x, 1, runLenPtr);
 
 	// Convert to character value
 	return currentTileMap[tile];
@@ -141,7 +170,6 @@ void layoutCurrentMap(UInt8 sightDistance) {
 	// printDebugInfo("H $", mapFrameSize.height, 50);
 }
 
-
 void drawCurrentMap(PointU8 *center) {
 	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
 	const UInt8 *runLenPtr = currentRunLenMap;
@@ -150,7 +178,7 @@ void drawCurrentMap(PointU8 *center) {
 	UInt8 mapFrameHalfWidth = mapFrameSize.width / 2;
 	UInt8 mapFrameHalfHeight = mapFrameSize.height / 2;
 	UInt8 row, col;
-	UInt8 leftBlank, leftSkip, decodeEnd, topBlank, topSkip;
+	UInt8 leftBlank, leftSkip, decodeLength, topBlank, topSkip;
 	UInt8 c, low, hasSpriteOverlay;
 	UInt8 buffer[20];
 
@@ -181,11 +209,12 @@ void drawCurrentMap(PointU8 *center) {
 		leftBlank = 0;
 		leftSkip = center->x - mapFrameHalfWidth;
 	}
-	decodeEnd = leftSkip + mapFrameSize.width - leftBlank;
-	if (decodeEnd > currentMapSize.width) {
-		decodeEnd = currentMapSize.width;
+	decodeLength = mapFrameSize.width - leftBlank;
+	if (decodeLength > currentMapSize.width - leftSkip) {
+		decodeLength = currentMapSize.width - leftSkip;
 	}
 
+	// Debugging:
 	// printDebugInfo("B$", leftBlank, 0);
 	// printDebugInfo("S$", leftSkip, 10);
 	// printDebugInfo("E$", decodeEnd, 20);
@@ -201,7 +230,7 @@ void drawCurrentMap(PointU8 *center) {
 				++screenIndex;
 			}
 		} else {
-			decodeRunLenRange(buffer, leftSkip, decodeEnd, runLenPtr);
+			OLD_decodeRunLenRange(buffer, leftSkip, decodeLength, runLenPtr);
 			runLenPtr += runLenPtr[0]; // Next row.
 			for (col=0; col<mapFrameSize.width; ++col) {
 				if (col < leftBlank || col + leftSkip >= currentMapSize.width + leftBlank) {
@@ -233,36 +262,3 @@ void drawCurrentMap(PointU8 *center) {
 		screenIndex += screenRowSkip;
 	}
 }
-
-
-void decodeRunLenRange(UInt8 *outData, UInt8 start, UInt8 end, const UInt8 *runLenData) {
-	UInt8 rowLength = runLenData[0];
-	UInt8 runLenIndex = 1;
-	UInt8 outIndex = 0;
-	UInt8 op, tile, count;
-
-	while (runLenIndex < rowLength && outIndex < end) {
-		op = runLenData[runLenIndex];
-		++runLenIndex;
-
-		tile = (op & 0xF0) >> 4;
-		count = (op & 0x0F);
-
-		if (count == 15) {
-			count += runLenData[runLenIndex];
-			++runLenIndex;
-		}
-
-		++count;
-		while (count > 0 && outIndex < end) {
-			if (outIndex >= start) {
-				outData[outIndex - start] = tile;
-			}
-			++outIndex;
-			--count;
-		}		
-	}
-}
-
-
-
