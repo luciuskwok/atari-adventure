@@ -1,16 +1,7 @@
-// tiles.h
+// image_data.h
 
 #include "types.h"
 
-
-#ifndef TILES_H
-#define TILES_H
-
-
-
-// Tile constants
-// Add 0x40 to these values to get the character value.
-// This puts them in the graphics/control character range in ATASCII.
 
 // Map Tiles
 enum TileValues {
@@ -48,7 +39,7 @@ enum TileValues {
 #define tPotion (0x3B)
 #define tFang (0x3D)
 
-// Bitmap Data
+// Tile Data
 extern const UInt8 tileBitmaps[];
 extern const UInt8 cursorSprite1[];
 extern const UInt8 cursorSprite2[];
@@ -56,4 +47,15 @@ extern const UInt8 tileSprites[];
 extern const UInt8 sansMegaSprite[];
 extern const UInt8 sansMegaSpriteLength;
 
-#endif
+// Raster Data
+extern const UInt8 testImage[];
+extern const UInt16 testImageLength;
+
+extern const UInt8 temShopImage[];
+extern const UInt16 temShopImageLength;
+
+extern const UInt8 temFaceSprite[];
+extern const UInt8 temFaceSpriteHeight;
+
+extern const UInt8 selectionCursorSprite[];
+extern const UInt8 selectionCursorSpriteHeight;

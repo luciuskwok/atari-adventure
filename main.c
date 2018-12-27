@@ -9,11 +9,11 @@
 #include "atari_memmap.h"
 #include "graphics.h"
 #include "images.h"
+#include "image_data.h"
 #include "map.h"
 #include "puff.h"
 #include "sprites.h"
 #include "text.h"
-#include "tiles.h"
 #include "types.h"
 #include <atari.h>
 #include <stdio.h>
@@ -336,7 +336,6 @@ void exitToOverworld(void) {
 	transitionToMap(OverworldMapType, 1);
 }
 
-
 void enterDungeon(void) {
 	sightDistance = lampStrength;
 	playerOverworldLocation = playerMapLocation;
@@ -344,14 +343,12 @@ void enterDungeon(void) {
 	transitionToMap(DungeonMapType, 1);
 }
 
-
 void enterTown(void) {
 	sightDistance = 0xFF;
 	playerOverworldLocation = playerMapLocation;
 	playerMapLocation = mapEntryPoint(TownMapType);
 	transitionToMap(TownMapType, 1);
 }
-
 
 UInt8 canMoveTo(PointU8 *pt) {
 	UInt8 tile = mapTileAt(pt) & 0x3F; // remove color data
@@ -456,7 +453,6 @@ void handleStick() {
 	if (cursorEvent != CursorNone && gCursorEventHandler) {
 		gCursorEventHandler(cursorEvent);
 	}
-
 }
 
 void handleTrigger(void) {
@@ -475,12 +471,10 @@ void handleTrigger(void) {
 	}
 }
 
-
 void runLoop(void) {
 	handleTrigger();
 	handleStick();
 }
-
 
 int main (void) {
 	// Graphics

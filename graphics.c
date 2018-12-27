@@ -31,10 +31,10 @@ Screen memory is allocated:
 
 #include "graphics.h"
 #include "atari_memmap.h"
+#include "image_data.h"
 #include "map.h"
 #include "sprites.h"
 #include "text.h"
-#include "tiles.h"
 #include <atari.h>
 
 

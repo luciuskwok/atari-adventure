@@ -2,6 +2,14 @@
 
 #include "types.h"
 
+/*
+Run-length encoded map format:
+For each row, the first byte indicates length of the row, not including length byte.
+High nybble indicates the tileChar to use.
+Low nybble stores the number of repeated tiles in addition to the first one.
+If low nybble is 0xF, the next byte contains an 8-bit value to add to the repeat.
+*/
+
 
 extern const UInt8 overworldRleMap[];
 extern const SizeU8 overworldMapSize;

@@ -1,7 +1,7 @@
 // map_data.c
 
 #include "map_data.h"
-#include "tiles.h"
+#include "image_data.h"
 
 
 // Color constants

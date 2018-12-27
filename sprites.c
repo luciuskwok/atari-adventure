@@ -3,7 +3,7 @@
 #include "sprites.h"
 #include "atari_memmap.h"
 #include "graphics.h"
-#include "tiles.h"
+#include "image_data.h"
 #include <atari.h>
 
 
