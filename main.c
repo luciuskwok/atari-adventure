@@ -32,7 +32,7 @@ UInt8 sightDistance;
 
 
 // Constants and macros
-#define DEBUGGING
+//#define DEBUGGING
 #define RESET_ATTRACT_MODE (POKE(ATRACT, 0))
 #define SCREEN_LENGTH (40 * 72)
 #define SHORT_CLOCK (PEEK(20) + 256 * PEEK(19))
@@ -49,9 +49,6 @@ UInt16 duration;
 void printStatText(void) {
 	clearTextWindow();
 
-	// Print header column
-	printString("HP:", 0, 2);
-
 	// Print character statistics
 	printCharaStats(0, "Alisa", 99, 123, 255);
 	printCharaStats(1, "Marie", 1, 4, 8);
@@ -62,23 +59,6 @@ void printStatText(void) {
 	printPartyStats(987123, 21, 1325, -891);
 
 }
-
-#ifdef DEBUGGING
-void printDebuggingInfo(void) {
- 	// int err;
-
- 	// err = verify_fixed_tables();
-	// clearTextWindow();
-	// printHex16bitValue("distcnt: ", (UInt16)fixed_distcnt, 1, 2);
-	// printDecimal16bitValue("err: ", err, 1, 4);
-
-	// Force export of symbols from map.c
-	//printHex16bitValue("decodeRunLenRange: ", (UInt16)decodeRunLenRange, 1, 0);
-	// printHex16bitValue("fixed:     ", (UInt16)fixed, 1, 2);
-	// printHex16bitValue("dynamic:   ", (UInt16)dynamic, 1, 3);
-	// printHex16bitValue("stored:    ", (UInt16)stored, 1, 4);
-}
-#endif
 
 
 // Screen functions
@@ -221,58 +201,50 @@ void drawImage(const UInt8 *data, UInt16 length) {
 	}
 }
 
+void clearRasterScreen(void) {
+	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
+	UInt16 i;
+	// Screen is made up of 72 lines * 40 bytes = 2880 bytes
+	for (i=0; i<(72*40); ++i) {
+		screen[i] = 0;
+	}
+}
 
 void presentDialog(void) {
 	UInt8 temShopColorTable[] = {
 		0x00, 0x00, 0x58, 0x5C, // sprite
 		0x26, 0x0E, 0x00, 0xFF, 0x2A // playfield
 	};
-	UInt8 greyscaleColorTable[] = {
-		0x50, 0x54, 0x58, 0x5C,
-		0x00, 0x04, 0x08, 0xFF, 0x0C
-	};
-	UInt8 gradient[] = { 
-		12, 0x92, 
-		12, 0x94,
-		 6, 0x96,
-		 3, 0x98,
-		 2, 0x9A,
-		 1, 0x9C, 
-		 1, 0xC2, 
-		 3, 0xC4,
-		 7, 0xC6,
-		21, 0xC8,
-		 5, 0xCA,
-		 0 };
-	PointU8 sansPosition = { 81, 16 + 45 };
-	const UInt8 msg1[] = "Sans: Why are graveyards so noisy?\n Because of all the *coffin*!";
-	const UInt8 msg2[] = "Ellie: How are you doing today?\n That teacher was totally unfair.\n C'mon, let's go to the beach!";
-	const UInt8 msg3[] = "Papyrus: Nyeh Heh Heh!";
-	const UInt8 *messages[3];
+	// UInt8 greyscaleColorTable[] = {
+	// 	0x50, 0x54, 0x58, 0x5C,
+	// 	0x00, 0x04, 0x08, 0xFF, 0x0C
+	// };
+	// UInt8 gradient[] = { 
+	// 	12, 0x92, 
+	// 	12, 0x94,
+	// 	 6, 0x96,
+	// 	 3, 0x98,
+	// 	 2, 0x9A,
+	// 	 1, 0x9C, 
+	// 	 1, 0xC2, 
+	// 	 3, 0xC4,
+	// 	 7, 0xC6,
+	// 	21, 0xC8,
+	// 	 5, 0xCA,
+	// 	 0 };
+	// PointU8 sansPosition = { 81, 16 + 45 };
+	// const UInt8 msg1[] = "Sans: Why are graveyards so noisy?\n Because of all the *coffin*!";
+	// const UInt8 msg2[] = "Ellie: How are you doing today?\n That teacher was totally unfair.\n C'mon, let's go to the beach!";
+	// const UInt8 msg3[] = "Papyrus: Nyeh Heh Heh!";
+	// const UInt8 *messages[3];
 	UInt8 i;
 
 	// Set up graphics window
 	fadeOut(FadeTextBox);
 	setScreenVisible(0);
 	clearTextWindow();
+	clearRasterScreen();
 	setPlayerCursorVisible(0);
-
-	// Set up sprites
-	clearSpriteData(1);
-	clearSpriteData(2);
-	drawSprite(temFaceSprite, 24, 1, 40);
-	drawSprite(temFaceSprite+24, 24, 2, 40);
-	setSpriteHorizontalPosition(1, PM_LEFT_MARGIN + 72);
-	setSpriteHorizontalPosition(2, PM_LEFT_MARGIN + 80);
-
-#ifdef DEBUGGING
-	startTime = SHORT_CLOCK;
-#endif
-
-	drawImage(temShopImage, temShopImageLength);
-
-	// Add Sans
-	//setMegaSprite(sansMegaSprite, sansMegaSpriteLength, &sansPosition, 2);
 
 	// Turn on screen
 	loadColorTable(temShopColorTable);
@@ -281,34 +253,40 @@ void presentDialog(void) {
 	selectDisplayList(2);
 	setScreenVisible(ScreenOn);
 
-#ifdef DEBUGGING
-	duration = SHORT_CLOCK - startTime;
-	printDecimal16bitValue("Time: ", duration, 1, 5);
-	printString("* hOi!", 1, 1);
-	printString("* welcom to...", 1, 2);
-	printString("* da TEM SHOP!!!", 1, 3);
+	// Set up sprites
+	clearSpriteData(1);
+	clearSpriteData(2);
+	drawSprite(temFaceSprite, 24, 1, 22+14);
+	drawSprite(temFaceSprite+24, 24, 2, 22+14);
+	setSpriteHorizontalPosition(1, PM_LEFT_MARGIN + 72);
+	setSpriteHorizontalPosition(2, PM_LEFT_MARGIN + 80);
 
-	for (i=0; i<6; ++i) {
-		printString("|", 29, i);
+	clearSpriteData(3);
+
+
+	drawImage(temShopImage, temShopImageLength);
+
+	// Add Sans
+	//setMegaSprite(sansMegaSprite, sansMegaSpriteLength, &sansPosition, 2);
+
+
+	//printDecimal16bitValue("Time: ", duration, 0, 6);
+	printString("* hOi!", 4, 1);
+	printString("* welcom to...", 4, 2);
+	printString("* da TEM SHOP!!!", 4, 3);
+
+	for (i=0; i<7; ++i) {
+		printString("|", 28, i);
 	}
 
 	printString("Buy", 32, 1);
 	printString("Sell", 32, 2);
 	printString("Talk", 32, 3);
 	printString("Exit", 32, 4);
+	printString("$901", 29, 6);
+	printString("21{", 37, 6);
 
 	waitForAnyInput();
-#else
-	// Loop through messages
-	messages[0] = msg1;
-	messages[1] = msg2;
-	messages[2] = msg3;
-	for (i=0; i<3; ++i) {
-		clearTextWindow();
-		printStringWithLayout(messages[i], 1, 1, 5, 0);
-		waitForAnyInput();
-	}
-#endif
 
 	// Fade out
 	fadeOut(FadeGradient | FadeTextBox);
@@ -402,15 +380,7 @@ void handleStick() {
 		if (newLoc.x < currentMapSize.width && newLoc.y < currentMapSize.height) {
 			if (canMoveTo(&newLoc)) {
 				playerMapLocation = newLoc;
-#ifdef DEBUGGING
-				startTime = SHORT_CLOCK;
-#endif				
 				drawCurrentMap(&playerMapLocation);
-#ifdef DEBUGGING
-				duration = SHORT_CLOCK - startTime;
-				clearTextWindow();
-				printDecimal16bitValue("Time: ", duration, 1, 1); 
-#endif
 			}
 		} else {
 			// Handle moving off the map for towns

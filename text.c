@@ -9,51 +9,53 @@
 
 // Constants
 #define TEXTBOX_WIDTH (40)
-#define TEXTBOX_HEIGHT (6)
+#define TEXTBOX_HEIGHT (7)
 
 
 
 void printCharaStats(UInt8 player, const UInt8 *name, UInt8 level, UInt8 hp, UInt8 maxHp) {
-	UInt8 x = player * 9 + 3;
+	UInt8 x = (player % 2) * 10 + 2;
+	UInt8 y = (player / 2) * 4;
 	UInt8 s1[9], s2[6];
 
-	printString(name, x, 0);
+	printString(name, x, y);
 
-	printString("Lv", x, 1);
+	printString("Lv", x, y+1);
 	numberString(s1, 0, level);
-	printString(s1, x + 2, 1);
+	printString(s1, x + 2, y+1);
 
 	numberString(s1, 0, hp);
 	numberString(s2, 0, maxHp);
 	appendString(s1, "/");
 	appendString(s1, s2);
-	printString(s1, x, 2);
+	printString(s1, x, y+2);
 }
 
 
 void printPartyStats(SInt32 money, UInt16 potions, UInt16 fangs, SInt16 reputation) {
 	UInt8 s[16];
 	UInt8 len;
+	const UInt8 x = 38;
+	UInt8 y = 1;
 
 	s[0] = '$';
 	numberString(s+1, ',', money);
 	len = strlen(s);
-	printString(s, 12-len, 4);
+	printString(s, x-len-1, y);
+	y += 2;
 
 	numberString(s, 0, potions);
 	appendString(s, "{");
 	len = strlen(s);
-	printString(s, 21-len, 4);
+	printString(s, x-len, y);
+	y += 2;
 
 	numberString(s, ',', fangs);
 	appendString(s, "}");
 	len = strlen(s);
-	printString(s, 30-len, 4);
+	printString(s, x-len, y);
+	y += 2;
 
-	numberString(s, ',', reputation);
-	appendString(s, "rep");
-	len = strlen(s);
-	printString(s, 40-len, 4);
 }
 
 

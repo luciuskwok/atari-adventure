@@ -46,6 +46,7 @@ extern void __fastcall__ storyViewDLI(void);
 
 // Constants
 #define CUR_TIMER (0x0600)
+#define PM_TOP_MARGIN (14)
 
 // Globals
 UInt8 *textWindow;
@@ -108,9 +109,9 @@ void initDisplayList(UInt8 startPage) {
 	POKEW (SAVMSC, (UInt16)screen);
 
 	// == Map View DL ==
-	for (i=0; i<3; ++i) {
-		mapViewDisplayList[x++] = DL_BLK8;
-	}
+	mapViewDisplayList[x++] = DL_BLK8;
+	mapViewDisplayList[x++] = DL_BLK8;
+	mapViewDisplayList[x++] = DL_BLK4;
 
 	mapViewDisplayList[x++] = mapTileLine | dl_LMS;
 	mapViewDisplayList[x++] = (UInt16)screen % 256;
@@ -120,14 +121,14 @@ void initDisplayList(UInt8 startPage) {
 		mapViewDisplayList[x++] = mapTileLine; // DLI on every tile row
 	}
 	
-	mapViewDisplayList[x++] = DL_BLK8; // 8 blank scanlines
+	//mapViewDisplayList[x++] = DL_BLK2; // 2 blank scanlines
 
 	// Text window
 	mapViewDisplayList[x++] = textWindowLine | dl_LMS;
 	mapViewDisplayList[x++] = (UInt16)textWindow % 256;
 	mapViewDisplayList[x++] = (UInt16)textWindow / 256;
 
-	for (i=1; i<5; ++i) { // 5 rows of text = 40 scanlines
+	for (i=1; i<7; ++i) { // 7 rows of text
 		mapViewDisplayList[x++] = textWindowLine; 
 	}
 	
@@ -139,7 +140,7 @@ void initDisplayList(UInt8 startPage) {
 	x = 0;
 	storyViewDisplayList[x++] = DL_BLK8;
 	storyViewDisplayList[x++] = DL_BLK8;
-	storyViewDisplayList[x++] = DL_BLK8;
+	storyViewDisplayList[x++] = DL_BLK4;
 	// OLD: 2 fewer scanlines here to allow 2 blank scanlines between raster image and text window
 
 	storyViewDisplayList[x++] = rasterLine | dl_LMS;
@@ -158,7 +159,7 @@ void initDisplayList(UInt8 startPage) {
 	storyViewDisplayList[x++] = (UInt16)textWindow % 256;
 	storyViewDisplayList[x++] = (UInt16)textWindow / 256;
 
-	for (i=1; i<6; ++i) { // 6 rows of text = 48 scanlines
+	for (i=1; i<7; ++i) { // 7 rows of text = 48 scanlines
 		storyViewDisplayList[x++] = textWindowLine; 
 	}
 	
@@ -308,8 +309,8 @@ void setPlayerCursorVisible(UInt8 visible) {
 		clearSpriteData(2);
 
 		// Draw cursor sprite, which takes up 2 players because it is 10 pixels wide
-		drawSprite(cursorSprite1, 10, 1, 31 + 16);
-		drawSprite(cursorSprite2, 10, 2, 31 + 16);
+		drawSprite(cursorSprite1, 10, 1, 31 + PM_TOP_MARGIN);
+		drawSprite(cursorSprite2, 10, 2, 31 + PM_TOP_MARGIN);
 
 		// Set sprite sizes
 		GTIA_WRITE.sizep0 = 0;
@@ -335,7 +336,7 @@ void setTileOverlaySprite(const UInt8 *sprite, UInt8 column, UInt8 row) {
 	// Set horizontal position for tile
 	P3_XPOS[row] = PM_LEFT_MARGIN + 8 * column + 4;
 	GTIA_WRITE.sizep3 = 0;
-	drawSprite(sprite, 8, 4, row * 8 + 16);
+	drawSprite(sprite, 8, 4, row * 8 + PM_TOP_MARGIN);
 }
 
 
