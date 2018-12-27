@@ -4,18 +4,33 @@
 #include "tiles.h"
 
 
+// Color constants
+#define WaterColor  (0x00)
+#define DesertColor (0x40)
+#define PlainsColor (0x80)
+#define ForestColor (0xC0)
+#define DungeonWallColor  (0x00)
+#define DungeonChestColor (0x40)
+#define DungeonFloorColor (0x80)
+#define DungeonExitColor  (0xC0)
+#define TownBlueColor  (0x00)
+#define TownGrayColor  (0x40)
+#define TownRedColor   (0x80)
+#define TownGreenColor (0xC0)
+
+
 UInt8 overworldTileMap[] = { 
 	0,  
 	tPlains   | PlainsColor,
 	tForest   | ForestColor, 
-	tSolid,
-	tMountain,
+	tSolid    | DesertColor,
+	tMountain | DesertColor,
 	tShallows | WaterColor,
 	tWater    | WaterColor, 
 	tBridgeH  | PlainsColor, 
 	tBridgeV  | PlainsColor,
 	tCastle   | PlainsColor,
-	tTown, 
+	tTown 	  | DesertColor, 
 	tVillage  | PlainsColor, 
 	tMonument | PlainsColor,
 	tCave     | PlainsColor,
@@ -25,10 +40,10 @@ const UInt8 overworldColorTable[] = {
 	0x58, // PM1: purple / cursor color
 	0x0F, // PM2: white / unused
 	0x0F, // PM3: white / tile overlay
-	0x1C, // 0: yellow / desert
-	0x22, // 1: dark brown / plains
-	0xC6, // 2: green / forest
-	0x84, // 3: blue / water
+	0x84, // 0: blue / water
+	0x1C, // 1: yellow / desert
+	0x22, // 2: dark brown / plains
+	0xC6, // 3: green / forest
 	0x00, // 4: black / background
 };
 const UInt8 overworldRleMap[] = {
@@ -116,9 +131,9 @@ const UInt8 dungeonColorTable[] = {
 	0x0F, // PM2: white / unused
 	0x0F, // PM3: white / tile overlay
 	0x06, // 0: wall: dark grey
-	0x90, // 1: floor: dark blue
-	0xBA, // 2: exit: light green
-	0x1C, // 3: chest: gold
+	0x1C, // 1: chest: gold
+	0x90, // 2: floor: dark blue
+	0xBA, // 3: exit: light green
 	0x00, // 4: black / background
 };
 const UInt8 dungeonRleMap[] = {
@@ -166,10 +181,10 @@ const UInt8 townColorTable[] = {
 	0x58, // PM1: purple / cursor color
 	0x0F, // PM2: white / unused
 	0x0F, // PM3: white / tile overlay
-	0x0A, // 0: gray
-	0x32, // 1: dark red
-	0xC6, // 2: green
-	0x74, // 3: blue
+	0x74, // 0: blue
+	0x0A, // 1: gray
+	0x32, // 2: dark red
+	0xC6, // 3: green
 	0x00, // 4: black / background
 };
 const UInt8 townRleMap[] = {

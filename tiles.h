@@ -7,19 +7,6 @@
 #define TILES_H
 
 
-// Color constants
-#define DesertColor (0x00)
-#define PlainsColor (0x40)
-#define ForestColor (0x80)
-#define WaterColor  (0xC0)
-#define DungeonWallColor  (0x00)
-#define DungeonFloorColor (0x40)
-#define DungeonExitColor  (0x80)
-#define DungeonChestColor (0xC0)
-#define TownGrayColor  (0x00)
-#define TownRedColor   (0x40)
-#define TownGreenColor (0x80)
-#define TownBlueColor  (0xC0)
 
 // Tile constants
 // Add 0x40 to these values to get the character value.
