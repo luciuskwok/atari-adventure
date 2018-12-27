@@ -4,7 +4,7 @@
 
 
 // Callbacks
-typedef void (*CursorEventHandlerCallbackType)(UInt8 eventType);
+typedef SInt8 (*CursorEventHandlerCallbackType)(UInt8 eventType);
 enum CursorEventType {
 	CursorNone = 0,
 	CursorClick = 1,
@@ -13,12 +13,17 @@ enum CursorEventType {
 	CursorLeft,
 	CursorRight
 };
+enum CursorEventMessages {
+	MessageNone = 0,
+	MessagePresentDialog = 1,
+	MessageExitDialog,
+};
 
 // Functions
 
 void initCursor(void);
 void registerCursorEventHandler(CursorEventHandlerCallbackType handler);
-void handleStick(void);
-void handleTrigger(void);
+SInt8 handleStick(void);
+SInt8 handleTrigger(void);
 void waitForAnyInput(void);
 void resetAttractMode(void);

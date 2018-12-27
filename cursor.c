@@ -21,15 +21,16 @@ void registerCursorEventHandler(CursorEventHandlerCallbackType handler) {
 	gCursorEventHandler = handler;
 }
 
-void handleStick(void) {
+SInt8 handleStick(void) {
 	// Only allow moves in 4 cardinal directions and not diagonals.
 	UInt8 stick = PEEK (STICK0);
 	UInt8 vb_timer = *VB_TIMER;
 	UInt8 cursorEvent = CursorNone;
+	SInt8 msg = 0;
 
 	if (stick == previousStick && vb_timer != 0) { 
 		// Handle changes in stick position immediately but delay repeating same moves.
-		return;
+		return 0;
 	}
 	*VB_TIMER = 10; // Reset stick timer
 	previousStick = stick;
@@ -43,24 +44,27 @@ void handleStick(void) {
 	}
 	
 	if (cursorEvent != CursorNone && gCursorEventHandler) {
-		gCursorEventHandler(cursorEvent);
+		msg = gCursorEventHandler(cursorEvent);
 	}
+	return msg;
 }
 
-void handleTrigger(void) {
+SInt8 handleTrigger(void) {
 	UInt8 trigger = PEEK (STRIG0);
+	SInt8 msg = 0;
 
 	// Recognize trigger only when it transitions from up to down.
 	if (trigger == previousTrigger) {
-		return;
+		return 0;
 	}
 	previousTrigger = trigger;
 	if (trigger != 0) {  // trigger == 0 when it is pressed
-		return;
+		return 0;
 	}
 	if (gCursorEventHandler) {
-		gCursorEventHandler(CursorClick);
+		msg = gCursorEventHandler(CursorClick);
 	}
+	return msg;
 }
 
 void waitForAnyInput(void) {

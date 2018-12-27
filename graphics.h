@@ -21,7 +21,6 @@ extern UInt8 *textWindow; // Pointer to screen memory for text window
 // Init
 void initGraphics(void);
 void initDisplayList(UInt8 startPage, UInt8 textPage);
-void selectDisplayList(UInt8 index);
 void hidePlayfieldAndSprites(void);
 
 // Transition Effects
@@ -31,12 +30,14 @@ enum FadeOptions {
 UInt8 applyFade(UInt8 color, UInt8 amount);
 void fadeOutColorTable(UInt8 fadeOptions);
 void fadeInColorTable(UInt8 fadeOptions, const UInt8 *colorTable);
-enum ScreenOptions {
-	ScreenOff = 0x00,
-	ScreenOn = 0x01,
-	EnableDLI = 0x80
+
+enum ScreenMode {
+	ScreenModeOff = 0,
+	ScreenModeMap,
+	ScreenModeShop,
+	ScreenModeBattle,
 };
-void setScreenVisible(UInt8 options);
+void setScreenMode(UInt8 mode);
 
 // Color Table
 void loadColorTable(const UInt8 *colors);

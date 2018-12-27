@@ -4,6 +4,7 @@
 #include "atari_memmap.h"
 #include "graphics.h"
 #include <atari.h>
+#include <string.h>
 
 
 // Globals
@@ -162,12 +163,8 @@ void setMegaSprite(const UInt8 *sprite, const UInt8 length, const PointU8 *posit
 // Clearing
 
 void clearSpriteData(UInt8 player) {
-	UInt8 *pmbasePtr = (UInt8 *) (256 * spritePage + 384 + 128 * player);
-	UInt8 i;
-
-	for (i=0; i<128; ++i) {
-		pmbasePtr[i] = 0;
-	}
+	UInt8 *p = (UInt8 *) (256 * spritePage + 384 + 128 * player);
+	memset(p, 0, 128);
 }
 
 void hideSprites(void) {

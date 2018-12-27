@@ -34,6 +34,7 @@ Screen memory is allocated:
 #include "images.h"
 #include "sprites.h"
 #include <atari.h>
+#include <string.h>
 
 
 extern void __fastcall__ initVBI(void *addr);
@@ -55,12 +56,15 @@ UInt8 *storyViewDisplayList;
 void initGraphics(void) {
 	UInt8 ramtop = PEEK(RAMTOP);
 
+	// Turn off screen during init and leave it off for main to turn back on.
+	POKE (SDMCTL, 0);
+
 	initVBI(immediateUserVBI); // Safe value: 0xE45F
 	
-	// Set color table to all black and change the display list
-	POKE (SDMCTL, 0x2E); // standard playfield + missile DMA + player DMA + display list DMA
+	// Set color table to all black
+	loadColorTable(NULL);
+
 	initDisplayList(ramtop - 12, ramtop - 16);
-	selectDisplayList(1);
 	initSprites(ramtop - 16);
 	initTileFont(ramtop - 20);
 	
@@ -150,29 +154,6 @@ void initDisplayList(UInt8 startPage, UInt8 textPage) {
 	storyViewDisplayList[x++] = (UInt16)storyViewDisplayList / 256;
 }
 
-void selectDisplayList(UInt8 index) {
-	UInt8 oldSdmctl = PEEK(SDMCTL);
-
-	POKE (SDMCTL, 0); // turn off DMA and DLI before changing pointers
-	ANTIC.nmien = 0x40;
-
-	switch (index) {
-	case 1: // Map view
-		POKEW (SDLSTL, (UInt16)mapViewDisplayList);
-		POKEW (VDSLST, (UInt16)mapViewDLI);
-		break;
-	case 2: // Story view
-		POKEW (SDLSTL, (UInt16)storyViewDisplayList);
-		POKEW (VDSLST, (UInt16)storyViewDLI);
-		break;
-	default: // No DL: keep everything off.
-		return;
-	}
-
-	ANTIC.nmien = 0xC0; // enable both DLI and VBI
-	POKE (SDMCTL, oldSdmctl);
-}
-
 // Transition Effects
 
 UInt8 applyFade(UInt8 color, UInt8 amount) {
@@ -242,16 +223,55 @@ void fadeInColorTable(UInt8 fadeOptions, const UInt8 *colorTable) {
 	}
 }
 
-void setScreenVisible(UInt8 options) {
-	UInt8 dma = 0;
+void setScreenMode(UInt8 mode) {
+	UInt8 dma = 0x2E; // standard playfield + missile DMA + player DMA + display list DMA
 	UInt8 nmi = 0x40; // enable VBI
+	void *dl = 0;
+	void *dli = 0;
 
-	if (options & ScreenOn) {
-		dma = 0x2E; // various Antic DMA options
-		if (options & EnableDLI) {
+	*VB_TIMER = 1;
+
+	switch (mode) {
+		case ScreenModeMap:
+			dma = 0x2E; // various Antic DMA options
 			nmi |= 0x80; // enable DLI
-		}
+			dl = mapViewDisplayList;
+			dli = mapViewDLI;
+			break;
+
+		case ScreenModeShop:
+			dma = 0x2E; // various Antic DMA options
+			dl = storyViewDisplayList;
+			dli = storyViewDLI;
+			break;
+
+		case ScreenModeBattle:
+			dma = 0x2E; // various Antic DMA options
+			nmi |= 0x80; // enable DLI
+			dl = storyViewDisplayList;
+			dli = storyViewDLI;
+			break;
+
+		case ScreenModeOff:
+		default:
+			dma = 0;
+			break;
 	}
+
+	// Turn off screen
+	POKE (SDMCTL, 0);
+	ANTIC.nmien = 0x40;
+
+	// Wait for vblank to prevent flicker
+	while (*VB_TIMER != 0) {}
+
+	if (dl != 0) {
+		POKEW (SDLSTL, (UInt16)dl);
+	}
+	if (dli != 0) {
+		POKEW (VDSLST, (UInt16)dli);
+	}
+
 	POKE (SDMCTL, dma);
 	ANTIC.nmien = nmi;
 }
@@ -261,8 +281,12 @@ void setScreenVisible(UInt8 options) {
 void loadColorTable(const UInt8 *colors) {
 	UInt8 *p = (UInt8*)(PCOLR0);
 	UInt8 i;
-	for (i=0; i<9; ++i) {
-		p[i] = colors[i];
+	if (colors) {
+		for (i=0; i<9; ++i) {
+			p[i] = colors[i];
+		}
+	} else {
+		memset(p, 0, 9);
 	}
 }
 

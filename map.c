@@ -11,18 +11,18 @@
 
 
 // Globals
-PointU8 mapOverworldLocation;
-PointU8 mapCurrentLocation;
+UInt8 currentMapType;
 UInt8 mapShipType;
 UInt8 mapLampStrength;
 UInt8 mapSightDistance;
+PointU8 mapOverworldLocation;
+PointU8 mapCurrentLocation;
 
 
 // Private Globals
 const UInt8 *currentRunLenMap;
 const UInt8 *currentTileMap;
 SizeU8 currentMapSize;
-UInt8 currentMapType;
 PointU8 mapFrameOrigin;
 SizeU8 mapFrameSize;
 
@@ -34,16 +34,18 @@ extern void __fastcall__ decodeRunLenRange(UInt8 *outData, UInt8 start, UInt8 en
 
 // Map Movement
 
-void transitionToMap(UInt8 mapType, UInt8 shouldFade) {
+void transitionToMap(UInt8 mapType, UInt8 shouldFadeOut, UInt8 shouldFadeIn) {
 	const UInt8 *colorTable = colorTableForMap(mapType);
 
-	if (shouldFade) {
+	if (shouldFadeOut) {
 		fadeOutColorTable(0);
+	} else {
+		loadColorTable(NULL);
 	}
 
 	loadMap(mapType, mapSightDistance, &mapCurrentLocation);
 	
-	if (shouldFade) {	
+	if (shouldFadeIn) {	
 		fadeInColorTable(0, colorTable);
 	} else {
 		loadColorTable(colorTable);
@@ -57,21 +59,21 @@ void transitionToMap(UInt8 mapType, UInt8 shouldFade) {
 void exitToOverworld(void) {
 	mapCurrentLocation = mapOverworldLocation;
 	mapSightDistance = 0xFF;
-	transitionToMap(OverworldMapType, 1);
+	transitionToMap(OverworldMapType, 1, 1);
 }
 
 void enterDungeon(void) {
 	mapSightDistance = mapLampStrength;
 	mapOverworldLocation = mapCurrentLocation;
 	mapCurrentLocation = mapEntryPoint(DungeonMapType);
-	transitionToMap(DungeonMapType, 1);
+	transitionToMap(DungeonMapType, 1, 1);
 }
 
 void enterTown(void) {
 	mapSightDistance = 0xFF;
 	mapOverworldLocation = mapCurrentLocation;
 	mapCurrentLocation = mapEntryPoint(TownMapType);
-	transitionToMap(TownMapType, 1);
+	transitionToMap(TownMapType, 1, 1);
 }
 
 UInt8 canMoveTo(PointU8 *pt) {
@@ -94,9 +96,10 @@ UInt8 canMoveTo(PointU8 *pt) {
 	return 1;
 }
 
-void mapCursorHandler(UInt8 event) {
+SInt8 mapCursorHandler(UInt8 event) {
 	UInt8 tile;
 	PointU8 oldLoc, newLoc;
+	SInt8 result = 0;
 
 	oldLoc = mapCurrentLocation;
 	newLoc = oldLoc;
@@ -111,14 +114,14 @@ void mapCursorHandler(UInt8 event) {
 				break;
 			case tVillage:
 			case tCastle:
-				//presentDialog();
+				result = MessagePresentDialog;
 				break;
 			case tMonument:
 			case tCave:
 				enterDungeon();
 				break;
 			case tHouseDoor:
-				//presentDialog();
+				result = MessagePresentDialog;
 				break;
 			case tLadder:
 				exitToOverworld();
@@ -145,6 +148,8 @@ void mapCursorHandler(UInt8 event) {
 			}
 		}
 	}
+
+	return result;
 }
 
 // Map Info

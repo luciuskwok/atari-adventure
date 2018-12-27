@@ -9,4 +9,4 @@ extern const UInt8 testImage[];
 
 extern const UInt16 temShopImageLength;
 extern const UInt8 temShopImage[];
-
+extern const UInt8 temShopColorTable[];
