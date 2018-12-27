@@ -31,10 +31,8 @@ Screen memory is allocated:
 
 #include "graphics.h"
 #include "atari_memmap.h"
-#include "image_data.h"
-#include "map.h"
+#include "images.h"
 #include "sprites.h"
-#include "text.h"
 #include <atari.h>
 
 
@@ -64,7 +62,7 @@ void initGraphics(void) {
 	initDisplayList(ramtop - 12, ramtop - 16);
 	selectDisplayList(1);
 	initSprites(ramtop - 16);
-	initFont(ramtop - 20);
+	initTileFont(ramtop - 20);
 	
 	// == Use scrolling to center the odd number of tiles ==
 	ANTIC.hscrol = 4;
@@ -173,47 +171,6 @@ void selectDisplayList(UInt8 index) {
 
 	ANTIC.nmien = 0xC0; // enable both DLI and VBI
 	POKE (SDMCTL, oldSdmctl);
-}
-
-void initFont(UInt8 fontPage) {
-	const UInt8 *romFont = (UInt8 *)0xE000;
-	UInt8 *customFont = (UInt8 *) ((UInt16)fontPage * 256);
-	UInt8 *tileFont = customFont + 512;
-	UInt16 index;
-	UInt8 tileIndex, bitmapIndex;
-
-	//print8bitValue("Start Font: ", fontPage, 1, 5);
-	
-	// Copy character set from ROM to RAM, 128 characters.
-	for (index=0; index<1024; ++index) {
-		customFont[index] = romFont[index];
-	}
-
-	// Blank out the tile with value 0 in the graphics character area
-	for (index=0; index<8; ++index) {
-		tileFont[index] = 0;
-	}
-	
-	// Add our custom tiles into the graphics character area
-	bitmapIndex = 0;
-	while (1) {
-		// Each tile bitmap has 9 bytes. First byte indicated which character it replaces, 
-		// or nil for the end of the data.
-		tileIndex = tileBitmaps[bitmapIndex * 9];
-		if (tileIndex == 0) {
-			break;
-		}
-		for (index=0; index<8; ++index) { 
-			tileFont[tileIndex * 8 + index] = tileBitmaps[bitmapIndex * 9 + index + 1];
-		}
-		++bitmapIndex;
-	}
-	
-	// Set CHBAS to point to the graphics character set area.
-	// This lets the  map tiles show in the color map part of the screen.
-	// It seems that the text window area truncates the value to a multple of 4, 
-	// neatly allowing for regular characters there.
-	POKE(CHBAS, fontPage + 2);
 }
 
 // Transition Effects

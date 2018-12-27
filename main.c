@@ -127,7 +127,15 @@ void presentDialog(void) {
 	printString("21{", 37, 6);
 
 	// Draw background image
-	drawImage(temShopImage, temShopImageLength);
+	{
+		SInt8 err = drawImage(temShopImage, temShopImageLength);
+		if (err) {
+			UInt8 *s;
+			sprintf(s, "puff() error:%c", err);
+			printString(s, 1, 1);
+			waitForAnyInput();
+		}
+	}
 
 	// Selection Cursor
 	clearSpriteData(1);

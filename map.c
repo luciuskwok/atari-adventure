@@ -5,7 +5,7 @@
 #include "graphics.h"
 #include "map_data.h"
 #include "sprites.h"
-#include "image_data.h"
+#include "images.h"
 #include "atari_memmap.h"
 #include <string.h>
 

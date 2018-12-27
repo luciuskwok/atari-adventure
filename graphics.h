@@ -22,7 +22,6 @@ extern UInt8 *textWindow; // Pointer to screen memory for text window
 void initGraphics(void);
 void initDisplayList(UInt8 startPage, UInt8 textPage);
 void selectDisplayList(UInt8 index);
-void initFont(UInt8 fontPage);
 void hidePlayfieldAndSprites(void);
 
 // Transition Effects

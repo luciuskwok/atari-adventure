@@ -18,3 +18,15 @@ void setMegaSprite(const UInt8 *sprite, const UInt8 length, const PointU8 *posit
 
 void clearSpriteData(UInt8 player);
 void hideSprites(void);
+
+// Sprite Data
+extern const UInt8 cursorSprite1[];
+extern const UInt8 cursorSprite2[];
+extern const UInt8 tileSprites[];
+
+extern const UInt8 temFaceSpriteHeight;
+extern const UInt8 temFaceSprite[];
+
+extern const UInt8 selectionCursorSpriteHeight;
+extern const UInt8 selectionCursorSprite[];
+

@@ -2,7 +2,6 @@
 
 #include "text.h"
 #include "graphics.h"
-//#include "atari_memmap.h"
 #include <atari.h>
 #include <stdio.h>
 #include <string.h>
