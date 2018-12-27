@@ -18,6 +18,17 @@
 #include "types.h"
 
 
+// Callbacks
+typedef void (*cursorEventHandlerCallbackType)(UInt8 eventType);
+enum CursorEventType {
+	CursorClick = 1,
+	CursorUp,
+	CursorDown,
+	CursorLeft,
+	CursorRight
+};
+
+
 // Globals
 UInt8 gQuit;
 UInt8 previousStick;
@@ -57,7 +68,6 @@ void printStatText(void) {
 
 	// Print party statistics
 	printPartyStats(987123, 21, 1325, -891);
-
 }
 
 
@@ -212,7 +222,7 @@ void clearRasterScreen(void) {
 
 void presentDialog(void) {
 	UInt8 temShopColorTable[] = {
-		0x00, 0x00, 0x58, 0x5C, // sprite
+		0x58, 0x58, 0x00, 0x00, // sprite
 		0x26, 0x0E, 0x00, 0xFF, 0x2A // playfield
 	};
 	// UInt8 greyscaleColorTable[] = {
@@ -254,17 +264,12 @@ void presentDialog(void) {
 	setScreenVisible(ScreenOn);
 
 	// Set up sprites
-	clearSpriteData(1);
-	clearSpriteData(2);
-	drawSprite(temFaceSprite, 24, 1, 22+14);
-	drawSprite(temFaceSprite+24, 24, 2, 22+14);
-	setSpriteHorizontalPosition(1, PM_LEFT_MARGIN + 72);
-	setSpriteHorizontalPosition(2, PM_LEFT_MARGIN + 80);
-
 	clearSpriteData(3);
-
-
-	drawImage(temShopImage, temShopImageLength);
+	clearSpriteData(4);
+	drawSprite(temFaceSprite, temFaceSpriteHeight, 3, 22+14);
+	drawSprite(temFaceSprite+temFaceSpriteHeight, temFaceSpriteHeight, 4, 22+14);
+	setSpriteHorizontalPosition(3, PM_LEFT_MARGIN + 72);
+	setSpriteHorizontalPosition(4, PM_LEFT_MARGIN + 80);
 
 	// Add Sans
 	//setMegaSprite(sansMegaSprite, sansMegaSpriteLength, &sansPosition, 2);
@@ -272,8 +277,8 @@ void presentDialog(void) {
 
 	//printDecimal16bitValue("Time: ", duration, 0, 6);
 	printString("* hOi!", 4, 1);
-	printString("* welcom to...", 4, 2);
-	printString("* da TEM SHOP!!!", 4, 3);
+	printString("* welcom to...", 4, 3);
+	printString("* da TEM SHOP!!!", 4, 5);
 
 	for (i=0; i<7; ++i) {
 		printString("|", 28, i);
@@ -285,6 +290,15 @@ void presentDialog(void) {
 	printString("Exit", 32, 4);
 	printString("$901", 29, 6);
 	printString("21{", 37, 6);
+
+	// Draw background image
+	drawImage(temShopImage, temShopImageLength);
+
+	// Selection Cursor
+	clearSpriteData(1);
+	drawSprite(selectionCursorSprite, selectionCursorSpriteHeight, 1, 75+14);
+	setSpriteHorizontalPosition(1, PM_LEFT_MARGIN + 119);
+	setPlayerCursorColorCycling(1);
 
 	waitForAnyInput();
 
@@ -305,7 +319,7 @@ void presentDialog(void) {
 }
 
 
-// Movement functions
+// Map Movement functions
 
 void exitToOverworld(void) {
 	playerMapLocation = playerOverworldLocation;
@@ -453,11 +467,6 @@ int main (void) {
 	exitToOverworld();
 	setTextWindowColorTheme(0);
 	printStatText();
-
-	// Debugging
-#ifdef DEBUGGING
-	printDebuggingInfo();
-#endif
 	
 	while (gQuit == 0) {
 		runLoop();

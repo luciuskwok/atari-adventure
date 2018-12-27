@@ -354,7 +354,8 @@ void setSpriteHorizontalPosition(UInt8 player, UInt8 x) {
 	UInt8 *spritePositions = (UInt8 *)HPOSP0;
 
 	if (player > 0 && player < 9) {
-		spritePositions[player - 1] = x;
+		player -= 1;
+		spritePositions[player] = x;
 		if (player == 3) {
 			P3_XPOS[0] = x; // VBI still copies P3_XPOS[0] to HPOSP0
 		}
