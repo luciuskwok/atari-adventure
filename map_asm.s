@@ -11,42 +11,43 @@
 
 .proc _decodeRunLenRange
 .code
-OUT = ptr2
-	sta OUT
-	stx OUT+1
-
-SKIP = ptr4
-	ldy #0
-	lda (sp),Y
-	sta SKIP
-
-OUT_LEN = tmp3
-	ldy #1
-	lda (sp),Y
-	sta OUT_LEN
-
-OUT_INDEX = tmp4
-	lda #0
-	sta OUT_INDEX
-
-IN = ptr1
-	ldy #2
-	lda (sp),Y
+IN = ptr1				; $8A
 	sta IN
-	ldy #3
-	lda (sp),Y
-	sta IN+1
+	stx IN+1
 
-IN_LEN = tmp1
+IN_LEN = tmp1			; $92
 	ldy #0
+	lda (IN),Y
 	sta IN_LEN
 
-IN_INDEX = tmp2
+IN_INDEX = tmp2			; $93
 	lda #1
 	sta IN_INDEX
 
-TILE = ptr3
-REPEAT = ptr3+1
+OUT = ptr2				; $8C
+	ldy #2
+	lda (sp),Y
+	sta OUT
+	ldy #3
+	lda (sp),Y
+	sta OUT+1
+
+SKIP = ptr4				; $90
+	ldy #1
+	lda (sp),Y
+	sta SKIP
+
+OUT_LEN = tmp3			; $94
+	ldy #0
+	lda (sp),Y
+	sta OUT_LEN
+
+OUT_INDEX = tmp4		; $95
+	lda #0
+	sta OUT_INDEX
+
+TILE = ptr3				; $8E
+REPEAT = ptr3+1			; $8F
 	
 	jmp while_input 	; 
 

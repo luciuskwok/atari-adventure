@@ -166,8 +166,6 @@ void layoutCurrentMap(UInt8 sightDistance) {
 		P3_XPOS[x] = 0;
 	}
 
-	// printDebugInfo("W $", mapFrameSize.width, 40);
-	// printDebugInfo("H $", mapFrameSize.height, 50);
 }
 
 void drawCurrentMap(PointU8 *center) {
@@ -230,7 +228,7 @@ void drawCurrentMap(PointU8 *center) {
 				++screenIndex;
 			}
 		} else {
-			OLD_decodeRunLenRange(buffer, leftSkip, decodeLength, runLenPtr);
+			decodeRunLenRange(buffer, leftSkip, decodeLength, runLenPtr);
 			runLenPtr += runLenPtr[0]; // Next row.
 			for (col=0; col<mapFrameSize.width; ++col) {
 				if (col < leftBlank || col + leftSkip >= currentMapSize.width + leftBlank) {
