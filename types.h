@@ -3,6 +3,8 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+#include <stddef.h>
+
 typedef unsigned char UInt8;
 typedef unsigned int UInt16;
 typedef unsigned long UInt32;
@@ -17,7 +19,5 @@ typedef struct {
 typedef struct {
 	UInt8 width, height;
 } SizeU8;
-
-#define NULL ((unsigned char *)0)
 
 #endif

@@ -4,6 +4,8 @@
 #include "graphics.h"
 //#include "atari_memmap.h"
 #include <atari.h>
+#include <stdio.h>
+#include <string.h>
 
 
 // Constants
@@ -15,19 +17,16 @@
 void printCharaStats(UInt8 player, const UInt8 *name, UInt8 level, UInt8 hp, UInt8 maxHp) {
 	UInt8 x = (player % 2) * 10 + 2;
 	UInt8 y = (player / 2) * 4;
-	UInt8 s1[9], s2[6];
+	UInt8 lvStr[9];
+	UInt8 hpStr[9];
 
 	printString(name, x, y);
 
-	printString("Lv", x, y+1);
-	numberString(s1, 0, level);
-	printString(s1, x + 2, y+1);
+	sprintf(lvStr, "Lv %u", level);
+	printString(lvStr, x, y+1);
 
-	numberString(s1, 0, hp);
-	numberString(s2, 0, maxHp);
-	appendString(s1, "/");
-	appendString(s1, s2);
-	printString(s1, x, y+2);
+	sprintf(hpStr, "%u/%u", hp, maxHp);
+	printString(hpStr, x, y+2);
 }
 
 void printPartyStats(SInt32 money, UInt16 potions, UInt16 fangs, SInt16 reputation) {
@@ -43,13 +42,13 @@ void printPartyStats(SInt32 money, UInt16 potions, UInt16 fangs, SInt16 reputati
 	y += 2;
 
 	numberString(s, 0, potions);
-	appendString(s, "{");
+	strcat(s, "{");
 	len = strlen(s);
 	printString(s, x-len, y);
 	y += 2;
 
 	numberString(s, ',', fangs);
-	appendString(s, "}");
+	strcat(s, "}");
 	len = strlen(s);
 	printString(s, x-len, y);
 	y += 2;
@@ -231,29 +230,6 @@ void hexString(UInt8 *outString, UInt8 length, UInt16 value) {
 		value = value >> 4;
 	}
 	outString[length] = 0;
-}
-
-UInt8 strlen(const UInt8 *s) {
-	UInt8 len = 0;
-	while (s[len] != 0 && len < 0xFF) {
-		++len;
-	}
-	return len;
-}
-
-void appendString(UInt8 *ioString, const UInt8 *append) {
-	UInt8 ai = 0;
-	UInt8 i = 0;
-
-	while (ioString[i] != 0 && i < 255) {
-		++i;
-	}
-	while (append[ai] != 0 && i < 255) {
-		ioString[i] = append[ai];
-		++i;
-		++ai;
-	}
-	ioString[i] = 0; // null terminator
 }
 
 UInt8 toAtascii(UInt8 c) {

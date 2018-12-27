@@ -6,7 +6,6 @@
 
 
 // Includes
-#include <atari.h>
 #include "atari_memmap.h"
 #include "graphics.h"
 #include "images.h"
@@ -16,6 +15,8 @@
 #include "text.h"
 #include "tiles.h"
 #include "types.h"
+#include <atari.h>
+#include <string.h>
 
 
 // Callbacks
@@ -213,11 +214,7 @@ void drawImage(const UInt8 *data, UInt16 length) {
 
 void clearRasterScreen(void) {
 	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
-	UInt16 i;
-	// Screen is made up of 72 lines * 40 bytes = 2880 bytes
-	for (i=0; i<(72*40); ++i) {
-		screen[i] = 0;
-	}
+	memset(screen, 0, 72*40);
 }
 
 void presentDialog(void) {
