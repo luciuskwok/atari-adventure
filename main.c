@@ -12,7 +12,7 @@
 #include "images.h"
 #include "map.h"
 #include "puff.h"
-#include "string.h"
+#include "sprites.h"
 #include "text.h"
 #include "tiles.h"
 #include "types.h"

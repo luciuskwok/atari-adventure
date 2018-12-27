@@ -2,7 +2,6 @@
 
 #include "text.h"
 #include "graphics.h"
-#include "string.h"
 //#include "atari_memmap.h"
 #include <atari.h>
 
@@ -31,7 +30,6 @@ void printCharaStats(UInt8 player, const UInt8 *name, UInt8 level, UInt8 hp, UIn
 	printString(s1, x, y+2);
 }
 
-
 void printPartyStats(SInt32 money, UInt16 potions, UInt16 fangs, SInt16 reputation) {
 	UInt8 s[16];
 	UInt8 len;
@@ -58,7 +56,6 @@ void printPartyStats(SInt32 money, UInt16 potions, UInt16 fangs, SInt16 reputati
 
 }
 
-
 void clearTextWindow(void) {
 	UInt16 i;
 
@@ -66,7 +63,6 @@ void clearTextWindow(void) {
 		textWindow[i] = 0;
 	}
 }
-
 
 void setTextWindowColorTheme(UInt8 theme) {
 	switch (theme) {
@@ -85,7 +81,6 @@ void setTextWindowColorTheme(UInt8 theme) {
 	}
 }
 
-
 void printString(const UInt8 *s, UInt8 x, UInt8 y) {
 	UInt8 index = 0;
 	UInt8 c;
@@ -97,7 +92,6 @@ void printString(const UInt8 *s, UInt8 x, UInt8 y) {
 		++index;
 	}
 }
-
 
 void printStringWithLayout(const UInt8 *s, UInt8 top, UInt8 firstIndent, UInt8 leftMargin, UInt8 rightMargin) {
 	// firstIndent is independent of leftMargin
@@ -151,7 +145,6 @@ void printStringWithLayout(const UInt8 *s, UInt8 top, UInt8 firstIndent, UInt8 l
 	}
 }
 
-
 void printDecimal16bitValue(const UInt8 *label, SInt16 value, UInt8 x, UInt8 y) {
 	UInt8 s[7];
 	UInt8 labelLength = strlen(label);	
@@ -159,7 +152,6 @@ void printDecimal16bitValue(const UInt8 *label, SInt16 value, UInt8 x, UInt8 y) 
 	printString(label, x, y);
 	printString(s, x + labelLength, y);
 }
-
 
 void printHex16bitValue(const UInt8 *label, UInt16 value, UInt8 x, UInt8 y) {
 	// Prints a label and a hex value in the text box area.
@@ -171,7 +163,6 @@ void printHex16bitValue(const UInt8 *label, UInt16 value, UInt8 x, UInt8 y) {
 	printString(hexStr, x + labelLength, y);
 }
 
-
 void printHex8bitValue(const UInt8 *label, UInt8 value, UInt8 x, UInt8 y) {
 	// Prints a label and a hex value in the text box area.
 	UInt8 hexStr[3];
@@ -182,15 +173,94 @@ void printHex8bitValue(const UInt8 *label, UInt8 value, UInt8 x, UInt8 y) {
 	printString(hexStr, x + labelLength, y);
 }
 
+void numberString(UInt8 *outString, UInt8 thousandsSeparator, SInt32 value) {
+	UInt8 isNegative = 0;
+	UInt8 len = 0;
+	UInt32 x;
+	UInt8 c, i, j;
 
-// Obsolete
+	if (value == 0) { // Special case for value of zero.
+		outString[0] = '0';
+		++len;
+	} else {
+		if (value < 0) {
+			x = -value;
+			isNegative = 1;
+		} else {
+			x = value;
+		}
 
+		// Add digits in reverse order, then reverse the string.
+		while (x != 0) {
+			if ((len >= 3) && (len % 4 == 3) && (thousandsSeparator != 0)) {
+				outString[len] = thousandsSeparator;
+				++len;
+			}
+			c = x % 10;
+			outString[len] = c + 0x30;
+			++len;
+			x = x / 10;
+		}
 
-void printAllTiles(void) {
-	UInt8 i;
-	for (i=0; i<40*5; ++i) {
-		textWindow[i] = i;
+		// Add negative sign
+		if (isNegative) {
+			outString[len] = '-';
+			++len;
+		}
+
+		// Reverse the string
+		for (i=0, j=len-1; i<j; ++i, --j) {
+			c = outString[j];
+			outString[j] = outString[i];
+			outString[i] = c;
+		}
 	}
+	outString[len] = 0; // null terminate string
 }
 
+void hexString(UInt8 *outString, UInt8 length, UInt16 value) {
+	UInt8 i, c;	
+	for (i=0; i<length; ++i) {
+		c = value & 0x0F;
+		if (c < 10) {
+			c += 0x30;
+		} else {
+			c += 0x41 - 10;
+		}
+		outString[length-1-i] = c;
+		value = value >> 4;
+	}
+	outString[length] = 0;
+}
 
+UInt8 strlen(const UInt8 *s) {
+	UInt8 len = 0;
+	while (s[len] != 0 && len < 0xFF) {
+		++len;
+	}
+	return len;
+}
+
+void appendString(UInt8 *ioString, const UInt8 *append) {
+	UInt8 ai = 0;
+	UInt8 i = 0;
+
+	while (ioString[i] != 0 && i < 255) {
+		++i;
+	}
+	while (append[ai] != 0 && i < 255) {
+		ioString[i] = append[ai];
+		++i;
+		++ai;
+	}
+	ioString[i] = 0; // null terminator
+}
+
+UInt8 toAtascii(UInt8 c) {
+	if (c < 0x20) {
+		c += 0x40;
+	} else if (c < 0x60) {
+		c -= 0x20;
+	}
+	return c;
+}

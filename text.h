@@ -16,7 +16,12 @@ void printDecimal16bitValue(const UInt8 *label, SInt16 value, UInt8 x, UInt8 y);
 void printHex16bitValue(const UInt8 *label, UInt16 value, UInt8 x, UInt8 y);
 void printHex8bitValue(const UInt8 *label, UInt8 value, UInt8 x, UInt8 y);
 
-// Obsolete
-void printAllTiles(void);
+void numberString(UInt8 *outString, UInt8 thousandsSeparator, SInt32 value);
+void hexString(UInt8 *outString, UInt8 length, UInt16 value);
+
+UInt8 strlen(const UInt8 *s);
+void appendString(UInt8 *ioString, const UInt8 *append);
+
+UInt8 toAtascii(UInt8 c);
 
 #endif

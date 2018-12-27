@@ -2,8 +2,9 @@
 
 #include "map.h"
 #include "graphics.h"
-#include "tiles.h"
 #include "map_data.h"
+#include "sprites.h"
+#include "tiles.h"
 #include "atari_memmap.h"
 //#include <atari.h>
 
