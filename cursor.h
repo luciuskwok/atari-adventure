@@ -20,3 +20,5 @@ void initCursor(void);
 void registerCursorEventHandler(CursorEventHandlerCallbackType handler);
 void handleStick(void);
 void handleTrigger(void);
+void waitForAnyInput(void);
+void resetAttractMode(void);

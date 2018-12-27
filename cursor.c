@@ -62,3 +62,18 @@ void handleTrigger(void) {
 		gCursorEventHandler(CursorClick);
 	}
 }
+
+void waitForAnyInput(void) {
+	// Wait for trigger to be released first.
+	while (PEEK(STRIG0) == 0) {
+	}
+
+	// Then wait for trigger to be pressed
+	while (PEEK(STRIG0) != 0) {
+		resetAttractMode();
+	}
+}
+
+void resetAttractMode(void) {
+	POKE(ATRACT, 0);
+}
