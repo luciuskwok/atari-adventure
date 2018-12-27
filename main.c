@@ -21,25 +21,26 @@
 
 
 // Callbacks
-typedef void (*cursorEventHandlerCallbackType)(UInt8 eventType);
+typedef void (*CursorEventHandlerCallbackType)(UInt8 eventType);
 enum CursorEventType {
+	CursorNone = 0,
 	CursorClick = 1,
 	CursorUp,
 	CursorDown,
 	CursorLeft,
 	CursorRight
 };
+CursorEventHandlerCallbackType gCursorEventHandler;
 
 
 // Globals
-UInt8 gQuit;
+UInt8 isQuitting;
 UInt8 previousStick;
 UInt8 previousTrigger;
 
 PointU8 playerOverworldLocation;
 PointU8 playerMapLocation;
-UInt8 hasBoat;
-UInt8 hasShip;
+UInt8 shipType;
 UInt8 lampStrength;
 UInt8 sightDistance;
 
@@ -56,8 +57,16 @@ UInt16 startTime;
 UInt16 duration;
 #endif
 
-// Text functions
 
+// Cursor functions
+
+void registerCursorEventHandler(CursorEventHandlerCallbackType handler) {
+	gCursorEventHandler = handler;
+}
+
+
+
+// Text functions
 
 void printStatText(void) {
 	clearTextWindow();
@@ -350,9 +359,9 @@ UInt8 canMoveTo(PointU8 *pt) {
 	switch (currentMapType) {
 		case OverworldMapType:
 			if (tile == tShallows) { // Shallows
-				return (hasBoat || hasShip);
+				return shipType >= 1;
 			} else if (tile == tWater) {
-				return hasShip;
+				return shipType >= 2;
 			}
 			return 1;
 		case DungeonMapType:
@@ -364,32 +373,50 @@ UInt8 canMoveTo(PointU8 *pt) {
 	return 1;
 }
 
-
-void handleStick() {
-	// Only allow moves in 4 cardinal directions and not diagonals.
-	UInt8 stick = PEEK (STICK0);
-	UInt8 vb_timer = *VB_TIMER;
+void mapCursorHandler(UInt8 event) {
+	UInt8 tile;
 	PointU8 oldLoc, newLoc;
-
-	if (stick == previousStick && vb_timer != 0) { 
-		// Handle changes in stick position immediately but delay repeating same moves.
-		return;
-	}
-	*VB_TIMER = 10; // Reset stick timer
-	previousStick = stick;
 
 	oldLoc = playerMapLocation;
 	newLoc = oldLoc;
 	
-	switch (stick) {
-		case 0x0E: --newLoc.y; break; // up
-		case 0x0D: ++newLoc.y; break; // down
-		case 0x0B: --newLoc.x; break; // left
-		case 0x07: ++newLoc.x; break; // right
-		default: break;
+	switch (event) {
+	case CursorClick:
+		// Get the tile without color info.
+		tile = mapTileAt(&playerMapLocation) & 0x3F; 
+		switch (tile) {
+			case tTown:
+				enterTown();
+				break;
+			case tVillage:
+			case tCastle:
+				presentDialog();
+				break;
+			case tMonument:
+			case tCave:
+				enterDungeon();
+				break;
+			case tHouseDoor:
+				presentDialog();
+				break;
+			case tLadder:
+				exitToOverworld();
+		}
+		break;
+
+	case CursorUp:    --newLoc.y; break; // up
+	case CursorDown:  ++newLoc.y; break; // down
+	case CursorLeft:  --newLoc.x; break; // left
+	case CursorRight: ++newLoc.x; break; // right
 	}
-	
-	if (oldLoc != newLoc) {
+
+		{
+			UInt8 s[16];
+			sprintf(s, "Event=%u", event);
+			printString(s, 40-strlen(s), 6);
+		}
+
+	if (newLoc != oldLoc) {
 		// Check map bounds. Because newLoc is unsigned, it wraps around from 0 to 255.
 		if (newLoc.x < currentMapSize.width && newLoc.y < currentMapSize.height) {
 			if (canMoveTo(&newLoc)) {
@@ -403,13 +430,37 @@ void handleStick() {
 			}
 		}
 	}
+}
+
+void handleStick() {
+	// Only allow moves in 4 cardinal directions and not diagonals.
+	UInt8 stick = PEEK (STICK0);
+	UInt8 vb_timer = *VB_TIMER;
+	UInt8 cursorEvent = CursorNone;
+
+	if (stick == previousStick && vb_timer != 0) { 
+		// Handle changes in stick position immediately but delay repeating same moves.
+		return;
+	}
+	*VB_TIMER = 10; // Reset stick timer
+	previousStick = stick;
+
+	switch (stick) {
+		case 0x0E: cursorEvent = CursorUp; break; 
+		case 0x0D: cursorEvent = CursorDown; break; 
+		case 0x0B: cursorEvent = CursorLeft; break;
+		case 0x07: cursorEvent = CursorRight; break;
+		default: break;
+	}
+	
+	if (cursorEvent != CursorNone && gCursorEventHandler) {
+		gCursorEventHandler(cursorEvent);
+	}
 
 }
 
-// == handleTrigger() ==
 void handleTrigger(void) {
 	UInt8 trigger = PEEK (STRIG0);
-	UInt8 tile;
 
 	// Recognize trigger only when it transitions from up to down.
 	if (trigger == previousTrigger) {
@@ -419,33 +470,15 @@ void handleTrigger(void) {
 	if (trigger != 0) {  // trigger == 0 when it is pressed
 		return;
 	}
-
-	// Get the tile without color info.
-	tile = mapTileAt(&playerMapLocation) & 0x3F; 
-	switch (tile) {
-		case tTown:
-			enterTown();
-			break;
-		case tVillage:
-		case tCastle:
-			presentDialog();
-			break;
-		case tMonument:
-		case tCave:
-			enterDungeon();
-			break;
-		case tHouseDoor:
-			presentDialog();
-			break;
-		case tLadder:
-			exitToOverworld();
+	if (gCursorEventHandler) {
+		gCursorEventHandler(CursorClick);
 	}
 }
 
 
 void runLoop(void) {
-	handleStick();
 	handleTrigger();
+	handleStick();
 }
 
 
@@ -454,11 +487,10 @@ int main (void) {
 	initGraphics();
 	
 	// Start new game
-	gQuit = 0;
+	isQuitting = 0;
 	previousStick = 0x0F;
 	previousTrigger = 1;
-	hasBoat = 0;
-	hasShip = 0;
+	shipType = 0;
 	lampStrength = 2;
 	sightDistance = 0xFF;
 	playerOverworldLocation = mapEntryPoint(OverworldMapType);
@@ -467,8 +499,9 @@ int main (void) {
 	exitToOverworld();
 	setTextWindowColorTheme(0);
 	printStatText();
+	registerCursorEventHandler(mapCursorHandler);
 	
-	while (gQuit == 0) {
+	while (isQuitting == 0) {
 		runLoop();
 		RESET_ATTRACT_MODE;
 	}
