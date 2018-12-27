@@ -6,7 +6,7 @@
 #include "sprites.h"
 #include "tiles.h"
 #include "atari_memmap.h"
-//#include <atari.h>
+#include <string.h>
 
 
 // Globals
@@ -19,36 +19,6 @@ SizeU8 mapFrameSize;
 
 #define SCREEN_WIDTH (24)
 
-
-/* OLD
-void OLD_decodeRunLenRange(UInt8 *outData, UInt8 skip, UInt8 length, const UInt8 *inData) {
-	UInt8 inLength = inData[0];
-	UInt8 inIndex = 1;
-	UInt8 outIndex = 0;
-	UInt8 outLength = length;
-	UInt8 op, tile, count;
-
-	while (inIndex < inLength && outIndex < length) {
-		op = inData[inIndex++];
-
-		tile = (op & 0xF0) >> 4;
-		count = (op & 0x0F);
-
-		if (count == 15) {
-			count += inData[inIndex++];
-		}
-
-		count += 1;
-		while (count > 0 && outIndex < outLength) {
-			if (skip != 0) {
-				skip -= 1;
-			} else {
-				outData[outIndex++] = tile;
-			}
-			--count;
-		}		
-	}
-} */
 
 UInt8 mapTileAt(PointU8 *pt) {
 	const UInt8 *runLenPtr = currentRunLenMap;
@@ -134,15 +104,9 @@ const UInt8 *colorTableForMap(UInt8 mapType) {
 
 void clearMapScreen(void) {
 	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
-	UInt8 i;
-	// Screen is made up of 9 lines * 24 tiles = 216 tiles
-	for (i=0; i<(9*24); ++i) {
-		screen[i] = 0;
-	}
-	// Clear out the sprite overlays
-	for (i=0; i<9; ++i) {
-		P3_XPOS[i] = 0;
-	}
+
+	memset(screen, 0, 9*SCREEN_WIDTH);
+	memset(P3_XPOS, 0, 9);
 }
 
 

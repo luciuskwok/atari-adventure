@@ -16,6 +16,7 @@
 #include "tiles.h"
 #include "types.h"
 #include <atari.h>
+#include <stdio.h>
 #include <string.h>
 
 
@@ -207,7 +208,9 @@ void drawImage(const UInt8 *data, UInt16 length) {
 	result = puff(screen, &screenLen, data, &length);
 
 	if (result) {
-		printDecimal16bitValue("puff() error:  ", result, 1, 3);
+		UInt8 *s;
+		sprintf(s, "puff() error:%c", result);
+		printString(s, 1, 1);
 		waitForAnyInput();
 	}
 }
