@@ -82,6 +82,15 @@ store_repeat:
 	jmp while_output
 
 loop_output:
+	lda SKIP			; if skip >= repeat
+	cmp REPEAT
+	bcc check_skip
+	
+	sbc REPEAT 			; fast-forward past skipped bytes
+	sta SKIP
+	jmp while_input		; and continue to next input byte
+
+check_skip:
 	dec REPEAT			; repeat -= 1
 
 	ldx SKIP			; if skip > 0

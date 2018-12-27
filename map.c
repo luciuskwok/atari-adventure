@@ -19,6 +19,7 @@ SizeU8 mapFrameSize;
 #define SCREEN_WIDTH (24)
 
 
+/* OLD
 void OLD_decodeRunLenRange(UInt8 *outData, UInt8 skip, UInt8 length, const UInt8 *inData) {
 	UInt8 inLength = inData[0];
 	UInt8 inIndex = 1;
@@ -46,7 +47,7 @@ void OLD_decodeRunLenRange(UInt8 *outData, UInt8 skip, UInt8 length, const UInt8
 			--count;
 		}		
 	}
-}
+} */
 
 UInt8 mapTileAt(PointU8 *pt) {
 	const UInt8 *runLenPtr = currentRunLenMap;
@@ -60,7 +61,7 @@ UInt8 mapTileAt(PointU8 *pt) {
 	}
 
 	// Get tile
-	OLD_decodeRunLenRange(&tile, x, 1, runLenPtr);
+	decodeRunLenRange(&tile, x, 1, runLenPtr);
 
 	// Convert to character value
 	return currentTileMap[tile];
@@ -232,14 +233,13 @@ void drawCurrentMap(PointU8 *center) {
 			runLenPtr += runLenPtr[0]; // Next row.
 			for (col=0; col<mapFrameSize.width; ++col) {
 				if (col < leftBlank || col + leftSkip >= currentMapSize.width + leftBlank) {
-					c = 0; // Tiles outside map bounds are set to default blank tile.			
+					c = 0; // Tiles outside map bounds are set to default blank tile.
 				} else {
 					c = buffer[col - leftBlank];
 				}
 
 				// Convert decoded value to character value
-				c = currentTileMap[c];				
-
+				c = currentTileMap[c];
 
 				// Add sprite overlay for special characters
 				low = (c & 0x3F);
