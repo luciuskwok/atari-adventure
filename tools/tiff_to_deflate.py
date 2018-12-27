@@ -153,7 +153,19 @@ with open(sys.argv[1], "rb") as file:
 			g = ord(pixelData[pixelOffset+1])
 			b = ord(pixelData[pixelOffset+2])
 			lum = float(r+g+b) / (255 * 3)
-			indexedData.append(int(round(lum * 3)))
+			colorIndex = 1;
+
+			# Apply a custom color mapping. 
+			if lum > 0.9:
+				colorIndex = 2 # white
+			elif lum > 0.5:
+				colorIndex = 0 # light background
+			elif lum > 0.1:
+				colorIndex = 1 # dark background
+			else:
+				colorIndex = 3 # black
+
+			indexedData.append(colorIndex)
 
 	# pack data into 2 bits per pixel, 4 pixels per byte
 	packedData = bytearray()

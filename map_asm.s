@@ -79,6 +79,7 @@ store_repeat:
 	sta REPEAT
 	sty IN_INDEX
 	
+	ldy OUT_INDEX		; use Y as out_index within the output loop
 	jmp while_output
 
 loop_output:
@@ -100,23 +101,22 @@ check_skip:
 	jmp while_output
 
 output_byte:
-	ldy OUT_INDEX 		; out[out_index++] = tile
 	lda TILE
 	sta (OUT),Y
 	iny
-	sty OUT_INDEX
 
 while_output: 			; while (repeat > 0 && outIndex < end)
 	lda REPEAT
 	beq while_input
 	
-	lda OUT_INDEX
-	cmp OUT_LEN
+	cpy OUT_LEN			; Y = out_index
 	bcs while_input
 
 	jmp loop_output
 
 while_input:			; while (in_index < in_len && out_index < out_len)
+	sty OUT_INDEX		; save Y in out_index
+
 	lda IN_INDEX		; check in_index < in_len
 	cmp IN_LEN
 	bcs return

@@ -45,7 +45,6 @@ extern void __fastcall__ storyViewDLI(void);
 
 
 // Constants
-#define PM_LEFT_MARGIN (48)
 #define CUR_TIMER (0x0600)
 
 // Globals
@@ -140,7 +139,8 @@ void initDisplayList(UInt8 startPage) {
 	x = 0;
 	storyViewDisplayList[x++] = DL_BLK8;
 	storyViewDisplayList[x++] = DL_BLK8;
-	storyViewDisplayList[x++] = DL_BLK6; // 2 fewer scanlines here to allow 2 blank scanlines between raster image and text window
+	storyViewDisplayList[x++] = DL_BLK8;
+	// OLD: 2 fewer scanlines here to allow 2 blank scanlines between raster image and text window
 
 	storyViewDisplayList[x++] = rasterLine | dl_LMS;
 	storyViewDisplayList[x++] = (UInt16)screen % 256;
@@ -150,8 +150,8 @@ void initDisplayList(UInt8 startPage) {
 		storyViewDisplayList[x++] = rasterLine; // DLI on every tile row
 	}
 	
-	// Needs blank scanline for DLI to change text window colors in time
-	storyViewDisplayList[x++] = DL_BLK2; 
+	// OLD: Needs blank scanline for DLI to change text window colors in time
+	//storyViewDisplayList[x++] = DL_BLK2; 
 
 	// Text window
 	storyViewDisplayList[x++] = textWindowLine | dl_LMS;
@@ -346,6 +346,17 @@ void drawSprite(const UInt8 *sprite, UInt8 length, UInt8 player, UInt8 y) {
 	UInt8 i;
 	for (i=0; i<length; ++i) {
 		p[i] = sprite[i];
+	}
+}
+
+void setSpriteHorizontalPosition(UInt8 player, UInt8 x) {
+	UInt8 *spritePositions = (UInt8 *)HPOSP0;
+
+	if (player > 0 && player < 9) {
+		spritePositions[player - 1] = x;
+		if (player == 3) {
+			P3_XPOS[0] = x; // VBI still copies P3_XPOS[0] to HPOSP0
+		}
 	}
 }
 

@@ -174,14 +174,24 @@ void transitionToMap(UInt8 mapType, UInt8 shouldFade) {
 	setPlayerCursorColorCycling(1);
 }
 
-void setScreenVisible(UInt8 visible) {
-	if (visible) {
-		POKE (SDMCTL, 0x2E); // turn on Antic
-		ANTIC.nmien = 0xC0;  // turn on DLI
-	} else {
-		POKE (SDMCTL, 0);   // turn off Antic
-		ANTIC.nmien = 0x40; // turn off DLI but leave VBI running
-	}	
+enum ScreenOptions {
+	ScreenOff = 0x00,
+	ScreenOn = 0x01,
+	EnableDLI = 0x80
+};
+
+void setScreenVisible(UInt8 options) {
+	UInt8 dma = 0;
+	UInt8 nmi = 0x40; // enable VBI running
+
+	if (options & ScreenOn) {
+		dma = 0x2E; // various Antic DMA options
+		if (options & EnableDLI) {
+			nmi |= 0x80; // enable DLI
+		}
+	}
+	POKE (SDMCTL, dma);
+	ANTIC.nmien = nmi;
 }
 
 
@@ -213,9 +223,13 @@ void drawImage(const UInt8 *data, UInt16 length) {
 
 
 void presentDialog(void) {
-	UInt8 dialogColorTable[] = {
-		0x0F, 0x0F, 0x00, 0x00, // white/black for mega sprite
-		0x22, 0x28, 0x2E, 0x5A, 0x92 // playfield
+	UInt8 temShopColorTable[] = {
+		0x00, 0x00, 0x58, 0x5C, // sprite
+		0x26, 0x0E, 0x00, 0xFF, 0x2A // playfield
+	};
+	UInt8 greyscaleColorTable[] = {
+		0x50, 0x54, 0x58, 0x5C,
+		0x00, 0x04, 0x08, 0xFF, 0x0C
 	};
 	UInt8 gradient[] = { 
 		12, 0x92, 
@@ -241,19 +255,50 @@ void presentDialog(void) {
 	fadeOut(FadeTextBox);
 	setScreenVisible(0);
 	clearTextWindow();
+	setPlayerCursorVisible(0);
 
-	drawImage(testImage, testImageLength);
+	// Set up sprites
+	clearSpriteData(1);
+	clearSpriteData(2);
+	drawSprite(temFaceSprite, 24, 1, 40);
+	drawSprite(temFaceSprite+24, 24, 2, 40);
+	setSpriteHorizontalPosition(1, PM_LEFT_MARGIN + 72);
+	setSpriteHorizontalPosition(2, PM_LEFT_MARGIN + 80);
+
+#ifdef DEBUGGING
+	startTime = SHORT_CLOCK;
+#endif
+
+	drawImage(temShopImage, temShopImageLength);
 
 	// Add Sans
-	setMegaSprite(sansMegaSprite, sansMegaSpriteLength, &sansPosition, 2);
+	//setMegaSprite(sansMegaSprite, sansMegaSpriteLength, &sansPosition, 2);
 
 	// Turn on screen
-	setTextWindowColorTheme(1);
-	loadColorTable(dialogColorTable);
-	setBackgroundGradient(gradient);
+	loadColorTable(temShopColorTable);
+	// setTextWindowColorTheme(1);
+	// setBackgroundGradient(gradient);
 	selectDisplayList(2);
-	setScreenVisible(1);
+	setScreenVisible(ScreenOn);
 
+#ifdef DEBUGGING
+	duration = SHORT_CLOCK - startTime;
+	printDecimal16bitValue("Time: ", duration, 1, 5);
+	printString("* hOi!", 1, 1);
+	printString("* welcom to...", 1, 2);
+	printString("* da TEM SHOP!!!", 1, 3);
+
+	for (i=0; i<6; ++i) {
+		printString("|", 29, i);
+	}
+
+	printString("Buy", 32, 1);
+	printString("Sell", 32, 2);
+	printString("Talk", 32, 3);
+	printString("Exit", 32, 4);
+
+	waitForAnyInput();
+#else
 	// Loop through messages
 	messages[0] = msg1;
 	messages[1] = msg2;
@@ -263,6 +308,7 @@ void presentDialog(void) {
 		printStringWithLayout(messages[i], 1, 1, 5, 0);
 		waitForAnyInput();
 	}
+#endif
 
 	// Fade out
 	fadeOut(FadeGradient | FadeTextBox);
@@ -275,7 +321,7 @@ void presentDialog(void) {
 
 	selectDisplayList(1);
 	setTextWindowColorTheme(0);
-	setScreenVisible(1);
+	setScreenVisible(ScreenOn | EnableDLI);
 
 	printStatText();
 }
