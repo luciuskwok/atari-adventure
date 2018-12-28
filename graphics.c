@@ -6,12 +6,12 @@ In the config.cfg file, the reserved memory is set to 0x1020, giving us 4KB
 of space below the 1 KB display area for a total of 5KB. The space between 
 APPMHI and MEMTOP should be ours to use. 
 
-RAMTOP: 0xC0 without BASIC, 0xA0 with BASIC. Below are values with BASIC.
+RAMTOP: 0xC0 without BASIC, 0xA0 with BASIC. Below are values without BASIC.
 
-0x9C00: 1 KB: PMGraphics needs 640 bytes (double-line sprites), but the data area 
-	doesn't start until 384 (0x180) bytes after PMBase, which must be on 1KB boundary.
-0x9000: 3 KB: Display list and screen memory, which must be on 4 KB boundary.
-0x8C00: 1 KB: Custom character set needs 128 chars * 8 bytes = 1024 bytes.
+0xB400: 3 KB: Display list and screen memory, within 4 KB boundaries.
+0xB000: 1 KB: PMGraphics needs 640 bytes (double-line sprites), but the data area 
+	doesn't start until 384 (0x180) bytes after PMBase, within 1KB boundaries.
+0xAC00: 1 KB: Custom character set needs 128 chars * 8 bytes = 1024 bytes.
 
 Screen memory is allocated:
 - Map View:
@@ -21,7 +21,7 @@ Screen memory is allocated:
 	- Display List: 96 bytes
 	- Screen memory: 40x72 = 2,880 bytes
 - Total: about 3,008 bytes if screen memory is shared between the 2 views.
-- Shared text window: 40x6 = 240 bytes. Goes into memory hole at start of PMGraphics.
+- Shared text window: 40x7 = 280 bytes. Goes into memory hole at start of PMGraphics.
 
 - Display list should not cross a 1KB boundary (0x0400)
 - Screen memory should not cross a 4KB boundary (0x1000)

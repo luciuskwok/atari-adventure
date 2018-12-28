@@ -12,16 +12,18 @@
 
 
 // Constants
-enum DialogSpecialValue {
-	MenuNodeTypeA = 0xFFF1,
-	MenuNodeTypeB = 0xFFF2,
-	BuyNode = 0xFFF3,
-	SellNode = 0xFFF4,
-	TalkNode = 0xFFF5,
+enum NodeTypes {
+	MenuNodeTypeA = 0xFF00,
+	MenuNodeTypeB = 0xFF02,
+	MenuItemNode = 0xFF03,
+	BuyItemNode = 0xFF10,
+	SellNode = 0xFF20,
+	TalkNode = 0xFF30,
+	MessageNode = 0xFF31,
 	ExitNode = 0xFFFF
 };
 #define DIALOG_STACK_CAPACITY (16)
-#define NODE_CHILD_CAPACITY (6)
+#define NODE_CHILD_CAPACITY (8)
 
 
 // Type
@@ -29,11 +31,7 @@ typedef struct tnode *TreeNodePtr;
 typedef struct tnode {
 	UInt8 *text;
 	UInt16 value;
-	struct tnode *children[NODE_CHILD_CAPACITY]; 
-		// Message nodes: >1 node: menu choices.
-		//     1 node = message continues on next node.
-		//     0 nodes = message ends, pop stack.
-		// NULL terminates list.
+	struct tnode *children[]; 
 } TreeNode;
 
 typedef struct StackItem {
@@ -64,16 +62,16 @@ TreeNode exitNode = { "Exit", ExitNode, { NULL } };
 TreeNode backNode = { "<Back", ExitNode, { NULL } };
 
 TreeNode buyFlake1InfoNode = { "Heals 2HP\nDISCOUNT FOOD OF TEM!!!", 3, { NULL } };
-TreeNode buyFlake1Node = { "tem flake", BuyNode, { &buyFlake1InfoNode, NULL } };
+TreeNode buyFlake1Node = { "tem flake", BuyItemNode, { &buyFlake1InfoNode, NULL } };
 
 TreeNode buyFlake2InfoNode = { "Heals 2HP\nfood of tem", 1, { NULL } };
-TreeNode buyFlake2Node = { "tem flake (onsale,)", BuyNode, { &buyFlake2InfoNode, NULL } };
+TreeNode buyFlake2Node = { "tem flake (onsale,)", BuyItemNode, { &buyFlake2InfoNode, NULL } };
 
 TreeNode buyFlake3InfoNode = { "Heals 2HP\nfood of tem\n(expensiv)", 10, { NULL } };
-TreeNode buyFlake3Node = { "tem flake (expensiv)", BuyNode, { &buyFlake3InfoNode, NULL } };
+TreeNode buyFlake3Node = { "tem flake (expensiv)", BuyItemNode, { &buyFlake3InfoNode, NULL } };
 
 TreeNode buyCollegeInfoNode = { "COLLEGE\tem pursu higher education", 1000, { NULL } };
-TreeNode buyCollegeNode = { "tem pay for colleg", BuyNode, { &buyCollegeInfoNode, NULL } };
+TreeNode buyCollegeNode = { "tem pay for colleg", BuyItemNode, { &buyCollegeInfoNode, NULL } };
 
 TreeNode temShopBuyMenuNode = { 
 	"hOI!!!\nwelcom to...\nTEM SHOP!",
@@ -88,16 +86,44 @@ TreeNode temShopBuyMenuNode = {
 	}
 };
 
-TreeNode temShopTalkHelloChoiceNode = { "Say Hello", 0, { NULL } };
+TreeNode helloMessage1Node = { "* hOI!!!", MessageNode, { NULL } };
+TreeNode helloMessage2Node = { "* i'm temmie", MessageNode, { NULL } };
 
-TreeNode temShopTalkArmorChoiceNode = { "About Temmie Armor", 0, { NULL } };
+TreeNode temShopTalkHelloChoiceNode = { 
+	"Say Hello", TalkNode, { 
+		&helloMessage1Node, 
+		&helloMessage2Node, 
+		NULL 
+	} 
+};
 
-TreeNode temShopTalkHistoryChoiceNode = { "Temmie History", 0, { NULL } };
+TreeNode armorMessage1Node = { "* tem armor so GOOds!\n* any battle becom!\n* a EASY victories!!!", MessageNode, { NULL } };
+TreeNode armorMessage2Node = { "* but, hnnn, tem think...\n* if u use armors, battles woudn b a challenge anymores,", MessageNode, { NULL } };
+TreeNode armorMessage3Node = { "* but tem...\n* have a solushun!", MessageNode, { NULL } };
+TreeNode armorMessage4Node = { "* tem wil offer...\n* a SKOLARSHIPS!", MessageNode, { NULL } };
+TreeNode armorMessage5Node = { "* if u lose a lot of battles, tem wil LOWER THE PRICE!", MessageNode, { NULL } };
+TreeNode armorMessage6Node = { "* so if you get to TOUGH BATLE and feel FRUSTRATE, can buy TEM armor as last resort!", MessageNode, { NULL } };
+TreeNode temShopTalkArmorChoiceNode = { 
+	"About Temmie Armor", 
+	TalkNode, { 
+		&armorMessage1Node, 
+		&armorMessage2Node, 
+		&armorMessage3Node, 
+		&armorMessage4Node, 
+		&armorMessage5Node, 
+		&armorMessage6Node, 
+		NULL 
+	} 
+};
 
-TreeNode temShopTalkShopChoiceNode = { "About Shop", 0, { NULL } };
+TreeNode historyMessageNode = { "* tem have DEEP HISTORY!!!", MessageNode, { NULL } };
+TreeNode temShopTalkHistoryChoiceNode = { "Temmie History", TalkNode, { &historyMessageNode, NULL } };
+
+TreeNode shopMessageNode = { "* yaYA1!!!\n* go to TEM SHOP!!!", MessageNode, { NULL } };
+TreeNode temShopTalkShopChoiceNode = { "About Shop", TalkNode, { &shopMessageNode, NULL } };
 
 TreeNode temShopTalkMenuNode = { 
-	"HOI!!!\n\nim temmie",
+	"HOI!!!\nim temmie",
 	MenuNodeTypeB, 
 	{
 		&temShopTalkHelloChoiceNode,
@@ -109,14 +135,14 @@ TreeNode temShopTalkMenuNode = {
 	}
 };
 
-TreeNode temShopBuyChoiceNode = { "Buy", 0, { &temShopBuyMenuNode, NULL } };
+TreeNode temShopBuyChoiceNode = { "Buy", MenuItemNode, { &temShopBuyMenuNode, NULL } };
 
-TreeNode temShopSellChoiceNode = { "Sell", 0, { NULL } };
+TreeNode temShopSellChoiceNode = { "Sell", MenuItemNode, { NULL } };
 
-TreeNode temShopTalkChoiceNode = { "Talk", 0, { &temShopTalkMenuNode, NULL } };
+TreeNode temShopTalkChoiceNode = { "Talk", MenuItemNode, { &temShopTalkMenuNode, NULL } };
 
 TreeNode temShopRootNode = { 
-	"* hOi!\n\n* welcom to...\n\n* da TEM SHOP!!!", 
+	"* hOi!\n* welcom to...\n* da TEM SHOP!!!", 
 	MenuNodeTypeA, 
 	{ 
 		&temShopBuyChoiceNode, 
@@ -202,7 +228,7 @@ void drawMenu(TreeNodePtr node) {
 	for (i=0; i<6; ++i) {
 		child = node->children[i];
 		if (child) {
-			if (child->value == BuyNode) {
+			if (child->value == BuyItemNode) {
 				// Get additional info 
 				TreeNodePtr info = child->children[0];
 				UInt8 s[32];
@@ -225,28 +251,38 @@ void drawStatus(void) {
 	printString("21{", 37, 6);
 }
 
-void setCurrentNode(TreeNodePtr node) {
+void drawNode(TreeNodePtr node) {
+	PointU8 pt = { 4, 1 };
+	UInt8 lineSpacing;
+	UInt8 width;
+
 	clearTextWindow();
 
 	if (node->value == MenuNodeTypeA || node->value == MenuNodeTypeB) {
-		PointU8 pt;
-		UInt8 width;
-
 		drawVerticalDivider(28);
 
 		if (node->value == MenuNodeTypeA) {
 			pt.x = 4;
 			width = 24;
+			lineSpacing = 2;
 		} else {
 			pt.x = 30;
 			width = 10;
+			lineSpacing = 1;
 		}
-		pt.y = 1;
-		drawTextBox(node->text, &pt, width);
+		drawTextBox(node->text, &pt, width, lineSpacing);
+		drawMenu(node);
+		drawStatus();
+	} else if (node->value == TalkNode) {
+		// Use selectedRow as the index of the message to show.
+		TreeNodePtr message = node->children[selectedRow];
+		if (message) {
+			pt.x = 4;
+			width = 32;
+			lineSpacing = 2;
+			drawTextBox(message->text, &pt, width, lineSpacing);
+		}
 	}
-
-	drawMenu(node);
-	drawStatus();
 }
 
 void setCursorPosition(PointU8 *newPos) {
@@ -261,6 +297,10 @@ void setCursorPosition(PointU8 *newPos) {
 	setSpriteHorizontalPosition(1, PM_LEFT_MARGIN - 8 + 4 * newPos->x);
 
 	previousY = newPos->y;
+}
+
+void hideCursor(void) {
+	setSpriteHorizontalPosition(1, 0);
 }
 
 void printStackDebuggingInfo(UInt8 x) {
@@ -296,7 +336,7 @@ void exitCurrentNode(void) {
 		topOfStack(&item);
 
 		// Draw previous node
-		setCurrentNode(item.node);
+		drawNode(item.node);
 
 		// Restore selection row
 		setSelectedRow(item.selectedRow);
@@ -316,31 +356,78 @@ UInt8 childCount(TreeNodePtr node) {
 	return 0;
 }
 
-void clickMenuItem(void) {
+void handleMenuItemNode(TreeNodePtr node) {
 	StackItem item;
 
-	// Pop item, update its selected row, and push it back on stack.
-	popStack(&item);
-	item.selectedRow = selectedRow;
+	// Get the menu node inside the choice node
+	TreeNodePtr menu = node->children[0];
+	if (menu != NULL) {
+
+		// Push the selected node.
+		item.node = menu;
+		item.selectedRow = 0;
+		pushStack(&item);
+		drawNode(menu);
+		setSelectedRow(0);
+	}
+}
+
+void handleTalkNode(TreeNodePtr node) {
+	StackItem item;
+	item.node = node;
+	item.selectedRow = 0;
+	selectedRow = 0;
 	pushStack(&item);
+	hideCursor();
+	drawNode(node);
+}
 
-	// Check if node is valid
+void advanceToNextMessage(void) {
+	StackItem item;
+	topOfStack(&item);
+
+	++selectedRow;
 	if (selectedRow < childCount(item.node)) {
-		TreeNodePtr choiceNode = item.node->children[selectedRow];
+		drawNode(item.node);
+	} else {
+		exitCurrentNode();
+	}
+}
 
-		// Check for exit
-		if (choiceNode->value == ExitNode) {
-			exitCurrentNode();
-		} else {
-			// Get the menu node inside the choice node
-			TreeNodePtr menuNode = choiceNode->children[0];
-			if (menuNode != NULL) {
-				item.node = menuNode;
-				item.selectedRow = 0;
-				pushStack(&item);
-				setCurrentNode(menuNode);
-				setSelectedRow(0);
-			}
+void handleBuyItemNode(TreeNodePtr node) {
+	// Show confirmation dialog
+}
+
+void handleClick(void) {
+	StackItem item;
+	topOfStack(&item);
+
+	if (item.node->value == TalkNode) {
+		// Advance to next message or exit talk node.
+		advanceToNextMessage();
+	} else if (selectedRow < childCount(item.node)) {
+		TreeNodePtr choice = item.node->children[selectedRow];
+
+		// Save selected row of current node.
+		popStack(&item);
+		item.selectedRow = selectedRow;
+		pushStack(&item);
+
+		switch (choice->value) {
+			case ExitNode:
+				exitCurrentNode();
+				break;
+			case MenuItemNode:
+				handleMenuItemNode(choice);
+				break;
+			case TalkNode:
+				handleTalkNode(choice);
+				break;
+			case BuyItemNode:
+				handleBuyItemNode(choice);
+				break;
+			default: 
+				break;
 		}
 	}
 }
@@ -373,7 +460,7 @@ void initDialog(void) {
 		item.node = &temShopRootNode;
 		item.selectedRow = 0;
 		pushStack(&item);
-		setCurrentNode(item.node);
+		drawNode(item.node);
 	}
 
 	// Draw background image
@@ -406,7 +493,7 @@ void exitDialog(void) {
 SInt8 dialogCursorHandler(UInt8 event) {
 
 	if (event == CursorClick) {
-		clickMenuItem();
+		handleClick();
 		if (isExittingDialog != 0) {
 			return MessageExitDialog;
 		} 

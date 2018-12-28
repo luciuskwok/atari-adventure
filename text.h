@@ -11,7 +11,7 @@ void clearTextWindow(void);
 void setTextWindowColorTheme(UInt8 theme);
 
 void printString(const UInt8 *s, UInt8 x, UInt8 y);
-void drawTextBox(const UInt8 *s, PointU8 *position, UInt8 width);
+void drawTextBox(const UInt8 *s, PointU8 *position, UInt8 width, UInt8 lineSpacing);
 
 void numberString(UInt8 *outString, UInt8 thousandsSeparator, SInt32 value);
 void hexString(UInt8 *outString, UInt8 length, UInt16 value);

@@ -91,7 +91,7 @@ void printString(const UInt8 *s, UInt8 x, UInt8 y) {
 	}
 }
 
-void drawTextBox(const UInt8 *s, PointU8 *position, UInt8 width) {
+void drawTextBox(const UInt8 *s, PointU8 *position, UInt8 width, UInt8 lineSpacing) {
 	// text will be broken at space characters
 
 	UInt8 i = 0;
@@ -122,13 +122,13 @@ void drawTextBox(const UInt8 *s, PointU8 *position, UInt8 width) {
 			while (s[i] == ' ' || s[i] == '\n') {
 				++i;
 				if (s[i] == '\n') {
-					++y;
+					y += lineSpacing;
 				}
 			}
 			c = s[i];
 
 			// Start new line
-			++y;
+			y += lineSpacing;
 			x = position->x;
 			lineStartIndex = i;
 			previousBreakable = i;
