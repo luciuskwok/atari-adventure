@@ -84,8 +84,12 @@ void drawSprite(const UInt8 *sprite, UInt8 length, UInt8 player, UInt8 y) {
 	// this simplifies the math and allows both players and missiles to be addressed
 	UInt8 *p = (UInt8 *) (384 + 256 * spritePage + 128 * player + y);
 	UInt8 i;
-	for (i=0; i<length; ++i) {
-		p[i] = sprite[i];
+	if (sprite) {
+		for (i=0; i<length; ++i) {
+			p[i] = sprite[i];
+		}
+	} else {
+		memset(p, 0, length);
 	}
 }
 

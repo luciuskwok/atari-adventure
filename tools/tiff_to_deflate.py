@@ -182,7 +182,7 @@ with open(sys.argv[1], "rb") as file:
 		print "Packed data length should be 2880 but is "+str(len(packedData))
 
 	# compress with DEFLATE
-	zlibData = zlib.compress(buffer(packedData))
+	zlibData = zlib.compress(buffer(packedData), 9)
 	compData = zlibData[2:-4]
 
 	compLength = len(compData)

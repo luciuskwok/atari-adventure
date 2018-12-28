@@ -125,5 +125,19 @@ const UInt8 temShopColorTable[] = {
 };
 
 
+const UInt8 plainsGradient[] = { 
+	12, 0x92, 
+	12, 0x94,
+	 6, 0x96,
+	 3, 0x98,
+	 2, 0x9A,
+	 1, 0x9C, 
+	 1, 0xC2, 
+	 3, 0xC4,
+	 7, 0xC6,
+	21, 0xC8,
+	 5, 0xCA,
+	 0 
+};
 
 

@@ -11,30 +11,93 @@
 #include <string.h>
 
 
-void presentDialog(void) {
-	// UInt8 greyscaleColorTable[] = {
-	// 	0x50, 0x54, 0x58, 0x5C,
-	// 	0x00, 0x04, 0x08, 0xFF, 0x0C
-	// };
-	// UInt8 gradient[] = { 
-	// 	12, 0x92, 
-	// 	12, 0x94,
-	// 	 6, 0x96,
-	// 	 3, 0x98,
-	// 	 2, 0x9A,
-	// 	 1, 0x9C, 
-	// 	 1, 0xC2, 
-	// 	 3, 0xC4,
-	// 	 7, 0xC6,
-	// 	21, 0xC8,
-	// 	 5, 0xCA,
-	// 	 0 };
-	// PointU8 sansPosition = { 81, 16 + 45 };
-	// const UInt8 msg1[] = "Sans: Why are graveyards so noisy?\n Because of all the *coffin*!";
-	// const UInt8 msg2[] = "Ellie: How are you doing today?\n That teacher was totally unfair.\n C'mon, let's go to the beach!";
-	// const UInt8 msg3[] = "Papyrus: Nyeh Heh Heh!";
-	// const UInt8 *messages[3];
+// Globals
+PointU8 cursorPosition;
+PointU8 menuPosition;
+UInt8 menuItemCount;
+UInt8 selectedRow;
+
+
+
+// Data
+UInt8 exitString[] = "Exit";
+
+UInt8 temMessage1[] = "* hOi!\n\n* welcom to...\n\n* da TEM SHOP!!!";
+UInt8 temMenu1A[] = "Buy";
+UInt8 temMenu1B[] = "Sell";
+UInt8 temMenu1C[] = "Talk";
+
+UInt8 temMessage2[] = "HOI!!!\nim temmie";
+UInt8 temMenu2A[] = "Say Hello";
+UInt8 temMenu2B[] = "About Temmie Armor";
+UInt8 temMenu2C[] = "Temmie History";
+UInt8 temMenu2D[] = "About Shop";
+
+// Testing strings:
+UInt8 sansMessage[] = "Sans: Why are graveyards so noisy?\n Because of all the *coffin*!";
+UInt8 ellieMessage[] = "Ellie: How are you doing today? That teacher was totally unfair. C'mon, let's go to the beach!";
+UInt8 papyrusMessage[] = "Papyrus: Nyeh Heh Heh!";
+
+
+
+enum DialogLayout {
+	LayoutBlank = 0,
+	LayoutSplitA,
+	LayoutSplitB,
+};
+
+void layoutDialog(UInt8 mode) {
 	UInt8 i;
+
+	clearTextWindow();
+
+	switch (mode) {
+		case LayoutSplitA:
+		case LayoutSplitB:
+			for (i=0; i<7; ++i) {
+				printString("|", 28, i);
+			}
+			break;
+	}
+}
+
+void drawMenu(UInt8 **items, UInt8 itemCount, PointU8 *position) {
+	UInt8 x = position->x;
+	UInt8 y = position->y;
+	UInt8 *itemString;
+	UInt8 i;
+
+	for (i=0; i<itemCount; ++i) {
+		itemString = items[i];
+		printString(itemString, x, y);
+		++y;
+	}
+}
+
+void setCursorPosition(PointU8 *newPos) {
+	const UInt8 topMargin = 14;
+
+	// Remove old sprite data
+	drawSprite(NULL, selectionCursorSpriteHeight, 1, topMargin + 4 * cursorPosition.y);
+	
+	// Draw sprite in new position
+	drawSprite(selectionCursorSprite, selectionCursorSpriteHeight, 1, topMargin + 4 * newPos->y);
+	setSpriteHorizontalPosition(1, PM_LEFT_MARGIN - 8 + 4 * newPos->x);
+
+	cursorPosition.x = newPos->x;
+	cursorPosition.y = newPos->y;
+}
+
+void setCursorAtMenuItem(UInt8 index) {
+	const UInt8 topMargin = 18;
+	PointU8 cell;
+	cell.x = menuPosition.x;
+	cell.y = menuPosition.y + index + topMargin;
+	setCursorPosition(&cell);
+	selectedRow = index;
+}
+
+void presentDialog(void) {
 
 	// Set up graphics window
 	fadeOutColorTable(FadeTextBox);
@@ -57,23 +120,29 @@ void presentDialog(void) {
 	setSpriteHorizontalPosition(3, PM_LEFT_MARGIN + 72);
 	setSpriteHorizontalPosition(4, PM_LEFT_MARGIN + 80);
 
-	// Add Sans
-	//setMegaSprite(sansMegaSprite, sansMegaSpriteLength, &sansPosition, 2);
+	// Draw message and menu 
+	{
+		PointU8 pt;
+		UInt8 *menu[5];
 
+		layoutDialog(LayoutSplitA);
 
-	//printDecimal16bitValue("Time: ", duration, 0, 6);
-	printString("* hOi!", 4, 1);
-	printString("* welcom to...", 4, 3);
-	printString("* da TEM SHOP!!!", 4, 5);
+		pt.x = 4;
+		pt.y = 1;
+		drawTextBox(sansMessage, &pt, 20);
+		// temMessage1
 
-	for (i=0; i<7; ++i) {
-		printString("|", 28, i);
+		menu[0] = temMenu1A;
+		menu[1] = temMenu1B;
+		menu[2] = temMenu1C;
+		menu[3] = exitString;
+		menuPosition.x = 32;
+		menuPosition.y = 1;
+		menuItemCount = 4;
+		drawMenu(menu, menuItemCount, &menuPosition);
 	}
 
-	printString("Buy", 32, 1);
-	printString("Sell", 32, 2);
-	printString("Talk", 32, 3);
-	printString("Exit", 32, 4);
+	// Draw money and potion count.
 	printString("$901", 29, 6);
 	printString("21{", 37, 6);
 
@@ -90,9 +159,8 @@ void presentDialog(void) {
 
 	// Selection Cursor
 	clearSpriteData(1);
-	drawSprite(selectionCursorSprite, selectionCursorSpriteHeight, 1, 75+14);
-	setSpriteHorizontalPosition(1, PM_LEFT_MARGIN + 119);
 	setPlayerCursorColorCycling(1);
+	setCursorAtMenuItem(0);
 
 
 	registerCursorEventHandler(dialogCursorHandler);
@@ -106,10 +174,26 @@ void exitDialog(void) {
 }
 
 SInt8 dialogCursorHandler(UInt8 event) {
-	SInt8 msg = MessageNone;
+	UInt8 newRow = selectedRow;
 
-	if (event == CursorClick) {
-		msg = MessageExitDialog;
+	switch (event) {
+		case CursorClick:
+			return MessageExitDialog;
+		case CursorUp:
+			--newRow;
+			break;
+		case CursorDown:
+			++newRow;
+			break;
+		case CursorLeft:
+			break;
+		case CursorRight:
+			break;
 	}
-	return msg;
+
+	if (newRow != selectedRow && newRow < menuItemCount) {
+		setCursorAtMenuItem(newRow);
+	}
+
+	return MessageNone;
 }

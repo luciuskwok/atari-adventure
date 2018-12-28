@@ -28,7 +28,7 @@ void printCharaStats(UInt8 player, const UInt8 *name, UInt8 level, UInt8 hp, UIn
 	printString(hpStr, x, y+2);
 }
 
-void printPartyStats(SInt32 money, UInt16 potions, UInt16 fangs, SInt16 reputation) {
+void printPartyStats(SInt32 money, UInt16 potions, UInt16 fangs, SInt16 /* reputation */) {
 	UInt8 s[16];
 	UInt8 len;
 	const UInt8 x = 38;
@@ -91,18 +91,15 @@ void printString(const UInt8 *s, UInt8 x, UInt8 y) {
 	}
 }
 
-void printStringWithLayout(const UInt8 *s, UInt8 top, UInt8 firstIndent, UInt8 leftMargin, UInt8 rightMargin) {
-	// firstIndent is independent of leftMargin
-	// leftMargin controls lines after the first one
-	// rightMargin controls all lines
+void drawTextBox(const UInt8 *s, PointU8 *position, UInt8 width) {
 	// text will be broken at space characters
 
 	UInt8 i = 0;
-	UInt8 y = top;
-	UInt8 x = firstIndent;
+	UInt8 y = position->y;
+	UInt8 x = position->x;
 	UInt8 previousBreakable = 0;
 	UInt8 lineStartIndex = 0;
-	UInt8 xMax = TEXTBOX_WIDTH - rightMargin;
+	UInt8 xMax = x + width;
 	UInt8 c;
 
 	while (y < TEXTBOX_HEIGHT) {
@@ -124,12 +121,15 @@ void printStringWithLayout(const UInt8 *s, UInt8 top, UInt8 firstIndent, UInt8 l
 			// Skip past whitespace
 			while (s[i] == ' ' || s[i] == '\n') {
 				++i;
+				if (s[i] == '\n') {
+					++y;
+				}
 			}
 			c = s[i];
 
 			// Start new line
 			++y;
-			x = leftMargin;
+			x = position->x;
 			lineStartIndex = i;
 			previousBreakable = i;
 		}
