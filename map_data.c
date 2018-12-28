@@ -40,10 +40,10 @@ const UInt8 overworldColorTable[] = {
 	0x58, // PM1: purple / cursor color
 	0x0F, // PM2: white / unused
 	0x0F, // PM3: white / tile overlay
-	0x84, // 0: blue / water
+	0x82, // 0: blue / water
 	0x1C, // 1: yellow / desert
-	0x22, // 2: dark brown / plains
-	0xC6, // 3: green / forest
+	0x22, // 2: brown / plains
+	0xB4, // 3: dark green / forest
 	0x00, // 4: black / background
 };
 const UInt8 overworldRleMap[] = {

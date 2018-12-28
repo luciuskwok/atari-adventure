@@ -429,8 +429,6 @@ void initDialog(void) {
 
 	// Turn on screen
 	loadColorTable(temShopColorTable);
-	// setTextWindowColorTheme(1);
-	// setBackgroundGradient(gradient);
 	setScreenMode(ScreenModeShop);
 
 	// Set up sprites

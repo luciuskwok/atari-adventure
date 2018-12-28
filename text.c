@@ -10,47 +10,68 @@
 #define TEXTBOX_HEIGHT (7)
 
 
+void drawBarChart(UInt8 x, UInt8 y, UInt8 width, UInt8 filled) {
+	UInt8 *pixel = textWindow + x + y * TEXTBOX_WIDTH;
+	UInt8 i, c;
+
+	for (i=0; i<width; ++i) {
+		c = (i >= filled) ? 1 : 2;
+		c <<= ((3-i) % 4) * 2;
+		pixel[i/4] |= c;
+	}
+}
 
 void printCharaStats(UInt8 player, const UInt8 *name, UInt8 level, UInt8 hp, UInt8 maxHp) {
-	UInt8 x = (player % 2) * 10 + 2;
-	UInt8 y = (player / 2) * 4;
+	UInt8 x = player * 10 + 1;
+	UInt8 y = 0;
 	UInt8 lvStr[9] = "Lv ";
 	UInt8 hpStr[9];
 
-	printString(name, x, y);
+	printString(name, x, 0);
 
 	numberString(lvStr+3, 0, level);
-	printString(lvStr, x, y+1);
+	printString(lvStr, x, 1);
 
 	numberString(hpStr, 0, hp);
 	stringConcat(hpStr, "/");
 	numberString(hpStr+stringLength(hpStr), 0, maxHp);
-	printString(hpStr, x, y+2);
+	printString(hpStr, x, 2);
+
+	// Draw bar chart
+	{
+		UInt8 width;
+		UInt16 fill;
+
+		if (maxHp >= 72) {
+			width = 72;
+		} else {
+			width = maxHp;
+		}
+		fill = (UInt16)hp * width / maxHp;
+		fill = (fill + 1) / 2;
+		drawBarChart(x, 3, width / 2, fill);
+	}
 }
 
 void printPartyStats(SInt32 money, UInt16 potions, UInt16 fangs, SInt16 /* reputation */) {
-	UInt8 s[16];
+	UInt8 s[40];
 	UInt8 len;
-	const UInt8 x = 38;
-	UInt8 y = 1;
+	UInt8 x;
 
 	s[0] = '$';
 	numberString(s+1, ',', money);
-	len = stringLength(s);
-	printString(s, x-len-1, y);
-	y += 2;
+	stringConcat(s, "  ");
 
-	numberString(s, 0, potions);
-	stringConcat(s, "{");
-	len = stringLength(s);
-	printString(s, x-len, y);
-	y += 2;
+	numberString(s+stringLength(s), 0, potions);
+	stringConcat(s, "{  ");
 
-	numberString(s, ',', fangs);
+	numberString(s+stringLength(s), 0, fangs);
 	stringConcat(s, "}");
+
 	len = stringLength(s);
-	printString(s, x-len, y);
-	y += 2;
+	x = 20 - len / 2;
+
+	printString(s, x, 4);
 
 }
 
@@ -59,23 +80,6 @@ void clearTextWindow(void) {
 
 	for (i=0; i<TEXTBOX_HEIGHT*TEXTBOX_WIDTH; ++i) {
 		textWindow[i] = 0;
-	}
-}
-
-void setTextWindowColorTheme(UInt8 theme) {
-	switch (theme) {
-		case 1:
-			*TEXT_LUM = 0x0E;    // white
-			*TEXT_BG  = 0x00;    // black
-			break;
-		case 2:
-			*TEXT_LUM = 0x0E;    // white
-			*TEXT_BG  = 0x92;    // dark blue
-			break;
-		default:
-			*TEXT_LUM = 0x0E;    // white
-			*TEXT_BG  = 0x04;    // gray
-			break;
 	}
 }
 

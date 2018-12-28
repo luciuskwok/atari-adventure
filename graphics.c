@@ -81,46 +81,64 @@ void initDisplayList(UInt8 startPage, UInt8 textPage) {
 	const UInt8 mapTileLine = (dl_Interrupt | dl_HScroll | 7);
 	const UInt8 rasterLine = (dl_Interrupt | 13);
 	const UInt8 textWindowLine = 2;
+	
 	UInt8 *screen = (UInt8 *)(startPage * 256 + 128);
+	UInt8 screenLSB = (UInt16)screen % 256;
+	UInt8 screenMSB = (UInt16)screen / 256;
+
+	const UInt8 textBarChartLSB = 120;
+
 	UInt8 x = 0;
 	UInt8 i;
 
 
-	// Allocate display memory usage
+	// Init globals
 	mapViewDisplayList = (UInt8 *)(startPage * 256);
-	storyViewDisplayList = mapViewDisplayList + 32;
-	textWindow = (UInt8 *)(textPage * 256); // Using the unused memory area below PMGraphics
+	storyViewDisplayList = mapViewDisplayList + 35;
+	textWindow = (UInt8 *)(textPage * 256); // Using the unused 384 bytes below PMGraphics
 
 	// Update screen memory pointer
 	POKEW (SAVMSC, (UInt16)screen);
 
 	// == Map View DL ==
-	mapViewDisplayList[x++] = DL_BLK8;
-	mapViewDisplayList[x++] = DL_BLK8;
-	mapViewDisplayList[x++] = DL_BLK4;
+	mapViewDisplayList[x++] = DL_BLK8; 
+	mapViewDisplayList[x++] = DL_BLK8; 
+	mapViewDisplayList[x++] = DL_BLK4; // 3
 
-	mapViewDisplayList[x++] = mapTileLine | dl_LMS;
-	mapViewDisplayList[x++] = (UInt16)screen % 256;
-	mapViewDisplayList[x++] = (UInt16)screen / 256;
+	mapViewDisplayList[x++] = mapTileLine | dl_LMS; 
+	mapViewDisplayList[x++] = screenLSB; 
+	mapViewDisplayList[x++] = screenMSB; // 6
 	
 	for (i=1; i<9; ++i) { // 9 rows * 16 scanlines = 144 scanlines
 		mapViewDisplayList[x++] = mapTileLine; // DLI on every tile row
-	}
+	} // 14
 	
-	//mapViewDisplayList[x++] = DL_BLK2; // 2 blank scanlines
-
 	// Text window
 	mapViewDisplayList[x++] = textWindowLine | dl_LMS;
-	mapViewDisplayList[x++] = (UInt16)textWindow % 256;
-	mapViewDisplayList[x++] = (UInt16)textWindow / 256;
+	mapViewDisplayList[x++] = 0;
+	mapViewDisplayList[x++] = textPage; // 17
 
-	for (i=1; i<7; ++i) { // 7 rows of text
-		mapViewDisplayList[x++] = textWindowLine; 
-	}
-	
-	mapViewDisplayList[x++] = DL_JVB; // Vertical blank + jump to beginning of display list
+	mapViewDisplayList[x++] = textWindowLine; 
+	mapViewDisplayList[x++] = textWindowLine; // 19
+
+	mapViewDisplayList[x++] = DL_BLK1;
+	mapViewDisplayList[x++] = rasterLine | dl_LMS; // Triple repeating rows
+	mapViewDisplayList[x++] = textBarChartLSB;
+	mapViewDisplayList[x++] = textPage;
+	mapViewDisplayList[x++] = rasterLine | dl_LMS;
+	mapViewDisplayList[x++] = textBarChartLSB;
+	mapViewDisplayList[x++] = textPage;
+	mapViewDisplayList[x++] = rasterLine | dl_LMS;
+	mapViewDisplayList[x++] = textBarChartLSB;
+	mapViewDisplayList[x++] = textPage;
+	mapViewDisplayList[x++] = DL_BLK1;
+	mapViewDisplayList[x++] = DL_BLK8; // 31
+
+	mapViewDisplayList[x++] = textWindowLine; // 32
+
+	mapViewDisplayList[x++] = DL_JVB; // Vertical blank + jump to DL start
 	mapViewDisplayList[x++] = (UInt16)mapViewDisplayList % 256;
-	mapViewDisplayList[x++] = (UInt16)mapViewDisplayList / 256;
+	mapViewDisplayList[x++] = (UInt16)mapViewDisplayList / 256; // 35 bytes total
 
 	// == Story View DL ==
 	x = 0;
@@ -130,28 +148,25 @@ void initDisplayList(UInt8 startPage, UInt8 textPage) {
 	// OLD: 2 fewer scanlines here to allow 2 blank scanlines between raster image and text window
 
 	storyViewDisplayList[x++] = rasterLine | dl_LMS;
-	storyViewDisplayList[x++] = (UInt16)screen % 256;
-	storyViewDisplayList[x++] = (UInt16)screen / 256;
+	storyViewDisplayList[x++] = screenLSB;
+	storyViewDisplayList[x++] = screenMSB; // 6
 	
 	for (i=1; i<72; ++i) { // 72 rows * 2 scanlines = 144 scanlines
 		storyViewDisplayList[x++] = rasterLine; // DLI on every tile row
-	}
+	} // 77
 	
-	// OLD: Needs blank scanline for DLI to change text window colors in time
-	//storyViewDisplayList[x++] = DL_BLK2; 
-
 	// Text window
 	storyViewDisplayList[x++] = textWindowLine | dl_LMS;
-	storyViewDisplayList[x++] = (UInt16)textWindow % 256;
-	storyViewDisplayList[x++] = (UInt16)textWindow / 256;
+	storyViewDisplayList[x++] = 0;
+	storyViewDisplayList[x++] = textPage; // 80
 
 	for (i=1; i<7; ++i) { // 7 rows of text = 48 scanlines
 		storyViewDisplayList[x++] = textWindowLine; 
-	}
+	} // 86
 	
 	storyViewDisplayList[x++] = DL_JVB; // Vertical blank + jump to beginning of display list
 	storyViewDisplayList[x++] = (UInt16)storyViewDisplayList % 256;
-	storyViewDisplayList[x++] = (UInt16)storyViewDisplayList / 256;
+	storyViewDisplayList[x++] = (UInt16)storyViewDisplayList / 256; // 89 bytes total
 }
 
 // Transition Effects

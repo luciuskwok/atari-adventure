@@ -74,7 +74,7 @@ void setPlayerCursorColorCycling(UInt8 cycle) {
 
 void setTileOverlaySprite(const UInt8 *sprite, UInt8 column, UInt8 row) {
 	// Set horizontal position for tile
-	P3_XPOS[row] = PM_LEFT_MARGIN + 8 * column + 4;
+	P3_XPOS[row] = PM_LEFT_MARGIN - 4 + column * 8;
 	GTIA_WRITE.sizep3 = 0;
 	drawSprite(sprite, 8, 4, row * 8 + PM_TOP_MARGIN);
 }

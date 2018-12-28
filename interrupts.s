@@ -115,10 +115,10 @@ return:
 	bvc return_dli
 	
 set_text_color:
-	lda TEXT_BG			; text window background color
-	sta COLPF2
-	lda TEXT_LUM		; text window text luminance
-	sta COLPF1
+	lda TEXT_BG	
+	sta COLPF2			; text window background color
+	lda TEXT_LUM		
+	sta COLPF1			; text luminance / bar chart foreground
 
 return_dli:	
 	pla					; restore accumulator and X register from stack
@@ -144,10 +144,10 @@ return_dli:
 	cpx #72
 	bne return_dli		; if DLI_ROW == 72, set colors for text window
 	
-	lda TEXT_BG			; text window background color
-	sta COLPF2
-	lda TEXT_LUM		; text window text luminance
-	sta COLPF1
+;	lda TEXT_BG			; text window background color
+;	sta COLPF2
+;	lda TEXT_LUM		; text window text luminance
+;	sta COLPF1
 
 return_dli:	
 	pla					; restore accumulator and X register from stack

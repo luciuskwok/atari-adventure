@@ -245,7 +245,7 @@ void layoutCurrentMap(UInt8 mapSightDistance) {
 	UInt8 x, halfWidth, halfHeight;
 
 	if (mapSightDistance > 3) {
-		mapFrameSize.width = 19;
+		mapFrameSize.width = 21;
 		mapFrameSize.height = 9;
 	} else {
 		x = mapSightDistance * 2 + 1;
@@ -274,7 +274,7 @@ void drawCurrentMap(PointU8 *center) {
 	UInt8 row, col;
 	UInt8 leftBlank, leftSkip, decodeLength, topBlank, topSkip;
 	UInt8 c, low, hasSpriteOverlay;
-	UInt8 buffer[20];
+	UInt8 buffer[SCREEN_WIDTH];
 
 	// Integrity check
 	if (runLenPtr == NULL) {

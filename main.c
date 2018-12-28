@@ -39,16 +39,19 @@ void printStatText(void) {
 
 	// Print character statistics
 	printCharaStats(0, "Alisa", 99, 123, 255);
-	printCharaStats(1, "Marie", 1, 4, 8);
-	printCharaStats(2, "Guy", 19, 67, 72);
-	printCharaStats(3, "Nyorn", 7, 78, 180);
+	printCharaStats(1, "Marie", 1, 1, 8);
+	printCharaStats(2, "Guy", 19, 35, 36);
+	printCharaStats(3, "Nyorn", 7, 1, 40);
 
 	// Print party statistics
 	printPartyStats(987123, 21, 1325, -891);
 }
 
 void setUpMapMode(void) {
-	setTextWindowColorTheme(0);
+	// Set text window colors
+	*TEXT_LUM = 0x0E;    // white
+	*TEXT_BG  = 0x02;    // gray
+
 	printStatText();
 
 	setScreenMode(ScreenModeMap);
