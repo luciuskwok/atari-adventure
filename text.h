@@ -18,4 +18,7 @@ void hexString(UInt8 *outString, UInt8 length, UInt16 value);
 
 UInt8 toAtascii(UInt8 c);
 
+extern UInt8 __fastcall__ stringLength(UInt8 *s);
+extern void __fastcall__ stringConcat(UInt8 *dst, UInt8 *src);
+
 #endif

@@ -12,7 +12,9 @@
 #define COLCRS (0x0055)
 #define SAVMSC (0x0058)
 #define RAMTOP (0x006A)
+#define SHORT_CLOCK (PEEK(20) + 256 * PEEK(19))
 
+// Page 2 - OS
 #define VDSLST (0x0200) /* Display list interrupt vector */
 #define VVBLKI (0x0222) /* Immediate vertical blank interrupt vector */
 #define VVBLKD (0x0224) /* Deferred vertical blank interrupt vector */

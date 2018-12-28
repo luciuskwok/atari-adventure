@@ -17,8 +17,6 @@
 #include "text.h"
 #include "types.h"
 #include <atari.h>
-#include <stdio.h>
-#include <string.h>
 
 
 // Globals
@@ -27,7 +25,6 @@ UInt8 isQuitting;
 
 // Constants and macros
 //#define DEBUGGING
-#define SHORT_CLOCK (PEEK(20) + 256 * PEEK(19))
 
 // Debugging
 #ifdef DEBUGGING

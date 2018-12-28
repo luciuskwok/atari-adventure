@@ -7,8 +7,7 @@
 #include "image_data.h"
 #include "sprites.h"
 #include "text.h"
-#include <stdio.h>
-#include <string.h>
+#include "atari_memmap.h"
 
 
 // Constants
@@ -231,8 +230,10 @@ void drawMenu(TreeNodePtr node) {
 			if (child->value == BuyItemNode) {
 				// Get additional info 
 				TreeNodePtr info = child->children[0];
-				UInt8 s[32];
-				sprintf(s, "$%u - %s", info->value, child->text);
+				UInt8 s[40] = "$";
+				numberString(s+1, 0, info->value);
+				stringConcat(s, " - ");
+				stringConcat(s, child->text);
 				printString(s, x, y);
 			} else {
 				printString(child->text, x, y);
@@ -301,20 +302,6 @@ void setCursorPosition(PointU8 *newPos) {
 
 void hideCursor(void) {
 	setSpriteHorizontalPosition(1, 0);
-}
-
-void printStackDebuggingInfo(UInt8 x) {
-	// Debugging
-	UInt8 s[16];
-	UInt8 i;
-
-	sprintf(s, "%u", x);
-	printString(s, 0, 0);
-
-	for (i=0; i<dialogStackCount; ++i) {
-		sprintf(s, "[%u]=%u", i, dialogStack[i].selectedRow);
-		printString(s, i*6, 6);		
-	}
 }
 
 void setSelectedRow(UInt8 index) {
@@ -464,15 +451,21 @@ void initDialog(void) {
 	}
 
 	// Draw background image
-	// {
-	// 	SInt8 err = drawImage(temShopImage, temShopImageLength);
-	// 	if (err) {
-	// 		UInt8 *s;
-	// 		sprintf(s, "puff() error:%c", err);
-	// 		printString(s, 1, 1);
-	// 		waitForAnyInput();
-	// 	}
-	// }
+	{
+		UInt16 duration;
+		UInt8 s[16] = "Time: ";
+		UInt16 startTime = SHORT_CLOCK;
+		SInt8 err = drawImage(temShopImage, temShopImageLength);
+		if (err) {
+			UInt8 message[20] = "puff() error:";
+			numberString(message+13, 0, err);
+			printString(message, 1, 0);
+			//waitForAnyInput();
+		}
+		duration = SHORT_CLOCK - startTime;
+		numberString(s+6, 0, duration);
+		printString(s, 1, 2);
+	}
 
 	// Selection Cursor
 	clearSpriteData(1);

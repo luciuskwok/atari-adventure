@@ -3,8 +3,6 @@
 #include "text.h"
 #include "graphics.h"
 #include <atari.h>
-#include <stdio.h>
-#include <string.h>
 
 
 // Constants
@@ -16,15 +14,17 @@
 void printCharaStats(UInt8 player, const UInt8 *name, UInt8 level, UInt8 hp, UInt8 maxHp) {
 	UInt8 x = (player % 2) * 10 + 2;
 	UInt8 y = (player / 2) * 4;
-	UInt8 lvStr[9];
+	UInt8 lvStr[9] = "Lv ";
 	UInt8 hpStr[9];
 
 	printString(name, x, y);
 
-	sprintf(lvStr, "Lv %u", level);
+	numberString(lvStr+3, 0, level);
 	printString(lvStr, x, y+1);
 
-	sprintf(hpStr, "%u/%u", hp, maxHp);
+	numberString(hpStr, 0, hp);
+	stringConcat(hpStr, "/");
+	numberString(hpStr+stringLength(hpStr), 0, maxHp);
 	printString(hpStr, x, y+2);
 }
 
@@ -36,19 +36,19 @@ void printPartyStats(SInt32 money, UInt16 potions, UInt16 fangs, SInt16 /* reput
 
 	s[0] = '$';
 	numberString(s+1, ',', money);
-	len = strlen(s);
+	len = stringLength(s);
 	printString(s, x-len-1, y);
 	y += 2;
 
 	numberString(s, 0, potions);
-	strcat(s, "{");
-	len = strlen(s);
+	stringConcat(s, "{");
+	len = stringLength(s);
 	printString(s, x-len, y);
 	y += 2;
 
 	numberString(s, ',', fangs);
-	strcat(s, "}");
-	len = strlen(s);
+	stringConcat(s, "}");
+	len = stringLength(s);
 	printString(s, x-len, y);
 	y += 2;
 
