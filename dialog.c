@@ -452,19 +452,18 @@ void initDialog(void) {
 
 	// Draw background image
 	{
-		UInt16 duration;
-		UInt8 s[16] = "Time: ";
-		UInt16 startTime = SHORT_CLOCK;
+		// UInt16 duration;
+		// UInt8 s[16] = "Time: ";
+		// UInt16 startTime = SHORT_CLOCK;
 		SInt8 err = drawImage(temShopImage, temShopImageLength);
 		if (err) {
 			UInt8 message[20] = "puff() error:";
 			numberString(message+13, 0, err);
 			printString(message, 1, 0);
-			//waitForAnyInput();
 		}
-		duration = SHORT_CLOCK - startTime;
-		numberString(s+6, 0, duration);
-		printString(s, 1, 2);
+		// duration = SHORT_CLOCK - startTime;
+		// numberString(s+6, 0, duration);
+		// printString(s, 1, 2);
 	}
 
 	// Selection Cursor
