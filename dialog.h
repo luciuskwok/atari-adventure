@@ -2,6 +2,6 @@
 
 #include "types.h"
 
-void presentDialog(void);
+void initDialog(void);
 void exitDialog(void);
 SInt8 dialogCursorHandler(UInt8 event);

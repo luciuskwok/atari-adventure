@@ -66,7 +66,7 @@ void setUpMapMode(void) {
 void handleMessage(SInt8 message) {
 	switch (message) {
 		case MessagePresentDialog:
-			presentDialog();
+			initDialog();
 			break;
 		case MessageExitDialog:
 			exitDialog();
