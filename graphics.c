@@ -46,8 +46,17 @@ extern void __fastcall__ storyViewDLI(void);
 
 // Globals
 UInt8 *textWindow;
-UInt8 *mapViewDisplayList;
-UInt8 *storyViewDisplayList;
+
+
+// Display List constants
+#define dl_Interrupt (0x80)
+#define dl_LMS (0x40)
+#define dl_VScroll (0x20)
+#define dl_HScroll (0x10)
+#define dl_mapTileLine (dl_Interrupt | dl_HScroll | 7)
+#define dl_rasterLine (dl_Interrupt | 13)
+#define dl_textWindowLine (2)
+
 
 
 
@@ -73,100 +82,157 @@ void initGraphics(void) {
 }
 
 void initDisplayList(UInt8 startPage, UInt8 textPage) {
-	// Create two display lists, one for map view, and the other for story view.
-	const UInt8 dl_Interrupt = 0x80;
-	const UInt8 dl_LMS = 0x40;
-	const UInt8 dl_VScroll = 0x20;
-	const UInt8 dl_HScroll = 0x10;
-	const UInt8 mapTileLine = (dl_Interrupt | dl_HScroll | 7);
-	const UInt8 rasterLine = (dl_Interrupt | 13);
-	const UInt8 textWindowLine = 2;
-	
-	UInt8 *screen = (UInt8 *)(startPage * 256 + 128);
-	UInt8 screenLSB = (UInt16)screen % 256;
-	UInt8 screenMSB = (UInt16)screen / 256;
-
+	const UInt8 screenLSB = startPage;
+	const UInt8 screenMSB = 128;
+	UInt8 *displayList = (UInt8 *)(startPage * 256);
+	const UInt8 *screen = displayList + 128;
 	const UInt8 textBarChartLSB = 120;
 
-	UInt8 x = 0;
-	UInt8 i;
-
-
 	// Init globals
-	mapViewDisplayList = (UInt8 *)(startPage * 256);
-	storyViewDisplayList = mapViewDisplayList + 35;
 	textWindow = (UInt8 *)(textPage * 256); // Using the unused 384 bytes below PMGraphics
 
-	// Update screen memory pointer
+	// Update OS pointers
 	POKEW (SAVMSC, (UInt16)screen);
+	POKEW (SDLSTL, (UInt16)displayList);
 
-	// == Map View DL ==
-	mapViewDisplayList[x++] = DL_BLK8; 
-	mapViewDisplayList[x++] = DL_BLK8; 
-	mapViewDisplayList[x++] = DL_BLK4; // 3
+	// Set up lines common to all display lists
+	displayList[0] = DL_BLK8; 
+	displayList[1] = DL_BLK8; 
+	displayList[2] = DL_BLK4; // 3
+}
 
-	mapViewDisplayList[x++] = mapTileLine | dl_LMS; 
-	mapViewDisplayList[x++] = screenLSB; 
-	mapViewDisplayList[x++] = screenMSB; // 6
+// Screen Modes
+
+UInt8 writeDisplayListLines(UInt8 *dl, const UInt8 *screen, UInt8 mode, UInt8 count) {
+	UInt8 i;
+
+	dl[0] = mode | dl_LMS; 
+	dl[1] = (UInt16)screen % 256; 
+	dl[2] = (UInt16)screen / 256; // 6
 	
-	for (i=1; i<9; ++i) { // 9 rows * 16 scanlines = 144 scanlines
-		mapViewDisplayList[x++] = mapTileLine; // DLI on every tile row
-	} // 14
-	
+	for (i=0; i<count; ++i) {
+		dl[i+3] = mode;
+	}
+	return count + 2; // number of bytes written
+}
+
+UInt8 writeDisplayListCustomTextLines(UInt8 *dl) {
+	UInt8 textPage = (UInt16)textWindow / 256;
+	const UInt8 textBarChartLSB = (3 * 40); // 4th line is bar chart area
+	UInt8 x = 0;
+
 	// Text window
-	mapViewDisplayList[x++] = textWindowLine | dl_LMS;
-	mapViewDisplayList[x++] = 0;
-	mapViewDisplayList[x++] = textPage; // 17
+	dl[x++] = DL_BLK8;
+	dl[x++] = dl_textWindowLine | dl_LMS;
+	dl[x++] = 0;
+	dl[x++] = textPage;
 
-	mapViewDisplayList[x++] = textWindowLine; 
-	mapViewDisplayList[x++] = textWindowLine; // 19
+	dl[x++] = dl_textWindowLine; 
+	dl[x++] = dl_textWindowLine;
 
-	mapViewDisplayList[x++] = DL_BLK1;
-	mapViewDisplayList[x++] = rasterLine | dl_LMS; // Triple repeating rows
-	mapViewDisplayList[x++] = textBarChartLSB;
-	mapViewDisplayList[x++] = textPage;
-	mapViewDisplayList[x++] = rasterLine | dl_LMS;
-	mapViewDisplayList[x++] = textBarChartLSB;
-	mapViewDisplayList[x++] = textPage;
-	mapViewDisplayList[x++] = rasterLine | dl_LMS;
-	mapViewDisplayList[x++] = textBarChartLSB;
-	mapViewDisplayList[x++] = textPage;
-	mapViewDisplayList[x++] = DL_BLK1;
-	mapViewDisplayList[x++] = DL_BLK8; // 31
+	dl[x++] = DL_BLK1;
+	dl[x++] = dl_rasterLine | dl_LMS; // Bar chart uses 3 repeating rows
+	dl[x++] = textBarChartLSB;
+	dl[x++] = textPage;
+	dl[x++] = dl_rasterLine | dl_LMS;
+	dl[x++] = textBarChartLSB;
+	dl[x++] = textPage;
+	dl[x++] = dl_rasterLine | dl_LMS;
+	dl[x++] = textBarChartLSB;
+	dl[x++] = textPage;
+	dl[x++] = DL_BLK1 | dl_Interrupt;
+	dl[x++] = DL_BLK8;
 
-	mapViewDisplayList[x++] = textWindowLine; // 32
+	dl[x++] = dl_textWindowLine; 
 
-	mapViewDisplayList[x++] = DL_JVB; // Vertical blank + jump to DL start
-	mapViewDisplayList[x++] = (UInt16)mapViewDisplayList % 256;
-	mapViewDisplayList[x++] = (UInt16)mapViewDisplayList / 256; // 35 bytes total
+	return x;
+}
 
-	// == Story View DL ==
-	x = 0;
-	storyViewDisplayList[x++] = DL_BLK8;
-	storyViewDisplayList[x++] = DL_BLK8;
-	storyViewDisplayList[x++] = DL_BLK4;
-	// OLD: 2 fewer scanlines here to allow 2 blank scanlines between raster image and text window
+void writeDisplayListEnd(UInt8 *dl) {
+	dl[0] = DL_JVB; // Vertical blank + jump to DL start
+	dl[1] = PEEK(SDLSTL);
+	dl[2] = PEEK(SDLSTL+1);
+}
 
-	storyViewDisplayList[x++] = rasterLine | dl_LMS;
-	storyViewDisplayList[x++] = screenLSB;
-	storyViewDisplayList[x++] = screenMSB; // 6
-	
-	for (i=1; i<72; ++i) { // 72 rows * 2 scanlines = 144 scanlines
-		storyViewDisplayList[x++] = rasterLine; // DLI on every tile row
-	} // 77
-	
-	// Text window
-	storyViewDisplayList[x++] = textWindowLine | dl_LMS;
-	storyViewDisplayList[x++] = 0;
-	storyViewDisplayList[x++] = textPage; // 80
+void writeMapViewDisplayList(void) {
+	UInt8 *dl = (UInt8 *)PEEKW(SDLSTL);
+	const UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
+	UInt8 x = 3;
 
-	for (i=1; i<7; ++i) { // 7 rows of text = 48 scanlines
-		storyViewDisplayList[x++] = textWindowLine; 
-	} // 86
-	
-	storyViewDisplayList[x++] = DL_JVB; // Vertical blank + jump to beginning of display list
-	storyViewDisplayList[x++] = (UInt16)storyViewDisplayList % 256;
-	storyViewDisplayList[x++] = (UInt16)storyViewDisplayList / 256; // 89 bytes total
+	x += writeDisplayListLines(dl+3, screen, dl_mapTileLine, 9);  // 14
+	x += writeDisplayListCustomTextLines(dl+x);
+	writeDisplayListEnd(dl+x);
+}
+
+void writeStoryViewDisplayList(void) {
+	UInt8 *dl = (UInt8 *)PEEKW(SDLSTL);
+	const UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
+	UInt8 x = 3;
+
+	x += writeDisplayListLines(dl+3, screen, dl_rasterLine, 72);
+	x += writeDisplayListLines(dl+x, textWindow, dl_textWindowLine, 7);
+	writeDisplayListEnd(dl+x);
+
+}
+
+void writeBattleViewDisplayList(void) {
+	UInt8 *dl = (UInt8 *)PEEKW(SDLSTL);
+	const UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
+	UInt8 x = 3;
+
+	x += writeDisplayListLines(dl+3, screen, dl_rasterLine, 72);
+	x += writeDisplayListCustomTextLines(dl+x);
+	writeDisplayListEnd(dl+x);
+}
+
+
+void setScreenMode(UInt8 mode) {
+	UInt8 dma = 0x2E; // standard playfield + missile DMA + player DMA + display list DMA
+	UInt8 nmi = 0x40; // enable VBI
+	void *dli = 0;
+
+	*VB_TIMER = 1;
+
+	switch (mode) {
+		case ScreenModeMap:
+			dma = 0x2E; // various Antic DMA options
+			nmi |= 0x80; // enable DLI
+			writeMapViewDisplayList();
+			dli = mapViewDLI;
+			break;
+
+		case ScreenModeShop:
+			dma = 0x2E; // various Antic DMA options
+			writeStoryViewDisplayList();
+			dli = storyViewDLI;
+			break;
+
+		case ScreenModeBattle:
+			dma = 0x2E; // various Antic DMA options
+			nmi |= 0x80; // enable DLI
+			writeBattleViewDisplayList();
+			dli = storyViewDLI;
+			break;
+
+		case ScreenModeOff:
+		default:
+			dma = 0;
+			break;
+	}
+
+	// Turn off screen
+	POKE (SDMCTL, 0);
+	ANTIC.nmien = 0x40;
+
+	// Wait for vblank to prevent flicker
+	while (*VB_TIMER != 0) {}
+
+	if (dli != 0) {
+		POKEW (VDSLST, (UInt16)dli);
+	}
+
+	POKE (SDMCTL, dma);
+	ANTIC.nmien = nmi;
 }
 
 // Transition Effects
@@ -236,59 +302,6 @@ void fadeInColorTable(UInt8 fadeOptions, const UInt8 *colorTable) {
 		while (*VB_TIMER) {
 		}
 	}
-}
-
-void setScreenMode(UInt8 mode) {
-	UInt8 dma = 0x2E; // standard playfield + missile DMA + player DMA + display list DMA
-	UInt8 nmi = 0x40; // enable VBI
-	void *dl = 0;
-	void *dli = 0;
-
-	*VB_TIMER = 1;
-
-	switch (mode) {
-		case ScreenModeMap:
-			dma = 0x2E; // various Antic DMA options
-			nmi |= 0x80; // enable DLI
-			dl = mapViewDisplayList;
-			dli = mapViewDLI;
-			break;
-
-		case ScreenModeShop:
-			dma = 0x2E; // various Antic DMA options
-			dl = storyViewDisplayList;
-			dli = storyViewDLI;
-			break;
-
-		case ScreenModeBattle:
-			dma = 0x2E; // various Antic DMA options
-			nmi |= 0x80; // enable DLI
-			dl = storyViewDisplayList;
-			dli = storyViewDLI;
-			break;
-
-		case ScreenModeOff:
-		default:
-			dma = 0;
-			break;
-	}
-
-	// Turn off screen
-	POKE (SDMCTL, 0);
-	ANTIC.nmien = 0x40;
-
-	// Wait for vblank to prevent flicker
-	while (*VB_TIMER != 0) {}
-
-	if (dl != 0) {
-		POKEW (SDLSTL, (UInt16)dl);
-	}
-	if (dli != 0) {
-		POKEW (VDSLST, (UInt16)dli);
-	}
-
-	POKE (SDMCTL, dma);
-	ANTIC.nmien = nmi;
 }
 
 // Color Table

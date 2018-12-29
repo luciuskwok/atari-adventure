@@ -22,7 +22,7 @@ void drawBarChart(UInt8 x, UInt8 y, UInt8 width, UInt8 filled) {
 }
 
 void printCharaStats(UInt8 player, const UInt8 *name, UInt8 level, UInt8 hp, UInt8 maxHp) {
-	UInt8 x = player * 10 + 1;
+	UInt8 x = player * 10;
 	UInt8 y = 0;
 	UInt8 lvStr[9] = "Lv ";
 	UInt8 hpStr[9];

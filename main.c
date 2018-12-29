@@ -50,7 +50,7 @@ void printStatText(void) {
 void setUpMapMode(void) {
 	// Set text window colors
 	*TEXT_LUM = 0x0E;    // white
-	*TEXT_BG  = 0x02;    // gray
+	*TEXT_BG  = 0x04;    // grey
 
 	printStatText();
 

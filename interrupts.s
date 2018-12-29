@@ -107,18 +107,26 @@ return:
 	stx DLI_ROW
 	stx WSYNC			; wait for horizontal sync
 
-	cpx #9				; if DLI_ROW >= 9, skip to setting text color
-	bcs set_text_color
+	cpx #9				; row 9: upper text window
+	beq upper_text_window
+	
+	cpx #10				; row 10: lower text window
+	beq lower_text_window
 	
 	lda P3_XPOS,X		; HPOSP2 = P3_XPOS[DLI_ROW]
 	sta HPOSP3
-	bvc return_dli
+	jmp return_dli
 	
-set_text_color:
-	lda TEXT_BG	
-	sta COLPF2			; text window background color
+upper_text_window:
+	lda #$00	
+	sta COLPF2			; upper text window is always black
 	lda TEXT_LUM		
 	sta COLPF1			; text luminance / bar chart foreground
+	jmp return_dli
+
+lower_text_window:
+	lda TEXT_BG			; lower text window is grey
+	sta COLPF2
 
 return_dli:	
 	pla					; restore accumulator and X register from stack
