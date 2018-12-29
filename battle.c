@@ -9,14 +9,12 @@
 #include "text.h"
 #include "atari_memmap.h"
 
-
 // Globals
 UInt8 isLeavingBattle;
 UInt8 selectedIndex;
 UInt8 menuItemCount;
 UInt8 menuType;
 UInt8 shouldRedrawEncounterTextOnMove;
-
 
 
 void modifyPixelValues(UInt8 isMasking, UInt8 offset, UInt8 length) {
@@ -41,11 +39,10 @@ void modifyPixelValues(UInt8 isMasking, UInt8 offset, UInt8 length) {
 	}
 }
 
-
 static void setSelectedIndex(UInt8 index) {
 	PointU8 pt;
 	pt.x = 43 * index + 9;
-	pt.y = 91;
+	pt.y = 90;
 	setCursorPosition(&pt);
 
 	// Change color of old selection and new selection.
@@ -58,25 +55,30 @@ static void setSelectedIndex(UInt8 index) {
 }
 
 static void showEncounterText(void) {
-	PointU8 pt = { 6, 0 };
+	PointU8 pt = { 3, 0 };
 	UInt8 s[] = "* Evil Merchant blocks your path!";
 
 	clearTextWindow(3);
-	drawTextBox(s, &pt, 30, 2, -2);
+	drawTextBox(s, &pt, 38, 2, -2);
 	shouldRedrawEncounterTextOnMove = 0;
 }
 
 static void enterTalk(void) {
-	PointU8 pt = { 6, 0 };
+	PointU8 pt = { 3, 0 };
 	UInt8 s[] = "* Evil Merchant doesn't care what you think!";
 
 	clearTextWindow(3);
-	drawTextBox(s, &pt, 30, 2, -2);
+	drawTextBox(s, &pt, 38, 2, -2);
 	shouldRedrawEncounterTextOnMove = 1;
 }
 
 static void enterItemMenu(void) {
+	PointU8 pt = { 6, 0 };
+	UInt8 s[] = "* Sacred Nuts (5)\n* Staff of Earthquakes (1)";
+
 	clearTextWindow(3);
+	drawTextBox(s, &pt, 28, 2, 0);
+	shouldRedrawEncounterTextOnMove = 1;
 }
 
 static void attemptMercy(void) {

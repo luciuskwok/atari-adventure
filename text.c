@@ -57,7 +57,7 @@ void printAllCharaText(UInt8 y) {
 	printCharaStats(0, y, "Alisa", 99, 123, 255);
 	printCharaStats(1, y, "Marie", 1, 1, 8);
 	printCharaStats(2, y, "Guy", 19, 35, 36);
-	printCharaStats(3, y, "Nyorn", 7, 1, 40);
+	printCharaStats(3, y, "Nyorn", 7, 70, 80);
 }
 
 void printPartyStats(SInt32 money, UInt16 potions, UInt16 fangs) {
@@ -122,7 +122,7 @@ void drawTextBox(const UInt8 *s, PointU8 *position, UInt8 width, UInt8 lineSpaci
 
 		if (x >= xMax || c == '\n') {
 			isNewLine = 0;
-			
+
 			// Rewind to previous breakable character
 			if (previousBreakable > lineStartIndex) {
 				while (i > previousBreakable + 1) {

@@ -133,10 +133,10 @@ const UInt8 dungeonColorTable[] = {
 	0x0F, // PM3: white / tile overlay
 	0x90, // 0: floor: dark blue
 	0x1C, // 1: chest: gold
-	0x06, // 2: wall: dark grey
-	0xBA, // 3: exit: light green
+	0x04, // 2: wall: dark grey
+	0xBC, // 3: exit: light green
 	0x00, // 4: black / background
-	0x0C, 0x02, 0x82 // text box
+	0x0A, 0x02, 0x82 // text box
 };
 const UInt8 dungeonRleMap[] = {
 0x03,0x24,0x0A,
