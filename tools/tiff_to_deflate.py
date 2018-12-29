@@ -8,7 +8,7 @@ import zlib, sys, base64
 
 # Color table mapping
 # colorTable = [3, 1, 0, 2] # Tem Shop colors
-colorTable = [0, 0, 3, 3] # Battle button colors
+colorTable = [0, 1, 3, 2] # Battle button colors
 
 def validateTIFFHeader(ifh):
 	isBigEndian = False

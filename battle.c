@@ -17,6 +17,8 @@ UInt8 menuItemCount;
 
 
 void initBattle(void) {
+	SInt8 err;
+
 	isLeavingBattle = 0;
 	selectedIndex = 0;
 	menuItemCount = 0;
@@ -31,21 +33,42 @@ void initBattle(void) {
 	hideSprites();
 
 	// Turn on screen
-	loadColorTable(temShopColorTable); // battleColorTable
+	loadColorTable(battleColorTable); // battleColorTable
 	setTextBoxColors();
 	setScreenMode(ScreenModeBattle);
 
-	printStatText();
+	printAllCharaText(4);
 
-	// Draw background image
-	{
-		SInt8 err = drawImage(battleButtonsImage, battleButtonsImageLength, 62, 10);
-		if (err) {
-			UInt8 message[20] = "puff() error:";
-			numberString(message+13, 0, err);
-			printString(message, 1, 0);
-		}
+	// { // Debugging
+	// 	UInt8 i;
+	// 	for (i=0; i<128; ++i) {
+	// 		textWindow[i+40] = i;
+	// 	}
+	// }
+
+	{ // Print encounter text
+		UInt8 s[] = "Evil Merchant blocks your path!";
+		UInt8 len = stringLength(s);
+		printString(s, 20 - len / 2, 0);
 	}
+
+	// Draw button bar image
+	err = drawImage(battleButtonsImage, battleButtonsImageLength, 48, 10);
+	if (err) {
+		UInt8 message[20] = "puff() error:";
+		numberString(message+13, 0, err);
+		printString(message, 1, 1);
+	}
+
+
+	// Draw enemy image
+	err = drawImage(battleEnemyImage, battleEnemyImageLength, 0, 48);
+	if (err) {
+		UInt8 message[20] = "puff() error:";
+		numberString(message+13, 0, err);
+		printString(message, 1, 2);
+	}
+	
 
 	// Selection Cursor
 	clearSpriteData(1);

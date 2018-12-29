@@ -116,9 +116,11 @@ UInt8 writeDisplayListLines(UInt8 *dl, const UInt8 *screen, UInt8 mode, UInt8 co
 	return count + 2; // number of bytes written
 }
 
-UInt8 writeDisplayListCustomTextLines(UInt8 *dl) {
+UInt8 writeDisplayListCustomTextLines(UInt8 *dl, UInt8 count) {
 	UInt8 textPage = (UInt16)textWindow / 256;
-	const UInt8 textBarChartLSB = (3 * 40); // 4th line is bar chart area
+	const UInt16 barChartOffset = (count * 40);
+	const UInt8 barChartLSB = barChartOffset % 256;
+	const UInt8 barChartMSB = textPage + barChartOffset / 256;
 	UInt8 x = 0;
 
 	// Text window
@@ -127,24 +129,17 @@ UInt8 writeDisplayListCustomTextLines(UInt8 *dl) {
 	dl[x++] = 0;
 	dl[x++] = textPage;
 
-	dl[x++] = dl_textWindowLine; 
-	dl[x++] = dl_textWindowLine;
+	while (--count > 0) {
+		dl[x++] = dl_textWindowLine; 
+	}
 
 	dl[x++] = DL_BLK1;
-	dl[x++] = dl_rasterLine | dl_LMS; // Bar chart uses 3 repeating rows
-	dl[x++] = textBarChartLSB;
-	dl[x++] = textPage;
-	dl[x++] = dl_rasterLine | dl_LMS;
-	dl[x++] = textBarChartLSB;
-	dl[x++] = textPage;
-	dl[x++] = dl_rasterLine | dl_LMS;
-	dl[x++] = textBarChartLSB;
-	dl[x++] = textPage;
+	for (count=0; count<3; ++count) {
+		dl[x++] = dl_rasterLine | dl_LMS; // Bar chart uses 3 repeating rows
+		dl[x++] = barChartLSB;
+		dl[x++] = barChartMSB;
+	}
 	dl[x++] = DL_BLK1 | dl_Interrupt;
-
-	// Party stats line
-	dl[x++] = DL_BLK8;
-	dl[x++] = dl_textWindowLine; 
 
 	return x;
 }
@@ -161,7 +156,12 @@ void writeMapViewDisplayList(void) {
 	UInt8 x = 3;
 
 	x += writeDisplayListLines(dl+3, screen, dl_mapTileLine, 9);  // 14
-	x += writeDisplayListCustomTextLines(dl+x);
+	x += writeDisplayListCustomTextLines(dl+x, 3);
+
+	// Party stats line
+	dl[x++] = DL_BLK8;
+	dl[x++] = dl_textWindowLine; 
+
 	writeDisplayListEnd(dl+x);
 }
 
@@ -172,17 +172,28 @@ void writeStoryViewDisplayList(void) {
 
 	x += writeDisplayListLines(dl+3, screen, dl_rasterLine, 72);
 	x += writeDisplayListLines(dl+x, textWindow, dl_textWindowLine, 7);
+
 	writeDisplayListEnd(dl+x);
 }
 
 void writeBattleViewDisplayList(void) {
 	UInt8 *dl = (UInt8 *)PEEKW(SDLSTL);
 	const UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
+	const UInt16 rasterHeight = 48;
 	UInt8 x = 3;
 
-	x += writeDisplayListLines(dl+3, screen, dl_rasterLine, 72);
+	x += writeDisplayListLines(dl+3, screen, dl_rasterLine, rasterHeight); // 96
 	dl[x-1] |= dl_Interrupt; 
-	x += writeDisplayListCustomTextLines(dl+x);
+
+	dl[x++] = DL_BLK2; // 2
+	
+	x += writeDisplayListCustomTextLines(dl+x, 7); // 72 // Chara stats
+
+	dl[x++] = DL_BLK8; // 8
+
+	screen += rasterHeight * 40;
+	x += writeDisplayListLines(dl+x, screen, dl_rasterLine, 10); // 20
+
 	writeDisplayListEnd(dl+x);
 }
 

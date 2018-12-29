@@ -38,7 +38,8 @@ UInt16 duration;
 void setUpMapMode(void) {
 	setTextBoxColors();
 
-	printStatText();
+	printAllCharaText(0);
+	printPartyStats(987123, 21, 1325);
 
 	setScreenMode(ScreenModeMap);
 	transitionToMap(currentMapType, 0, 1);

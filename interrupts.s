@@ -146,21 +146,21 @@ return_dli:
 	stx WSYNC			; wait for horizontal sync
 
 	cpx #2
-	beq lower_text_window
+	beq button_bar
 
-upper_text_window:
+text_window:
 	lda #$00	
-	sta COLPF2			; upper text window is always black
+	sta COLPF2			; text box background: black
 	lda TEXT_LUM		
 	sta COLPF1			; text luminance / bar chart foreground
 	lda #$00
-	sta COLPF4
+	sta COLPF4			; border background: black
 	lda #$82
-	sta COLPF0			; bar chart background color
+	sta COLPF0			; bar chart background color: blue
 	jmp return_dli
 
-lower_text_window:
-	lda TEXT_BG			; lower text window is grey
+button_bar:
+	lda #$28			; orange buttons
 	sta COLPF2
 
 return_dli:	

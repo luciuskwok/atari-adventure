@@ -27,21 +27,20 @@ void drawBarChart(UInt8 x, UInt8 y, UInt8 width, UInt8 filled) {
 	}
 }
 
-void printCharaStats(UInt8 player, const UInt8 *name, UInt8 level, UInt8 hp, UInt8 maxHp) {
+void printCharaStats(UInt8 player, UInt8 y, const UInt8 *name, UInt8 level, UInt8 hp, UInt8 maxHp) {
 	UInt8 x = player * 10;
-	UInt8 y = 0;
 	UInt8 lvStr[9] = "Lv ";
 	UInt8 hpStr[9];
 
-	printString(name, x, 0);
+	printString(name, x, y);
 
 	numberString(lvStr+3, 0, level);
-	printString(lvStr, x, 1);
+	printString(lvStr, x, y+1);
 
 	numberString(hpStr, 0, hp);
 	stringConcat(hpStr, "/");
 	numberString(hpStr+stringLength(hpStr), 0, maxHp);
-	printString(hpStr, x, 2);
+	printString(hpStr, x, y+2);
 
 	// Draw bar chart
 	{
@@ -55,11 +54,21 @@ void printCharaStats(UInt8 player, const UInt8 *name, UInt8 level, UInt8 hp, UIn
 		}
 		fill = (UInt16)hp * width / maxHp;
 		fill = (fill + 1) / 2;
-		drawBarChart(x, 3, width / 2, fill);
+		drawBarChart(x, y+3, width / 2, fill);
 	}
 }
 
-void printPartyStats(SInt32 money, UInt16 potions, UInt16 fangs, SInt16 /* reputation */) {
+void printAllCharaText(UInt8 y) {
+	clearTextWindow();
+
+	// Print character statistics
+	printCharaStats(0, y, "Alisa", 99, 123, 255);
+	printCharaStats(1, y, "Marie", 1, 1, 8);
+	printCharaStats(2, y, "Guy", 19, 35, 36);
+	printCharaStats(3, y, "Nyorn", 7, 1, 40);
+}
+
+void printPartyStats(SInt32 money, UInt16 potions, UInt16 fangs) {
 	UInt8 s[40];
 	UInt8 len;
 	UInt8 x;
@@ -87,19 +96,6 @@ void clearTextWindow(void) {
 	for (i=0; i<TEXTBOX_HEIGHT*TEXTBOX_WIDTH; ++i) {
 		textWindow[i] = 0;
 	}
-}
-
-void printStatText(void) {
-	clearTextWindow();
-
-	// Print character statistics
-	printCharaStats(0, "Alisa", 99, 123, 255);
-	printCharaStats(1, "Marie", 1, 1, 8);
-	printCharaStats(2, "Guy", 19, 35, 36);
-	printCharaStats(3, "Nyorn", 7, 1, 40);
-
-	// Print party statistics
-	printPartyStats(987123, 21, 1325, -891);
 }
 
 void printString(const UInt8 *s, UInt8 x, UInt8 y) {
