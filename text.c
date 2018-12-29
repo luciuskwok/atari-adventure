@@ -10,6 +10,15 @@
 #define TEXTBOX_HEIGHT (10)
 
 
+UInt8 toAtascii(UInt8 c) {
+	if (c < 0x20) {
+		c += 0x40;
+	} else if (c < 0x60) {
+		c -= 0x20;
+	}
+	return c;
+}
+
 void drawBarChart(UInt8 x, UInt8 y, UInt8 width, UInt8 filled) {
 	UInt8 *pixel = textWindow + x + y * TEXTBOX_WIDTH;
 	UInt8 i, c;
@@ -79,7 +88,6 @@ void printPartyStats(SInt32 money, UInt16 potions, UInt16 fangs) {
 	x = 20 - len / 2;
 
 	printString(s, x, 4);
-
 }
 
 void clearTextWindow(UInt8 lines) {
@@ -225,11 +233,12 @@ void hexString(UInt8 *outString, UInt8 length, UInt16 value) {
 	outString[length] = 0;
 }
 
-UInt8 toAtascii(UInt8 c) {
-	if (c < 0x20) {
-		c += 0x40;
-	} else if (c < 0x60) {
-		c -= 0x20;
-	}
-	return c;
+void debugPrint(const UInt8 *s, UInt16 value, UInt8 x, UInt8 y) {
+	UInt8 message[40] = { 0 };
+	UInt8 valStr[6];
+
+	numberString(valStr, 0, value);
+	stringConcat(message, s);
+	stringConcat(message, valStr);
+	printString(message, x, y);
 }

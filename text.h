@@ -16,9 +16,9 @@ void drawTextBox(const UInt8 *s, PointU8 *position, UInt8 width, UInt8 lineSpaci
 void numberString(UInt8 *outString, UInt8 thousandsSeparator, SInt32 value);
 void hexString(UInt8 *outString, UInt8 length, UInt16 value);
 
-UInt8 toAtascii(UInt8 c);
+void debugPrint(const UInt8 *s, UInt16 value, UInt8 x, UInt8 y);
 
 extern UInt8 __fastcall__ stringLength(UInt8 *s);
-extern void __fastcall__ stringConcat(UInt8 *dst, UInt8 *src);
+extern void __fastcall__ stringConcat(UInt8 *dst, const UInt8 *src);
 
 #endif

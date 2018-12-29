@@ -1,7 +1,7 @@
 ; text_asm.s
 
 .export _stringLength 		; extern UInt8 __fastcall__ stringLength(UInt8 *s);
-.export _stringConcat 		; extern void __fastcall__ stringConcat(UInt8 *dst, UInt8 *src);
+.export _stringConcat 		; extern void __fastcall__ stringConcat(UInt8 *dst, const UInt8 *src);
 
 .import 	pushax
 .import		incsp2, incsp4

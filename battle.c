@@ -11,10 +11,17 @@
 
 // Globals
 UInt8 isLeavingBattle;
-UInt8 selectedIndex;
-UInt8 menuItemCount;
 UInt8 menuType;
+UInt8 menuItemCount;
+PointU8 menuOrigin;
+UInt8 menuItemSpacing;
+UInt8 selectedIndex;
+UInt8 rootMenuSelectedIndex;
 UInt8 shouldRedrawEncounterTextOnMove;
+
+enum BattleMenuType {
+	BattleRootMenu, BattleFightMenu, BattleItemMenu
+};
 
 
 void modifyPixelValues(UInt8 isMasking, UInt8 offset, UInt8 length) {
@@ -41,15 +48,17 @@ void modifyPixelValues(UInt8 isMasking, UInt8 offset, UInt8 length) {
 
 static void setSelectedIndex(UInt8 index) {
 	PointU8 pt;
-	pt.x = 43 * index + 9;
-	pt.y = 90;
+	pt.x = menuOrigin.x + menuItemSpacing * index;
+	pt.y = menuOrigin.y;
 	setCursorPosition(&pt);
 
 	// Change color of old selection and new selection.
-	if (selectedIndex < 4) {
-		modifyPixelValues(0, selectedIndex * 10, 10);
+	if (menuType == BattleRootMenu) {
+		if (selectedIndex < 4) {
+			modifyPixelValues(0, selectedIndex * 10, 10);
+		}
+		modifyPixelValues(1, index * 10, 10);
 	}
-	modifyPixelValues(1, index * 10, 10);
 
 	selectedIndex = index;
 }
@@ -63,6 +72,23 @@ static void showEncounterText(void) {
 	shouldRedrawEncounterTextOnMove = 0;
 }
 
+static void enterFightMenu(void) {
+	rootMenuSelectedIndex = selectedIndex;
+
+	clearTextWindow(3);
+	printString("* Who shall fight?", 1, 0);
+
+	menuType = BattleFightMenu;
+	menuItemCount = 4;
+	menuOrigin.x = 8;
+	menuOrigin.y = 64;
+	menuItemSpacing = 40;
+	selectedIndex = -1;
+	setSelectedIndex(0);
+
+	shouldRedrawEncounterTextOnMove = 0;
+}
+
 static void enterTalk(void) {
 	PointU8 pt = { 3, 0 };
 	UInt8 s[] = "* Evil Merchant doesn't care what you think!";
@@ -73,30 +99,60 @@ static void enterTalk(void) {
 }
 
 static void enterItemMenu(void) {
-	PointU8 pt = { 6, 0 };
-	UInt8 s[] = "* Sacred Nuts (5)\n* Staff of Earthquakes (1)";
+	rootMenuSelectedIndex = selectedIndex;
 
 	clearTextWindow(3);
-	drawTextBox(s, &pt, 28, 2, 0);
-	shouldRedrawEncounterTextOnMove = 1;
+	printString("* Sacred Nuts (5)", 4, 0);
+	printString("* Staff (1)", 24, 0);
+
+	menuType = BattleItemMenu;
+	menuItemCount = 2;
+	menuOrigin.x = 17;
+	menuOrigin.y = 49;
+	menuItemSpacing = 80;
+	selectedIndex = -1;
+	setSelectedIndex(0);
+
+	shouldRedrawEncounterTextOnMove = 0;
 }
 
 static void attemptMercy(void) {
 	isLeavingBattle = 1;
 }
 
+static void enterRootMenu(void) {
+	showEncounterText();
+
+	menuType = BattleRootMenu;
+	menuItemCount = 4;
+	menuOrigin.x = 9;
+	menuOrigin.y = 90;
+	menuItemSpacing = 43;
+	selectedIndex = -1;
+	setSelectedIndex(rootMenuSelectedIndex);
+}
+
 static void handleClick(void) {
-	switch (selectedIndex) {
-		case 0:
+	switch (menuType) {
+		case BattleRootMenu:
+			switch (selectedIndex) {
+				case 0:
+					enterFightMenu();
+					break;
+				case 1:
+					enterTalk();
+					break;
+				case 2:
+					enterItemMenu();
+					break;
+				case 3:
+					attemptMercy();
+					break;
+			}
 			break;
-		case 1:
-			enterTalk();
+		case BattleFightMenu:
 			break;
-		case 2:
-			enterItemMenu();
-			break;
-		case 3:
-			attemptMercy();
+		case BattleItemMenu:
 			break;
 	}
 }
@@ -110,17 +166,20 @@ static SInt8 battleCursorHandler(UInt8 event) {
 	} else {
 		UInt8 newIndex = selectedIndex;
 		switch (event) {
-			case CursorUp:				
-				break;
-			case CursorDown:
-				break;
 			case CursorLeft:
 				--newIndex;
 				break;
 			case CursorRight:
 				++newIndex;
 				break;
+			case CursorDown:
+				if (menuType != BattleRootMenu) {
+					enterRootMenu();
+					return MessageNone;
+				}
+				break;
 		}
+
 		if (newIndex != selectedIndex) {
 			if (shouldRedrawEncounterTextOnMove) {
 				showEncounterText();
@@ -164,27 +223,24 @@ void initBattle(void) {
 	// Draw button bar image
 	err = drawImage(battleButtonsImage, battleButtonsImageLength, 48, 10);
 	if (err) {
-		UInt8 message[20] = "puff() error:";
-		numberString(message+13, 0, err);
-		printString(message, 1, 1);
+		debugPrint("puff() error:", err, 1, 1);
 	}
 
 	// Draw enemy image
 	err = drawImage(battleEnemyImage, battleEnemyImageLength, 0, 48);
 	if (err) {
-		UInt8 message[20] = "puff() error:";
-		numberString(message+13, 0, err);
-		printString(message, 1, 2);
+		debugPrint("puff() error:", err, 1, 2);
 	}
-	
+
 	// Selection Cursor
-	isLeavingBattle = 0;
-	menuItemCount = 4;
 	clearSpriteData(1);
 	setCursorSprite(mediumHeartSprite, mediumHeartSpriteHeight);
-	selectedIndex = -1;
-	setSelectedIndex(0);
 	setPlayerCursorColorCycling(1);
+
+	// Set up menu
+	rootMenuSelectedIndex = 0;
+	isLeavingBattle = 0;
+	enterRootMenu();
 
 	registerCursorEventHandler(battleCursorHandler);
 }

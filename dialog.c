@@ -467,9 +467,7 @@ void initDialog(void) {
 		// UInt16 startTime = SHORT_CLOCK;
 		SInt8 err = drawImage(temShopImage, temShopImageLength, 0, 72);
 		if (err) {
-			UInt8 message[20] = "puff() error:";
-			numberString(message+13, 0, err);
-			printString(message, 1, 0);
+			debugPrint("puff() error:", err, 1, 0);
 		}
 		// duration = SHORT_CLOCK - startTime;
 		// numberString(s+6, 0, duration);
