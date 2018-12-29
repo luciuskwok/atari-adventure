@@ -4,4 +4,3 @@
 
 
 void initBattle(void);
-SInt8 battleCursorHandler(UInt8 event);

@@ -36,12 +36,12 @@ UInt16 duration;
 // Map Mode functions
 
 void setUpMapMode(void) {
+	clearTextWindow(7);
 	printAllCharaText(0);
 	printPartyStats(987123, 21, 1325);
 
 	setScreenMode(ScreenModeMap);
 	transitionToMap(currentMapType, 0, 1);
-	setTextBoxColors();
 
 	registerCursorEventHandler(mapCursorHandler);
 }

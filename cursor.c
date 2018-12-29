@@ -3,11 +3,14 @@
 #include "cursor.h"
 #include "atari_memmap.h"
 #include "graphics.h"
+#include "sprites.h"
 
 
 // Globals
 UInt8 previousStick;
 UInt8 previousTrigger;
+UInt8 cursorHeight;
+const UInt8 *cursorSprite;
 CursorEventHandlerCallbackType gCursorEventHandler;
 
 // Functions
@@ -20,6 +23,31 @@ void initCursor(void) {
 void registerCursorEventHandler(CursorEventHandlerCallbackType handler) {
 	gCursorEventHandler = handler;
 }
+
+void setCursorSprite(const UInt8 *sprite, UInt8 height) {
+	cursorSprite = sprite;
+	cursorHeight = height;
+}
+
+void setCursorPosition(PointU8 *newPos) {
+	static UInt8 previousY = 0;
+	const UInt8 topMargin = 14;
+
+	// Remove old sprite data
+	drawSprite(NULL, cursorHeight, 1, topMargin + previousY);
+	
+	// Draw sprite in new position
+	drawSprite(cursorSprite, cursorHeight, 1, topMargin + newPos->y);
+	setSpriteHorizontalPosition(1, PM_LEFT_MARGIN - 8 + newPos->x);
+
+	previousY = newPos->y;
+}
+
+void hideCursor(void) {
+	setSpriteHorizontalPosition(1, 0);
+}
+
+// Event Handling
 
 SInt8 handleStick(void) {
 	// Only allow moves in 4 cardinal directions and not diagonals.

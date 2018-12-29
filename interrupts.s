@@ -12,8 +12,14 @@
 .code
 PCOLR0 = $02C0		; Player 0 color
 PCOLR1 = $02C1		; Player 1 color
+COLOR0 = $02C4		; Field 0 color (pixel value 1)
+COLOR1 = $02C5		; Field 1 color (pixel value 2)
 COLOR2 = $02C6		; Field 2 color (pixel value 3)
+COLOR3 = $02C7		; Field 3 color
 COLOR4 = $02C8		; Background color (pixel value 0)
+COLOR5 = $02C9		; Extra color: Text luminance
+COLOR6 = $02CA		; Extra color: Text box background color
+COLOR7 = $02CB		; Extra color: Bar background color
 
 CHBASE = $D409		; Character set
 HPOSP3 = $D003		; Player 2 horizontal position
@@ -29,8 +35,6 @@ CUR_SKIP  = 15		; number of frames to skip for color cycling
 CUR_TIMER = $0600	; cursor color cycling frame skip countdown timer
 VB_TIMER = $0601	; general countdown timer that decrements every VBI
 DLI_ROW   = $0610	; for keeping track of which row the DLI is on. Easier to use this for iterating through P3_XPOS and BG_COLOR arrays than to use VCOUNT.
-TEXT_LUM  = $0611	; text luminance for text window
-TEXT_BG   = $0612	; text window background color
 P3_XPOS   = $0613	; array of 9 bytes for repositioning player 3
 BG_COLOR  = $0620	; array of 72 bytes for changing background color per raster line
 
@@ -122,12 +126,12 @@ return:
 upper_text_window:
 	lda #$00	
 	sta COLPF2			; upper text window is always black
-	lda TEXT_LUM		
+	lda COLOR5		
 	sta COLPF1			; text luminance / bar chart foreground
 	jmp return_dli
 
 lower_text_window:
-	lda TEXT_BG			; lower text window is grey
+	lda COLOR6			; lower text window is gray
 	sta COLPF2
 
 return_dli:	
@@ -153,16 +157,20 @@ return_dli:
 text_window:
 	lda #$00	
 	sta COLPF2			; text box background: black
-	lda TEXT_LUM		
+	lda COLOR5		
 	sta COLPF1			; text luminance / bar chart foreground
-	lda #$00
+	lda #$02
 	sta COLPF4			; border background: black
-	lda #$82
+	lda COLOR7
 	sta COLPF0			; bar chart background color: blue
 	jmp return_dli
 
 button_bar:
-	lda COLOR2			; reload shadow register value
+	lda COLOR0			; reload shadow register values
+	sta COLPF0
+	lda COLOR1			; reload shadow register values
+	sta COLPF1
+	lda COLOR2			
 	sta COLPF2
 
 return_dli:	

@@ -30,3 +30,8 @@ extern const UInt8 temFaceSprite[];
 extern const UInt8 selectionCursorSpriteHeight;
 extern const UInt8 selectionCursorSprite[];
 
+extern const UInt8 smallHeartSpriteHeight;
+extern const UInt8 smallHeartSprite[];
+
+extern const UInt8 mediumHeartSpriteHeight;
+extern const UInt8 mediumHeartSprite[];

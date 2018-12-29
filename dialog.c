@@ -257,7 +257,7 @@ void drawNode(TreeNodePtr node) {
 	UInt8 lineSpacing;
 	UInt8 width;
 
-	clearTextWindow();
+	clearTextWindow(7);
 
 	if (node->value == MenuNodeTypeA || node->value == MenuNodeTypeB) {
 		drawVerticalDivider(28);
@@ -271,45 +271,27 @@ void drawNode(TreeNodePtr node) {
 			width = 10;
 			lineSpacing = 1;
 		}
-		drawTextBox(node->text, &pt, width, lineSpacing);
+		drawTextBox(node->text, &pt, width, lineSpacing, 0);
 		drawMenu(node);
 		drawStatus();
 	} else if (node->value == TalkNode) {
 		// Use selectedRow as the index of the message to show.
 		TreeNodePtr message = node->children[selectedRow];
 		if (message) {
-			pt.x = 4;
+			pt.x = 6;
 			width = 32;
 			lineSpacing = 2;
-			drawTextBox(message->text, &pt, width, lineSpacing);
+			drawTextBox(message->text, &pt, width, lineSpacing, -2);
 		}
 	}
 }
 
-void setCursorPosition(PointU8 *newPos) {
-	const UInt8 topMargin = 14;
-	static UInt8 previousY = 0;
-
-	// Remove old sprite data
-	drawSprite(NULL, selectionCursorSpriteHeight, 1, topMargin + 4 * previousY);
-	
-	// Draw sprite in new position
-	drawSprite(selectionCursorSprite, selectionCursorSpriteHeight, 1, topMargin + 4 * newPos->y);
-	setSpriteHorizontalPosition(1, PM_LEFT_MARGIN - 8 + 4 * newPos->x);
-
-	previousY = newPos->y;
-}
-
-void hideCursor(void) {
-	setSpriteHorizontalPosition(1, 0);
-}
-
 void setSelectedRow(UInt8 index) {
 	const UInt8 topMargin = 18;
-	PointU8 cell;
-	cell.x = menuOrigin.x;
-	cell.y = menuOrigin.y + index + topMargin;
-	setCursorPosition(&cell);
+	PointU8 pt;
+	pt.x = menuOrigin.x * 4;
+	pt.y = (menuOrigin.y + index + topMargin) * 4;
+	setCursorPosition(&pt);
 	selectedRow = index;
 }
 
@@ -419,13 +401,41 @@ static void handleClick(void) {
 	}
 }
 
+static SInt8 dialogCursorHandler(UInt8 event) {
+
+	if (event == CursorClick) {
+		handleClick();
+		if (isExittingDialog != 0) {
+			return MessageReturnToMap;
+		} 
+	} else {
+		UInt8 newRow = selectedRow;
+		switch (event) {
+			case CursorUp:
+				--newRow;
+				break;
+			case CursorDown:
+				++newRow;
+				break;
+			case CursorLeft:
+				break;
+			case CursorRight:
+				break;
+		}
+		if (newRow != selectedRow && newRow < menuItemCount) {
+			setSelectedRow(newRow);
+		}
+	}
+	return MessageNone;
+}
+
 void initDialog(void) {
 	isExittingDialog = 0;
 
 	// Set up graphics window
 	fadeOutColorTable(FadeTextBox);
 	setScreenMode(ScreenModeOff);
-	clearTextWindow();
+	clearTextWindow(7);
 	clearRasterScreen();
 	setPlayerCursorVisible(0);
 
@@ -469,36 +479,9 @@ void initDialog(void) {
 	// Selection Cursor
 	clearSpriteData(1);
 	setPlayerCursorColorCycling(1);
+	setCursorSprite(smallHeartSprite, smallHeartSpriteHeight);
 	setSelectedRow(0);
 
 	registerCursorEventHandler(dialogCursorHandler);
 }
 
-
-SInt8 dialogCursorHandler(UInt8 event) {
-
-	if (event == CursorClick) {
-		handleClick();
-		if (isExittingDialog != 0) {
-			return MessageReturnToMap;
-		} 
-	} else {
-		UInt8 newRow = selectedRow;
-		switch (event) {
-			case CursorUp:
-				--newRow;
-				break;
-			case CursorDown:
-				++newRow;
-				break;
-			case CursorLeft:
-				break;
-			case CursorRight:
-				break;
-		}
-		if (newRow != selectedRow && newRow < menuItemCount) {
-			setSelectedRow(newRow);
-		}
-	}
-	return MessageNone;
-}

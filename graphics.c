@@ -269,17 +269,13 @@ void fadeOutColorTable(UInt8 fadeOptions) {
 	for (count=0; count<15; ++count) {
 		*VB_TIMER = 1;
 
-		for (i=0; i<9; ++i) {
+		for (i=0; i<12; ++i) {
 			colors[i] = applyFade(colors[i], 1);			
 		}
 		if (fadeOptions & FadeGradient) {
 			for (i=0; i<72; ++i) {
 				BG_COLOR[i] = applyFade(BG_COLOR[i], 1);				
 			}
-		}
-		if (fadeOptions & FadeTextBox) {
-			*TEXT_LUM = applyFade(*TEXT_LUM, 1);
-			*TEXT_BG = applyFade(*TEXT_BG, 1);
 		}
 
 		// Delay 
@@ -296,17 +292,13 @@ void fadeInColorTable(UInt8 fadeOptions, const UInt8 *colorTable) {
 	for (amount=15; amount>=0; --amount) {
 		*VB_TIMER = 1;
 
-		for (i=0; i<9; ++i) {
+		for (i=0; i<12; ++i) {
 			colors[i] = applyFade(colorTable[i], amount);			
 		}
 		if (fadeOptions & FadeGradient) {
 			for (i=0; i<72; ++i) {
 				//BG_COLOR[i] = applyFade(BG_COLOR[i]);				
 			}
-		}
-		if (fadeOptions & FadeTextBox) {
-			// *TEXT_LUM = applyFade(*TEXT_LUM);
-			// *TEXT_BG = applyFade(*TEXT_BG);
 		}
 
 		// Delay 
@@ -321,11 +313,11 @@ void loadColorTable(const UInt8 *colors) {
 	UInt8 *p = (UInt8*)(PCOLR0);
 	UInt8 i;
 	if (colors) {
-		for (i=0; i<9; ++i) {
+		for (i=0; i<12; ++i) {
 			p[i] = colors[i];
 		}
 	} else {
-		memset(p, 0, 9);
+		memset(p, 0, 12);
 	}
 }
 

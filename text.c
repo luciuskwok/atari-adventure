@@ -10,12 +10,6 @@
 #define TEXTBOX_HEIGHT (10)
 
 
-void setTextBoxColors(void) {
-	// Set text window colors to defaults
-	*TEXT_LUM = 0x0E;    // white
-	*TEXT_BG  = 0x04;    // grey
-}
-
 void drawBarChart(UInt8 x, UInt8 y, UInt8 width, UInt8 filled) {
 	UInt8 *pixel = textWindow + x + y * TEXTBOX_WIDTH;
 	UInt8 i, c;
@@ -59,8 +53,6 @@ void printCharaStats(UInt8 player, UInt8 y, const UInt8 *name, UInt8 level, UInt
 }
 
 void printAllCharaText(UInt8 y) {
-	clearTextWindow();
-
 	// Print character statistics
 	printCharaStats(0, y, "Alisa", 99, 123, 255);
 	printCharaStats(1, y, "Marie", 1, 1, 8);
@@ -90,10 +82,10 @@ void printPartyStats(SInt32 money, UInt16 potions, UInt16 fangs) {
 
 }
 
-void clearTextWindow(void) {
+void clearTextWindow(UInt8 lines) {
 	UInt16 i;
 
-	for (i=0; i<TEXTBOX_HEIGHT*TEXTBOX_WIDTH; ++i) {
+	for (i=0; i<lines*TEXTBOX_WIDTH; ++i) {
 		textWindow[i] = 0;
 	}
 }
@@ -110,7 +102,7 @@ void printString(const UInt8 *s, UInt8 x, UInt8 y) {
 	}
 }
 
-void drawTextBox(const UInt8 *s, PointU8 *position, UInt8 width, UInt8 lineSpacing) {
+void drawTextBox(const UInt8 *s, PointU8 *position, UInt8 width, UInt8 lineSpacing, SInt8 indent) {
 	// text will be broken at space characters
 
 	UInt8 i = 0;
