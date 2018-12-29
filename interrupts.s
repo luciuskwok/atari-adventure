@@ -159,7 +159,7 @@ text_window:
 	sta COLPF2			; text box background: black
 	lda COLOR5		
 	sta COLPF1			; text luminance / bar chart foreground
-	lda #$02
+	lda #$00
 	sta COLPF4			; border background: black
 	lda COLOR7
 	sta COLPF0			; bar chart background color: blue

@@ -107,19 +107,22 @@ void drawTextBox(const UInt8 *s, PointU8 *position, UInt8 width, UInt8 lineSpaci
 
 	UInt8 i = 0;
 	UInt8 y = position->y;
-	UInt8 x = position->x;
+	UInt8 x = position->x + indent;
 	UInt8 previousBreakable = 0;
 	UInt8 lineStartIndex = 0;
 	UInt8 xMax = x + width;
+	UInt8 isNewLine = 1;
 	UInt8 c;
 
 	while (y < TEXTBOX_HEIGHT) {
 		c = s[i];
 		if (c == ' ' || c == '\n') { // whitespace
-			previousBreakable = i;
+			previousBreakable = i;			
 		}
 
 		if (x >= xMax || c == '\n') {
+			isNewLine = 0;
+			
 			// Rewind to previous breakable character
 			if (previousBreakable > lineStartIndex) {
 				while (i > previousBreakable + 1) {
@@ -129,11 +132,16 @@ void drawTextBox(const UInt8 *s, PointU8 *position, UInt8 width, UInt8 lineSpaci
 				}			
 			}
 
+			if (c == '\n') {
+				isNewLine = 1;
+			}
+
 			// Skip past whitespace
 			while (s[i] == ' ' || s[i] == '\n') {
 				++i;
 				if (s[i] == '\n') {
 					y += lineSpacing;
+					isNewLine = 1;
 				}
 			}
 			c = s[i];
@@ -141,6 +149,9 @@ void drawTextBox(const UInt8 *s, PointU8 *position, UInt8 width, UInt8 lineSpaci
 			// Start new line
 			y += lineSpacing;
 			x = position->x;
+			if (isNewLine != 0) {
+				x += indent;
+			}
 			lineStartIndex = i;
 			previousBreakable = i;
 		}
