@@ -12,14 +12,16 @@
 .code
 PCOLR0 = $02C0		; Player 0 color
 PCOLR1 = $02C1		; Player 1 color
+COLOR2 = $02C6		; Field 2 color (pixel value 3)
+COLOR4 = $02C8		; Background color (pixel value 0)
 
 CHBASE = $D409		; Character set
 HPOSP3 = $D003		; Player 2 horizontal position
-COLPF0 = $D016		; 
-COLPF1 = $D017		; text luminance
-COLPF2 = $D018		; text background
+COLPF0 = $D016		; pixel 1
+COLPF1 = $D017		; text luminance / pixel 2
+COLPF2 = $D018		; text background / pixel 3
 COLPF3 = $D019		; 
-COLPF4 = $D01A		; background
+COLPF4 = $D01A		; background / pixel 0
 WSYNC  = $D40A
 VCOUNT = $D40B		; vertical line counter
 
@@ -160,7 +162,7 @@ text_window:
 	jmp return_dli
 
 button_bar:
-	lda #$28			; orange buttons
+	lda COLOR2			; reload shadow register value
 	sta COLPF2
 
 return_dli:	
