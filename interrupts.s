@@ -7,7 +7,7 @@
 .export _initVBI
 .export _immediateUserVBI
 .export _mapViewDLI
-.export _storyViewDLI
+.export _battleViewDLI
 
 .code
 PCOLR0 = $02C0		; Player 0 color
@@ -135,27 +135,33 @@ return_dli:
 	rti
 .endproc
 
-.proc _storyViewDLI
+.proc _battleViewDLI
 	pha					; push accumulator and X register onto stack
 	txa
 	pha
 	
-	ldx DLI_ROW			 
-	lda BG_COLOR,X 		; set background color for each row
-
-	inx					; ++DLI_ROW
+	ldx DLI_ROW			; increment DLI_ROW
+	inx
 	stx DLI_ROW
+	stx WSYNC			; wait for horizontal sync
 
-	sta WSYNC			; wait for horizontal sync
+	cpx #2
+	beq lower_text_window
+
+upper_text_window:
+	lda #$00	
+	sta COLPF2			; upper text window is always black
+	lda TEXT_LUM		
+	sta COLPF1			; text luminance / bar chart foreground
+	lda #$00
 	sta COLPF4
+	lda #$82
+	sta COLPF0			; bar chart background color
+	jmp return_dli
 
-	cpx #72
-	bne return_dli		; if DLI_ROW == 72, set colors for text window
-	
-;	lda TEXT_BG			; text window background color
-;	sta COLPF2
-;	lda TEXT_LUM		; text window text luminance
-;	sta COLPF1
+lower_text_window:
+	lda TEXT_BG			; lower text window is grey
+	sta COLPF2
 
 return_dli:	
 	pla					; restore accumulator and X register from stack

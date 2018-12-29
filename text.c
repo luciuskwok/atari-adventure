@@ -10,6 +10,12 @@
 #define TEXTBOX_HEIGHT (7)
 
 
+void setTextBoxColors(void) {
+	// Set text window colors to defaults
+	*TEXT_LUM = 0x0E;    // white
+	*TEXT_BG  = 0x04;    // grey
+}
+
 void drawBarChart(UInt8 x, UInt8 y, UInt8 width, UInt8 filled) {
 	UInt8 *pixel = textWindow + x + y * TEXTBOX_WIDTH;
 	UInt8 i, c;
@@ -81,6 +87,19 @@ void clearTextWindow(void) {
 	for (i=0; i<TEXTBOX_HEIGHT*TEXTBOX_WIDTH; ++i) {
 		textWindow[i] = 0;
 	}
+}
+
+void printStatText(void) {
+	clearTextWindow();
+
+	// Print character statistics
+	printCharaStats(0, "Alisa", 99, 123, 255);
+	printCharaStats(1, "Marie", 1, 1, 8);
+	printCharaStats(2, "Guy", 19, 35, 36);
+	printCharaStats(3, "Nyorn", 7, 1, 40);
+
+	// Print party statistics
+	printPartyStats(987123, 21, 1325, -891);
 }
 
 void printString(const UInt8 *s, UInt8 x, UInt8 y) {

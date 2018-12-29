@@ -7,6 +7,7 @@
 
 // Includes
 #include "atari_memmap.h"
+#include "battle.h"
 #include "cursor.h"
 #include "dialog.h"
 #include "graphics.h"
@@ -34,23 +35,8 @@ UInt16 duration;
 
 // Map Mode functions
 
-void printStatText(void) {
-	clearTextWindow();
-
-	// Print character statistics
-	printCharaStats(0, "Alisa", 99, 123, 255);
-	printCharaStats(1, "Marie", 1, 1, 8);
-	printCharaStats(2, "Guy", 19, 35, 36);
-	printCharaStats(3, "Nyorn", 7, 1, 40);
-
-	// Print party statistics
-	printPartyStats(987123, 21, 1325, -891);
-}
-
 void setUpMapMode(void) {
-	// Set text window colors
-	*TEXT_LUM = 0x0E;    // white
-	*TEXT_BG  = 0x04;    // grey
+	setTextBoxColors();
 
 	printStatText();
 
@@ -62,14 +48,23 @@ void setUpMapMode(void) {
 
 // Dialog functions
 
+void fadeOutScreen(void) {
+	// Fade out
+	fadeOutColorTable(FadeGradient | FadeTextBox);
+	clearSpriteData(4);
+	hideSprites();
+}
 
 void handleMessage(SInt8 message) {
 	switch (message) {
-		case MessagePresentDialog:
+		case MessageEnterDialog:
 			initDialog();
 			break;
-		case MessageExitDialog:
-			exitDialog();
+		case MessageEnterBattle:
+			initBattle();
+			break;
+		case MessageReturnToMap:
+			fadeOutScreen();
 			setUpMapMode();
 			break;
 	}

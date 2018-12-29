@@ -40,7 +40,7 @@ Screen memory is allocated:
 extern void __fastcall__ initVBI(void *addr);
 extern void __fastcall__ immediateUserVBI(void);
 extern void __fastcall__ mapViewDLI(void);
-extern void __fastcall__ storyViewDLI(void);
+extern void __fastcall__ battleViewDLI(void);
 
 
 
@@ -54,7 +54,7 @@ UInt8 *textWindow;
 #define dl_VScroll (0x20)
 #define dl_HScroll (0x10)
 #define dl_mapTileLine (dl_Interrupt | dl_HScroll | 7)
-#define dl_rasterLine (dl_Interrupt | 13)
+#define dl_rasterLine (13)
 #define dl_textWindowLine (2)
 
 
@@ -141,8 +141,9 @@ UInt8 writeDisplayListCustomTextLines(UInt8 *dl) {
 	dl[x++] = textBarChartLSB;
 	dl[x++] = textPage;
 	dl[x++] = DL_BLK1 | dl_Interrupt;
-	dl[x++] = DL_BLK8;
 
+	// Party stats line
+	dl[x++] = DL_BLK8;
 	dl[x++] = dl_textWindowLine; 
 
 	return x;
@@ -172,7 +173,6 @@ void writeStoryViewDisplayList(void) {
 	x += writeDisplayListLines(dl+3, screen, dl_rasterLine, 72);
 	x += writeDisplayListLines(dl+x, textWindow, dl_textWindowLine, 7);
 	writeDisplayListEnd(dl+x);
-
 }
 
 void writeBattleViewDisplayList(void) {
@@ -181,6 +181,7 @@ void writeBattleViewDisplayList(void) {
 	UInt8 x = 3;
 
 	x += writeDisplayListLines(dl+3, screen, dl_rasterLine, 72);
+	dl[x-1] |= dl_Interrupt; 
 	x += writeDisplayListCustomTextLines(dl+x);
 	writeDisplayListEnd(dl+x);
 }
@@ -201,17 +202,16 @@ void setScreenMode(UInt8 mode) {
 			dli = mapViewDLI;
 			break;
 
-		case ScreenModeShop:
+		case ScreenModeDialog:
 			dma = 0x2E; // various Antic DMA options
 			writeStoryViewDisplayList();
-			dli = storyViewDLI;
 			break;
 
 		case ScreenModeBattle:
 			dma = 0x2E; // various Antic DMA options
 			nmi |= 0x80; // enable DLI
 			writeBattleViewDisplayList();
-			dli = storyViewDLI;
+			dli = battleViewDLI;
 			break;
 
 		case ScreenModeOff:

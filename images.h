@@ -3,7 +3,7 @@
 #include "types.h"
 
 void initTileFont(UInt8 fontPage);
-SInt8 drawImage(const UInt8 *data, UInt16 length);
+SInt8 drawImage(const UInt8 *data, UInt16 length, UInt8 rowOffset, UInt8 rowCount);
 void clearRasterScreen(void);
 
 

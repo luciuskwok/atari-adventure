@@ -9,9 +9,9 @@
 #define DesertColor (0x40)
 #define PlainsColor (0x80)
 #define ForestColor (0xC0)
-#define DungeonWallColor  (0x00)
+#define DungeonFloorColor (0x00)
 #define DungeonChestColor (0x40)
-#define DungeonFloorColor (0x80)
+#define DungeonWallColor  (0x80)
 #define DungeonExitColor  (0xC0)
 #define TownBlueColor  (0x00)
 #define TownGrayColor  (0x40)
@@ -113,7 +113,7 @@ const UInt8 overworldRleMap[] = {
 0x09,0x3F,0x00,0x12,0x64,0x15,0x2C,0x19,0x6A,
 };
 const SizeU8 overworldMapSize = { 64, 64 };
-const PointU8 overworldEntryPoint = { 60, 6 };
+const PointU8 overworldEntryPoint = { 47, 7 };
 
 
 
@@ -130,9 +130,9 @@ const UInt8 dungeonColorTable[] = {
 	0x58, // PM1: purple / cursor color
 	0x0F, // PM2: white / unused
 	0x0F, // PM3: white / tile overlay
-	0x06, // 0: wall: dark grey
+	0x90, // 0: floor: dark blue
 	0x1C, // 1: chest: gold
-	0x90, // 2: floor: dark blue
+	0x06, // 2: wall: dark grey
 	0xBA, // 3: exit: light green
 	0x00, // 4: black / background
 };

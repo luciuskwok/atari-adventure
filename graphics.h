@@ -34,7 +34,7 @@ void fadeInColorTable(UInt8 fadeOptions, const UInt8 *colorTable);
 enum ScreenMode {
 	ScreenModeOff = 0,
 	ScreenModeMap,
-	ScreenModeShop,
+	ScreenModeDialog,
 	ScreenModeBattle,
 };
 void setScreenMode(UInt8 mode);

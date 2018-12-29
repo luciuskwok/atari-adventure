@@ -46,11 +46,11 @@ typedef struct StackItem {
 StackItem dialogStack[DIALOG_STACK_CAPACITY];
 UInt8 dialogStackCount = 0;
 
-UInt8 isExittingDialog;
+static UInt8 isExittingDialog;
 
-PointU8 menuOrigin;
-UInt8 menuItemCount;
-UInt8 selectedRow;
+static PointU8 menuOrigin;
+static UInt8 menuItemCount;
+static UInt8 selectedRow;
 
 
 // Data
@@ -343,7 +343,7 @@ UInt8 childCount(TreeNodePtr node) {
 	return 0;
 }
 
-void handleMenuItemNode(TreeNodePtr node) {
+static void handleMenuItemNode(TreeNodePtr node) {
 	StackItem item;
 
 	// Get the menu node inside the choice node
@@ -359,7 +359,7 @@ void handleMenuItemNode(TreeNodePtr node) {
 	}
 }
 
-void handleTalkNode(TreeNodePtr node) {
+static void handleTalkNode(TreeNodePtr node) {
 	StackItem item;
 	item.node = node;
 	item.selectedRow = 0;
@@ -369,7 +369,7 @@ void handleTalkNode(TreeNodePtr node) {
 	drawNode(node);
 }
 
-void advanceToNextMessage(void) {
+static void advanceToNextMessage(void) {
 	StackItem item;
 	topOfStack(&item);
 
@@ -381,11 +381,11 @@ void advanceToNextMessage(void) {
 	}
 }
 
-void handleBuyItemNode(TreeNodePtr node) {
+static void handleBuyItemNode(TreeNodePtr node) {
 	// Show confirmation dialog
 }
 
-void handleClick(void) {
+static void handleClick(void) {
 	StackItem item;
 	topOfStack(&item);
 
@@ -420,6 +420,8 @@ void handleClick(void) {
 }
 
 void initDialog(void) {
+	isExittingDialog = 0;
+
 	// Set up graphics window
 	fadeOutColorTable(FadeTextBox);
 	setScreenMode(ScreenModeOff);
@@ -429,7 +431,7 @@ void initDialog(void) {
 
 	// Turn on screen
 	loadColorTable(temShopColorTable);
-	setScreenMode(ScreenModeShop);
+	setScreenMode(ScreenModeDialog);
 
 	// Set up sprites
 	clearSpriteData(3);
@@ -453,7 +455,7 @@ void initDialog(void) {
 		// UInt16 duration;
 		// UInt8 s[16] = "Time: ";
 		// UInt16 startTime = SHORT_CLOCK;
-		SInt8 err = drawImage(temShopImage, temShopImageLength);
+		SInt8 err = drawImage(temShopImage, temShopImageLength, 0, 72);
 		if (err) {
 			UInt8 message[20] = "puff() error:";
 			numberString(message+13, 0, err);
@@ -470,22 +472,15 @@ void initDialog(void) {
 	setSelectedRow(0);
 
 	registerCursorEventHandler(dialogCursorHandler);
-	isExittingDialog = 0;
 }
 
-void exitDialog(void) {
-	// Fade out
-	fadeOutColorTable(FadeGradient | FadeTextBox);
-	clearSpriteData(4);
-	hideSprites();
-}
 
 SInt8 dialogCursorHandler(UInt8 event) {
 
 	if (event == CursorClick) {
 		handleClick();
 		if (isExittingDialog != 0) {
-			return MessageExitDialog;
+			return MessageReturnToMap;
 		} 
 	} else {
 		UInt8 newRow = selectedRow;

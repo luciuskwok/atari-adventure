@@ -114,14 +114,16 @@ SInt8 mapCursorHandler(UInt8 event) {
 				break;
 			case tVillage:
 			case tCastle:
-				result = MessagePresentDialog;
+				result = MessageEnterDialog;
 				break;
 			case tMonument:
-			case tCave:
 				enterDungeon();
 				break;
+			case tCave:
+				result = MessageEnterBattle;
+				break;
 			case tHouseDoor:
-				result = MessagePresentDialog;
+				result = MessageEnterDialog;
 				break;
 			case tLadder:
 				exitToOverworld();

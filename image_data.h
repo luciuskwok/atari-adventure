@@ -11,4 +11,8 @@ extern const UInt16 temShopImageLength;
 extern const UInt8 temShopImage[];
 extern const UInt8 temShopColorTable[];
 
+extern const UInt16 battleButtonsImageLength;
+extern const UInt8 battleButtonsImage[];
+extern const UInt8 battleColorTable[];
+
 extern const UInt8 plainsGradient[];

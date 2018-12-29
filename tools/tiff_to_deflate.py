@@ -6,6 +6,9 @@
 
 import zlib, sys, base64
 
+# Color table mapping
+# colorTable = [3, 1, 0, 2] # Tem Shop colors
+colorTable = [0, 0, 3, 3] # Battle button colors
 
 def validateTIFFHeader(ifh):
 	isBigEndian = False
@@ -133,10 +136,8 @@ with open(sys.argv[1], "rb") as file:
 		print("Cannot process file in this format (samplesPerPixel: "+str(samplesPerPixel)+" photometricInterpretation: "+str(photometricInterpretation)+").")
 		exit()
 
-	#file should be 160x72 in size
-	if imageWidth != 160 or imageHeight != 72:
-		print("Image size is not 160x72. This file is "+str(imageWidth)+"x"+str(imageHeight))
-		exit()
+	# full screen images should be 160x72 in size
+	print("Image size is "+str(imageWidth)+"x"+str(imageHeight)+".")
 
 	# read file into buffer as string
 	file.seek(stripOffset, 0)
@@ -157,13 +158,13 @@ with open(sys.argv[1], "rb") as file:
 
 			# Apply a custom color mapping. 
 			if lum > 0.9:
-				colorIndex = 2 # white
+				colorIndex = colorTable[3] # white
 			elif lum > 0.5:
-				colorIndex = 0 # light background
+				colorIndex = colorTable[2] # light background
 			elif lum > 0.1:
-				colorIndex = 1 # dark background
+				colorIndex = colorTable[1] # dark background
 			else:
-				colorIndex = 3 # black
+				colorIndex = colorTable[0] # black
 
 			indexedData.append(colorIndex)
 
@@ -176,10 +177,6 @@ with open(sys.argv[1], "rb") as file:
 			if x % 4 == 3:
 				packedData.append(packedByte)
 				packedByte = 0
-
-	# integrity check
-	if len(packedData) != 2880:
-		print "Packed data length should be 2880 but is "+str(len(packedData))
 
 	# compress with DEFLATE
 	zlibData = zlib.compress(buffer(packedData), 9)

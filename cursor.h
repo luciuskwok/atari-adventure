@@ -15,8 +15,9 @@ enum CursorEventType {
 };
 enum CursorEventMessages {
 	MessageNone = 0,
-	MessagePresentDialog = 1,
-	MessageExitDialog,
+	MessageEnterDialog = 1,
+	MessageEnterBattle = 2,
+	MessageReturnToMap = 3,
 };
 
 // Functions

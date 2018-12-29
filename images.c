@@ -6,7 +6,8 @@
 #include <string.h>
 
 
-#define SCREEN_LENGTH (40 * 72)
+#define ROW_BYTES (40)
+#define SCREEN_HEIGHT (72)
 
 // Tile Data
 
@@ -82,14 +83,16 @@ void initTileFont(UInt8 fontPage) {
 	POKE(CHBAS, fontPage + 2);
 }
 
-SInt8 drawImage(const UInt8 *data, UInt16 length) {
+SInt8 drawImage(const UInt8 *data, UInt16 length, UInt8 rowOffset, UInt8 rowCount) {
 	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
-	UInt16 screenLen = SCREEN_LENGTH;
+	UInt16 screenLen = rowCount * ROW_BYTES;
+
+	screen += rowOffset * ROW_BYTES;
 	return puff(screen, &screenLen, data, &length);
 }
 
 void clearRasterScreen(void) {
 	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
-	memset(screen, 0, SCREEN_LENGTH);
+	memset(screen, 0, ROW_BYTES * SCREEN_HEIGHT);
 }
 
