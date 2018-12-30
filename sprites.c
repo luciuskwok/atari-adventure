@@ -96,12 +96,23 @@ void drawSprite(const UInt8 *sprite, UInt8 length, UInt8 player, UInt8 y) {
 void setSpriteHorizontalPosition(UInt8 player, UInt8 x) {
 	UInt8 *spritePositions = (UInt8 *)HPOSP0;
 
-	if (player > 0 && player < 9) {
+	if (1 <= player && player <= 8) {
 		player -= 1;
 		spritePositions[player] = x;
 		if (player == 3) {
 			P3_XPOS[0] = x; // VBI still copies P3_XPOS[0] to HPOSP0
 		}
+	}
+}
+
+void setSpriteWidth(UInt8 player, UInt8 width) {
+	UInt8 *spriteSize = (UInt8 *)SIZEP0;
+	UInt8 widthCode = width - 1;
+
+	if (1 <= player && player <= 4) {
+		spriteSize[player-1] = widthCode;
+	} else if (5 <= player && player <= 8) {
+		// Changing missile sprite widths not yet supported.
 	}
 }
 
@@ -212,6 +223,9 @@ const UInt8	smallHeartSprite[] = { 0x36, 0x7F, 0x3E, 0x08 };
 
 const UInt8 mediumHeartSpriteHeight = 6;
 const UInt8	mediumHeartSprite[] = { 0x66, 0xFF, 0xFF, 0x7E, 0x3C, 0x18 };
+
+const UInt8 enemyAttackSpriteHeight = 14;
+const UInt8 enemyAttackSprite[] = { 0x18, 0x3C, 0x7E, 0x7E, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7E, 0x7E, 0x3C, 0x18 };
 
 /*
 const UInt8 sansSpriteOLD[] = {

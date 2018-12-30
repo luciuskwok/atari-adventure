@@ -8,6 +8,7 @@
 void clearTextWindow(UInt8 lines);
 void clearTextRect(RectU8 *rect);
 
+void printCharaAtIndex(UInt8 index, UInt8 y, UInt8 clear);
 void printAllCharaText(UInt8 y);
 void printPartyStats(void);
 

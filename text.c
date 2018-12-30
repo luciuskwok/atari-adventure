@@ -58,16 +58,28 @@ static void printCharaStats(UInt8 x, UInt8 y, GameCharaPtr chara) {
 	}
 }
 
+void printCharaAtIndex(UInt8 index, UInt8 y, UInt8 clear) {
+	UInt8 x = 1 + index * 10;
+	GameCharaPtr chara = charaAtIndex(index);
+	RectU8 r;
+
+	if (clear) {
+		r.origin.x = x;
+		r.origin.y = y;
+		r.size.width = 10;
+		r.size.height = 4;
+		clearTextRect(&r);
+	}
+
+	printCharaStats(x, y, chara);
+}
+
 void printAllCharaText(UInt8 y) {
 	UInt8 count = numberInParty();
-	UInt8 x = 1;
-	GameCharaPtr chara;
 	UInt8 i;
 
 	for (i=0; i<count; ++i) {
-		chara = charaAtIndex(i);
-		printCharaStats(x, y, chara);
-		x += 10;
+		printCharaAtIndex(i, y, 0);
 	}
 }
 

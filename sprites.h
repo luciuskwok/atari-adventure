@@ -13,6 +13,9 @@ void setPlayerCursorColorCycling(UInt8 cycle);
 
 void setTileOverlaySprite(const UInt8 *sprite, UInt8 column, UInt8 row);
 void drawSprite(const UInt8 *sprite, UInt8 length, UInt8 player, UInt8 y);
+
+void setSpriteWidth(UInt8 player, UInt8 width);
+
 void setSpriteHorizontalPosition(UInt8 player, UInt8 x);
 void setMegaSprite(const UInt8 *sprite, const UInt8 length, const PointU8 *position, UInt8 magnification);
 
@@ -35,3 +38,6 @@ extern const UInt8 smallHeartSprite[];
 
 extern const UInt8 mediumHeartSpriteHeight;
 extern const UInt8 mediumHeartSprite[];
+
+extern const UInt8 enemyAttackSpriteHeight;
+extern const UInt8 enemyAttackSprite[];

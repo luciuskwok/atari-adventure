@@ -26,16 +26,6 @@ enum MapTypes {
 // extern SizeU8 currentMapSize;
 // extern UInt8 currentMapType;
 
-// Map Info
-PointU8 mapEntryPoint(UInt8 mapType);
-
-// Map Movement
-void transitionToMap(UInt8 mapType, UInt8 shouldFadeOut, UInt8 shouldFadeIn);
-void exitToOverworld(void);
-void enterDungeon(void);
-void enterTown(void);
-SInt8 mapCursorHandler(UInt8 event);
-
 // Map Drawing
 void loadMap(UInt8 mapType, UInt8 sightDistance, UInt8 x, UInt8 y);
 const UInt8 *colorTableForMap(UInt8 mapType);
@@ -43,6 +33,11 @@ void clearMapScreen(void);
 void layoutCurrentMap(UInt8 sightDistance);
 void drawCurrentMap(UInt8 x, UInt8 y);
 
-
+// Map Movement
+void transitionToMap(UInt8 mapType, UInt8 shouldFadeOut, UInt8 shouldFadeIn);
+void exitToOverworld(void);
+void enterDungeon(void);
+void enterTown(void);
+SInt8 mapCursorHandler(UInt8 event);
 
 #endif

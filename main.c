@@ -15,6 +15,7 @@
 #include "images.h"
 #include "image_data.h"
 #include "map.h"
+#include "map_data.h"
 #include "sprites.h"
 #include "text.h"
 #include "types.h"
@@ -89,7 +90,7 @@ int main (void) {
 	mapShipType = 0;
 	mapLampStrength = 2;
 	mapSightDistance = 0xFF;
-	mapOverworldLocation = mapEntryPoint(OverworldMapType);
+	mapOverworldLocation = overworldEntryPoint;
 	mapCurrentLocation = mapOverworldLocation;
 
 	setUpMapMode();

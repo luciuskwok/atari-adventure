@@ -6,6 +6,7 @@
 #include "graphics.h"
 #include "images.h"
 #include "image_data.h"
+#include "menu.h"
 #include "sprites.h"
 #include "text.h"
 #include "atari_memmap.h"
@@ -13,11 +14,8 @@
 // Globals
 UInt8 isLeavingBattle;
 UInt8 menuType;
-UInt8 menuItemCount;
-PointU8 menuOrigin;
-UInt8 menuItemSpacing;
-UInt8 selectedIndex;
 UInt8 rootMenuSelectedIndex;
+UInt8 previousSelectedIndex;
 UInt8 shouldRedrawEncounterTextOnMove;
 GameChara enemy;
 
@@ -49,22 +47,6 @@ static void applySelectionColor(UInt8 isMasking, UInt8 offset, UInt8 length) {
 	}
 }
 
-static void setSelectedIndex(UInt8 index) {
-	UInt8 x = menuOrigin.x + menuItemSpacing * index;
-	UInt8 y = menuOrigin.y;
-	setCursorPosition(x, y);
-
-	// Change color of old selection and new selection.
-	if (menuType == BattleRootMenu) {
-		if (selectedIndex < 4) {
-			applySelectionColor(0, selectedIndex * 10, 10);
-		}
-		applySelectionColor(1, index * 10, 10);
-	}
-
-	selectedIndex = index;
-}
-
 static void showEncounterText(void) {
 	UInt8 s[64] = "* ";
 
@@ -86,8 +68,8 @@ static void enterRootMenu(UInt8 showText) {
 	menuOrigin.x = 9;
 	menuOrigin.y = 92;
 	menuItemSpacing = 43;
-	selectedIndex = -1;
-	setSelectedIndex(rootMenuSelectedIndex);
+	previousSelectedIndex = -1;
+	setMenuSelectedIndex(rootMenuSelectedIndex);
 }
 
 static void drawEnemyHpBar(void) {
@@ -127,10 +109,21 @@ static void enemyWasHit(UInt8 damage) {
 	}
 }
 
-static void playerWasHit(UInt8 player, UInt8 damage) {
-	GameCharaPtr chara = charaAtIndex(player);
+static void addPlayerExperience(GameCharaPtr /* chara */, UInt8 /* value */) {
+	// TODO
+}
 
-	// TODO: Show animation for player getting hit.
+static void charaAtIndexWasHit(UInt8 index, UInt8 damage) {
+	GameCharaPtr chara = charaAtIndex(index);
+	UInt8 i;
+
+	// Show animation for player getting hit.
+	for (i=0; i<4; ++i) {
+		setSpriteHorizontalPosition(3, 48 + index * 40);
+		waitVsync(4);
+		setSpriteHorizontalPosition(3, 0);
+		waitVsync(4);
+	}
 
 	// Decrement player HP
 	if (damage < chara->hp) {
@@ -139,9 +132,8 @@ static void playerWasHit(UInt8 player, UInt8 damage) {
 		chara->hp = 0;
 	}
 
-	// TODO: Redraw just the one character's stats
-
-
+	// Redraw the character's stats
+	printCharaAtIndex(index, 4, 1);
 }
 
 static void doAttack(UInt8 player) {
@@ -149,6 +141,7 @@ static void doAttack(UInt8 player) {
 	UInt8 damage = 3;
 	UInt8 s[40] = "* ";
 
+	hideCursor();
 	stringConcat(s, chara->name);
 	clearTextWindow(3);
 
@@ -158,10 +151,23 @@ static void doAttack(UInt8 player) {
 	
 		// Calculate damage to enemy or miss.
 		enemyWasHit(damage);
-	
+
+		// Add to player XP
+		addPlayerExperience(chara, 1);
+
 		if (isLeavingBattle == 0) {
+			// Pause before counter-attack
+			waitVsync(15);
+			stringCopy(s, "* ");
+			stringConcat(s, enemy.name);
+			stringConcat(s, " counter-attacks ");
+			stringConcat(s, chara->name);
+			stringConcat(s, ".");
+			clearTextWindow(3);
+			drawTextBox(s, 1, 0, 38, 2, -2);
+	
 			// Calculate to player character or miss.
-			playerWasHit(player, damage);
+			charaAtIndexWasHit(player, damage);
 		}
 	
 		if (isLeavingBattle == 0) {
@@ -178,7 +184,6 @@ static void enterFightMenu(void) {
 	if (numberInParty() == 1) {
 		doAttack(0);
 	} else {
-		rootMenuSelectedIndex = selectedIndex;
 
 		clearTextWindow(3);
 		printString("* Who shall fight?", 1, 0);
@@ -188,8 +193,7 @@ static void enterFightMenu(void) {
 		menuOrigin.x = 8;
 		menuOrigin.y = 66;
 		menuItemSpacing = 40;
-		selectedIndex = -1;
-		setSelectedIndex(0);
+		setMenuSelectedIndex(0);
 
 		shouldRedrawEncounterTextOnMove = 0;
 	}
@@ -207,7 +211,10 @@ static void enterTalk(void) {
 }
 
 static void useItem(UInt8 item) {
+	UInt8 count = numberInParty();
+	UInt8 i;
 	UInt8 damage;
+	GameCharaPtr chara;
 
 	hideCursor();
 
@@ -222,6 +229,11 @@ static void useItem(UInt8 item) {
 	
 	enemyWasHit(damage);
 
+	for (i=0; i<count; ++i) {
+		chara = charaAtIndex(i);
+		addPlayerExperience(chara, 1);
+	}
+
 	if (isLeavingBattle == 0) {
 		enterRootMenu(0);
 		shouldRedrawEncounterTextOnMove = 1;
@@ -233,8 +245,6 @@ static void enterItemMenu(void) {
 	const UInt8 y = 1;
 	const UInt8 spacing = 8;
 
-	rootMenuSelectedIndex = selectedIndex;
-
 	clearTextWindow(3);
 	printString("* Nuts", x, y);
 	printString("* Staff", x + spacing, y);
@@ -244,8 +254,7 @@ static void enterItemMenu(void) {
 	menuOrigin.x = 6 + 4 * x;
 	menuOrigin.y = 53 + 4 * y;
 	menuItemSpacing = 4 * spacing;
-	selectedIndex = -1;
-	setSelectedIndex(0);
+	setMenuSelectedIndex(0);
 
 	shouldRedrawEncounterTextOnMove = 0;
 }
@@ -254,10 +263,11 @@ static void attemptMercy(void) {
 	isLeavingBattle = 1;
 }
 
-static void handleClick(void) {
+static SInt8 handleMenuClick(UInt8 index) {
 	switch (menuType) {
 		case BattleRootMenu:
-			switch (selectedIndex) {
+			rootMenuSelectedIndex = menuSelectedIndex;
+			switch (index) {
 				case 0:
 					enterFightMenu();
 					break;
@@ -273,47 +283,37 @@ static void handleClick(void) {
 			}
 			break;
 		case BattleFightMenu:
-			doAttack(selectedIndex);
+			doAttack(index);
 			break;
 		case BattleItemMenu:
-			useItem(selectedIndex);
+			useItem(index);
 			break;
+	}
+	return isLeavingBattle ? MessageReturnToMap : MessageNone;
+}
+
+static void handleMenuEscape(void) {
+	if (menuType != BattleRootMenu) {
+		enterRootMenu(1);
 	}
 }
 
-static SInt8 battleCursorHandler(UInt8 event) {
-	if (event == CursorClick) {
-		handleClick();
-		if (isLeavingBattle != 0) {
-			return MessageReturnToMap;
-		} 
-	} else {
-		UInt8 newIndex = selectedIndex;
-		switch (event) {
-			case CursorLeft:
-				--newIndex;
-				break;
-			case CursorRight:
-				++newIndex;
-				break;
-			case CursorDown:
-				if (menuType != BattleRootMenu) {
-					enterRootMenu(1);
-					return MessageNone;
-				}
-				break;
+static void menuSelectionDidChange(UInt8 index) {
+	// Change color of old selection and new selection.
+	if (menuType == BattleRootMenu) {
+		// Remove old selection
+		if (previousSelectedIndex < 4) {
+			applySelectionColor(0, previousSelectedIndex * 10, 10);
 		}
 
-		if (newIndex != selectedIndex) {
-			if (shouldRedrawEncounterTextOnMove) {
-				showEncounterText();
-			}
-			if (newIndex < menuItemCount) {
-				setSelectedIndex(newIndex);
-			}
-		} 
+		// Apply new selection
+		applySelectionColor(1, index * 10, 10);
+		previousSelectedIndex = index;
+
+		if (shouldRedrawEncounterTextOnMove) {
+			showEncounterText();
+		}
 	}
-	return MessageNone;
 }
 
 void initBattle(void) {
@@ -363,16 +363,24 @@ void initBattle(void) {
 		debugPrint("puff() error:", err, 1, 1);
 	}
 
-	// Selection Cursor
-	clearSpriteData(1);
-	setCursorSprite(mediumHeartSprite, mediumHeartSpriteHeight);
-	setPlayerCursorColorCycling(1);
+	// Enemy counter-attack effect
+	clearSpriteData(3);
+	setSpriteWidth(3, 4);
+	drawSprite(enemyAttackSprite, enemyAttackSpriteHeight, 3, 82);
+	//setSpriteHorizontalPosition(3, 48);
 
 	// Set up menu
+	initMenu();
+	menuIsHorizontal = 1;
+	setMenuCursor(mediumHeartSprite, mediumHeartSpriteHeight);
+
+	registerMenuDidClickCallback(handleMenuClick);
+	registerMenuSelectedIndexDidChangeCallback(menuSelectionDidChange);
+	menuEscapeCursorEvent = CursorDown;
+	registerMenuDidEscapeCallback(handleMenuEscape);
+
 	rootMenuSelectedIndex = 0;
 	isLeavingBattle = 0;
 	enterRootMenu(1);
-
-	registerCursorEventHandler(battleCursorHandler);
 }
 

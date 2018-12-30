@@ -4,7 +4,9 @@
 #include "cursor.h"
 #include "graphics.h"
 #include "map_data.h"
+#include "menu.h"
 #include "sprites.h"
+#include "text.h"
 #include "images.h"
 #include "atari_memmap.h"
 #include <string.h>
@@ -29,6 +31,51 @@ RectU8 mapFrame;
 
 // Assembly routine
 extern void __fastcall__ decodeRunLenRange(UInt8 *outData, UInt8 start, UInt8 end, const UInt8 *runLenData);
+
+// Menu
+
+static void exitMapMenu(void) {
+
+	registerCursorEventHandler(mapCursorHandler);
+}
+
+static SInt8 handleMenuClick(UInt8 index) {
+	switch (index) {
+		case 0: // Heal
+
+			break;
+
+		case 1: // Info
+
+			break;
+
+		case 2: // Save
+
+			break;
+
+		case 3: // Done
+
+			break;
+
+	}
+	return MessageNone;
+}
+
+
+static void initMapMenu(void) {
+	RectU8 r = { { 0, 4 }, { 40, 1 } };
+
+	clearTextRect(&r);
+
+	initMenu();
+	menuOrigin.x = 2;
+	menuOrigin.y =24;
+	menuItemCount = 4;
+	menuItemSpacing = 8;
+	menuIsHorizontal = 1;
+	registerMenuDidClickCallback(handleMenuClick);
+	setMenuCursor(mediumHeartSprite, mediumHeartSpriteHeight);
+}
 
 // Local Functions
 
@@ -66,127 +113,6 @@ static UInt8 canMoveTo(UInt8 x, UInt8 y) {
 	}
 
 	return 1;
-}
-
-// Map Info
-
-PointU8 mapEntryPoint(UInt8 mapType) {
-	PointU8 pt = {0,0};
-
-	switch (mapType) {
-	case OverworldMapType: 
-		pt = overworldEntryPoint;
-		break;
-	case DungeonMapType: 
-		pt = dungeonEntryPoint;
-		break;
-	case TownMapType: 
-		pt = townEntryPoint;
-		break;
-	}
-	return pt;
-}
-
-// Map Movement
-
-void transitionToMap(UInt8 mapType, UInt8 shouldFadeOut, UInt8 shouldFadeIn) {
-	const UInt8 *colorTable = colorTableForMap(mapType);
-
-	if (shouldFadeOut) {
-		fadeOutColorTable(0);
-	} else {
-		loadColorTable(NULL);
-	}
-
-	loadMap(mapType, mapSightDistance, mapCurrentLocation.x, mapCurrentLocation.y);
-	
-	if (shouldFadeIn) {	
-		fadeInColorTable(0, colorTable);
-	} else {
-		loadColorTable(colorTable);
-	}
-
-	// Show player cursor
-	setPlayerCursorVisible(1);
-	setPlayerCursorColorCycling(1);
-}
-
-void exitToOverworld(void) {
-	mapCurrentLocation = mapOverworldLocation;
-	mapSightDistance = 0xFF;
-	transitionToMap(OverworldMapType, 1, 1);
-}
-
-void enterDungeon(void) {
-	mapSightDistance = mapLampStrength;
-	mapOverworldLocation = mapCurrentLocation;
-	mapCurrentLocation = mapEntryPoint(DungeonMapType);
-	transitionToMap(DungeonMapType, 1, 1);
-}
-
-void enterTown(void) {
-	mapSightDistance = 0xFF;
-	mapOverworldLocation = mapCurrentLocation;
-	mapCurrentLocation = mapEntryPoint(TownMapType);
-	transitionToMap(TownMapType, 1, 1);
-}
-
-SInt8 mapCursorHandler(UInt8 event) {
-	SInt8 result = 0;
-	PointU8 oldLoc, newLoc;
-	UInt8 tile;
-
-	oldLoc = mapCurrentLocation;
-	newLoc = oldLoc;
-
-	switch (event) {
-	case CursorClick:
-		// Get the tile without color info.
-		tile = mapTileAt(oldLoc.x, oldLoc.y) & 0x3F; 
-		switch (tile) {
-			case tTown:
-				enterTown();
-				break;
-			case tVillage:
-			case tCastle:
-				result = MessageEnterDialog;
-				break;
-			case tMonument:
-				enterDungeon();
-				break;
-			case tCave:
-				result = MessageEnterBattle;
-				break;
-			case tHouseDoor:
-				result = MessageEnterDialog;
-				break;
-			case tLadder:
-				exitToOverworld();
-		}
-		break;
-
-	case CursorUp:    --newLoc.y; break; // up
-	case CursorDown:  ++newLoc.y; break; // down
-	case CursorLeft:  --newLoc.x; break; // left
-	case CursorRight: ++newLoc.x; break; // right
-	}
-
-	if (newLoc != oldLoc) {
-		// Check map bounds. Because newLoc is unsigned, it wraps around from 0 to 255.
-		if (newLoc.x < currentMapSize.width && newLoc.y < currentMapSize.height) {
-			if (canMoveTo(newLoc.x, newLoc.y)) {
-				mapCurrentLocation = newLoc;
-				drawCurrentMap(newLoc.x, newLoc.y);
-			}
-		} else {
-			// Handle moving off the map for towns
-			if (currentMapType == TownMapType) {
-				exitToOverworld();
-			}
-		}
-	}
-
-	return result;
 }
 
 // Map Drawing
@@ -355,3 +281,106 @@ void drawCurrentMap(UInt8 x, UInt8 y) {
 		screenIndex += screenRowSkip;
 	}
 }
+
+// Map Movement
+
+void transitionToMap(UInt8 mapType, UInt8 shouldFadeOut, UInt8 shouldFadeIn) {
+	const UInt8 *colorTable = colorTableForMap(mapType);
+
+	if (shouldFadeOut) {
+		fadeOutColorTable(0);
+	} else {
+		loadColorTable(NULL);
+	}
+
+	loadMap(mapType, mapSightDistance, mapCurrentLocation.x, mapCurrentLocation.y);
+	
+	if (shouldFadeIn) {	
+		fadeInColorTable(0, colorTable);
+	} else {
+		loadColorTable(colorTable);
+	}
+
+	// Show player cursor
+	setPlayerCursorVisible(1);
+	setPlayerCursorColorCycling(1);
+}
+
+void exitToOverworld(void) {
+	mapCurrentLocation = mapOverworldLocation;
+	mapSightDistance = 0xFF;
+	transitionToMap(OverworldMapType, 1, 1);
+}
+
+void enterDungeon(void) {
+	mapSightDistance = mapLampStrength;
+	mapOverworldLocation = mapCurrentLocation;
+	mapCurrentLocation = dungeonEntryPoint;
+	transitionToMap(DungeonMapType, 1, 1);
+}
+
+void enterTown(void) {
+	mapSightDistance = 0xFF;
+	mapOverworldLocation = mapCurrentLocation;
+	mapCurrentLocation = townEntryPoint;
+	transitionToMap(TownMapType, 1, 1);
+}
+
+SInt8 mapCursorHandler(UInt8 event) {
+	SInt8 result = MessageNone;
+	PointU8 oldLoc, newLoc;
+	UInt8 tile;
+
+	oldLoc = mapCurrentLocation;
+	newLoc = oldLoc;
+
+	switch (event) {
+	case CursorClick:
+		// Get the tile without color info.
+		tile = mapTileAt(oldLoc.x, oldLoc.y) & 0x3F; 
+		switch (tile) {
+			case tTown:
+				enterTown();
+				break;
+			case tVillage:
+			case tCastle:
+				result = MessageEnterDialog;
+				break;
+			case tMonument:
+				enterDungeon();
+				break;
+			case tCave:
+				result = MessageEnterBattle;
+				break;
+			case tHouseDoor:
+				result = MessageEnterDialog;
+				break;
+			case tLadder:
+				exitToOverworld();
+		}
+		break;
+
+	case CursorUp:    --newLoc.y; break; // up
+	case CursorDown:  ++newLoc.y; break; // down
+	case CursorLeft:  --newLoc.x; break; // left
+	case CursorRight: ++newLoc.x; break; // right
+	}
+
+	if (newLoc != oldLoc) {
+		// Check map bounds. Because newLoc is unsigned, it wraps around from 0 to 255.
+		if (newLoc.x < currentMapSize.width && newLoc.y < currentMapSize.height) {
+			if (canMoveTo(newLoc.x, newLoc.y)) {
+				mapCurrentLocation = newLoc;
+				drawCurrentMap(newLoc.x, newLoc.y);
+			}
+		} else {
+			// Handle moving off the map for towns
+			if (currentMapType == TownMapType) {
+				exitToOverworld();
+			}
+		}
+	}
+
+	return result;
+}
+

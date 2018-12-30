@@ -5,6 +5,7 @@
 
 // Callbacks
 typedef SInt8 (*CursorEventHandlerCallbackType)(UInt8 eventType);
+
 enum CursorEventType {
 	CursorNone = 0,
 	CursorClick = 1,
@@ -15,9 +16,10 @@ enum CursorEventType {
 };
 enum CursorEventMessages {
 	MessageNone = 0,
-	MessageEnterDialog = 1,
-	MessageEnterBattle = 2,
-	MessageReturnToMap = 3,
+	MessageEnterDialog,
+	MessageEnterBattle,
+	MessageEnterInfo,
+	MessageReturnToMap,
 };
 
 // Functions
