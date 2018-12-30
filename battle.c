@@ -86,7 +86,7 @@ static void enterRootMenu(UInt8 showText) {
 	menuType = BattleRootMenu;
 	menuItemCount = 4;
 	menuOrigin.x = 9;
-	menuOrigin.y = 90;
+	menuOrigin.y = 92;
 	menuItemSpacing = 43;
 	selectedIndex = -1;
 	setSelectedIndex(rootMenuSelectedIndex);
@@ -130,7 +130,7 @@ static void enterFightMenu(void) {
 		menuType = BattleFightMenu;
 		menuItemCount = 4;
 		menuOrigin.x = 8;
-		menuOrigin.y = 64;
+		menuOrigin.y = 66;
 		menuItemSpacing = 40;
 		selectedIndex = -1;
 		setSelectedIndex(0);
@@ -188,7 +188,7 @@ static void enterItemMenu(void) {
 	menuType = BattleItemMenu;
 	menuItemCount = 2;
 	menuOrigin.x = 6 + 4 * x;
-	menuOrigin.y = 51 + 4 * y;
+	menuOrigin.y = 53 + 4 * y;
 	menuItemSpacing = 4 * spacing;
 	selectedIndex = -1;
 	setSelectedIndex(0);
@@ -289,8 +289,8 @@ void initBattle(void) {
 
 	// Set up enemy character
 	stringCopy(enemy.name, "Evil Merchant");
-	enemy.hp = 127;
-	enemy.level = 25;
+	enemy.level = 12;
+	enemy.hp = charaMaxHp(&enemy);
 	showEncounterText();
 	shouldRedrawEncounterTextOnMove = 0;
 
@@ -305,11 +305,10 @@ void initBattle(void) {
 		UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
 		UInt8 maxHp = charaMaxHp(&enemy);
 		UInt8 width = maxHp / 2;
+		UInt8 barX = 80 - width / 2;
 		UInt8 fill = (enemy.hp + 1) / 2;
 
-		screen += 48 * 40; // Enemy image is 48 pixels high
-		screen += 20 - ((width + 7) / 8);
-		drawBarChart(screen, width, fill);
+		drawBarChart(screen, barX, 48, width, fill);
 	}
 
 	// Draw button bar image

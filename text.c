@@ -38,7 +38,6 @@ void printCharaStats(UInt8 x, UInt8 y, GameCharaPtr chara) {
 
 	// Draw bar chart
 	{
-		UInt8 *screen = textWindow + x + (y + 3) * TEXTBOX_WIDTH;
 		UInt8 width;
 		UInt8 fill;
 		UInt8 remainder;
@@ -55,7 +54,7 @@ void printCharaStats(UInt8 x, UInt8 y, GameCharaPtr chara) {
 		if (remainder) {
 			++fill;
 		}
-		drawBarChart(screen, width, fill);
+		drawBarChart(textWindow, x * 4, y + 3, width, fill);
 	}
 }
 

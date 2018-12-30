@@ -69,7 +69,6 @@ void initParty(void) {
 	initChara(&party[3], "Guy", 1, 10, 8);
 
 	// Testing
-	party[0].hp = 1;
 	party[1].hp = 18;
 	party[2].hp = 25;
 }

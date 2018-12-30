@@ -51,6 +51,9 @@ UInt8 *textWindow;
 #define dl_rasterLine (13)
 #define dl_textWindowLine (2)
 
+#define SCREEN_ROW_BYTES (40)
+
+
 // Init
 
 void initGraphics(void) {
@@ -109,9 +112,6 @@ static UInt8 writeDisplayListLines(UInt8 *dl, const UInt8 *screen, UInt8 mode, U
 
 static UInt8 writeDisplayListCustomTextLines(UInt8 *dl, UInt8 count) {
 	UInt8 textPage = (UInt16)textWindow / 256;
-	const UInt16 barChartOffset = (count * 40);
-	const UInt8 barChartLSB = barChartOffset % 256;
-	const UInt8 barChartMSB = textPage + barChartOffset / 256;
 	UInt8 x = 0;
 
 	// Text window
@@ -156,7 +156,7 @@ static void writeMapViewDisplayList(void) {
 	x += writeDisplayListLines(dl+3, screen, dl_mapTileLine, 9);  // 14
 	dl[x++] = DL_BLK8;
 	x += writeDisplayListCustomTextLines(dl+x, 3);
-	x += writeDisplayListBarChartLines(dl+x, textWindow + (3 * 40));
+	x += writeDisplayListBarChartLines(dl+x, textWindow + (3 * SCREEN_ROW_BYTES));
 
 	// Party stats line
 	dl[x++] = DL_BLK8 | dl_Interrupt;
@@ -187,16 +187,16 @@ static void writeBattleViewDisplayList(void) {
 	dl[x-1] |= dl_Interrupt; 
 
 	// Enemy HP bar
-	x += writeDisplayListBarChartLines(dl+x, screen + (48 * 40)); // +8 = 104
+	x += writeDisplayListBarChartLines(dl+x, screen + (rasterHeight * SCREEN_ROW_BYTES)); // +8 = 104
 	dl[x++] = DL_BLK4; // +4 = 180
 
 	// Chara stats
 	x += writeDisplayListCustomTextLines(dl+x, 7); // +56 = 164
-	x += writeDisplayListBarChartLines(dl+x, textWindow + (7 * 40)); // +8 = 172
+	x += writeDisplayListBarChartLines(dl+x, textWindow + (7 * SCREEN_ROW_BYTES)); // +8 = 172
 
 	dl[x++] = DL_BLK8 | dl_Interrupt; // +8 = 180
 
-	screen += (rasterHeight + 1) * 40;
+	screen += (rasterHeight + 1) * SCREEN_ROW_BYTES;
 	x += writeDisplayListLines(dl+x, screen, dl_rasterLine, 10); // +20 = 200
 
 	writeDisplayListEnd(dl+x);
@@ -352,13 +352,24 @@ void setBackgroundGradient(const UInt8 *data) {
 
 // Drawing
 
-void drawBarChart(UInt8 *screen, UInt8 width, UInt8 filled) {
-	UInt8 i, c;
+void setPixel(UInt8 *screen, UInt8 x, UInt8 y, UInt8 value) {
+	UInt8 shift = (3 - (x % 4)) * 2;
+	UInt8 mask = 3 << shift;
+
+	screen += x / 4 + SCREEN_ROW_BYTES * y;
+	*screen &= ~mask;
+
+	value <<= shift;
+	*screen += value;
+}
+
+void drawBarChart(UInt8 *screen, UInt8 x, UInt8 y, UInt8 width, UInt8 filled) {
+	UInt8 i, value;
 
 	for (i=0; i<width; ++i) {
-		c = (i >= filled) ? 1 : 2;
-		c <<= ((3-i) % 4) * 2;
-		screen[i/4] |= c;
+		value = (i >= filled) ? 1 : 2;
+		setPixel(screen, x, y, value);
+		++x;
 	}
 }
 
