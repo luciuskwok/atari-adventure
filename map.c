@@ -23,14 +23,69 @@ PointU8 mapCurrentLocation;
 const UInt8 *currentRunLenMap;
 const UInt8 *currentTileMap;
 SizeU8 currentMapSize;
-PointU8 mapFrameOrigin;
-SizeU8 mapFrameSize;
+RectU8 mapFrame;
 
 #define SCREEN_WIDTH (24)
 
 // Assembly routine
 extern void __fastcall__ decodeRunLenRange(UInt8 *outData, UInt8 start, UInt8 end, const UInt8 *runLenData);
 
+// Local Functions
+
+static UInt8 mapTileAt(UInt8 x, UInt8 y) {
+	const UInt8 *runLenPtr = currentRunLenMap;
+	UInt8 tile, i;
+
+	// Skip to row
+	for (i=0; i<y; ++i) {
+		runLenPtr += runLenPtr[0];
+	}
+
+	// Get tile
+	decodeRunLenRange(&tile, x, 1, runLenPtr);
+
+	// Convert to character value
+	return currentTileMap[tile];
+}
+
+static UInt8 canMoveTo(UInt8 x, UInt8 y) {
+	UInt8 tile = mapTileAt(x, y) & 0x3F; // remove color data
+
+	switch (currentMapType) {
+		case OverworldMapType:
+			if (tile == tShallows) { // Shallows
+				return mapShipType >= 1;
+			} else if (tile == tWater) {
+				return mapShipType >= 2;
+			}
+			return 1;
+		case DungeonMapType:
+			return tile != tBrick;
+		case TownMapType:
+			return tile == tSolid || tile == tHouseDoor;
+	}
+
+	return 1;
+}
+
+// Map Info
+
+PointU8 mapEntryPoint(UInt8 mapType) {
+	PointU8 pt = {0,0};
+
+	switch (mapType) {
+	case OverworldMapType: 
+		pt = overworldEntryPoint;
+		break;
+	case DungeonMapType: 
+		pt = dungeonEntryPoint;
+		break;
+	case TownMapType: 
+		pt = townEntryPoint;
+		break;
+	}
+	return pt;
+}
 
 // Map Movement
 
@@ -43,7 +98,7 @@ void transitionToMap(UInt8 mapType, UInt8 shouldFadeOut, UInt8 shouldFadeIn) {
 		loadColorTable(NULL);
 	}
 
-	loadMap(mapType, mapSightDistance, &mapCurrentLocation);
+	loadMap(mapType, mapSightDistance, mapCurrentLocation.x, mapCurrentLocation.y);
 	
 	if (shouldFadeIn) {	
 		fadeInColorTable(0, colorTable);
@@ -76,38 +131,18 @@ void enterTown(void) {
 	transitionToMap(TownMapType, 1, 1);
 }
 
-UInt8 canMoveTo(PointU8 *pt) {
-	UInt8 tile = mapTileAt(pt) & 0x3F; // remove color data
-
-	switch (currentMapType) {
-		case OverworldMapType:
-			if (tile == tShallows) { // Shallows
-				return mapShipType >= 1;
-			} else if (tile == tWater) {
-				return mapShipType >= 2;
-			}
-			return 1;
-		case DungeonMapType:
-			return tile != tBrick;
-		case TownMapType:
-			return tile == tSolid || tile == tHouseDoor;
-	}
-
-	return 1;
-}
-
 SInt8 mapCursorHandler(UInt8 event) {
-	UInt8 tile;
-	PointU8 oldLoc, newLoc;
 	SInt8 result = 0;
+	PointU8 oldLoc, newLoc;
+	UInt8 tile;
 
 	oldLoc = mapCurrentLocation;
 	newLoc = oldLoc;
-	
+
 	switch (event) {
 	case CursorClick:
 		// Get the tile without color info.
-		tile = mapTileAt(&mapCurrentLocation) & 0x3F; 
+		tile = mapTileAt(oldLoc.x, oldLoc.y) & 0x3F; 
 		switch (tile) {
 			case tTown:
 				enterTown();
@@ -139,9 +174,9 @@ SInt8 mapCursorHandler(UInt8 event) {
 	if (newLoc != oldLoc) {
 		// Check map bounds. Because newLoc is unsigned, it wraps around from 0 to 255.
 		if (newLoc.x < currentMapSize.width && newLoc.y < currentMapSize.height) {
-			if (canMoveTo(&newLoc)) {
+			if (canMoveTo(newLoc.x, newLoc.y)) {
 				mapCurrentLocation = newLoc;
-				drawCurrentMap(&mapCurrentLocation);
+				drawCurrentMap(newLoc.x, newLoc.y);
 			}
 		} else {
 			// Handle moving off the map for towns
@@ -154,46 +189,9 @@ SInt8 mapCursorHandler(UInt8 event) {
 	return result;
 }
 
-// Map Info
-
-UInt8 mapTileAt(PointU8 *pt) {
-	const UInt8 *runLenPtr = currentRunLenMap;
-	UInt8 x = pt->x;
-	UInt8 y = pt->y;
-	UInt8 tile, i;
-
-	// Skip to row
-	for (i=0; i<y; ++i) {
-		runLenPtr += runLenPtr[0];
-	}
-
-	// Get tile
-	decodeRunLenRange(&tile, x, 1, runLenPtr);
-
-	// Convert to character value
-	return currentTileMap[tile];
-}
-
-PointU8 mapEntryPoint(UInt8 mapType) {
-	PointU8 pt = {0,0};
-
-	switch (mapType) {
-	case OverworldMapType: 
-		pt = overworldEntryPoint;
-		break;
-	case DungeonMapType: 
-		pt = dungeonEntryPoint;
-		break;
-	case TownMapType: 
-		pt = townEntryPoint;
-		break;
-	}
-	return pt;
-}
-
 // Map Drawing
 
-void loadMap(UInt8 mapType, UInt8 mapSightDistance, PointU8 *location) {
+void loadMap(UInt8 mapType, UInt8 mapSightDistance, UInt8 x, UInt8 y) {
 	const UInt8 *colorTable;
 
 	clearMapScreen();
@@ -221,7 +219,7 @@ void loadMap(UInt8 mapType, UInt8 mapSightDistance, PointU8 *location) {
 	currentMapType = mapType;
 
 	layoutCurrentMap(mapSightDistance);
-	drawCurrentMap(location);
+	drawCurrentMap(x, y);
 }
 
 const UInt8 *colorTableForMap(UInt8 mapType) {
@@ -247,18 +245,18 @@ void layoutCurrentMap(UInt8 mapSightDistance) {
 	UInt8 x, halfWidth, halfHeight;
 
 	if (mapSightDistance > 3) {
-		mapFrameSize.width = 21;
-		mapFrameSize.height = 9;
+		mapFrame.size.width = 21;
+		mapFrame.size.height = 9;
 	} else {
 		x = mapSightDistance * 2 + 1;
-		mapFrameSize.width = x;
-		mapFrameSize.height = x;
+		mapFrame.size.width = x;
+		mapFrame.size.height = x;
 	}
-	halfWidth = mapFrameSize.width / 2;
-	halfHeight = mapFrameSize.height / 2;
+	halfWidth = mapFrame.size.width / 2;
+	halfHeight = mapFrame.size.height / 2;
 	// Map screen size is 24 wide by 9 high.
-	mapFrameOrigin.x = 11 - halfWidth;
-	mapFrameOrigin.y = 4 - halfHeight;
+	mapFrame.origin.x = 11 - halfWidth;
+	mapFrame.origin.y = 4 - halfHeight;
 
 	// Clear out the sprite overlays
 	for (x=0; x<9; ++x) {
@@ -266,13 +264,13 @@ void layoutCurrentMap(UInt8 mapSightDistance) {
 	}
 }
 
-void drawCurrentMap(PointU8 *center) {
+void drawCurrentMap(UInt8 x, UInt8 y) {
 	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
 	const UInt8 *runLenPtr = currentRunLenMap;
-	UInt8 screenRowSkip = SCREEN_WIDTH - mapFrameSize.width;
-	UInt8 screenIndex = mapFrameOrigin.x + SCREEN_WIDTH * mapFrameOrigin.y;
-	UInt8 mapFrameHalfWidth = mapFrameSize.width / 2;
-	UInt8 mapFrameHalfHeight = mapFrameSize.height / 2;
+	UInt8 screenRowSkip = SCREEN_WIDTH - mapFrame.size.width;
+	UInt8 screenIndex = mapFrame.origin.x + SCREEN_WIDTH * mapFrame.origin.y;
+	UInt8 mapFrameHalfWidth = mapFrame.size.width / 2;
+	UInt8 mapFrameHalfHeight = mapFrame.size.height / 2;
 	UInt8 row, col;
 	UInt8 leftBlank, leftSkip, decodeLength, topBlank, topSkip;
 	UInt8 c, low, hasSpriteOverlay;
@@ -284,12 +282,12 @@ void drawCurrentMap(PointU8 *center) {
 	}
 
 	// Calculate number of rows to leave blank and how many to skip in the map.
-	if (center->y <= mapFrameHalfHeight) {
-		topBlank = mapFrameHalfHeight - center->y;
+	if (y <= mapFrameHalfHeight) {
+		topBlank = mapFrameHalfHeight - y;
 		topSkip = 0;
 	} else {
 		topBlank = 0;
-		topSkip = center->y - mapFrameHalfHeight;
+		topSkip = y - mapFrameHalfHeight;
 
 		// Adjust runLenPtr to skip lines within run-len data.
 		for (c=0; c<topSkip; ++c) {
@@ -298,14 +296,14 @@ void drawCurrentMap(PointU8 *center) {
 	}
 
 	// Calculate number of columns to leave blank and how many to skip in the map.
-	if (center->x < mapFrameHalfWidth) {
-		leftBlank = mapFrameHalfWidth - center->x;
+	if (x < mapFrameHalfWidth) {
+		leftBlank = mapFrameHalfWidth - x;
 		leftSkip = 0;
 	} else {
 		leftBlank = 0;
-		leftSkip = center->x - mapFrameHalfWidth;
+		leftSkip = x - mapFrameHalfWidth;
 	}
-	decodeLength = mapFrameSize.width - leftBlank;
+	decodeLength = mapFrame.size.width - leftBlank;
 	if (decodeLength > currentMapSize.width - leftSkip) {
 		decodeLength = currentMapSize.width - leftSkip;
 	}
@@ -316,19 +314,19 @@ void drawCurrentMap(PointU8 *center) {
 	// printDebugInfo("E$", decodeEnd, 20);
 
 	// Main Loop
-	for (row=0; row<mapFrameSize.height; ++row) {
+	for (row=0; row<mapFrame.size.height; ++row) {
 		hasSpriteOverlay = 0;
 
 		if (row < topBlank || row + topSkip >= currentMapSize.height + topBlank) {
 			// Beyond borders: fill with the default empty tile.
-			for (col=0; col<mapFrameSize.width; ++col) {
+			for (col=0; col<mapFrame.size.width; ++col) {
 				screen[screenIndex] = currentTileMap[0];
 				++screenIndex;
 			}
 		} else {
 			decodeRunLenRange(buffer, leftSkip, decodeLength, runLenPtr);
 			runLenPtr += runLenPtr[0]; // Next row.
-			for (col=0; col<mapFrameSize.width; ++col) {
+			for (col=0; col<mapFrame.size.width; ++col) {
 				if (col < leftBlank || col + leftSkip >= currentMapSize.width + leftBlank) {
 					c = 0; // Tiles outside map bounds are set to default blank tile.
 				} else {

@@ -29,7 +29,7 @@ void setCursorSprite(const UInt8 *sprite, UInt8 height) {
 	cursorHeight = height;
 }
 
-void setCursorPosition(PointU8 *newPos) {
+void setCursorPosition(UInt8 x, UInt8 y) {
 	static UInt8 previousY = 0;
 	const UInt8 topMargin = 14;
 
@@ -37,10 +37,10 @@ void setCursorPosition(PointU8 *newPos) {
 	drawSprite(NULL, cursorHeight, 1, topMargin + previousY);
 	
 	// Draw sprite in new position
-	drawSprite(cursorSprite, cursorHeight, 1, topMargin + newPos->y);
-	setSpriteHorizontalPosition(1, PM_LEFT_MARGIN - 8 + newPos->x);
+	drawSprite(cursorSprite, cursorHeight, 1, topMargin + y);
+	setSpriteHorizontalPosition(1, PM_LEFT_MARGIN - 8 + x);
 
-	previousY = newPos->y;
+	previousY = y;
 }
 
 void hideCursor(void) {

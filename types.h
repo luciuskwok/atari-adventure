@@ -12,12 +12,17 @@ typedef signed char SInt8;
 typedef signed int SInt16;
 typedef signed long SInt32;
 
-typedef struct {
+typedef struct PointU8 {
 	UInt8 x, y;
 } PointU8;
 
-typedef struct {
+typedef struct SizeU8 {
 	UInt8 width, height;
 } SizeU8;
+
+typedef struct RectU8 {
+	PointU8 origin;
+	SizeU8 size;
+} RectU8;
 
 #endif

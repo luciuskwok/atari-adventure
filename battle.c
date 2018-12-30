@@ -50,10 +50,9 @@ static void applySelectionColor(UInt8 isMasking, UInt8 offset, UInt8 length) {
 }
 
 static void setSelectedIndex(UInt8 index) {
-	PointU8 pt;
-	pt.x = menuOrigin.x + menuItemSpacing * index;
-	pt.y = menuOrigin.y;
-	setCursorPosition(&pt);
+	UInt8 x = menuOrigin.x + menuItemSpacing * index;
+	UInt8 y = menuOrigin.y;
+	setCursorPosition(x, y);
 
 	// Change color of old selection and new selection.
 	if (menuType == BattleRootMenu) {
@@ -67,14 +66,13 @@ static void setSelectedIndex(UInt8 index) {
 }
 
 static void showEncounterText(void) {
-	PointU8 pt = { 3, 0 };
 	UInt8 s[64] = "* ";
 
 	stringConcat(s, enemy.name);
 	stringConcat(s, " blocks your path!");
 
 	clearTextWindow(3);
-	drawTextBox(s, &pt, 38, 2, -2);
+	drawTextBox(s, 1, 0, 38, 2, -2);
 	shouldRedrawEncounterTextOnMove = 0;
 }
 
@@ -151,10 +149,12 @@ static void doAttack(UInt8 player) {
 	UInt8 damage = 3;
 	UInt8 s[40] = "* ";
 
+	stringConcat(s, chara->name);
 	clearTextWindow(3);
 
 	if (chara->hp != 0) {
-		printString("* You attack.", 1, 0);
+		stringConcat(s, " attacks.");
+		printString(s, 1, 0);
 	
 		// Calculate damage to enemy or miss.
 		enemyWasHit(damage);
@@ -169,8 +169,8 @@ static void doAttack(UInt8 player) {
 			shouldRedrawEncounterTextOnMove = 1;
 		}
 	} else {
-		stringConcat(s, chara->name);
 		stringConcat(s, " seems unresponsive.");
+		printString(s, 1, 0);
 	}
 }
 
@@ -196,33 +196,27 @@ static void enterFightMenu(void) {
 }
 
 static void enterTalk(void) {
-	const PointU8 pt = { 3, 0 };
 	UInt8 s[64] = "* ";
 
 	stringConcat(s, enemy.name);
 	stringConcat(s, " doesn't care what you think!");
 
 	clearTextWindow(3);
-	drawTextBox(s, &pt, 38, 2, -2);
+	drawTextBox(s, 1, 0, 38, 2, -2);
 	shouldRedrawEncounterTextOnMove = 1;
 }
 
 static void useItem(UInt8 item) {
-	const PointU8 pt = { 3, 0 };
-	const UInt8 width = 38;
-	const UInt8 lineSpacing = 1;
-	const SInt8 indent = -2;
 	UInt8 damage;
 
 	hideCursor();
 
 	clearTextWindow(3);
 	if (item == 0) {
-		//printString("* You throw the Sacred Nuts.", 1, 0);
-		drawTextBox("* You throw the Sacred Nuts.", &pt, width, lineSpacing, indent);
+		printString("* The Sacred Nuts cause a reaction.", 1, 0);
 		damage = 8;
 	} else {
-		drawTextBox("* You feel the earth move.", &pt, width, lineSpacing, indent);
+		printString("* The Staff makes the earth move.", 1, 0);
 		damage = 16;
 	}
 	

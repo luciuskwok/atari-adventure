@@ -6,12 +6,13 @@
 #define TEXT_H
 
 void clearTextWindow(UInt8 lines);
+void clearTextRect(RectU8 *rect);
 
 void printAllCharaText(UInt8 y);
 void printPartyStats(SInt32 money, UInt16 potions, UInt16 fangs);
 
 void printString(const UInt8 *s, UInt8 x, UInt8 y);
-void drawTextBox(const UInt8 *s, const PointU8 *position, UInt8 width, UInt8 lineSpacing, SInt8 indent);
+void drawTextBox(const UInt8 *s, UInt8 x, UInt8 y, UInt8 width, UInt8 lineSpacing, SInt8 indent);
 
 void numberString(UInt8 *outString, UInt8 thousandsSeparator, SInt32 value);
 void hexString(UInt8 *outString, UInt8 length, UInt16 value);

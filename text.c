@@ -100,6 +100,10 @@ void clearTextWindow(UInt8 lines) {
 	}
 }
 
+void clearTextRect(RectU8 *rect) {
+
+}
+
 void printString(const UInt8 *s, UInt8 x, UInt8 y) {
 	UInt8 index = 0;
 	UInt8 c;
@@ -112,17 +116,18 @@ void printString(const UInt8 *s, UInt8 x, UInt8 y) {
 	}
 }
 
-void drawTextBox(const UInt8 *s, const PointU8 *position, UInt8 width, UInt8 lineSpacing, SInt8 indent) {
-	// text will be broken at space characters
-
+void drawTextBox(const UInt8 *s, UInt8 x, UInt8 y, UInt8 width, UInt8 lineSpacing, SInt8 indent) {
 	UInt8 i = 0;
-	UInt8 y = position->y;
-	UInt8 x = position->x + indent;
 	UInt8 previousBreakable = 0;
 	UInt8 lineStartIndex = 0;
 	UInt8 xMax = x + width;
 	UInt8 isNewLine = 1;
+	UInt8 left = x;
 	UInt8 c;
+
+	if (indent < 0) {
+		left -= indent;
+	}
 
 	while (y < TEXTBOX_HEIGHT) {
 		c = s[i];
@@ -158,7 +163,7 @@ void drawTextBox(const UInt8 *s, const PointU8 *position, UInt8 width, UInt8 lin
 
 			// Start new line
 			y += lineSpacing;
-			x = position->x;
+			x = left;
 			if (isNewLine != 0) {
 				x += indent;
 			}

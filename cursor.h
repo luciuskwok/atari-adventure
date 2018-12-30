@@ -25,7 +25,7 @@ enum CursorEventMessages {
 void initCursor(void);
 void registerCursorEventHandler(CursorEventHandlerCallbackType handler);
 void setCursorSprite(const UInt8 *sprite, UInt8 height);
-void setCursorPosition(PointU8 *newPos);
+void setCursorPosition(UInt8 x, UInt8 y);
 void hideCursor(void);
 
 SInt8 handleStick(void);

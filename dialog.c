@@ -253,9 +253,10 @@ void drawStatus(void) {
 }
 
 void drawNode(TreeNodePtr node) {
-	PointU8 pt = { 4, 1 };
+	const UInt8 y = 1;
 	UInt8 lineSpacing;
 	UInt8 width;
+	UInt8 x;
 
 	clearTextWindow(7);
 
@@ -263,35 +264,34 @@ void drawNode(TreeNodePtr node) {
 		drawVerticalDivider(28);
 
 		if (node->value == MenuNodeTypeA) {
-			pt.x = 4;
+			x = 4;
 			width = 24;
 			lineSpacing = 2;
 		} else {
-			pt.x = 30;
+			x = 30;
 			width = 10;
 			lineSpacing = 1;
 		}
-		drawTextBox(node->text, &pt, width, lineSpacing, 0);
+		drawTextBox(node->text, x, y, width, lineSpacing, 0);
 		drawMenu(node);
 		drawStatus();
 	} else if (node->value == TalkNode) {
 		// Use selectedRow as the index of the message to show.
 		TreeNodePtr message = node->children[selectedRow];
 		if (message) {
-			pt.x = 6;
+			x = 2;
 			width = 32;
 			lineSpacing = 2;
-			drawTextBox(message->text, &pt, width, lineSpacing, -2);
+			drawTextBox(message->text, x, y, width, lineSpacing, -2);
 		}
 	}
 }
 
 void setSelectedRow(UInt8 index) {
 	const UInt8 topMargin = 18;
-	PointU8 pt;
-	pt.x = menuOrigin.x * 4;
-	pt.y = (menuOrigin.y + index + topMargin) * 4;
-	setCursorPosition(&pt);
+	UInt8 x = menuOrigin.x * 4;
+	UInt8 y = (menuOrigin.y + index + topMargin) * 4;
+	setCursorPosition(x, y);
 	selectedRow = index;
 }
 
