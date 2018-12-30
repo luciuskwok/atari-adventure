@@ -27,7 +27,7 @@ enum BattleMenuType {
 };
 
 
-void modifyPixelValues(UInt8 isMasking, UInt8 offset, UInt8 length) {
+static void applySelectionColor(UInt8 isMasking, UInt8 offset, UInt8 length) {
 	const UInt8 y = 49;
 	UInt8 height = 10;
 	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC) + y * 40;
@@ -58,9 +58,9 @@ static void setSelectedIndex(UInt8 index) {
 	// Change color of old selection and new selection.
 	if (menuType == BattleRootMenu) {
 		if (selectedIndex < 4) {
-			modifyPixelValues(0, selectedIndex * 10, 10);
+			applySelectionColor(0, selectedIndex * 10, 10);
 		}
-		modifyPixelValues(1, index * 10, 10);
+		applySelectionColor(1, index * 10, 10);
 	}
 
 	selectedIndex = index;
@@ -92,12 +92,17 @@ static void enterRootMenu(UInt8 showText) {
 	setSelectedIndex(rootMenuSelectedIndex);
 }
 
-static void waitVsync(UInt8 ticks) {
-	*VB_TIMER = ticks;
-	while (*VB_TIMER != 0) {} // Wait for VSYNC 
+static void drawEnemyHpBar(void) {
+	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
+	UInt8 maxHp = charaMaxHp(&enemy);
+	UInt8 width = maxHp / 2;
+	UInt8 barX = 80 - width / 2;
+	UInt8 fill = (enemy.hp + 1) / 2;
+
+	drawBarChart(screen, barX, 48, width, fill);
 }
 
-static void enemyWasHit(void) {
+static void enemyWasHit(UInt8 damage) {
 	UInt8 i;
 
 	// Show animation for when enemy was hit.
@@ -106,16 +111,67 @@ static void enemyWasHit(void) {
 		waitVsync(4);
 		POKE(COLOR0, 0x0E);
 		waitVsync(4);
-	}	
+	}
+
+	// Decrement enemy HP
+	if (damage < enemy.hp) {
+		enemy.hp -= damage;
+	} else {
+		enemy.hp = 0;
+	}
+	drawEnemyHpBar();
+
+	if (enemy.hp == 0) {
+		clearTextWindow(3);
+		printString("* You are victorious.", 1, 0);
+		waitForAnyInput();
+		isLeavingBattle = 1;
+	}
 }
 
-static void doAttack(UInt8 /* player */) {
+static void playerWasHit(UInt8 player, UInt8 damage) {
+	GameCharaPtr chara = charaAtIndex(player);
+
+	// TODO: Show animation for player getting hit.
+
+	// Decrement player HP
+	if (damage < chara->hp) {
+		chara->hp -= damage;
+	} else {
+		chara->hp = 0;
+	}
+
+	// TODO: Redraw just the one character's stats
+
+
+}
+
+static void doAttack(UInt8 player) {
+	GameCharaPtr chara = charaAtIndex(player);
+	UInt8 damage = 3;
+	UInt8 s[40] = "* ";
+
 	clearTextWindow(3);
-	printString("* You attack.", 1, 0);
 
-	enemyWasHit();
-
-	shouldRedrawEncounterTextOnMove = 1;
+	if (chara->hp != 0) {
+		printString("* You attack.", 1, 0);
+	
+		// Calculate damage to enemy or miss.
+		enemyWasHit(damage);
+	
+		if (isLeavingBattle == 0) {
+			// Calculate to player character or miss.
+			playerWasHit(player, damage);
+		}
+	
+		if (isLeavingBattle == 0) {
+			enterRootMenu(0);
+			shouldRedrawEncounterTextOnMove = 1;
+		}
+	} else {
+		stringConcat(s, chara->name);
+		stringConcat(s, " seems unresponsive.");
+	}
 }
 
 static void enterFightMenu(void) {
@@ -156,6 +212,7 @@ static void useItem(UInt8 item) {
 	const UInt8 width = 38;
 	const UInt8 lineSpacing = 1;
 	const SInt8 indent = -2;
+	UInt8 damage;
 
 	hideCursor();
 
@@ -163,15 +220,18 @@ static void useItem(UInt8 item) {
 	if (item == 0) {
 		//printString("* You throw the Sacred Nuts.", 1, 0);
 		drawTextBox("* You throw the Sacred Nuts.", &pt, width, lineSpacing, indent);
+		damage = 8;
 	} else {
 		drawTextBox("* You feel the earth move.", &pt, width, lineSpacing, indent);
+		damage = 16;
 	}
 	
-	enemyWasHit();
-	//waitForAnyInput();
+	enemyWasHit(damage);
 
-	enterRootMenu(0);
-	shouldRedrawEncounterTextOnMove = 1;
+	if (isLeavingBattle == 0) {
+		enterRootMenu(0);
+		shouldRedrawEncounterTextOnMove = 1;
+	}
 }
 
 static void enterItemMenu(void) {
@@ -301,15 +361,7 @@ void initBattle(void) {
 	}
 
 	// Draw enemy HP bar
-	{
-		UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
-		UInt8 maxHp = charaMaxHp(&enemy);
-		UInt8 width = maxHp / 2;
-		UInt8 barX = 80 - width / 2;
-		UInt8 fill = (enemy.hp + 1) / 2;
-
-		drawBarChart(screen, barX, 48, width, fill);
-	}
+	drawEnemyHpBar();
 
 	// Draw button bar image
 	err = drawImage(battleButtonsImage, battleButtonsImageLength, 49, 10);

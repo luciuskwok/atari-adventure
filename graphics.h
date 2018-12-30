@@ -44,4 +44,7 @@ void setBackgroundGradient(const UInt8 *data);
 // Drawing
 void drawBarChart(UInt8 *screen, UInt8 x, UInt8 y, UInt8 width, UInt8 filled);
 
+// Timing
+void waitVsync(UInt8 ticks);
+
 #endif

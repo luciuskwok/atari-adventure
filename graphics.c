@@ -157,9 +157,10 @@ static void writeMapViewDisplayList(void) {
 	dl[x++] = DL_BLK8;
 	x += writeDisplayListCustomTextLines(dl+x, 3);
 	x += writeDisplayListBarChartLines(dl+x, textWindow + (3 * SCREEN_ROW_BYTES));
+	dl[x-1] |= dl_Interrupt; 
 
 	// Party stats line
-	dl[x++] = DL_BLK8 | dl_Interrupt;
+	dl[x++] = DL_BLK8;
 	dl[x++] = dl_textWindowLine; 
 
 	writeDisplayListEnd(dl+x);
@@ -193,8 +194,9 @@ static void writeBattleViewDisplayList(void) {
 	// Chara stats
 	x += writeDisplayListCustomTextLines(dl+x, 7); // +56 = 164
 	x += writeDisplayListBarChartLines(dl+x, textWindow + (7 * SCREEN_ROW_BYTES)); // +8 = 172
+	dl[x-1] |= dl_Interrupt; 
 
-	dl[x++] = DL_BLK8 | dl_Interrupt; // +8 = 180
+	dl[x++] = DL_BLK8; // +8 = 180
 
 	screen += (rasterHeight + 1) * SCREEN_ROW_BYTES;
 	x += writeDisplayListLines(dl+x, screen, dl_rasterLine, 10); // +20 = 200
@@ -206,8 +208,6 @@ void setScreenMode(UInt8 mode) {
 	UInt8 dma = 0x2E; // standard playfield + missile DMA + player DMA + display list DMA
 	UInt8 nmi = 0x40; // enable VBI
 	void *dli = 0;
-
-	*VB_TIMER = 1;
 
 	switch (mode) {
 		case ScreenModeMap:
@@ -240,7 +240,7 @@ void setScreenMode(UInt8 mode) {
 	ANTIC.nmien = 0x40;
 
 	// Wait for vblank to prevent flicker
-	while (*VB_TIMER != 0) {}
+	waitVsync(1);
 
 	if (dli != 0) {
 		POKEW (VDSLST, (UInt16)dli);
@@ -355,12 +355,16 @@ void setBackgroundGradient(const UInt8 *data) {
 void setPixel(UInt8 *screen, UInt8 x, UInt8 y, UInt8 value) {
 	UInt8 shift = (3 - (x % 4)) * 2;
 	UInt8 mask = 3 << shift;
+	UInt8 c;
 
 	screen += x / 4 + SCREEN_ROW_BYTES * y;
-	*screen &= ~mask;
+	c = *screen;
+	c &= ~mask;
 
 	value <<= shift;
-	*screen += value;
+	c |= value;
+
+	*screen = c;
 }
 
 void drawBarChart(UInt8 *screen, UInt8 x, UInt8 y, UInt8 width, UInt8 filled) {
@@ -371,6 +375,13 @@ void drawBarChart(UInt8 *screen, UInt8 x, UInt8 y, UInt8 width, UInt8 filled) {
 		setPixel(screen, x, y, value);
 		++x;
 	}
+}
+
+// Timing
+
+void waitVsync(UInt8 ticks) {
+	*VB_TIMER = ticks;
+	while (*VB_TIMER != 0) {} // Wait for VSYNC 
 }
 
 
