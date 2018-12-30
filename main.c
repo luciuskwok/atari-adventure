@@ -37,9 +37,9 @@ UInt16 duration;
 // Map Mode functions
 
 void setUpMapMode(void) {
-	clearTextWindow(7);
+	clearTextWindow(5);
 	printAllCharaText(0);
-	printPartyStats(987123, 21, 1325);
+	printPartyStats();
 
 	setScreenMode(ScreenModeMap);
 	transitionToMap(currentMapType, 0, 1);

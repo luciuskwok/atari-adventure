@@ -22,6 +22,13 @@ typedef struct GameChara {
 	GameEquipmentPtr armor;
 } GameChara;
 
+// Globals
+extern UInt32 partyMoney;
+extern UInt8 partyPotions;
+extern UInt8 partyFangs;
+extern SInt8 partyReputation;
+
+
 
 // Character Stats
 UInt8 charaMaxHp(GameCharaPtr chara);

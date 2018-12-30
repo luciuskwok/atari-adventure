@@ -11,7 +11,7 @@
 #define TEXTBOX_HEIGHT (8)
 
 
-UInt8 toAtascii(UInt8 c) {
+static UInt8 toAtascii(UInt8 c) {
 	if (c < 0x20) {
 		c += 0x40;
 	} else if (c < 0x60) {
@@ -20,7 +20,7 @@ UInt8 toAtascii(UInt8 c) {
 	return c;
 }
 
-void printCharaStats(UInt8 x, UInt8 y, GameCharaPtr chara) {
+static void printCharaStats(UInt8 x, UInt8 y, GameCharaPtr chara) {
 	UInt8 hp = chara->hp;
 	UInt8 maxHp = charaMaxHp(chara);
 	UInt8 lvStr[9] = "Lv ";
@@ -71,19 +71,19 @@ void printAllCharaText(UInt8 y) {
 	}
 }
 
-void printPartyStats(SInt32 money, UInt16 potions, UInt16 fangs) {
+void printPartyStats(void) {
 	UInt8 s[40];
 	UInt8 len;
 	UInt8 x;
 
 	s[0] = '$';
-	numberString(s+1, ',', money);
+	numberString(s+1, ',', partyMoney);
 	stringConcat(s, "  ");
 
-	numberString(s+stringLength(s), 0, potions);
+	numberString(s+stringLength(s), 0, partyPotions);
 	stringConcat(s, "{  ");
 
-	numberString(s+stringLength(s), 0, fangs);
+	numberString(s+stringLength(s), 0, partyFangs);
 	stringConcat(s, "}");
 
 	len = stringLength(s);
@@ -101,18 +101,26 @@ void clearTextWindow(UInt8 lines) {
 }
 
 void clearTextRect(RectU8 *rect) {
+	UInt8 rowSkip = TEXTBOX_WIDTH - rect->size.width;
+	UInt16 i = rect->origin.x + TEXTBOX_WIDTH * rect->origin.y;
+	UInt8 x, y;
 
+	for (y=0; y<rect->size.height; ++y) {
+		for (x=0; x<rect->size.width; ++x) {
+			textWindow[i++] = 0;
+		}
+		i += rowSkip;
+	}
 }
 
 void printString(const UInt8 *s, UInt8 x, UInt8 y) {
-	UInt8 index = 0;
+	UInt8 si = 0;
+	UInt16 ti = x + TEXTBOX_WIDTH * y;
 	UInt8 c;
 
-	while (c = s[index]) {
+	while (c = s[si++]) {
 		c = toAtascii(c);
-		textWindow[x + TEXTBOX_WIDTH * y] = c;
-		++x;
-		++index;
+		textWindow[ti++] = c;
 	}
 }
 

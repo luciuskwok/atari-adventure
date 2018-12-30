@@ -2,6 +2,7 @@
 
 #include "dialog.h"
 #include "cursor.h"
+#include "game_chara.h"
 #include "graphics.h"
 #include "images.h"
 #include "image_data.h"
@@ -154,9 +155,9 @@ TreeNode temShopRootNode = {
 
 
 // Testing strings:
-UInt8 sansMessage[] = "Sans: Why are graveyards so noisy?\n Because of all the *coffin*!";
-UInt8 ellieMessage[] = "Ellie: How are you doing today? That teacher was totally unfair. C'mon, let's go to the beach!";
-UInt8 papyrusMessage[] = "Papyrus: Nyeh Heh Heh!";
+// UInt8 sansMessage[] = "Sans: Why are graveyards so noisy?\n Because of all the *coffin*!";
+// UInt8 ellieMessage[] = "Ellie: How are you doing today? That teacher was totally unfair. C'mon, let's go to the beach!";
+// UInt8 papyrusMessage[] = "Papyrus: Nyeh Heh Heh!";
 
 
 void pushStack(StackItem *item) {
@@ -247,9 +248,18 @@ void drawMenu(TreeNodePtr node) {
 }
 
 void drawStatus(void) {
+	UInt8 s[8];
+	UInt8 len;
+
 	// Draw money and potion count.
-	printString("$901", 28, 6);
-	printString("21{", 37, 6);
+	printString("$", 28, 6);
+	numberString(s, ',', partyMoney);
+	printString(s, 29, 6);
+
+	printString("{", 39, 6);
+	numberString(s, 0, partyPotions);
+	len = stringLength(s);
+	printString(s, 39-len, 6);
 }
 
 void drawNode(TreeNodePtr node) {
