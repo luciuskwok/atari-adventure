@@ -10,6 +10,7 @@
 #include "battle.h"
 #include "cursor.h"
 #include "dialog.h"
+#include "game_chara.h"
 #include "graphics.h"
 #include "images.h"
 #include "image_data.h"
@@ -81,6 +82,7 @@ int main (void) {
 	initCursor();
 	
 	// Start new game
+	initParty();
 	isQuitting = 0;
 
 	currentMapType = OverworldMapType;

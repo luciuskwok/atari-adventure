@@ -41,4 +41,7 @@ void fadeInColorTable(UInt8 fadeOptions, const UInt8 *colorTable);
 void loadColorTable(const UInt8 *colors);
 void setBackgroundGradient(const UInt8 *data);
 
+// Drawing
+void drawBarChart(UInt8 *screen, UInt8 width, UInt8 filled);
+
 #endif

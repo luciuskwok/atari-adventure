@@ -94,7 +94,7 @@ void initDisplayList(UInt8 startPage, UInt8 textPage) {
 
 // Screen Modes
 
-UInt8 writeDisplayListLines(UInt8 *dl, const UInt8 *screen, UInt8 mode, UInt8 count) {
+static UInt8 writeDisplayListLines(UInt8 *dl, const UInt8 *screen, UInt8 mode, UInt8 count) {
 	UInt8 i;
 
 	dl[0] = mode | dl_LMS; 
@@ -107,7 +107,7 @@ UInt8 writeDisplayListLines(UInt8 *dl, const UInt8 *screen, UInt8 mode, UInt8 co
 	return count + 2; // number of bytes written
 }
 
-UInt8 writeDisplayListCustomTextLines(UInt8 *dl, UInt8 count) {
+static UInt8 writeDisplayListCustomTextLines(UInt8 *dl, UInt8 count) {
 	UInt8 textPage = (UInt16)textWindow / 256;
 	const UInt16 barChartOffset = (count * 40);
 	const UInt8 barChartLSB = barChartOffset % 256;
@@ -115,7 +115,6 @@ UInt8 writeDisplayListCustomTextLines(UInt8 *dl, UInt8 count) {
 	UInt8 x = 0;
 
 	// Text window
-	dl[x++] = DL_BLK8;
 	dl[x++] = dl_textWindowLine | dl_LMS;
 	dl[x++] = 0;
 	dl[x++] = textPage;
@@ -124,39 +123,49 @@ UInt8 writeDisplayListCustomTextLines(UInt8 *dl, UInt8 count) {
 		dl[x++] = dl_textWindowLine; 
 	}
 
-	dl[x++] = DL_BLK1;
-	for (count=0; count<3; ++count) {
-		dl[x++] = dl_rasterLine | dl_LMS; // Bar chart uses 3 repeating rows
-		dl[x++] = barChartLSB;
-		dl[x++] = barChartMSB;
-	}
-	dl[x++] = DL_BLK1 | dl_Interrupt;
-
 	return x;
 }
 
-void writeDisplayListEnd(UInt8 *dl) {
+static UInt8 writeDisplayListBarChartLines(UInt8 *dl, const UInt8 *screen) {
+	const UInt8 screenLSB = (UInt16)screen % 256;
+	const UInt8 screenMSB = (UInt16)screen / 256;
+	UInt8 x = 0;
+	UInt8 count;
+
+	dl[x++] = DL_BLK1;
+	for (count=0; count<3; ++count) {
+		dl[x++] = dl_rasterLine | dl_LMS; // Bar chart uses 3 repeating rows
+		dl[x++] = screenLSB;
+		dl[x++] = screenMSB;
+	}
+	dl[x++] = DL_BLK1;
+	return x;
+}
+
+static void writeDisplayListEnd(UInt8 *dl) {
 	dl[0] = DL_JVB; // Vertical blank + jump to DL start
 	dl[1] = PEEK(SDLSTL);
 	dl[2] = PEEK(SDLSTL+1);
 }
 
-void writeMapViewDisplayList(void) {
+static void writeMapViewDisplayList(void) {
 	UInt8 *dl = (UInt8 *)PEEKW(SDLSTL);
 	const UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
 	UInt8 x = 3;
 
 	x += writeDisplayListLines(dl+3, screen, dl_mapTileLine, 9);  // 14
+	dl[x++] = DL_BLK8;
 	x += writeDisplayListCustomTextLines(dl+x, 3);
+	x += writeDisplayListBarChartLines(dl+x, textWindow + (3 * 40));
 
 	// Party stats line
-	dl[x++] = DL_BLK8;
+	dl[x++] = DL_BLK8 | dl_Interrupt;
 	dl[x++] = dl_textWindowLine; 
 
 	writeDisplayListEnd(dl+x);
 }
 
-void writeStoryViewDisplayList(void) {
+static void writeStoryViewDisplayList(void) {
 	UInt8 *dl = (UInt8 *)PEEKW(SDLSTL);
 	const UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
 	UInt8 x = 3;
@@ -167,21 +176,28 @@ void writeStoryViewDisplayList(void) {
 	writeDisplayListEnd(dl+x);
 }
 
-void writeBattleViewDisplayList(void) {
+static void writeBattleViewDisplayList(void) {
 	UInt8 *dl = (UInt8 *)PEEKW(SDLSTL);
 	const UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
 	const UInt16 rasterHeight = 48;
 	UInt8 x = 3;
 
+	// Main raster area
 	x += writeDisplayListLines(dl+3, screen, dl_rasterLine, rasterHeight); // 96
 	dl[x-1] |= dl_Interrupt; 
 
-	x += writeDisplayListCustomTextLines(dl+x, 7); // 72 // Chara stats
+	// Enemy HP bar
+	x += writeDisplayListBarChartLines(dl+x, screen + (48 * 40)); // +8 = 104
+	dl[x++] = DL_BLK4; // +4 = 180
 
-	dl[x++] = DL_BLK8; // 8
+	// Chara stats
+	x += writeDisplayListCustomTextLines(dl+x, 7); // +56 = 164
+	x += writeDisplayListBarChartLines(dl+x, textWindow + (7 * 40)); // +8 = 172
 
-	screen += rasterHeight * 40;
-	x += writeDisplayListLines(dl+x, screen, dl_rasterLine, 10); // 20
+	dl[x++] = DL_BLK8 | dl_Interrupt; // +8 = 180
+
+	screen += (rasterHeight + 1) * 40;
+	x += writeDisplayListLines(dl+x, screen, dl_rasterLine, 10); // +20 = 200
 
 	writeDisplayListEnd(dl+x);
 }
@@ -331,6 +347,18 @@ void setBackgroundGradient(const UInt8 *data) {
 			}
 			--length;
 		}
+	}
+}
+
+// Drawing
+
+void drawBarChart(UInt8 *screen, UInt8 width, UInt8 filled) {
+	UInt8 i, c;
+
+	for (i=0; i<width; ++i) {
+		c = (i >= filled) ? 1 : 2;
+		c <<= ((3-i) % 4) * 2;
+		screen[i/4] |= c;
 	}
 }
 

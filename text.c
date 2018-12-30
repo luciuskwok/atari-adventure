@@ -1,13 +1,14 @@
 // text.c
 
 #include "text.h"
+#include "game_chara.h"
 #include "graphics.h"
 #include <atari.h>
 
 
 // Constants
 #define TEXTBOX_WIDTH (40)
-#define TEXTBOX_HEIGHT (10)
+#define TEXTBOX_HEIGHT (8)
 
 
 UInt8 toAtascii(UInt8 c) {
@@ -19,25 +20,15 @@ UInt8 toAtascii(UInt8 c) {
 	return c;
 }
 
-void drawBarChart(UInt8 x, UInt8 y, UInt8 width, UInt8 filled) {
-	UInt8 *pixel = textWindow + x + y * TEXTBOX_WIDTH;
-	UInt8 i, c;
-
-	for (i=0; i<width; ++i) {
-		c = (i >= filled) ? 1 : 2;
-		c <<= ((3-i) % 4) * 2;
-		pixel[i/4] |= c;
-	}
-}
-
-void printCharaStats(UInt8 player, UInt8 y, const UInt8 *name, UInt8 level, UInt8 hp, UInt8 maxHp) {
-	UInt8 x = player * 10+1;
+void printCharaStats(UInt8 x, UInt8 y, GameCharaPtr chara) {
+	UInt8 hp = chara->hp;
+	UInt8 maxHp = charaMaxHp(chara);
 	UInt8 lvStr[9] = "Lv ";
 	UInt8 hpStr[9];
 
-	printString(name, x, y);
+	printString(chara->name, x, y);
 
-	numberString(lvStr+3, 0, level);
+	numberString(lvStr+3, 0, chara->level);
 	printString(lvStr, x, y+1);
 
 	numberString(hpStr, 0, hp);
@@ -47,26 +38,38 @@ void printCharaStats(UInt8 player, UInt8 y, const UInt8 *name, UInt8 level, UInt
 
 	// Draw bar chart
 	{
+		UInt8 *screen = textWindow + x + (y + 3) * TEXTBOX_WIDTH;
 		UInt8 width;
-		UInt16 fill;
+		UInt8 fill;
+		UInt8 remainder;
+		UInt16 n;
 
 		if (maxHp >= 72) {
-			width = 72;
+			width = 36;
 		} else {
-			width = maxHp;
+			width = maxHp / 2;
 		}
-		fill = (UInt16)hp * width / maxHp;
-		fill = (fill + 1) / 2;
-		drawBarChart(x, y+3, width / 2, fill);
+		n = (UInt16)hp * width;
+		remainder = n % maxHp;
+		fill = n / maxHp;
+		if (remainder) {
+			++fill;
+		}
+		drawBarChart(screen, width, fill);
 	}
 }
 
 void printAllCharaText(UInt8 y) {
-	// Print character statistics
-	printCharaStats(0, y, "Alisa", 99, 123, 255);
-	printCharaStats(1, y, "Marie", 1, 1, 8);
-	printCharaStats(2, y, "Guy", 19, 35, 36);
-	printCharaStats(3, y, "Nyorn", 7, 70, 80);
+	UInt8 count = numberInParty();
+	UInt8 x = 1;
+	GameCharaPtr chara;
+	UInt8 i;
+
+	for (i=0; i<count; ++i) {
+		chara = charaAtIndex(i);
+		printCharaStats(x, y, chara);
+		x += 10;
+	}
 }
 
 void printPartyStats(SInt32 money, UInt16 potions, UInt16 fangs) {
@@ -110,7 +113,7 @@ void printString(const UInt8 *s, UInt8 x, UInt8 y) {
 	}
 }
 
-void drawTextBox(const UInt8 *s, PointU8 *position, UInt8 width, UInt8 lineSpacing, SInt8 indent) {
+void drawTextBox(const UInt8 *s, const PointU8 *position, UInt8 width, UInt8 lineSpacing, SInt8 indent) {
 	// text will be broken at space characters
 
 	UInt8 i = 0;

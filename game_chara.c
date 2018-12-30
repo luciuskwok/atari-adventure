@@ -7,6 +7,10 @@
 // Globals
 UInt8 partySize = 4;
 GameChara party[4];
+UInt32 partyMoney;
+UInt8 partyPotions;
+UInt8 partyFangs;
+SInt8 partyReputation;
 
 // Chara Stats
 
@@ -23,7 +27,11 @@ void initChara(GameCharaPtr outChara, UInt8 *name, UInt8 level, UInt8 atk, UInt8
 }
 
 UInt8 charaMaxHp(GameCharaPtr chara) {
-	return 15 + 8 * chara->level;
+	if (chara->level > 24) {
+		return 255;
+	} else {
+		return 10 + 10 * chara->level;
+	}
 }
 
 UInt8 charaAttackRating(GameCharaPtr chara) {
@@ -55,9 +63,14 @@ GameCharaPtr charaAtIndex(UInt8 index) {
 }
 
 void initParty(void) {
-	initChara(&party[0], "Alisa", 1, 8, 9);
+	initChara(&party[0], "Alisa", 8, 8, 9);
 	initChara(&party[1], "Nyorn", 1, 6, 12);
-	initChara(&party[2], "Marisa", 1, 6, 5);
+	initChara(&party[2], "Marisa", 4, 6, 5);
 	initChara(&party[3], "Guy", 1, 10, 8);
+
+	// Testing
+	party[0].hp = 1;
+	party[1].hp = 18;
+	party[2].hp = 25;
 }
 
