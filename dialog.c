@@ -363,7 +363,7 @@ static void advanceToNextMessage(void) {
 	}
 }
 
-static void handleBuyItemNode(TreeNodePtr node) {
+static void handleBuyItemNode(TreeNodePtr /* node */) {
 	// Show confirmation dialog
 }
 

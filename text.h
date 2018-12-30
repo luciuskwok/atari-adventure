@@ -18,7 +18,9 @@ void hexString(UInt8 *outString, UInt8 length, UInt16 value);
 
 void debugPrint(const UInt8 *s, UInt16 value, UInt8 x, UInt8 y);
 
-extern UInt8 __fastcall__ stringLength(UInt8 *s);
+// From text_asm.h
 extern void __fastcall__ stringConcat(UInt8 *dst, const UInt8 *src);
+extern void __fastcall__ stringCopy(UInt8 *dst, const UInt8 *src);
+extern UInt8 __fastcall__ stringLength(UInt8 *s);
 
 #endif
