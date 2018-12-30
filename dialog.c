@@ -6,6 +6,7 @@
 #include "graphics.h"
 #include "images.h"
 #include "image_data.h"
+#include "menu.h"
 #include "sprites.h"
 #include "text.h"
 #include "atari_memmap.h"
@@ -46,12 +47,8 @@ typedef struct StackItem {
 // Globals
 StackItem dialogStack[DIALOG_STACK_CAPACITY];
 UInt8 dialogStackCount = 0;
-
 static UInt8 isExittingDialog;
-
-static PointU8 menuOrigin;
-static UInt8 menuItemCount;
-static UInt8 selectedRow;
+static UInt8 messageIndex;
 
 
 // Data
@@ -208,6 +205,7 @@ void drawVerticalDivider(UInt8 x) {
 }
 
 void drawMenu(TreeNodePtr node) {
+	const UInt8 topMargin = 18;
 	UInt8 x = 0, y = 1;
 	TreeNodePtr child;
 	UInt8 i;
@@ -220,9 +218,9 @@ void drawMenu(TreeNodePtr node) {
 		return;
 	}
 
-	// Update globals
-	menuOrigin.x = x;
-	menuOrigin.y = y;
+	// Update menu settings
+	menuOrigin.x = x * 4;
+	menuOrigin.y = (y + topMargin) * 4;
 	menuItemCount = 0;
 
 	for (i=0; i<6; ++i) {
@@ -262,7 +260,7 @@ void drawStatus(void) {
 	printString(s, 39-len, 6);
 }
 
-void drawNode(TreeNodePtr node) {
+void drawNode(TreeNodePtr node, UInt8 selectIndex) {
 	const UInt8 y = 1;
 	UInt8 lineSpacing;
 	UInt8 width;
@@ -284,10 +282,10 @@ void drawNode(TreeNodePtr node) {
 		}
 		drawTextBox(node->text, x, y, width, lineSpacing, 0);
 		drawMenu(node);
+		setMenuSelectedIndex(selectIndex);
 		drawStatus();
 	} else if (node->value == TalkNode) {
-		// Use selectedRow as the index of the message to show.
-		TreeNodePtr message = node->children[selectedRow];
+		TreeNodePtr message = node->children[messageIndex];
 		if (message) {
 			x = 2;
 			width = 32;
@@ -295,14 +293,6 @@ void drawNode(TreeNodePtr node) {
 			drawTextBox(message->text, x, y, width, lineSpacing, -2);
 		}
 	}
-}
-
-void setSelectedRow(UInt8 index) {
-	const UInt8 topMargin = 18;
-	UInt8 x = menuOrigin.x * 4;
-	UInt8 y = (menuOrigin.y + index + topMargin) * 4;
-	setCursorPosition(x, y);
-	selectedRow = index;
 }
 
 void exitCurrentNode(void) {
@@ -314,11 +304,8 @@ void exitCurrentNode(void) {
 		StackItem item;
 		topOfStack(&item);
 
-		// Draw previous node
-		drawNode(item.node);
-
-		// Restore selection row
-		setSelectedRow(item.selectedRow);
+		// Draw previous node & restore selection
+		drawNode(item.node, item.selectedRow);
 	}
 }
 
@@ -346,8 +333,7 @@ static void handleMenuItemNode(TreeNodePtr node) {
 		item.node = menu;
 		item.selectedRow = 0;
 		pushStack(&item);
-		drawNode(menu);
-		setSelectedRow(0);
+		drawNode(menu, 0);
 	}
 }
 
@@ -355,19 +341,20 @@ static void handleTalkNode(TreeNodePtr node) {
 	StackItem item;
 	item.node = node;
 	item.selectedRow = 0;
-	selectedRow = 0;
+	menuItemCount = 0;
+	messageIndex = 0;
 	pushStack(&item);
 	hideCursor();
-	drawNode(node);
+	drawNode(node, 0);
 }
 
 static void advanceToNextMessage(void) {
 	StackItem item;
 	topOfStack(&item);
 
-	++selectedRow;
-	if (selectedRow < childCount(item.node)) {
-		drawNode(item.node);
+	++messageIndex;
+	if (messageIndex < childCount(item.node)) {
+		drawNode(item.node, 0);
 	} else {
 		exitCurrentNode();
 	}
@@ -377,19 +364,19 @@ static void handleBuyItemNode(TreeNodePtr /* node */) {
 	// Show confirmation dialog
 }
 
-static void handleClick(void) {
+static SInt8 handleMenuClick(UInt8 index) {
 	StackItem item;
 	topOfStack(&item);
 
 	if (item.node->value == TalkNode) {
 		// Advance to next message or exit talk node.
 		advanceToNextMessage();
-	} else if (selectedRow < childCount(item.node)) {
-		TreeNodePtr choice = item.node->children[selectedRow];
+	} else if (index < childCount(item.node)) {
+		TreeNodePtr choice = item.node->children[index];
 
 		// Save selected row of current node.
 		popStack(&item);
-		item.selectedRow = selectedRow;
+		item.selectedRow = index;
 		pushStack(&item);
 
 		switch (choice->value) {
@@ -409,34 +396,7 @@ static void handleClick(void) {
 				break;
 		}
 	}
-}
-
-static SInt8 dialogCursorHandler(UInt8 event) {
-
-	if (event == CursorClick) {
-		handleClick();
-		if (isExittingDialog != 0) {
-			return MessageReturnToMap;
-		} 
-	} else {
-		UInt8 newRow = selectedRow;
-		switch (event) {
-			case CursorUp:
-				--newRow;
-				break;
-			case CursorDown:
-				++newRow;
-				break;
-			case CursorLeft:
-				break;
-			case CursorRight:
-				break;
-		}
-		if (newRow != selectedRow && newRow < menuItemCount) {
-			setSelectedRow(newRow);
-		}
-	}
-	return MessageNone;
+	return isExittingDialog ? MessageReturnToMap : MessageNone;
 }
 
 void initDialog(void) {
@@ -461,13 +421,20 @@ void initDialog(void) {
 	setSpriteHorizontalPosition(3, PM_LEFT_MARGIN + 72);
 	setSpriteHorizontalPosition(4, PM_LEFT_MARGIN + 80);
 
+	// Set up menu
+	initMenu();
+	menuIsHorizontal = 0;
+	menuItemSpacing = 4;
+	setMenuCursor(smallHeartSprite, smallHeartSpriteHeight);
+	registerMenuDidClickCallback(handleMenuClick);
+
 	// Set up dialog tree
 	{
 		StackItem item;
 		item.node = &temShopRootNode;
 		item.selectedRow = 0;
 		pushStack(&item);
-		drawNode(item.node);
+		drawNode(item.node, 0);
 	}
 
 	// Draw background image
@@ -483,13 +450,5 @@ void initDialog(void) {
 		// numberString(s+6, 0, duration);
 		// printString(s, 1, 2);
 	}
-
-	// Selection Cursor
-	clearSpriteData(1);
-	setPlayerCursorColorCycling(1);
-	setCursorSprite(smallHeartSprite, smallHeartSpriteHeight);
-	setSelectedRow(0);
-
-	registerCursorEventHandler(dialogCursorHandler);
 }
 

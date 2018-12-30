@@ -67,7 +67,7 @@ static SInt8 menuCursorHandler(UInt8 event) {
 			break;		
 	}
 
-	if (index != menuSelectedIndex && index < 4) {
+	if (index != menuSelectedIndex && index < menuItemCount) {
 		setMenuSelectedIndex(index);
 	} else if (menuEscapeCursorEvent != CursorNone && event == menuEscapeCursorEvent && menuEscapeCallback) {
 		menuEscapeCallback();
@@ -97,7 +97,8 @@ void setMenuCursor(const UInt8 *sprite, UInt8 height) {
 }
 
 void initMenu(void) {
-	menuSelectedIndex =0;
+	menuIsHorizontal = 0;
+	menuSelectedIndex = 0;
 	menuEscapeCursorEvent = CursorNone;
 
 	menuClickCallback = NULL;
