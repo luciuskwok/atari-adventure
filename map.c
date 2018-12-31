@@ -207,9 +207,14 @@ void drawCurrentMap(UInt8 x, UInt8 y) {
 	UInt8 mapFrameHalfWidth = mapFrame.size.width / 2;
 	UInt8 mapFrameHalfHeight = mapFrame.size.height / 2;
 	UInt8 row, col;
+	UInt8 colMax;
 	UInt8 leftBlank, leftSkip, decodeLength, topBlank, topSkip;
 	UInt8 c, low, hasSpriteOverlay;
 	UInt8 buffer[SCREEN_WIDTH];
+
+	// Debugging
+	UInt16 startTime = SHORT_CLOCK;
+	UInt16 duration;
 
 	// Integrity check
 	if (runLenPtr == NULL) {
@@ -242,6 +247,7 @@ void drawCurrentMap(UInt8 x, UInt8 y) {
 	if (decodeLength > currentMapSize.width - leftSkip) {
 		decodeLength = currentMapSize.width - leftSkip;
 	}
+	colMax = currentMapSize.width + leftBlank - leftSkip;
 
 	// Debugging:
 	// printDebugInfo("B$", leftBlank, 0);
@@ -262,7 +268,7 @@ void drawCurrentMap(UInt8 x, UInt8 y) {
 			decodeRunLenRange(buffer, leftSkip, decodeLength, runLenPtr);
 			runLenPtr += runLenPtr[0]; // Next row.
 			for (col=0; col<mapFrame.size.width; ++col) {
-				if (col < leftBlank || col + leftSkip >= currentMapSize.width + leftBlank) {
+				if (col < leftBlank || col >= colMax) {
 					c = 0; // Tiles outside map bounds are set to default blank tile.
 				} else {
 					c = buffer[col - leftBlank];
@@ -274,7 +280,9 @@ void drawCurrentMap(UInt8 x, UInt8 y) {
 				// Add sprite overlay for special characters
 				low = (c & 0x3F);
 				if (low >= tCastle) {
-					setTileOverlaySprite(tileSprites + 8 * (low - tCastle), col, row);
+					low -= tCastle;
+					low <<= 3;
+					setTileOverlaySprite(tileSprites + low, col, row);
 					hasSpriteOverlay = 1;
 				}
 
@@ -288,6 +296,14 @@ void drawCurrentMap(UInt8 x, UInt8 y) {
 			P3_XPOS[row] = 0;
 		}
 		screenIndex += screenRowSkip;
+	}
+
+	// Debugging
+	{
+		UInt8 s[6];
+		duration = SHORT_CLOCK - startTime;
+		numberString(s, 0, duration);
+		printString(s, 0, 4);
 	}
 }
 
