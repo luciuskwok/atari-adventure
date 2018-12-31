@@ -1,9 +1,8 @@
 # tiff_to_deflate.py
 
-# (Updated for Python 3.)
-
 # Given a filename in command line, opens TIFF image, converts to 2-bpp screen data, and uses DEFLATE, which is output as C code
 
+# Python 2.7 returns a string for file.read() calls, but the strings are actually 8-bit binary data. This seems to be the native data type for Python 2, so it's easier to handle data in that format, and then call ord() to get the value of each byte.
 
 import zlib, sys, base64
 
@@ -12,16 +11,14 @@ import zlib, sys, base64
 # colorTable = [0, 3, 2, 1] # Battle button colors
 colorTable = [3, 0, 1, 2] # Avatar colors
 
-
 def validateTIFFHeader(ifh):
 	isBigEndian = False
 	isHeaderValid = False
-	string = ifh[0:2].decode("ascii")
 
-	if string == "II":
+	if ifh[0:2] == "II":
 		isHeaderValid = True
 		isBigEndian = False
-	elif string == "MM":
+	elif ifh[0:2] == "MM":
 		isHeaderValid = True
 		isBigEndian = True
 
@@ -34,23 +31,27 @@ def validateTIFFHeader(ifh):
 #end def validateTIFFHeader()
 
 
-def intFromEndianData(bytes, isBigEndian):
-	index = 0;
-	length = len(bytes);
+def intFromEndianData(dataString, isBigEndian):
+	bytes = []
+	for c in dataString:
+		bytes.append(ord(c))
+
 	result = 0;
-	while index < length:
+	while len(bytes) > 0:
+		c = 0;
 		result = result << 8;
 		if isBigEndian:
-			result = result | bytes[length - index - 1] 
+			result = result | bytes[0] 
+			bytes.pop(0)
 		else:
-			result = result | bytes[index]
-		index += 1
+			result = result | bytes[-1]
+			bytes.pop()
 	return result
 #end def intFromEndianData()
 
 
 def valueForTag(tag, ifd, isBigEndian):
-	ifdCount = len(ifd) // 12
+	ifdCount = len(ifd) / 12
 	for index in range(0,ifdCount):
 		ifdOffset = index*12
 		entry = ifd[ifdOffset : ifdOffset + 12]
@@ -60,7 +61,7 @@ def valueForTag(tag, ifd, isBigEndian):
 
 			if valueCount == 1:
 				if valueType == 1 or valueType == 2:
-					return entry[8]
+					return ord(entry[8])
 				if valueType == 3:
 					return intFromEndianData(entry[8:10], isBigEndian)
 				if valueType == 4:
@@ -81,11 +82,11 @@ def printAllIFDEntries(ifd, isBigEndian):
 		# if value fits in 4 bytes, the value is stored in the ValueOffset field itself
 		if ifdValueCount == 1: 
 			if ifdType == 1 or ifdType == 2:
-				ifdValueOffset = entry[8]
+				ifdValueOffset = ord(entry[8])
 			if ifdType == 3:
 				ifdValueOffset = intFromEndianData(entry[8:10], isBigEndian)
 
-		print("IFD[{}]: tag={} type={} count={} offset={}".format(index, ifdTag, ifdType, ifdValueCount, ifdValueOffset) )
+		print("IFD["+str(index)+"]: tag="+str(ifdTag)+" type="+str(ifdType)+" count="+str(ifdValueCount)+" offset="+str(ifdValueOffset) )
 
 
 #begin script
@@ -127,17 +128,17 @@ with open(sys.argv[1], "rb") as file:
 	# check for specific image properties before continuing
 	# file should be uncompressed
 	if compression != 1 :
-		print("Cannot process compressed file (compression: {}).".format(compression))
+		print("Cannot process compressed file (compression: "+str(compression)+").")
 		exit()
 
 
 	# file should be RGB color
 	if samplesPerPixel != 3 or photometricInterpretation != 2:
-		print("Cannot process file in this format (samplesPerPixel: {} photometricInterpretation: {}).".format(samplesPerPixel, photometricInterpretation))
+		print("Cannot process file in this format (samplesPerPixel: "+str(samplesPerPixel)+" photometricInterpretation: "+str(photometricInterpretation)+").")
 		exit()
 
 	# full screen images should be 160x72 in size
-	print("Image size is {}x{}.".format(imageWidth, imageHeight))
+	print("Image size is "+str(imageWidth)+"x"+str(imageHeight)+".")
 
 	# read file into buffer as string
 	file.seek(stripOffset, 0)
@@ -150,9 +151,9 @@ with open(sys.argv[1], "rb") as file:
 		for x in range(0, imageWidth):
 			pixelOffset = 3 * (x + imageWidth * y)
 			# take the simple average of RGB values
-			r = pixelData[pixelOffset]
-			g = pixelData[pixelOffset+1]
-			b = pixelData[pixelOffset+2]
+			r = ord(pixelData[pixelOffset])
+			g = ord(pixelData[pixelOffset+1])
+			b = ord(pixelData[pixelOffset+2])
 			lum = float(r+g+b) / (255 * 3)
 			colorIndex = 1;
 
@@ -179,17 +180,14 @@ with open(sys.argv[1], "rb") as file:
 				packedByte = 0
 
 	# compress with DEFLATE
-	compressor = zlib.compressobj(level=9, method=zlib.DEFLATED, strategy=zlib.Z_FIXED)
-		# option: zlib.Z_DEFAULT_STRATEGY
-	zlibData = compressor.compress(packedData)
-	zlibData += compressor.flush()
+	zlibData = zlib.compress(buffer(packedData), 9)
 	compData = zlibData[2:-4]
 
 	compLength = len(compData)
 	compRatio = 1.0 - (float(compLength) / float(len(packedData)))
 	percentStr = "%1.1f%%"%(compRatio*100)
 
-	print ("Length: {}, Compression: {}%.".format(len(compData), percentStr))
+	print "Length: "+str(len(compData))+", Compression: "+percentStr
 
 	# Print compressed data for C
 	i = 0

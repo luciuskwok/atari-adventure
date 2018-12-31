@@ -99,6 +99,9 @@ void initInfo(void) {
 	UInt8 i;
 	UInt8 s[20];
 
+	UInt16 startTime = SHORT_CLOCK;
+	UInt16 duration;
+
 	// Set up graphics window
 	setScreenMode(ScreenModeOff);
 	setPlayerCursorVisible(0);
@@ -156,4 +159,8 @@ void initInfo(void) {
 	for (i=0; i<count; ++i) {
 		drawAvatarAtIndex(i);
 	}
+
+	duration = SHORT_CLOCK - startTime;
+	uint16toString(s, duration);
+	printString(s, 0, ITEM_WINDOW_ROW+4);
 }
