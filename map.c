@@ -3,7 +3,6 @@
 #include "map.h"
 #include "cursor.h"
 #include "graphics.h"
-#include "image_data.h"
 #include "map_data.h"
 #include "menu.h"
 #include "sprites.h"

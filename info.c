@@ -15,7 +15,7 @@
 // Data
 
 const UInt8 infoColorTable[] = {
-	0x88, 0x88, 0x96, 0x96, // sprite
+	0x88, 0x88, 0xB4, 0xB4, // sprite
 	0x28,
 	0x0E,
 	0x00, 
@@ -125,6 +125,9 @@ const DataBlock *avatarImages[4] = {
 	&avatar4ImageRaw
 };
 
+// avatar2SpriteL is reused for avatar4
+const DataBlock avatar4SpriteR = { 4, {0xC0, 0x80, 0x80, 0xC0} };
+
 // Functions
 
 static SInt8 infoCursorHandler(UInt8 event) {
@@ -223,6 +226,13 @@ static void drawDeflatedAvatarAtIndex(UInt8 index) {
 }
 */
 
+static void setHiglightSprite(UInt8 index, const DataBlock *sprite, UInt8 x, UInt8 y) {
+	clearSprite(index);
+	drawSprite(sprite, index, PM_TOP_MARGIN + y);
+	setSpriteOriginX(index, PM_LEFT_MARGIN + x);
+	setSpriteWidth(index, 1);
+}
+
 void initInfo(void) {
 	const UInt8 missileHeight = 91;
 	UInt8 count = numberInParty();
@@ -292,14 +302,10 @@ void initInfo(void) {
 	}
 
 	// Add image highlights
-	clearSprite(1);
-	clearSprite(2);
-	drawSprite(&avatar2SpriteL, 1, PM_TOP_MARGIN + 10);
-	drawSprite(&avatar2SpriteR, 2, PM_TOP_MARGIN + 10);
-	setSpriteOriginX(1, PM_LEFT_MARGIN + 44 + 5);
-	setSpriteOriginX(2, PM_LEFT_MARGIN + 44 + 14);
-	setSpriteWidth(1, 1);
-	setSpriteWidth(2, 1);
+	setHiglightSprite(1, &avatar2SpriteL, 44 + 5, 10);
+	setHiglightSprite(2, &avatar2SpriteR, 44 + 14, 10);
+	setHiglightSprite(3, &avatar2SpriteL, 124 + 11, 8);
+	setHiglightSprite(4, &avatar4SpriteR, 124 + 22, 9);
 
 	duration = SHORT_CLOCK - startTime;
 	uint16toString(s, duration);

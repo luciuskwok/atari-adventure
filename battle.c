@@ -4,7 +4,6 @@
 #include "cursor.h"
 #include "game_chara.h"
 #include "graphics.h"
-#include "image_data.h"
 #include "menu.h"
 #include "sprites.h"
 #include "text.h"
