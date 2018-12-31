@@ -215,18 +215,18 @@ static void writeInfoViewDisplayList(void) {
 	UInt8 i;
 
 	// Move text window
-	textWindow = screen + (16 * SCREEN_ROW_BYTES);
+	textWindow = screen + (24 * SCREEN_ROW_BYTES);
 
-	x += writeDisplayListLines(dl+3, screen, dl_rasterLine, 16);
-	dl[x-1] |= dl_Interrupt; // 32
+	x += writeDisplayListLines(dl+3, screen, dl_rasterLine, 24);
+	dl[x-1] |= dl_Interrupt; // 48
 
 	dl[x++] = dl_textWindowLine | dl_Interrupt;
-	dl[x++] = DL_BLK2; // + 10: 42
+	dl[x++] = DL_BLK2; // + 10: 58
 
-	for (i=0; i<14; ++i) {
+	for (i=0; i<12; ++i) {
 		dl[x++] = dl_textWindowLine;
 	}
-	dl[x-1] |= dl_Interrupt; // + 14*8 = +112: 154
+	dl[x-1] |= dl_Interrupt; // + 12*8 = +96: 154
 
 	dl[x++] = DL_BLK4; // +4: 158
 
@@ -249,26 +249,22 @@ void setScreenMode(UInt8 mode) {
 
 	switch (mode) {
 		case ScreenModeMap:
-			dma = 0x2E; // various Antic DMA options
 			writeMapViewDisplayList();
 			nmi |= 0x80; // enable DLI
 			dli = mapViewDLI;
 			break;
 
 		case ScreenModeDialog:
-			dma = 0x2E; // various Antic DMA options
 			writeStoryViewDisplayList();
 			break;
 
 		case ScreenModeBattle:
-			dma = 0x2E; // various Antic DMA options
 			writeBattleViewDisplayList();
 			nmi |= 0x80; // enable DLI
 			dli = battleViewDLI;
 			break;
 
 		case ScreenModeInfo:
-			dma = 0x2E; // various Antic DMA options
 			writeInfoViewDisplayList();
 			nmi |= 0x80; // enable DLI
 			dli = infoViewDLI;

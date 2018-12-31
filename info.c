@@ -1,14 +1,20 @@
 // info.c
 
 #include "info.h"
+#include "atari_memmap.h"
 #include "cursor.h"
 #include "game_chara.h"
 #include "graphics.h"
 #include "images.h"
 #include "image_data.h"
+#include "puff.h"
 #include "sprites.h"
 #include "text.h"
 #include <string.h>
+
+
+
+#define ITEM_WINDOW_ROW (13)
 
 
 static SInt8 infoCursorHandler(UInt8 event) {
@@ -59,9 +65,37 @@ static void drawCharaInfoAtIndex(UInt8 index) {
 	printString("Shield+1", x, y++);
 }
 
+static void drawAvatarAtIndex(UInt8 index) {
+	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
+	UInt8 *buffer = textWindow + 40 * 18; // use empty space after screen memory
+	const UInt8 bufferRowBytes = 8; // 8 bytes * 4 ppb = 32 pixels
+	const UInt8 imageHeight = 24;
+	UInt16 bufferLength = imageHeight * bufferRowBytes;
+	UInt16 compressedLength = avatarImages[index]->length;
+
+	SInt8 err = puff(buffer, &bufferLength, avatarImages[index]->data, &compressedLength);
+
+	if (err) {
+		debugPrint("puff() error:", err, 1, ITEM_WINDOW_ROW);
+	} else {
+		// Copy image from buffer to screen
+		UInt8 i = 0;
+		UInt8 x, y;
+
+		screen += index * 10 + 1; // align with chara info text
+
+		for (y=0; y<imageHeight; ++y) {
+			for (x=0; x<bufferRowBytes; ++x) {
+				screen[x] = buffer[i++];
+			}
+			screen += 40; // next row
+		}
+	}
+
+}
+
 void initInfo(void) {
 	const UInt8 missileHeight = 91;
-	const UInt8 itemWindowRow = 15;
 	UInt8 count = numberInParty();
 	UInt8 i;
 	UInt8 s[20];
@@ -69,7 +103,8 @@ void initInfo(void) {
 	// Set up graphics window
 	setScreenMode(ScreenModeOff);
 	setPlayerCursorVisible(0);
-	clearRasterScreen(16+24); // also clears text window
+	clearRasterScreen(24+18); // also clears text window
+	registerCursorEventHandler(infoCursorHandler);
 
 	// Position missile sprites as borders
 	fillSprite(0, 0xFF, 0, missileHeight);
@@ -89,34 +124,37 @@ void initInfo(void) {
 	}
 
 	// Print party info
-	printString("Items", 1, itemWindowRow);
+	printString("Items", 1, ITEM_WINDOW_ROW);
 
 	stringCopy(s, "Gold: $");
 	numberString(s+stringLength(s), ',', partyMoney);
-	printString(s, 1, itemWindowRow+1);
+	printString(s, 1, ITEM_WINDOW_ROW+1);
 
 	stringCopy(s, "Herbs: ");
 	numberString(s+stringLength(s), 0, partyPotions);
 	stringConcat(s, "{");
-	printString(s, 1, itemWindowRow+2);
+	printString(s, 1, ITEM_WINDOW_ROW+2);
 
 	stringCopy(s, "Fangs: ");
 	numberString(s+stringLength(s), 0, partyFangs);
 	stringConcat(s, "}");
-	printString(s, 1, itemWindowRow+3);
+	printString(s, 1, ITEM_WINDOW_ROW+3);
 
 	stringCopy(s, "Nuts: ");
 	numberString(s+stringLength(s), 0, 11);
-	printString(s, 16, itemWindowRow+1);
+	printString(s, 16, ITEM_WINDOW_ROW+1);
 
 	stringCopy(s, "Staff: ");
 	numberString(s+stringLength(s), 0, 3);
-	printString(s, 16, itemWindowRow+3);
+	printString(s, 16, ITEM_WINDOW_ROW+3);
 	
-	printString("Boat", 31, itemWindowRow+1);
-	printString("Lamp", 31, itemWindowRow+2);
-	printString("Crystal", 31, itemWindowRow+3);
-	printString("Mantle", 31, itemWindowRow+4);
+	printString("Boat", 31, ITEM_WINDOW_ROW+1);
+	printString("Lamp", 31, ITEM_WINDOW_ROW+2);
+	printString("Crystal", 31, ITEM_WINDOW_ROW+3);
+	printString("Mantle", 31, ITEM_WINDOW_ROW+4);
 
-	registerCursorEventHandler(infoCursorHandler);
+	// Draw avatars last because it can be slow
+	for (i=0; i<count; ++i) {
+		drawAvatarAtIndex(i);
+	}
 }

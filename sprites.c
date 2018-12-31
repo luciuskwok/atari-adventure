@@ -28,7 +28,7 @@ void initSprites(UInt8 page) {
 	
 	// Set up ANTIC
 	ANTIC.pmbase = page;
-	POKE (GPRIOR, 0x01); // layer players above playfield.
+	POKE (GPRIOR, 0x11); // layer players above playfield + missiles use COLOR3
 	GTIA_WRITE.gractl = 3; // enable both missile and player graphics
 	//POKE (SDMCTL, 0x2E);
 }

@@ -443,7 +443,7 @@ void initDialog(void) {
 		// UInt16 duration;
 		// UInt8 s[16] = "Time: ";
 		// UInt16 startTime = SHORT_CLOCK;
-		SInt8 err = drawImage(temShopImage, temShopImageLength, 0, 72);
+		SInt8 err = drawImage(&temShopImage, 0, 72);
 		if (err) {
 			debugPrint("puff() error:", err, 1, 0);
 		}

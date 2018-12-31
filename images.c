@@ -83,12 +83,13 @@ void initTileFont(UInt8 fontPage) {
 	POKE(CHBAS, fontPage + 2);
 }
 
-SInt8 drawImage(const UInt8 *data, UInt16 length, UInt8 rowOffset, UInt8 rowCount) {
+SInt8 drawImage(const DeflatedImage *image, UInt8 rowOffset, UInt8 rowCount) {
 	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
 	UInt16 screenLen = rowCount * ROW_BYTES;
+	UInt16 dataLen = image->length;
 
 	screen += rowOffset * ROW_BYTES;
-	return puff(screen, &screenLen, data, &length);
+	return puff(screen, &screenLen, image->data, &dataLen);
 }
 
 void clearRasterScreen(UInt8 rows) {

@@ -347,7 +347,7 @@ void initBattle(void) {
 	shouldRedrawEncounterTextOnMove = 0;
 
 	// Draw enemy image
-	err = drawImage(battleEnemyImage, battleEnemyImageLength, 0, 48);
+	err = drawImage(&battleEnemyImage, 0, 48);
 	if (err) {
 		debugPrint("puff() error:", err, 1, 2);
 	}
@@ -356,7 +356,7 @@ void initBattle(void) {
 	drawEnemyHpBar();
 
 	// Draw button bar image
-	err = drawImage(battleButtonsImage, battleButtonsImageLength, 49, 10);
+	err = drawImage(&battleButtonsImage, 49, 10);
 	if (err) {
 		debugPrint("puff() error:", err, 1, 1);
 	}

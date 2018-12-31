@@ -25,4 +25,9 @@ typedef struct RectU8 {
 	SizeU8 size;
 } RectU8;
 
+typedef struct DeflatedImage {
+	UInt16 length;
+	UInt8 data[];
+} DeflatedImage;
+
 #endif

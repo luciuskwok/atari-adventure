@@ -53,7 +53,7 @@ UInt8 charaDefenseRating(GameCharaPtr chara) {
 	return defense;
 }
 
-UInt16 charaXpToNextLevel(GameCharaPtr chara) {
+UInt16 charaXpToNextLevel(GameCharaPtr /* chara */) {
 	return 255;
 }
 
