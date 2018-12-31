@@ -69,7 +69,7 @@ GameCharaPtr charaAtIndex(UInt8 index) {
 void initParty(void) {
 	initChara(&party[0], "Alisa", 8, 8, 9);
 	initChara(&party[1], "Nyorn", 1, 6, 12);
-	initChara(&party[2], "Marisa", 4, 6, 5);
+	initChara(&party[2], "Marie", 4, 6, 5);
 	initChara(&party[3], "Guy", 1, 10, 8);
 
 	// Testing

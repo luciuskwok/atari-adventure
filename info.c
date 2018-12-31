@@ -66,6 +66,25 @@ static void drawCharaInfoAtIndex(UInt8 index) {
 
 static void drawAvatarAtIndex(UInt8 index) {
 	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
+	UInt8 *buffer = avatarImages[index]->bytes;
+	const UInt8 bufferRowBytes = 8; // 8 bytes * 4 ppb = 32 pixels
+	const UInt8 imageHeight = 24;	
+	UInt8 i = 0;
+	UInt8 x, y;
+
+	screen += index * 10 + 1; // align with chara info text
+
+	for (y=0; y<imageHeight; ++y) {
+		for (x=0; x<bufferRowBytes; ++x) {
+			screen[x] = buffer[i++];
+		}
+		screen += 40; // next row
+	}
+}
+
+/*
+static void drawDeflatedAvatarAtIndex(UInt8 index) {
+	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
 	UInt8 *buffer = textWindow + 40 * 18; // use empty space after screen memory
 	const UInt8 bufferRowBytes = 8; // 8 bytes * 4 ppb = 32 pixels
 	const UInt8 imageHeight = 24;
@@ -90,8 +109,8 @@ static void drawAvatarAtIndex(UInt8 index) {
 			screen += 40; // next row
 		}
 	}
-
 }
+*/
 
 void initInfo(void) {
 	const UInt8 missileHeight = 91;
@@ -118,7 +137,8 @@ void initInfo(void) {
 
 	// Turn on screen
 	setScreenMode(ScreenModeInfo);
-	fadeInColorTable(FadeTextBox, infoColorTable);
+	//fadeInColorTable(FadeTextBox, infoColorTable);
+	loadColorTable(infoColorTable);
 
 	// Print chara info
 	for (i=0; i<count; ++i) {

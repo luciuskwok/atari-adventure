@@ -1,5 +1,7 @@
 # analyze_trace.py
 
+# Updated for Python 3.
+
 import sys
 
 def parseSymbol(string):
@@ -26,7 +28,7 @@ with open("../linker_map.txt", "r") as mapFile:
 		if foundSegmentList == False:
 			if line.startswith("Segment list:"):
 				foundSegmentList = True
-				print "Found segment list."
+				print("Found segment list.")
 			continue
 
 		# Find "CODE" segment
@@ -35,7 +37,7 @@ with open("../linker_map.txt", "r") as mapFile:
 				codeStartAddr = line[24:28]
 				codeEndAddr = line[32:36]
 				foundCodeSegment = True
-				print "Found code segment."
+				print("Found code segment.")
 			continue
 
 		# Find "Exports list by value:"
@@ -43,7 +45,7 @@ with open("../linker_map.txt", "r") as mapFile:
 			if line.startswith("Exports list by value:"):
 				foundExportsList = True
 				skipHorizontalRule = True
-				print "Found exports list."
+				print("Found exports list.")
 			continue
 
 		if skipHorizontalRule == True:
@@ -53,7 +55,6 @@ with open("../linker_map.txt", "r") as mapFile:
 		# Parse 2-column line of symbols
 		if completedExportsList == False:
 			if len(line) >= 40:
-				#print "Found symbol line."
 				symbols.append(parseSymbol(line[0:40]))
 				if len(line) >= 80:
 					symbols.append(parseSymbol(line[40:80]))
@@ -61,7 +62,7 @@ with open("../linker_map.txt", "r") as mapFile:
 				completedExportsList = True
 			continue
 
-	print "CODE %s to %s, %d symbols" % (codeStartAddr, codeEndAddr, len(symbols))
+	print("CODE {} to {}, {} symbols".format(codeStartAddr, codeEndAddr, len(symbols)))
 
 
 # Read the trace file
@@ -90,8 +91,8 @@ with open(sys.argv[1], "r") as traceFile:
 				addressDictionary[foundSymbol] = 1
 
 	# Print out top 20 addresses sorted by value
-	for key, value in sorted(addressDictionary.iteritems(), key = lambda (k,v): (v,k), reverse=True)[:48]:
-		print "{1:>10,} {0}".format(key, value)
-		#print "%s: %s" % (key, value)
+	sortedAddresses = [(k, addressDictionary[k]) for k in sorted(addressDictionary, key=addressDictionary.get, reverse=True)]
+	for key, value in sortedAddresses:
+		print("{1:>10,} {0}".format(key, value))
 
 # == End Script ==
