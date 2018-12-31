@@ -13,6 +13,7 @@ void setPlayerCursorColorCycling(UInt8 cycle);
 
 void setTileOverlaySprite(const UInt8 *sprite, UInt8 column, UInt8 row);
 void drawSprite(const UInt8 *sprite, UInt8 length, UInt8 player, UInt8 y);
+void fillSprite(UInt8 player, UInt8 value, UInt8 offset, UInt8 length);
 
 void setSpriteWidth(UInt8 player, UInt8 width);
 

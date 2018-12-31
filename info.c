@@ -8,10 +8,15 @@
 #include "image_data.h"
 #include "sprites.h"
 #include "text.h"
+#include <string.h>
 
 
 static SInt8 infoCursorHandler(UInt8 event) {
 	return (event == CursorClick) ? MessageReturnToMap : MessageNone;
+}
+
+static void fillSpacerLine(UInt8 row) {
+	memset(textWindow + row * 40, 0xFF, 40);
 }
 
 static void drawCharaInfoAtIndex(UInt8 index) {
@@ -23,15 +28,7 @@ static void drawCharaInfoAtIndex(UInt8 index) {
 	UInt8 s[11];
 
 	printString(chara->name, x, y++);
-	
-	stringCopy(s, "atk ");
-	numberString(s+4, 0, charaAttackRating(chara));
-	printString(s, x+2, y++);
 
-	stringCopy(s, "def ");
-	numberString(s+4, 0, charaDefenseRating(chara));
-	printString(s, x+2, y++);
-	
 	stringCopy(s, "Lv ");
 	numberString(s+3, 0, chara->level);
 	printString(s, x, y++);
@@ -40,6 +37,8 @@ static void drawCharaInfoAtIndex(UInt8 index) {
 	numberString(s+5, 0, charaXpToNextLevel(chara));
 	printString(s, x, y++);
 
+	++y;
+
 	printString("HP", x, y++);
 
 	numberString(s, 0, hp);
@@ -47,26 +46,41 @@ static void drawCharaInfoAtIndex(UInt8 index) {
 	numberString(s+stringLength(s), 0, maxHp);
 	printString(s, x, y++);
 	
-	drawHpBar(x, y++, hp, maxHp);
+	++y;
 
-	printString("Sword", x, y++);
-	printString("atk +1", x+2, y++);
+	stringCopy(s, "ATK ");
+	numberString(s+4, 0, charaAttackRating(chara));
+	printString(s, x, y++);
 
-	printString("Armor", x, y++);
-	printString("def +2", x+2, y++);
+	stringCopy(s, "DEF ");
+	numberString(s+4, 0, charaDefenseRating(chara));
+	printString(s, x, y++);
 
-	printString("Shield", x, y++);
-	printString("def +1", x+2, y++);
+	++y;
+
+	printString("Sword+1", x, y++);
+	printString("Armor+2", x, y++);
+	printString("Shield+1", x, y++);
 }
 
 void initInfo(void) {
+	const UInt8 missileHeight = 90;
 	UInt8 count = numberInParty();
 	UInt8 i;
+	UInt8 s[20];
 
 	// Set up graphics window
 	setScreenMode(ScreenModeOff);
 	setPlayerCursorVisible(0);
 	clearRasterScreen(16+24); // also clears text window
+
+	// Position missile sprites as borders
+	fillSprite(0, 0xFF, 0, missileHeight);
+	fillSprite(0, 0x03, missileHeight, 128-missileHeight);
+	setSpriteHorizontalPosition(5, 48);
+	setSpriteHorizontalPosition(6, 88);
+	setSpriteHorizontalPosition(7, 128);
+	setSpriteHorizontalPosition(8, 168);
 
 	// Turn on screen
 	setScreenMode(ScreenModeInfo);
@@ -78,7 +92,34 @@ void initInfo(void) {
 	}
 
 	// Print party info
+	printString("Items", 1, 14);
 
+	stringCopy(s, "Gold: $");
+	numberString(s+stringLength(s), ',', partyMoney);
+	printString(s, 1, 15);
+
+	stringCopy(s, "Herbs: ");
+	numberString(s+stringLength(s), 0, partyPotions);
+	stringConcat(s, "{");
+	printString(s, 1, 16);
+
+	stringCopy(s, "Fangs: ");
+	numberString(s+stringLength(s), 0, partyFangs);
+	stringConcat(s, "}");
+	printString(s, 1, 17);
+
+	stringCopy(s, "Nuts: ");
+	numberString(s+stringLength(s), 0, 11);
+	printString(s, 16, 15);
+
+	stringCopy(s, "Staff: ");
+	numberString(s+stringLength(s), 0, 3);
+	printString(s, 16, 16);
+	
+	printString("Boat", 31, 15);
+	printString("Lamp", 31, 16);
+	printString("Crystal", 31, 17);
+	printString("Mantle", 31, 18);
 
 	registerCursorEventHandler(infoCursorHandler);
 }

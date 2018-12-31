@@ -90,6 +90,11 @@ void drawSprite(const UInt8 *sprite, UInt8 length, UInt8 player, UInt8 y) {
 	}
 }
 
+void fillSprite(UInt8 player, UInt8 value, UInt8 offset, UInt8 length) {
+	UInt8 *p = (UInt8 *) (384 + spriteArea + 128 * player + offset);
+	memset(p, value, length);
+}
+
 void setSpriteHorizontalPosition(UInt8 player, UInt8 x) {
 	UInt8 *spritePositions = (UInt8 *)HPOSP0;
 

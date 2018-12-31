@@ -38,6 +38,7 @@ extern void __fastcall__ initVBI(void *addr);
 extern void __fastcall__ immediateUserVBI(void);
 extern void __fastcall__ mapViewDLI(void);
 extern void __fastcall__ battleViewDLI(void);
+extern void __fastcall__ infoViewDLI(void);
 
 // Globals
 UInt8 *textWindow;
@@ -211,12 +212,32 @@ static void writeInfoViewDisplayList(void) {
 	UInt8 *dl = (UInt8 *)PEEKW(SDLSTL);
 	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
 	UInt8 x = 3;
-
-	x += writeDisplayListLines(dl+3, screen, dl_rasterLine, 16);
+	UInt8 i;
 
 	// Move text window
-	textWindow = screen + (18 * SCREEN_ROW_BYTES);
-	x += writeDisplayListLines(dl+x, textWindow, dl_textWindowLine, 21);
+	textWindow = screen + (16 * SCREEN_ROW_BYTES);
+
+	x += writeDisplayListLines(dl+3, screen, dl_rasterLine, 16);
+	dl[x-1] |= dl_Interrupt; // 32
+
+	dl[x++] = DL_BLK2; // +2: 34
+
+	dl[x++] = dl_textWindowLine | dl_Interrupt;
+	dl[x++] = DL_BLK2; // + 10: 44
+
+	for (i=0; i<13; ++i) {
+		dl[x++] = dl_textWindowLine;
+	}
+	dl[x-1] |= dl_Interrupt; // + 13*8 = +104: 148
+
+	dl[x++] = DL_BLK4; // +4: 152
+
+	dl[x++] = dl_textWindowLine | dl_Interrupt;
+	dl[x++] = DL_BLK2; // +2: 154
+
+	for (i=0; i<5; ++i) {
+		dl[x++] = dl_textWindowLine;
+	} // + 5*8 = +40: 194
 
 	writeDisplayListEnd(dl+x);
 }
@@ -231,8 +252,8 @@ void setScreenMode(UInt8 mode) {
 	switch (mode) {
 		case ScreenModeMap:
 			dma = 0x2E; // various Antic DMA options
-			nmi |= 0x80; // enable DLI
 			writeMapViewDisplayList();
+			nmi |= 0x80; // enable DLI
 			dli = mapViewDLI;
 			break;
 
@@ -243,14 +264,16 @@ void setScreenMode(UInt8 mode) {
 
 		case ScreenModeBattle:
 			dma = 0x2E; // various Antic DMA options
-			nmi |= 0x80; // enable DLI
 			writeBattleViewDisplayList();
+			nmi |= 0x80; // enable DLI
 			dli = battleViewDLI;
 			break;
 
 		case ScreenModeInfo:
 			dma = 0x2E; // various Antic DMA options
 			writeInfoViewDisplayList();
+			nmi |= 0x80; // enable DLI
+			dli = infoViewDLI;
 			break;
 
 		case ScreenModeOff:

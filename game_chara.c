@@ -5,7 +5,7 @@
 
 
 // Globals
-UInt8 partySize = 4;
+UInt8 partySize = 2;
 GameChara party[4];
 UInt32 partyMoney;
 UInt8 partyPotions;

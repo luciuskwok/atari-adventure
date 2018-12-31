@@ -8,6 +8,7 @@
 .export _immediateUserVBI
 .export _mapViewDLI
 .export _battleViewDLI
+.export _infoViewDLI
 
 .code
 PCOLR0 = $02C0		; Player 0 color
@@ -177,5 +178,34 @@ return_dli:
 	pla					; restore accumulator and X register from stack
 	tax
 	pla
+	rti
+.endproc
+
+.proc _infoViewDLI
+	pha					; push accumulator and X register onto stack
+	
+	lda DLI_ROW			; increment DLI_ROW
+	clc
+	adc #1
+	sta DLI_ROW
+	sta WSYNC			; wait for horizontal sync
+
+	and #1
+	beq even_rows
+odd_rows:
+	lda TXTLUM 		 	; swap background and text color	
+	sta COLPF2			; text box background
+	lda #0
+	sta COLPF1			; text luminance / bar chart foreground
+	jmp return
+
+even_rows:
+	lda TXTBKG
+	sta COLPF2			; text box background
+	lda TXTLUM
+	sta COLPF1			; text luminance / bar chart foreground
+
+return:	
+	pla					; restore accumulator and X register from stack
 	rti
 .endproc
