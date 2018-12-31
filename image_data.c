@@ -11,7 +11,7 @@ const UInt8 temShopColorTable[] = {
 	0x0E, 0x00, 0x82 // text box
 };
 
-const DeflatedImage temShopImage = {
+const DataBlock temShopImage = {
 	1150, // length
 	{
 		0x8D,0xD6,0x31,0x6B,0x23,0x47,0x14,0x00,0xE0,0xD9,0xAC,0xB6,0x31,0xF8,0x56,0x02,
@@ -95,7 +95,7 @@ const UInt8 battleColorTable[] = {
 	0x0E, 0x00, 0x82 // text box
 };
 
-const DeflatedImage battleButtonsImage = {
+const DataBlock battleButtonsImage = {
 	164, // length
 	{
 		0x8D,0x90,0x31,0x0A,0x05,0x31,0x08,0x44,0x05,0x5B,0x21,0x57,0x11,0x6C,0x17,0xBC,
@@ -112,7 +112,7 @@ const DeflatedImage battleButtonsImage = {
 	}
 };
 
-const DeflatedImage battleEnemyImage = {
+const DataBlock battleEnemyImage = {
 	163, // length
 	{
 		0xED,0xD4,0x31,0x0E,0x83,0x30,0x0C,0x05,0xD0,0x40,0xC5,0xC2,0xC2,0x94,0xF3,0x34,
@@ -141,7 +141,7 @@ const UInt8 infoColorTable[] = {
 	0x82  // bar background
 };
 
-const DeflatedImage avatar1Image = {
+const DataBlock avatar1Image = {
 	132, // length
 	{
 		0x4D,0xCC,0xB1,0x0D,0xC2,0x40,0x0C,0x05,0x50,0x4B,0x37,0x40,0x2A,0x46,0x89,0xA8,
@@ -156,12 +156,14 @@ const DeflatedImage avatar1Image = {
 	}
 };
 
-const DeflatedImage *avatarImages[4] = {
+const DataBlock *avatarImages[4] = {
 	&avatar1Image,
 	&avatar1Image,
 	&avatar1Image,
 	&avatar1Image
 };
+
+/* Obsolete data
 
 const UInt8 plainsGradient[] = { 
 	12, 0x92, 
@@ -178,8 +180,6 @@ const UInt8 plainsGradient[] = {
 	 0 
 };
 
-
-/*
 const UInt16 testImageLength = 495;
 
 const UInt8 testImage[] = {

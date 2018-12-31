@@ -73,7 +73,7 @@ static void drawAvatarAtIndex(UInt8 index) {
 	UInt16 bufferLength = imageHeight * bufferRowBytes;
 	UInt16 compressedLength = avatarImages[index]->length;
 
-	SInt8 err = puff(buffer, &bufferLength, avatarImages[index]->data, &compressedLength);
+	SInt8 err = puff(buffer, &bufferLength, avatarImages[index]->bytes, &compressedLength);
 
 	if (err) {
 		debugPrint("puff() error:", err, 1, ITEM_WINDOW_ROW);

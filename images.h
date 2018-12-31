@@ -5,7 +5,7 @@
 
 
 void initTileFont(UInt8 fontPage);
-SInt8 drawImage(const DeflatedImage *image, UInt8 rowOffset, UInt8 rowCount);
+SInt8 drawImage(const DataBlock *image, UInt8 rowOffset, UInt8 rowCount);
 void clearRasterScreen(UInt8 rows);
 
 

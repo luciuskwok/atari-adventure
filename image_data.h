@@ -5,14 +5,12 @@
 // Raster Data
 
 extern const UInt8 temShopColorTable[];
-extern const DeflatedImage temShopImage;
+extern const DataBlock temShopImage;
 
 extern const UInt8 battleColorTable[];
-extern const DeflatedImage battleButtonsImage;
-extern const DeflatedImage battleEnemyImage;
+extern const DataBlock battleButtonsImage;
+extern const DataBlock battleEnemyImage;
 
 extern const UInt8 infoColorTable[];
-extern const DeflatedImage avatar1Image;
-extern const DeflatedImage *avatarImages[];
-
-extern const UInt8 plainsGradient[];
+extern const DataBlock avatar1Image;
+extern const DataBlock *avatarImages[];
