@@ -3,11 +3,11 @@
 #include "map.h"
 #include "cursor.h"
 #include "graphics.h"
+#include "images.h"
 #include "map_data.h"
 #include "menu.h"
 #include "sprites.h"
 #include "text.h"
-#include "images.h"
 #include "atari_memmap.h"
 #include <string.h>
 
@@ -54,8 +54,7 @@ static SInt8 handleMenuClick(UInt8 index) {
 			break;
 
 		case 1: // Info
-
-			break;
+			return MessageEnterInfo;
 
 		case 2: // Save
 
@@ -399,7 +398,9 @@ SInt8 mapCursorHandler(UInt8 event) {
 }
 
 void initMap(void) {
+	hideSprites();
 	setScreenMode(ScreenModeMap);
+	clearMapScreen();
 	drawMapTextBox();
 	transitionToMap(currentMapType, 0, 1);
 	registerCursorEventHandler(mapCursorHandler);

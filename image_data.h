@@ -17,4 +17,6 @@ extern const UInt16 battleEnemyImageLength;
 extern const UInt8 battleEnemyImage[];
 extern const UInt8 battleColorTable[];
 
+extern const UInt8 infoColorTable[];
+
 extern const UInt8 plainsGradient[];

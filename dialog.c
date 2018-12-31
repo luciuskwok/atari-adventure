@@ -403,10 +403,9 @@ void initDialog(void) {
 	isExittingDialog = 0;
 
 	// Set up graphics window
-	fadeOutColorTable(FadeTextBox);
 	setScreenMode(ScreenModeOff);
 	clearTextWindow(7);
-	clearRasterScreen();
+	clearRasterScreen(72);
 	setPlayerCursorVisible(0);
 
 	// Turn on screen
@@ -420,6 +419,8 @@ void initDialog(void) {
 	drawSprite(temFaceSprite+temFaceSpriteHeight, temFaceSpriteHeight, 4, 22+14);
 	setSpriteHorizontalPosition(3, PM_LEFT_MARGIN + 72);
 	setSpriteHorizontalPosition(4, PM_LEFT_MARGIN + 80);
+	setSpriteWidth(3, 1);
+	setSpriteWidth(3, 1);
 
 	// Set up menu
 	initMenu();

@@ -34,6 +34,7 @@ extern SInt8 partyReputation;
 UInt8 charaMaxHp(GameCharaPtr chara);
 UInt8 charaAttackRating(GameCharaPtr chara);
 UInt8 charaDefenseRating(GameCharaPtr chara);
+UInt16 charaXpToNextLevel(GameCharaPtr chara);
 
 // Party Stats
 UInt8 numberInParty(void);

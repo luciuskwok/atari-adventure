@@ -166,6 +166,16 @@ const UInt8 battleColorTable[] = {
 	0x0E, 0x00, 0x82 // text box
 };
 
+const UInt8 infoColorTable[] = {
+	0, 0, 0, 0, // sprite
+	0,
+	0x0E, // text luminance
+	0x04, // text background
+	0, 
+	0x00, // background
+	0, 0, 0 // DLI (unused)
+};
+
 const UInt8 plainsGradient[] = { 
 	12, 0x92, 
 	12, 0x94,

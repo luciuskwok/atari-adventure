@@ -14,6 +14,7 @@
 #include "graphics.h"
 #include "images.h"
 #include "image_data.h"
+#include "info.h"
 #include "map.h"
 #include "map_data.h"
 #include "sprites.h"
@@ -40,7 +41,7 @@ UInt16 duration;
 
 void fadeOutScreen(void) {
 	// Fade out
-	fadeOutColorTable(FadeGradient | FadeTextBox);
+	fadeOutColorTable(FadeTextBox);
 	clearSpriteData(4);
 	hideSprites();
 }
@@ -48,11 +49,17 @@ void fadeOutScreen(void) {
 void handleMessage(SInt8 message) {
 	switch (message) {
 		case MessageEnterDialog:
+			fadeOutScreen();
 			initDialog();
 			break;
 		case MessageEnterBattle:
+			fadeOutScreen();
 			initBattle();
 			break;
+		case MessageEnterInfo:
+			fadeOutScreen();
+			initInfo();
+			break;		
 		case MessageReturnToMap:
 			fadeOutScreen();
 			initMap();

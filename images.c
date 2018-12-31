@@ -91,8 +91,8 @@ SInt8 drawImage(const UInt8 *data, UInt16 length, UInt8 rowOffset, UInt8 rowCoun
 	return puff(screen, &screenLen, data, &length);
 }
 
-void clearRasterScreen(void) {
+void clearRasterScreen(UInt8 rows) {
 	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
-	memset(screen, 0, ROW_BYTES * SCREEN_HEIGHT);
+	memset(screen, 0, ROW_BYTES * rows);
 }
 

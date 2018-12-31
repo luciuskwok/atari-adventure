@@ -33,8 +33,8 @@
 #define PCOLR2 (0x02C2)
 #define PCOLR3 (0x02C3)
 #define COLOR0 (0x02C4)
-#define COLOR1 (0x02C5)
-#define COLOR2 (0x02C6)
+#define COLOR1 (0x02C5) /* text luminance */
+#define COLOR2 (0x02C6) /* text background color */
 #define COLOR3 (0x02C7)
 #define COLOR4 (0x02C8)
 #define TXTBKG (0x02CA)

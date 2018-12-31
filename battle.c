@@ -320,13 +320,10 @@ void initBattle(void) {
 	SInt8 err;
 
 	// Set up graphics window
-	fadeOutColorTable(FadeTextBox);
 	setScreenMode(ScreenModeOff);
 	clearTextWindow(7);
-	clearRasterScreen();
+	clearRasterScreen(72);
 	setPlayerCursorVisible(0);
-
-	hideSprites();
 
 	// Turn on screen
 	loadColorTable(battleColorTable); // battleColorTable

@@ -20,7 +20,7 @@ static UInt8 toAtascii(UInt8 c) {
 	return c;
 }
 
-static void drawHpBar(UInt8 x, UInt8 y, UInt8 hp, UInt8 maxHp) {
+void drawHpBar(UInt8 x, UInt8 y, UInt8 hp, UInt8 maxHp) {
 	UInt8 width;
 	UInt8 fill;
 	UInt8 remainder;
