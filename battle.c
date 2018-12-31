@@ -124,9 +124,9 @@ static void charaAtIndexWasHit(UInt8 index, UInt8 damage) {
 
 	// Show animation for player getting hit.
 	for (i=0; i<4; ++i) {
-		setSpriteHorizontalPosition(3, 48 + index * 40);
+		setSpriteOriginX(3, 48 + index * 40);
 		waitVsync(4);
-		setSpriteHorizontalPosition(3, 0);
+		setSpriteOriginX(3, 0);
 		waitVsync(4);
 	}
 
@@ -370,17 +370,16 @@ void initBattle(void) {
 	clearSpriteData(3);
 	setSpriteWidth(3, 4);
 	drawSprite(&enemyAttackSprite, 3, 82);
-	//setSpriteHorizontalPosition(3, 48);
 
 	// Set up menu
 	initMenu();
 	menuIsHorizontal = 1;
 	setMenuCursor(MediumHeartCursor);
 
-	registerMenuDidClickCallback(handleMenuClick);
-	registerMenuSelectedIndexDidChangeCallback(menuSelectionDidChange);
+	setMenuClickHandler(handleMenuClick);
+	setMenuSelIndexHandler(menuSelectionDidChange);
 	menuEscapeCursorEvent = CursorDown;
-	registerMenuDidEscapeCallback(handleMenuEscape);
+	setMenuEscapeHandler(handleMenuEscape);
 
 	rootMenuSelectedIndex = 0;
 	isLeavingBattle = 0;

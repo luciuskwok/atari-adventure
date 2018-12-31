@@ -57,7 +57,7 @@ void setPlayerCursorVisible(UInt8 visible) {
 	}
 }
 
-void setPlayerCursorColorCycling(UInt8 cycle) {
+void setCursorColorCycling(UInt8 cycle) {
 	if (cycle) {
 		POKE (CUR_TIMER, 15); // on
 	} else {
@@ -67,7 +67,7 @@ void setPlayerCursorColorCycling(UInt8 cycle) {
 
 // Drawing
 
-void setTileOverlaySpriteAtIndex(UInt8 spriteIndex, UInt8 column, UInt8 row) {
+void setTileSprite(UInt8 spriteIndex, UInt8 column, UInt8 row) {
 	// Set horizontal position for tile
 	P3_XPOS[row] = PM_LEFT_MARGIN - 4 + column * 8;
 	GTIA_WRITE.sizep3 = 0;
@@ -81,12 +81,8 @@ void drawSprite(const DataBlock *sprite, UInt8 player, UInt8 y) {
 	UInt8 length = sprite->length;
 	UInt8 *bytes = sprite->bytes;
 	UInt8 i;
-	if (sprite) {
-		for (i=0; i<length; ++i) {
-			p[i] = bytes[i];
-		}
-	} else {
-		memset(p, 0, length);
+	for (i=0; i<length; ++i) {
+		p[i] = bytes[i];
 	}
 }
 
@@ -95,7 +91,7 @@ void fillSprite(UInt8 player, UInt8 value, UInt8 offset, UInt8 length) {
 	memset(p, value, length);
 }
 
-void setSpriteHorizontalPosition(UInt8 player, UInt8 x) {
+void setSpriteOriginX(UInt8 player, UInt8 x) {
 	UInt8 *spritePositions = (UInt8 *)HPOSP0;
 
 	if (1 <= player && player <= 8) {
@@ -117,6 +113,50 @@ void setSpriteWidth(UInt8 player, UInt8 width) {
 		// Changing missile sprite widths not yet supported.
 	}
 }
+
+// Clearing
+
+void clearSpriteData(UInt8 player) {
+	UInt8 *p = (UInt8 *) (spriteArea + 384 + 128 * player);
+	memset(p, 0, 128);
+}
+
+void hideSprites(void) {
+	UInt8 *spritePositions = (UInt8 *)HPOSP0;
+	UInt8 i;
+
+	for (i=0; i<8; ++i) {
+		spritePositions[i] = 0;
+	}
+	for (i=0; i<9; ++i) {
+		P3_XPOS[i] = 0;
+	}
+}
+
+void initSprites(UInt8 page) {
+	UInt16 i;
+	UInt8 c;
+
+	spriteArea = (UInt8 *) (page * 256);
+	
+	// Zero out sprite memory area
+	for (i=384; i<1024; ++i) {
+		spriteArea[i] = 0;
+	}
+	
+	// Clear GTIA registers
+	for (c=0; c<12; ++c) {
+		POKE (HPOSP0 + c, 0);
+	}
+	
+	// Set up ANTIC
+	ANTIC.pmbase = page;
+	POKE (GPRIOR, 0x11); // layer players above playfield + missiles use COLOR3
+	GTIA_WRITE.gractl = 3; // enable both missile and player graphics
+	//POKE (SDMCTL, 0x2E);
+}
+
+/*
 
 void setMegaSprite(DataBlock *sprite, const PointU8 *position, UInt8 magnification) {
 	// Sprite will be centered on position.
@@ -177,53 +217,6 @@ void setMegaSprite(DataBlock *sprite, const PointU8 *position, UInt8 magnificati
 	spritePositions[6] = x;
 }
 
-// Clearing
-
-void clearSpriteData(UInt8 player) {
-	UInt8 *p = (UInt8 *) (spriteArea + 384 + 128 * player);
-	memset(p, 0, 128);
-}
-
-void hideSprites(void) {
-	UInt8 *spritePositions = (UInt8 *)HPOSP0;
-	UInt8 i;
-
-	for (i=0; i<8; ++i) {
-		spritePositions[i] = 0;
-	}
-	for (i=0; i<9; ++i) {
-		P3_XPOS[i] = 0;
-	}
-}
-
-void initSprites(UInt8 page) {
-	UInt16 i;
-	UInt8 c;
-
-	spriteArea = (UInt8 *) (page * 256);
-	
-	// Zero out sprite memory area
-	for (i=384; i<1024; ++i) {
-		spriteArea[i] = 0;
-	}
-	
-	// Clear GTIA registers
-	for (c=0; c<12; ++c) {
-		POKE (HPOSP0 + c, 0);
-	}
-	
-	// Set up ANTIC
-	ANTIC.pmbase = page;
-	POKE (GPRIOR, 0x11); // layer players above playfield + missiles use COLOR3
-	GTIA_WRITE.gractl = 3; // enable both missile and player graphics
-	//POKE (SDMCTL, 0x2E);
-}
-
-
-
-
-
-/*
 const UInt8 sansSpriteOLD[] = {
 	0x00, 0x01, 0x07, 0x07, 0x0F, 0x0F, 0x0F, 0x0C, 0x07, 0x05, 0x0C, 0x0E, 0x03, 0x00, 0x10, 0x36, 0x3B, 0x64, 0x7B, 0x79, 0x0B, 0x03, 0x0B, 0x08, 0x10, 0x10, 0x0F, 0x20, 0x7F, 0x7F, 0x00, 0x00, 
 	0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFC, 0xFC, 0x6C, 0xC7, 0xFF, 0x00, 0xAA, 0x01, 0xFE, 0x00, 0xEE, 0x11, 0x7C, 0x7D, 0x39, 0x7D, 0x01, 0x01, 0x00, 0x10, 0x28, 0xEF, 0x00, 0xC7, 0x87, 0x00, 0x00, 

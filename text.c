@@ -48,12 +48,12 @@ static void printCharaStats(UInt8 x, UInt8 y, GameCharaPtr chara) {
 
 	printString(chara->name, x, y);
 
-	numberString(lvStr+3, 0, chara->level);
+	uint8toString(lvStr+3, chara->level);
 	printString(lvStr, x, y+1);
 
-	numberString(hpStr, 0, hp);
+	uint8toString(hpStr, hp);
 	stringConcat(hpStr, "/");
-	numberString(hpStr+stringLength(hpStr), 0, maxHp);
+	uint8toString(hpStr+stringLength(hpStr), maxHp);
 	printString(hpStr, x, y+2);
 
 	drawHpBar(x, y+3, hp, maxHp);
@@ -90,13 +90,13 @@ void printPartyStats(void) {
 	UInt8 x;
 
 	s[0] = '$';
-	numberString(s+1, ',', partyMoney);
+	uint16toString(s+1, partyMoney);
 	stringConcat(s, "  ");
 
-	numberString(s+stringLength(s), 0, partyPotions);
+	uint8toString(s+stringLength(s), partyPotions);
 	stringConcat(s, "{  ");
 
-	numberString(s+stringLength(s), 0, partyFangs);
+	uint8toString(s+stringLength(s), partyFangs);
 	stringConcat(s, "}");
 
 	len = stringLength(s);
@@ -201,49 +201,32 @@ void drawTextBox(const UInt8 *s, UInt8 x, UInt8 y, UInt8 width, UInt8 lineSpacin
 	}
 }
 
-void numberString(UInt8 *outString, UInt8 thousandsSeparator, SInt32 value) {
-	UInt8 isNegative = 0;
-	UInt8 len = 0;
-	UInt32 x;
-	UInt8 c, i, j;
-
-	if (value == 0) { // Special case for value of zero.
-		outString[0] = '0';
-		++len;
-	} else {
-		if (value < 0) {
-			x = -value;
-			isNegative = 1;
-		} else {
-			x = value;
-		}
-
-		// Add digits in reverse order, then reverse the string.
-		while (x != 0) {
-			if ((len >= 3) && (len % 4 == 3) && (thousandsSeparator != 0)) {
-				outString[len] = thousandsSeparator;
-				++len;
-			}
-			c = x % 10;
-			outString[len] = c + 0x30;
-			++len;
-			x = x / 10;
-		}
-
-		// Add negative sign
-		if (isNegative) {
-			outString[len] = '-';
-			++len;
-		}
-
-		// Reverse the string
-		for (i=0, j=len-1; i<j; ++i, --j) {
-			c = outString[j];
-			outString[j] = outString[i];
-			outString[i] = c;
-		}
+void uint8toString(UInt8 *outString, UInt8 value) {
+	if (value >= 100) {
+		*outString++ = value / 100 + 0x30;
 	}
-	outString[len] = 0; // null terminate string
+	if (value >= 10) {
+		*outString++ = (value / 10) % 10 + 0x30;
+	}
+	*outString++ = value % 10 + 0x30;
+	*outString = 0;
+}
+
+void uint16toString(UInt8 *outString, UInt16 value) {
+	if (value >= 10000) {
+		*outString++ = value / 10000 + 0x30;
+	}
+	if (value >= 1000) {
+		*outString++ = (value / 1000) % 10 + 0x30;
+	}
+	if (value >= 100) {
+		*outString++ = (value / 100) % 10 + 0x30;
+	}
+	if (value >= 10) {
+		*outString++ = (value / 10) % 10 + 0x30;
+	}
+	*outString++ = value % 10 + 0x30;
+	*outString = 0;	
 }
 
 void hexString(UInt8 *outString, UInt8 length, UInt16 value) {
@@ -265,7 +248,7 @@ void debugPrint(const UInt8 *s, UInt16 value, UInt8 x, UInt8 y) {
 	UInt8 message[40] = { 0 };
 	UInt8 valStr[6];
 
-	numberString(valStr, 0, value);
+	uint16toString(valStr, value);
 	stringConcat(message, s);
 	stringConcat(message, valStr);
 	printString(message, x, y);

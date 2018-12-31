@@ -44,7 +44,7 @@ static void exitMapMenu(void) {
 	POKE(TXTBKG, overworldColorTable[10]);
 	setPlayerCursorVisible(1);
 	drawMapTextBox();
-	registerCursorEventHandler(mapCursorHandler);
+	setCursorEventHandler(mapCursorHandler);
 }
 
 static SInt8 handleMenuClick(UInt8 index) {
@@ -83,7 +83,7 @@ static void initMapMenu(void) {
 	menuItemCount = 4;
 	menuItemSpacing = 8 * 4;
 	menuIsHorizontal = 1;
-	registerMenuDidClickCallback(handleMenuClick);
+	setMenuClickHandler(handleMenuClick);
 	setMenuCursor(MediumHeartCursor);
 	setMenuSelectedIndex(0);
 }
@@ -281,7 +281,7 @@ void drawCurrentMap(UInt8 x, UInt8 y) {
 				low = (c & 0x3F);
 				if (low >= tCastle) {
 					low -= tCastle;
-					setTileOverlaySpriteAtIndex(low, col, row);
+					setTileSprite(low, col, row);
 					hasSpriteOverlay = 1;
 				}
 
@@ -301,7 +301,7 @@ void drawCurrentMap(UInt8 x, UInt8 y) {
 	{
 		UInt8 s[6];
 		duration = SHORT_CLOCK - startTime;
-		numberString(s, 0, duration);
+		uint16toString(s, duration);
 		printString(s, 0, 4);
 	}
 }
@@ -327,7 +327,7 @@ void transitionToMap(UInt8 mapType, UInt8 shouldFadeOut, UInt8 shouldFadeIn) {
 
 	// Show player cursor
 	setPlayerCursorVisible(1);
-	setPlayerCursorColorCycling(1);
+	setCursorColorCycling(1);
 }
 
 void exitToOverworld(void) {
@@ -418,5 +418,5 @@ void initMap(void) {
 	clearMapScreen();
 	drawMapTextBox();
 	transitionToMap(currentMapType, 0, 1);
-	registerCursorEventHandler(mapCursorHandler);
+	setCursorEventHandler(mapCursorHandler);
 }

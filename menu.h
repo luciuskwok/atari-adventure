@@ -23,9 +23,9 @@ enum MenuCursors {
 void setMenuCursor(UInt8 cursor);
 void hideCursor(void);
 
-void registerMenuDidClickCallback(MenuDidClickCallbackType cb);
-void registerMenuSelectedIndexDidChangeCallback(MenuSelectedIndexDidChangeCallbackType cb);
-void registerMenuDidEscapeCallback(MenuDidEscapeCallbackType cb);
+void setMenuClickHandler(MenuDidClickCallbackType cb);
+void setMenuSelIndexHandler(MenuSelectedIndexDidChangeCallbackType cb);
+void setMenuEscapeHandler(MenuDidEscapeCallbackType cb);
 
 void initMenu(void);
 

@@ -31,30 +31,30 @@ static void drawCharaInfoAtIndex(UInt8 index) {
 	printString(chara->name, x, y++);
 
 	stringCopy(s, "Lv ");
-	numberString(s+3, 0, chara->level);
+	uint8toString(s+3, chara->level);
 	printString(s, x, y++);
 	
 	stringCopy(s, "next ");
-	numberString(s+5, 0, charaXpToNextLevel(chara));
+	uint16toString(s+5, charaXpToNextLevel(chara));
 	printString(s, x, y++);
 
 	++y;
 
 	printString("HP", x, y++);
 
-	numberString(s, 0, hp);
+	uint8toString(s, hp);
 	stringConcat(s, "/");
-	numberString(s+stringLength(s), 0, maxHp);
+	uint8toString(s+stringLength(s), maxHp);
 	printString(s, x, y++);
 	
 	++y;
 
 	stringCopy(s, "ATK ");
-	numberString(s+4, 0, charaAttackRating(chara));
+	uint8toString(s+4, charaAttackRating(chara));
 	printString(s, x, y++);
 
 	stringCopy(s, "DEF ");
-	numberString(s+4, 0, charaDefenseRating(chara));
+	uint8toString(s+4, charaDefenseRating(chara));
 	printString(s, x, y++);
 
 	++y;
@@ -103,15 +103,15 @@ void initInfo(void) {
 	setScreenMode(ScreenModeOff);
 	setPlayerCursorVisible(0);
 	clearRasterScreen(24+18); // also clears text window
-	registerCursorEventHandler(infoCursorHandler);
+	setCursorEventHandler(infoCursorHandler);
 
 	// Position missile sprites as borders
 	fillSprite(0, 0xFF, 0, missileHeight);
 	fillSprite(0, 0x03, missileHeight, 128-missileHeight);
-	setSpriteHorizontalPosition(5, 48);
-	setSpriteHorizontalPosition(6, 88);
-	setSpriteHorizontalPosition(7, 128);
-	setSpriteHorizontalPosition(8, 168);
+	setSpriteOriginX(5, 48);
+	setSpriteOriginX(6, 88);
+	setSpriteOriginX(7, 128);
+	setSpriteOriginX(8, 168);
 
 	// Turn on screen
 	setScreenMode(ScreenModeInfo);
@@ -126,25 +126,25 @@ void initInfo(void) {
 	printString("Items", 1, ITEM_WINDOW_ROW);
 
 	stringCopy(s, "Gold: $");
-	numberString(s+stringLength(s), ',', partyMoney);
+	uint16toString(s+stringLength(s), partyMoney);
 	printString(s, 1, ITEM_WINDOW_ROW+1);
 
 	stringCopy(s, "Herbs: ");
-	numberString(s+stringLength(s), 0, partyPotions);
+	uint8toString(s+stringLength(s), partyPotions);
 	stringConcat(s, "{");
 	printString(s, 1, ITEM_WINDOW_ROW+2);
 
 	stringCopy(s, "Fangs: ");
-	numberString(s+stringLength(s), 0, partyFangs);
+	uint8toString(s+stringLength(s), partyFangs);
 	stringConcat(s, "}");
 	printString(s, 1, ITEM_WINDOW_ROW+3);
 
 	stringCopy(s, "Nuts: ");
-	numberString(s+stringLength(s), 0, 11);
+	uint8toString(s+stringLength(s), 11);
 	printString(s, 16, ITEM_WINDOW_ROW+1);
 
 	stringCopy(s, "Staff: ");
-	numberString(s+stringLength(s), 0, 3);
+	uint8toString(s+stringLength(s), 3);
 	printString(s, 16, ITEM_WINDOW_ROW+3);
 	
 	printString("Boat", 31, ITEM_WINDOW_ROW+1);

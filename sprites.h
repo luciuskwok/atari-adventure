@@ -9,16 +9,15 @@
 void initSprites(UInt8 page);
 
 void setPlayerCursorVisible(UInt8 visible);
-void setPlayerCursorColorCycling(UInt8 cycle);
+void setCursorColorCycling(UInt8 cycle);
 
-void setTileOverlaySpriteAtIndex(UInt8 spriteIndex, UInt8 column, UInt8 row);
+void setTileSprite(UInt8 spriteIndex, UInt8 column, UInt8 row);
 void drawSprite(const DataBlock *sprite, UInt8 player, UInt8 y);
 void fillSprite(UInt8 player, UInt8 value, UInt8 offset, UInt8 length);
 
 void setSpriteWidth(UInt8 player, UInt8 width);
 
-void setSpriteHorizontalPosition(UInt8 player, UInt8 x);
-void setMegaSprite(DataBlock *sprite, const PointU8 *position, UInt8 magnification);
+void setSpriteOriginX(UInt8 player, UInt8 x);
 
 void clearSpriteData(UInt8 player);
 void hideSprites(void);

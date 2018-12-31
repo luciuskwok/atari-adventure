@@ -268,7 +268,7 @@ void fadeOutColorTable(UInt8 fadeOptions) {
 	UInt8 i;
 
 	// Disable player color cycling to avoid conflicts
-	setPlayerCursorColorCycling(0);
+	setCursorColorCycling(0);
 
 	for (count=0; count<15; ++count) {
 		*VB_TIMER = 1;

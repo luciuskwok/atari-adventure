@@ -31,7 +31,7 @@ static void setCursorPosition(UInt8 x, UInt8 y) {
 	
 	// Draw sprite in new position
 	drawSprite(menuCursorSprite, 1, topMargin + y);
-	setSpriteHorizontalPosition(1, PM_LEFT_MARGIN - 8 + x);
+	setSpriteOriginX(1, PM_LEFT_MARGIN - 8 + x);
 
 	previousY = y;
 }
@@ -96,7 +96,7 @@ static SInt8 menuCursorHandler(UInt8 event) {
 
 void setMenuCursor(UInt8 cursor) {
 	clearSpriteData(1);
-	setPlayerCursorColorCycling(1);
+	setCursorColorCycling(1);
 	setSpriteWidth(1, 1);
 	if (cursor == SmallHeartCursor) {
 		menuCursorSprite = &smallHeartSprite;
@@ -106,18 +106,18 @@ void setMenuCursor(UInt8 cursor) {
 }
 
 void hideCursor(void) {
-	setSpriteHorizontalPosition(1, 0);
+	setSpriteOriginX(1, 0);
 }
 
-void registerMenuDidClickCallback(MenuDidClickCallbackType cb) {
+void setMenuClickHandler(MenuDidClickCallbackType cb) {
 	menuClickCallback = cb;
 }
 
-void registerMenuSelectedIndexDidChangeCallback(MenuSelectedIndexDidChangeCallbackType cb) {
+void setMenuSelIndexHandler(MenuSelectedIndexDidChangeCallbackType cb) {
 	menuSelectedIndexCallback = cb;
 }
 
-void registerMenuDidEscapeCallback(MenuDidEscapeCallbackType cb) {
+void setMenuEscapeHandler(MenuDidEscapeCallbackType cb) {
 	menuEscapeCallback = cb;
 }
 
@@ -129,5 +129,5 @@ void initMenu(void) {
 	menuClickCallback = NULL;
 	menuSelectedIndexCallback = NULL;
 	menuEscapeCallback = NULL;
-	registerCursorEventHandler(menuCursorHandler);
+	setCursorEventHandler(menuCursorHandler);
 }

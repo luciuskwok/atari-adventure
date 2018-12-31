@@ -8,7 +8,6 @@
 #include "menu.h"
 #include "sprites.h"
 #include "text.h"
-#include "atari_memmap.h"
 
 
 // Constants
@@ -242,7 +241,7 @@ void drawMenu(TreeNodePtr node) {
 				// Get additional info 
 				TreeNodePtr info = child->children[0];
 				UInt8 s[40] = "$";
-				numberString(s+1, 0, info->value);
+				uint16toString(s+1, info->value);
 				stringConcat(s, " - ");
 				stringConcat(s, child->text);
 				printString(s, x, y);
@@ -263,11 +262,11 @@ void drawStatus(void) {
 
 	// Draw money and potion count.
 	printString("$", 28, 6);
-	numberString(s, ',', partyMoney);
+	uint16toString(s, partyMoney);
 	printString(s, 29, 6);
 
 	printString("{", 39, 6);
-	numberString(s, 0, partyPotions);
+	uint8toString(s, partyPotions);
 	len = stringLength(s);
 	printString(s, 39-len, 6);
 }
@@ -429,8 +428,8 @@ void initDialog(void) {
 	clearSpriteData(4);
 	drawSprite(&temFaceSpriteL, 3, 22+14);
 	drawSprite(&temFaceSpriteR, 4, 22+14);
-	setSpriteHorizontalPosition(3, PM_LEFT_MARGIN + 72);
-	setSpriteHorizontalPosition(4, PM_LEFT_MARGIN + 80);
+	setSpriteOriginX(3, PM_LEFT_MARGIN + 72);
+	setSpriteOriginX(4, PM_LEFT_MARGIN + 80);
 	setSpriteWidth(3, 1);
 	setSpriteWidth(3, 1);
 
@@ -439,7 +438,7 @@ void initDialog(void) {
 	menuIsHorizontal = 0;
 	menuItemSpacing = 4;
 	setMenuCursor(SmallHeartCursor);
-	registerMenuDidClickCallback(handleMenuClick);
+	setMenuClickHandler(handleMenuClick);
 
 	// Set up dialog tree
 	{
@@ -460,7 +459,7 @@ void initDialog(void) {
 			debugPrint("puff() error:", err, 1, 0);
 		}
 		// duration = SHORT_CLOCK - startTime;
-		// numberString(s+6, 0, duration);
+		// uint16toString(s+6, duration);
 		// printString(s, 1, 2);
 	}
 }

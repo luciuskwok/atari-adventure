@@ -11,17 +11,6 @@ UInt8 previousStick;
 UInt8 previousTrigger;
 CursorEventHandlerCallbackType gCursorEventHandler;
 
-// Functions
-
-void initCursor(void) {
-	previousStick = 0x0F;
-	previousTrigger = 1;
-}
-
-void registerCursorEventHandler(CursorEventHandlerCallbackType handler) {
-	gCursorEventHandler = handler;
-}
-
 // Event Handling
 
 SInt8 handleStick(void) {
@@ -84,3 +73,15 @@ void waitForAnyInput(void) {
 void resetAttractMode(void) {
 	POKE(ATRACT, 0);
 }
+
+// Init
+
+void setCursorEventHandler(CursorEventHandlerCallbackType handler) {
+	gCursorEventHandler = handler;
+}
+
+void initCursor(void) {
+	previousStick = 0x0F;
+	previousTrigger = 1;
+}
+

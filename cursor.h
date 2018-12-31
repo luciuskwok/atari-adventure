@@ -24,10 +24,10 @@ enum CursorEventMessages {
 
 // Functions
 
-void initCursor(void);
-void registerCursorEventHandler(CursorEventHandlerCallbackType handler);
-
 SInt8 handleStick(void);
 SInt8 handleTrigger(void);
 void waitForAnyInput(void);
 void resetAttractMode(void);
+
+void setCursorEventHandler(CursorEventHandlerCallbackType handler);
+void initCursor(void);
