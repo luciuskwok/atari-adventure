@@ -40,8 +40,8 @@ void setPlayerCursorVisible(UInt8 visible) {
 
 	if (visible) { 
 		// Clear sprite data.
-		clearSpriteData(1);
-		clearSpriteData(2);
+		clearSprite(1);
+		clearSprite(2);
 
 		// Draw cursor sprite, which takes up 2 players because it is 10 pixels wide
 		drawSprite(&cursorSprite1, 1, 31 + PM_TOP_MARGIN);
@@ -116,7 +116,7 @@ void setSpriteWidth(UInt8 player, UInt8 width) {
 
 // Clearing
 
-void clearSpriteData(UInt8 player) {
+void clearSprite(UInt8 player) {
 	UInt8 *p = (UInt8 *) (spriteArea + 384 + 128 * player);
 	memset(p, 0, 128);
 }

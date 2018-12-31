@@ -41,7 +41,7 @@ UInt16 duration;
 void fadeOutScreen(void) {
 	// Fade out
 	fadeOutColorTable(FadeTextBox);
-	clearSpriteData(4);
+	clearSprite(4);
 	hideSprites();
 }
 

@@ -19,5 +19,5 @@ void setSpriteWidth(UInt8 player, UInt8 width);
 
 void setSpriteOriginX(UInt8 player, UInt8 x);
 
-void clearSpriteData(UInt8 player);
+void clearSprite(UInt8 player);
 void hideSprites(void);

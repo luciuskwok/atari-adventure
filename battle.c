@@ -367,7 +367,7 @@ void initBattle(void) {
 	}
 
 	// Enemy counter-attack effect
-	clearSpriteData(3);
+	clearSprite(3);
 	setSpriteWidth(3, 4);
 	drawSprite(&enemyAttackSprite, 3, 82);
 
