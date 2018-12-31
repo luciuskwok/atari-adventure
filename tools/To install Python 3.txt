@@ -1,0 +1,6 @@
+To install Python 3
+
+- Install Homebrew with `ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"`
+- Add homebrew to path by adding to .bash_profile: export PATH="/usr/local/opt/python/libexec/bin:$PATH" 
+- Then install python with `brew install python`
+

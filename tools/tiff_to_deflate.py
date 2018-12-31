@@ -5,7 +5,7 @@
 # Given a filename in command line, opens TIFF image, converts to 2-bpp screen data, and uses DEFLATE, which is output as C code
 
 
-import zlib, sys, base64
+import sys, zlib
 
 # Color table mapping
 # colorTable = [3, 1, 0, 2] # Tem Shop colors
@@ -179,8 +179,8 @@ with open(sys.argv[1], "rb") as file:
 				packedByte = 0
 
 	# compress with DEFLATE
-	compressor = zlib.compressobj(level=9, method=zlib.DEFLATED, strategy=zlib.Z_FIXED)
-		# option: zlib.Z_DEFAULT_STRATEGY
+	compressor = zlib.compressobj(level=9, method=zlib.DEFLATED, strategy=zlib.Z_DEFAULT_STRATEGY)
+		# strategy: zlib.Z_DEFAULT_STRATEGY, zlib.Z_FIXED
 	zlibData = compressor.compress(packedData)
 	zlibData += compressor.flush()
 	compData = zlibData[2:-4]
