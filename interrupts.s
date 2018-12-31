@@ -17,8 +17,8 @@ COLOR1 = $02C5		; Field 1 color (pixel value 2)
 COLOR2 = $02C6		; Field 2 color (pixel value 3)
 COLOR3 = $02C7		; Field 3 color
 COLOR4 = $02C8		; Background color (pixel value 0)
-COLOR5 = $02C9		; Extra color: Text luminance
-COLOR6 = $02CA		; Extra color: Text box background color
+TXTLUM = $02C9		; Extra color: Text luminance
+TXTBKG = $02CA		; Extra color: Text box background color
 COLOR7 = $02CB		; Extra color: Bar background color
 
 CHBASE = $D409		; Character set
@@ -126,12 +126,12 @@ return:
 upper_text_window:
 	lda #$00	
 	sta COLPF2			; upper text window is always black
-	lda COLOR5		
+	lda TXTLUM		
 	sta COLPF1			; text luminance / bar chart foreground
 	jmp return_dli
 
 lower_text_window:
-	lda COLOR6			; lower text window is gray
+	lda TXTBKG			; lower text window is gray
 	sta COLPF2
 
 return_dli:	
@@ -157,7 +157,7 @@ return_dli:
 text_window:
 	lda #$00	
 	sta COLPF2			; text box background: black
-	lda COLOR5		
+	lda TXTLUM		
 	sta COLPF1			; text luminance / bar chart foreground
 	lda #$00
 	sta COLPF4			; border background: black

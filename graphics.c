@@ -41,6 +41,8 @@ extern void __fastcall__ battleViewDLI(void);
 
 // Globals
 UInt8 *textWindow;
+static UInt8 *smallTextWindow;
+
 
 // Display List constants
 #define dl_Interrupt (0x80)
@@ -83,7 +85,8 @@ void initDisplayList(UInt8 startPage, UInt8 textPage) {
 	const UInt8 textBarChartLSB = 120;
 
 	// Init globals
-	textWindow = (UInt8 *)(textPage * 256); // Using the unused 384 bytes below PMGraphics
+	smallTextWindow = (UInt8 *)(textPage * 256); // Using the unused 384 bytes below PMGraphics
+	textWindow = smallTextWindow;
 
 	// Update OS pointers
 	POKEW (SAVMSC, (UInt16)screen);
@@ -204,10 +207,26 @@ static void writeBattleViewDisplayList(void) {
 	writeDisplayListEnd(dl+x);
 }
 
+static void writeInfoViewDisplayList(void) {
+	UInt8 *dl = (UInt8 *)PEEKW(SDLSTL);
+	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
+	UInt8 x = 3;
+
+	x += writeDisplayListLines(dl+3, screen, dl_rasterLine, 16);
+
+	// Move text window
+	textWindow = screen + (18 * SCREEN_ROW_BYTES);
+	x += writeDisplayListLines(dl+x, textWindow, dl_textWindowLine, 21);
+
+	writeDisplayListEnd(dl+x);
+}
+
 void setScreenMode(UInt8 mode) {
 	UInt8 dma = 0x2E; // standard playfield + missile DMA + player DMA + display list DMA
 	UInt8 nmi = 0x40; // enable VBI
 	void *dli = 0;
+
+	textWindow = smallTextWindow;
 
 	switch (mode) {
 		case ScreenModeMap:
@@ -227,6 +246,11 @@ void setScreenMode(UInt8 mode) {
 			nmi |= 0x80; // enable DLI
 			writeBattleViewDisplayList();
 			dli = battleViewDLI;
+			break;
+
+		case ScreenModeInfo:
+			dma = 0x2E; // various Antic DMA options
+			writeInfoViewDisplayList();
 			break;
 
 		case ScreenModeOff:

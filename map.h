@@ -40,4 +40,6 @@ void enterDungeon(void);
 void enterTown(void);
 SInt8 mapCursorHandler(UInt8 event);
 
+void initMap(void);
+
 #endif

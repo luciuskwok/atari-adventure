@@ -20,6 +20,26 @@ static UInt8 toAtascii(UInt8 c) {
 	return c;
 }
 
+static void drawHpBar(UInt8 x, UInt8 y, UInt8 hp, UInt8 maxHp) {
+	UInt8 width;
+	UInt8 fill;
+	UInt8 remainder;
+	UInt16 n;
+
+	if (maxHp >= 72) {
+		width = 36;
+	} else {
+		width = maxHp / 2;
+	}
+	n = (UInt16)hp * width;
+	remainder = n % maxHp;
+	fill = n / maxHp;
+	if (remainder) {
+		++fill;
+	}
+	drawBarChart(textWindow, x * 4, y, width, fill);
+}
+
 static void printCharaStats(UInt8 x, UInt8 y, GameCharaPtr chara) {
 	UInt8 hp = chara->hp;
 	UInt8 maxHp = charaMaxHp(chara);
@@ -36,26 +56,7 @@ static void printCharaStats(UInt8 x, UInt8 y, GameCharaPtr chara) {
 	numberString(hpStr+stringLength(hpStr), 0, maxHp);
 	printString(hpStr, x, y+2);
 
-	// Draw bar chart
-	{
-		UInt8 width;
-		UInt8 fill;
-		UInt8 remainder;
-		UInt16 n;
-
-		if (maxHp >= 72) {
-			width = 36;
-		} else {
-			width = maxHp / 2;
-		}
-		n = (UInt16)hp * width;
-		remainder = n % maxHp;
-		fill = n / maxHp;
-		if (remainder) {
-			++fill;
-		}
-		drawBarChart(textWindow, x * 4, y + 3, width, fill);
-	}
+	drawHpBar(x, y+3, hp, maxHp);
 }
 
 void printCharaAtIndex(UInt8 index, UInt8 y, UInt8 clear) {

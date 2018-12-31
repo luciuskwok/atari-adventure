@@ -34,8 +34,16 @@ extern void __fastcall__ decodeRunLenRange(UInt8 *outData, UInt8 start, UInt8 en
 
 // Menu
 
-static void exitMapMenu(void) {
+static void drawMapTextBox(void) {
+	clearTextWindow(5);
+	printAllCharaText(0);
+	printPartyStats();
+}
 
+static void exitMapMenu(void) {
+	POKE(TXTBKG, overworldColorTable[10]);
+	setPlayerCursorVisible(1);
+	drawMapTextBox();
 	registerCursorEventHandler(mapCursorHandler);
 }
 
@@ -54,7 +62,7 @@ static SInt8 handleMenuClick(UInt8 index) {
 			break;
 
 		case 3: // Done
-
+			exitMapMenu();
 			break;
 
 	}
@@ -65,19 +73,21 @@ static SInt8 handleMenuClick(UInt8 index) {
 static void initMapMenu(void) {
 	RectU8 r = { { 0, 4 }, { 40, 1 } };
 
+	setPlayerCursorVisible(0);
 	clearTextRect(&r);
+	printString("* Heal  * Info  * Save  * Done", 5, 4);
+	POKE(TXTBKG, 0x24);
 
 	initMenu();
-	menuOrigin.x = 2;
-	menuOrigin.y =24;
+	menuOrigin.x = 6 + 5 * 4;
+	menuOrigin.y = 3 + 23 * 4;
 	menuItemCount = 4;
-	menuItemSpacing = 8;
+	menuItemSpacing = 8 * 4;
 	menuIsHorizontal = 1;
 	registerMenuDidClickCallback(handleMenuClick);
 	setMenuCursor(mediumHeartSprite, mediumHeartSpriteHeight);
+	setMenuSelectedIndex(0);
 }
-
-// Local Functions
 
 static UInt8 mapTileAt(UInt8 x, UInt8 y) {
 	const UInt8 *runLenPtr = currentRunLenMap;
@@ -357,6 +367,10 @@ SInt8 mapCursorHandler(UInt8 event) {
 				break;
 			case tLadder:
 				exitToOverworld();
+				break;
+			default:
+				initMapMenu();
+				break;
 		}
 		break;
 
@@ -384,3 +398,9 @@ SInt8 mapCursorHandler(UInt8 event) {
 	return result;
 }
 
+void initMap(void) {
+	setScreenMode(ScreenModeMap);
+	drawMapTextBox();
+	transitionToMap(currentMapType, 0, 1);
+	registerCursorEventHandler(mapCursorHandler);
+}

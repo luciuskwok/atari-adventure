@@ -7,21 +7,18 @@
 #include <string.h>
 
 
-// Globals
-UInt8 spritePage; // shadow of ANTIC hardware register, which cannot be read
-
+static UInt8 *spriteArea;
 
 
 void initSprites(UInt8 page) {
-	UInt8 *pmbasePtr = (UInt8 *) (page * 256 + 384);
 	UInt16 i;
 	UInt8 c;
 
-	spritePage = page;
+	spriteArea = (UInt8 *) (page * 256);
 	
 	// Zero out sprite memory area
-	for (i=0; i<640; ++i) {
-		pmbasePtr[i] = 0;
+	for (i=384; i<1024; ++i) {
+		spriteArea[i] = 0;
 	}
 	
 	// Clear GTIA registers
@@ -30,7 +27,7 @@ void initSprites(UInt8 page) {
 	}
 	
 	// Set up ANTIC
-	ANTIC.pmbase = spritePage;
+	ANTIC.pmbase = page;
 	POKE (GPRIOR, 0x01); // layer players above playfield.
 	GTIA_WRITE.gractl = 3; // enable both missile and player graphics
 	//POKE (SDMCTL, 0x2E);
@@ -82,7 +79,7 @@ void setTileOverlaySprite(const UInt8 *sprite, UInt8 column, UInt8 row) {
 void drawSprite(const UInt8 *sprite, UInt8 length, UInt8 player, UInt8 y) {
 	// player: 0=missile, 1-4=p0-p3.
 	// this simplifies the math and allows both players and missiles to be addressed
-	UInt8 *p = (UInt8 *) (384 + 256 * spritePage + 128 * player + y);
+	UInt8 *p = (UInt8 *) (384 + spriteArea + 128 * player + y);
 	UInt8 i;
 	if (sprite) {
 		for (i=0; i<length; ++i) {
@@ -120,7 +117,7 @@ void setMegaSprite(const UInt8 *sprite, const UInt8 length, const PointU8 *posit
 	// Sprite will be centered on position.
 	UInt8 *spritePositions = (UInt8 *)HPOSP0;
 	UInt8 *spriteSizes = (UInt8 *)SIZEP0;
-	UInt8 *pmbasePtr = (UInt8 *) (256 * spritePage + 384);
+	UInt8 *playerArea = spriteArea + 384;
 	UInt8 spriteIndex = 0;
 	UInt8 x = position->x - 10 * magnification + PM_LEFT_MARGIN;
 	UInt8 yStart = position->y - length * magnification / 2;
@@ -145,7 +142,7 @@ void setMegaSprite(const UInt8 *sprite, const UInt8 length, const PointU8 *posit
 		lineRepeat = magnification - 1;
 		for (y=0; y<112; ++y) {
 			if (yStart <= y && y < yEnd) {
-				pmbasePtr[y] = sprite[spriteIndex];
+				playerArea[y] = sprite[spriteIndex];
 				if (lineRepeat > 0) {
 					--lineRepeat;
 				} else {
@@ -154,10 +151,10 @@ void setMegaSprite(const UInt8 *sprite, const UInt8 length, const PointU8 *posit
 				}
 				
 			} else {
-				pmbasePtr[y] = 0;
+				playerArea[y] = 0;
 			}
 		}
-		pmbasePtr += 128;
+		playerArea += 128;
 	}
 
 	// Position sprites
@@ -178,7 +175,7 @@ void setMegaSprite(const UInt8 *sprite, const UInt8 length, const PointU8 *posit
 // Clearing
 
 void clearSpriteData(UInt8 player) {
-	UInt8 *p = (UInt8 *) (256 * spritePage + 384 + 128 * player);
+	UInt8 *p = (UInt8 *) (spriteArea + 384 + 128 * player);
 	memset(p, 0, 128);
 }
 

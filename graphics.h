@@ -26,6 +26,7 @@ enum ScreenMode {
 	ScreenModeMap,
 	ScreenModeDialog,
 	ScreenModeBattle,
+	ScreenModeInfo,
 };
 void setScreenMode(UInt8 mode);
 

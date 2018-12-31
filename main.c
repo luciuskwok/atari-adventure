@@ -35,18 +35,6 @@ UInt16 startTime;
 UInt16 duration;
 #endif
 
-// Map Mode functions
-
-void setUpMapMode(void) {
-	clearTextWindow(5);
-	printAllCharaText(0);
-	printPartyStats();
-
-	setScreenMode(ScreenModeMap);
-	transitionToMap(currentMapType, 0, 1);
-
-	registerCursorEventHandler(mapCursorHandler);
-}
 
 // Dialog functions
 
@@ -67,7 +55,7 @@ void handleMessage(SInt8 message) {
 			break;
 		case MessageReturnToMap:
 			fadeOutScreen();
-			setUpMapMode();
+			initMap();
 			break;
 	}
 }
@@ -93,7 +81,7 @@ int main (void) {
 	mapOverworldLocation = overworldEntryPoint;
 	mapCurrentLocation = mapOverworldLocation;
 
-	setUpMapMode();
+	initMap();
 	
 	while (isQuitting == 0) {
 		runLoop();

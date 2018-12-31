@@ -37,6 +37,7 @@
 #define COLOR2 (0x02C6)
 #define COLOR3 (0x02C7)
 #define COLOR4 (0x02C8)
+#define TXTBKG (0x02CA)
 
 // Sprites
 #define HPOSP0 (0xD000)
