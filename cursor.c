@@ -9,8 +9,6 @@
 // Globals
 UInt8 previousStick;
 UInt8 previousTrigger;
-UInt8 cursorHeight;
-const UInt8 *cursorSprite;
 CursorEventHandlerCallbackType gCursorEventHandler;
 
 // Functions
@@ -22,29 +20,6 @@ void initCursor(void) {
 
 void registerCursorEventHandler(CursorEventHandlerCallbackType handler) {
 	gCursorEventHandler = handler;
-}
-
-void setCursorSprite(const UInt8 *sprite, UInt8 height) {
-	cursorSprite = sprite;
-	cursorHeight = height;
-}
-
-void setCursorPosition(UInt8 x, UInt8 y) {
-	static UInt8 previousY = 0;
-	const UInt8 topMargin = 14;
-
-	// Remove old sprite data
-	drawSprite(NULL, cursorHeight, 1, topMargin + previousY);
-	
-	// Draw sprite in new position
-	drawSprite(cursorSprite, cursorHeight, 1, topMargin + y);
-	setSpriteHorizontalPosition(1, PM_LEFT_MARGIN - 8 + x);
-
-	previousY = y;
-}
-
-void hideCursor(void) {
-	setSpriteHorizontalPosition(1, 0);
 }
 
 // Event Handling

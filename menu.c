@@ -12,11 +12,29 @@ UInt8 menuItemSpacing;
 UInt8 menuIsHorizontal;
 UInt8 menuSelectedIndex;
 UInt8 menuEscapeCursorEvent;
+const DataBlock *menuCursorSprite;
 
 MenuDidClickCallbackType menuClickCallback;
 MenuSelectedIndexDidChangeCallbackType menuSelectedIndexCallback;
 MenuDidEscapeCallbackType menuEscapeCallback;
 
+// Cursor Sprites
+const DataBlock smallHeartSprite = { 4, { 0x36, 0x7F, 0x3E, 0x08 } };
+const DataBlock	mediumHeartSprite = { 6, { 0x66, 0xFF, 0xFF, 0x7E, 0x3C, 0x18 } };
+
+static void setCursorPosition(UInt8 x, UInt8 y) {
+	static UInt8 previousY = 0;
+	const UInt8 topMargin = 14;
+
+	// Remove old sprite data
+	fillSprite(1, 0, topMargin + previousY, menuCursorSprite->length);
+	
+	// Draw sprite in new position
+	drawSprite(menuCursorSprite, 1, topMargin + y);
+	setSpriteHorizontalPosition(1, PM_LEFT_MARGIN - 8 + x);
+
+	previousY = y;
+}
 
 void setMenuSelectedIndex(UInt8 index) {
 	UInt8 x = menuOrigin.x;
@@ -76,6 +94,21 @@ static SInt8 menuCursorHandler(UInt8 event) {
 	return MessageNone;
 }
 
+void setMenuCursor(UInt8 cursor) {
+	clearSpriteData(1);
+	setPlayerCursorColorCycling(1);
+	setSpriteWidth(1, 1);
+	if (cursor == SmallHeartCursor) {
+		menuCursorSprite = &smallHeartSprite;
+	} else {
+		menuCursorSprite = &mediumHeartSprite;
+	}
+}
+
+void hideCursor(void) {
+	setSpriteHorizontalPosition(1, 0);
+}
+
 void registerMenuDidClickCallback(MenuDidClickCallbackType cb) {
 	menuClickCallback = cb;
 }
@@ -86,13 +119,6 @@ void registerMenuSelectedIndexDidChangeCallback(MenuSelectedIndexDidChangeCallba
 
 void registerMenuDidEscapeCallback(MenuDidEscapeCallbackType cb) {
 	menuEscapeCallback = cb;
-}
-
-void setMenuCursor(const UInt8 *sprite, UInt8 height) {
-	clearSpriteData(1);
-	setPlayerCursorColorCycling(1);
-	setSpriteWidth(1, 1);
-	setCursorSprite(sprite, height);
 }
 
 void initMenu(void) {

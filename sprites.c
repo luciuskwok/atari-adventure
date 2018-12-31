@@ -10,28 +10,26 @@
 static UInt8 *spriteArea;
 
 
-void initSprites(UInt8 page) {
-	UInt16 i;
-	UInt8 c;
+// Sprite Data
 
-	spriteArea = (UInt8 *) (page * 256);
-	
-	// Zero out sprite memory area
-	for (i=384; i<1024; ++i) {
-		spriteArea[i] = 0;
-	}
-	
-	// Clear GTIA registers
-	for (c=0; c<12; ++c) {
-		POKE (HPOSP0 + c, 0);
-	}
-	
-	// Set up ANTIC
-	ANTIC.pmbase = page;
-	POKE (GPRIOR, 0x11); // layer players above playfield + missiles use COLOR3
-	GTIA_WRITE.gractl = 3; // enable both missile and player graphics
-	//POKE (SDMCTL, 0x2E);
-}
+const DataBlock cursorSprite1 = { 10, { 0x1F, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x1F } };
+const DataBlock cursorSprite2 = { 10, { 0xF8, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0xF8 } };
+
+const DataBlock tileSpriteCastle = { 8, {0x66, 0x99, 0x81, 0x42, 0x42, 0x81, 0x99, 0x66} };
+const DataBlock tileSpriteTown = { 8, {0xEE, 0x82, 0x82, 0x00, 0x82, 0x82, 0xEE, 0x00} };
+const DataBlock tileSpriteVillage = { 8, {0x00, 0x2C, 0x60, 0x06, 0x50, 0x44, 0x10, 0x00} };
+const DataBlock tileSpriteMonument = { 8, {0x00, 0x00, 0x00, 0x18, 0x18, 0x00, 0x00, 0x00} };
+const DataBlock tileSpriteCave = { 8, {0x00, 0x00, 0x18, 0x24, 0x24, 0x24, 0x00, 0x00} };
+const DataBlock tileSpriteHouseDoor = { 8, {0x3E, 0x3E, 0x22, 0x22, 0x22, 0x22, 0x22, 0x00} };
+
+const DataBlock *tileOverlaySprites[] = { 
+	&tileSpriteCastle,
+	&tileSpriteTown,
+	&tileSpriteVillage,
+	&tileSpriteMonument,
+	&tileSpriteCave,
+	&tileSpriteHouseDoor
+};
 
 // Cursor
 
@@ -46,8 +44,8 @@ void setPlayerCursorVisible(UInt8 visible) {
 		clearSpriteData(2);
 
 		// Draw cursor sprite, which takes up 2 players because it is 10 pixels wide
-		drawSprite(cursorSprite1, 10, 1, 31 + PM_TOP_MARGIN);
-		drawSprite(cursorSprite2, 10, 2, 31 + PM_TOP_MARGIN);
+		drawSprite(&cursorSprite1, 1, 31 + PM_TOP_MARGIN);
+		drawSprite(&cursorSprite2, 2, 31 + PM_TOP_MARGIN);
 
 		// Set sprite sizes
 		GTIA_WRITE.sizep0 = 0;
@@ -69,21 +67,23 @@ void setPlayerCursorColorCycling(UInt8 cycle) {
 
 // Drawing
 
-void setTileOverlaySprite(const UInt8 *sprite, UInt8 column, UInt8 row) {
+void setTileOverlaySpriteAtIndex(UInt8 spriteIndex, UInt8 column, UInt8 row) {
 	// Set horizontal position for tile
 	P3_XPOS[row] = PM_LEFT_MARGIN - 4 + column * 8;
 	GTIA_WRITE.sizep3 = 0;
-	drawSprite(sprite, 8, 4, row * 8 + PM_TOP_MARGIN);
+	drawSprite(tileOverlaySprites[spriteIndex], 4, row * 8 + PM_TOP_MARGIN);
 }
 
-void drawSprite(const UInt8 *sprite, UInt8 length, UInt8 player, UInt8 y) {
+void drawSprite(const DataBlock *sprite, UInt8 player, UInt8 y) {
 	// player: 0=missile, 1-4=p0-p3.
 	// this simplifies the math and allows both players and missiles to be addressed
 	UInt8 *p = (UInt8 *) (384 + spriteArea + 128 * player + y);
+	UInt8 length = sprite->length;
+	UInt8 *bytes = sprite->bytes;
 	UInt8 i;
 	if (sprite) {
 		for (i=0; i<length; ++i) {
-			p[i] = sprite[i];
+			p[i] = bytes[i];
 		}
 	} else {
 		memset(p, 0, length);
@@ -118,15 +118,15 @@ void setSpriteWidth(UInt8 player, UInt8 width) {
 	}
 }
 
-void setMegaSprite(const UInt8 *sprite, const UInt8 length, const PointU8 *position, UInt8 magnification) {
+void setMegaSprite(DataBlock *sprite, const PointU8 *position, UInt8 magnification) {
 	// Sprite will be centered on position.
 	UInt8 *spritePositions = (UInt8 *)HPOSP0;
 	UInt8 *spriteSizes = (UInt8 *)SIZEP0;
 	UInt8 *playerArea = spriteArea + 384;
 	UInt8 spriteIndex = 0;
 	UInt8 x = position->x - 10 * magnification + PM_LEFT_MARGIN;
-	UInt8 yStart = position->y - length * magnification / 2;
-	UInt8 yEnd = yStart + length * magnification;
+	UInt8 yStart = position->y - sprite->length * magnification / 2;
+	UInt8 yEnd = yStart + sprite->length * magnification;
 	UInt8 spriteSizeCode = magnification - 1;
 	UInt8 i, y, lineRepeat;
 
@@ -147,7 +147,7 @@ void setMegaSprite(const UInt8 *sprite, const UInt8 length, const PointU8 *posit
 		lineRepeat = magnification - 1;
 		for (y=0; y<112; ++y) {
 			if (yStart <= y && y < yEnd) {
-				playerArea[y] = sprite[spriteIndex];
+				playerArea[y] = sprite->bytes[spriteIndex];
 				if (lineRepeat > 0) {
 					--lineRepeat;
 				} else {
@@ -196,38 +196,32 @@ void hideSprites(void) {
 	}
 }
 
+void initSprites(UInt8 page) {
+	UInt16 i;
+	UInt8 c;
 
-// Sprite Data
+	spriteArea = (UInt8 *) (page * 256);
+	
+	// Zero out sprite memory area
+	for (i=384; i<1024; ++i) {
+		spriteArea[i] = 0;
+	}
+	
+	// Clear GTIA registers
+	for (c=0; c<12; ++c) {
+		POKE (HPOSP0 + c, 0);
+	}
+	
+	// Set up ANTIC
+	ANTIC.pmbase = page;
+	POKE (GPRIOR, 0x11); // layer players above playfield + missiles use COLOR3
+	GTIA_WRITE.gractl = 3; // enable both missile and player graphics
+	//POKE (SDMCTL, 0x2E);
+}
 
-const UInt8 cursorSprite1[] = { 0x1F, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x1F };
-const UInt8 cursorSprite2[] = { 0xF8, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0xF8 };
 
-const UInt8 tileSprites[] = { 
-	0x66, 0x99, 0x81, 0x42, 0x42, 0x81, 0x99, 0x66, // Castle
-	0xEE, 0x82, 0x82, 0x00, 0x82, 0x82, 0xEE, 0x00, // Town
-	0x00, 0x2C, 0x60, 0x06, 0x50, 0x44, 0x10, 0x00, // Village
-	0x00, 0x00, 0x00, 0x18, 0x18, 0x00, 0x00, 0x00, // Monument
-	0x00, 0x00, 0x18, 0x24, 0x24, 0x24, 0x00, 0x00, // Cave
-	0x3E, 0x3E, 0x22, 0x22, 0x22, 0x22, 0x22, 0x00, // House Door
-};
 
-const UInt8 temFaceSpriteHeight = 24;
-const UInt8 temFaceSprite[] = {
-	0x00, 0x38, 0x44, 0x00, 0x00, 0x00, 0x00, 0x0C, 0x1E, 0x1E, 0x0C, 0x00, 0x00, 0x01, 0x00, 0x00, 0x04, 0x03, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,  
-	0x1C, 0x22, 0x00, 0x00, 0x00, 0x00, 0x06, 0x0F, 0x0F, 0x06, 0x00, 0x00, 0x00, 0x80, 0x00, 0x04, 0xE4, 0xF8, 0xE0, 0xE0, 0xE0, 0x40, 0x00, 0x00, 
-};
 
-const UInt8 selectionCursorSpriteHeight = 5;
-const UInt8 selectionCursorSprite[] = { 0xC0, 0x78, 0x7F, 0x78, 0xC0 };
-
-const UInt8 smallHeartSpriteHeight = 4;
-const UInt8	smallHeartSprite[] = { 0x36, 0x7F, 0x3E, 0x08 };
-
-const UInt8 mediumHeartSpriteHeight = 6;
-const UInt8	mediumHeartSprite[] = { 0x66, 0xFF, 0xFF, 0x7E, 0x3C, 0x18 };
-
-const UInt8 enemyAttackSpriteHeight = 14;
-const UInt8 enemyAttackSprite[] = { 0x18, 0x3C, 0x7E, 0x7E, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7E, 0x7E, 0x3C, 0x18 };
 
 /*
 const UInt8 sansSpriteOLD[] = {

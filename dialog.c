@@ -149,6 +149,19 @@ TreeNode temShopRootNode = {
 	} 
 };
 
+const DataBlock temFaceSpriteL = {
+	24, // length
+	{
+		0x00, 0x38, 0x44, 0x00, 0x00, 0x00, 0x00, 0x0C, 0x1E, 0x1E, 0x0C, 0x00, 0x00, 0x01, 0x00, 0x00, 0x04, 0x03, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,  
+	}
+};
+const DataBlock temFaceSpriteR = {
+	24, // length
+	{
+		0x1C, 0x22, 0x00, 0x00, 0x00, 0x00, 0x06, 0x0F, 0x0F, 0x06, 0x00, 0x00, 0x00, 0x80, 0x00, 0x04, 0xE4, 0xF8, 0xE0, 0xE0, 0xE0, 0x40, 0x00, 0x00, 
+	}
+};
+
 
 // Testing strings:
 // UInt8 sansMessage[] = "Sans: Why are graveyards so noisy?\n Because of all the *coffin*!";
@@ -414,8 +427,8 @@ void initDialog(void) {
 	// Set up sprites
 	clearSpriteData(3);
 	clearSpriteData(4);
-	drawSprite(temFaceSprite, temFaceSpriteHeight, 3, 22+14);
-	drawSprite(temFaceSprite+temFaceSpriteHeight, temFaceSpriteHeight, 4, 22+14);
+	drawSprite(&temFaceSpriteL, 3, 22+14);
+	drawSprite(&temFaceSpriteR, 4, 22+14);
 	setSpriteHorizontalPosition(3, PM_LEFT_MARGIN + 72);
 	setSpriteHorizontalPosition(4, PM_LEFT_MARGIN + 80);
 	setSpriteWidth(3, 1);
@@ -425,7 +438,7 @@ void initDialog(void) {
 	initMenu();
 	menuIsHorizontal = 0;
 	menuItemSpacing = 4;
-	setMenuCursor(smallHeartSprite, smallHeartSpriteHeight);
+	setMenuCursor(SmallHeartCursor);
 	registerMenuDidClickCallback(handleMenuClick);
 
 	// Set up dialog tree

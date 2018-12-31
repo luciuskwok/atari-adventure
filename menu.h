@@ -17,11 +17,16 @@ extern UInt8 menuEscapeCursorEvent;
 
 void setMenuSelectedIndex(UInt8 index);
 
+enum MenuCursors {
+	SmallHeartCursor, MediumHeartCursor
+};
+void setMenuCursor(UInt8 cursor);
+void hideCursor(void);
+
 void registerMenuDidClickCallback(MenuDidClickCallbackType cb);
 void registerMenuSelectedIndexDidChangeCallback(MenuSelectedIndexDidChangeCallbackType cb);
 void registerMenuDidEscapeCallback(MenuDidEscapeCallbackType cb);
 
-void setMenuCursor(const UInt8 *sprite, UInt8 height);
 void initMenu(void);
 
 

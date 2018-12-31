@@ -84,7 +84,7 @@ static void initMapMenu(void) {
 	menuItemSpacing = 8 * 4;
 	menuIsHorizontal = 1;
 	registerMenuDidClickCallback(handleMenuClick);
-	setMenuCursor(mediumHeartSprite, mediumHeartSpriteHeight);
+	setMenuCursor(MediumHeartCursor);
 	setMenuSelectedIndex(0);
 }
 
@@ -281,8 +281,7 @@ void drawCurrentMap(UInt8 x, UInt8 y) {
 				low = (c & 0x3F);
 				if (low >= tCastle) {
 					low -= tCastle;
-					low <<= 3;
-					setTileOverlaySprite(tileSprites + low, col, row);
+					setTileOverlaySpriteAtIndex(low, col, row);
 					hasSpriteOverlay = 1;
 				}
 

@@ -24,6 +24,12 @@ enum BattleMenuType {
 };
 
 
+const DataBlock enemyAttackSprite = {
+	14, // length
+	{ 0x18, 0x3C, 0x7E, 0x7E, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7E, 0x7E, 0x3C, 0x18 }
+};
+
+
 static void applySelectionColor(UInt8 isMasking, UInt8 offset, UInt8 length) {
 	const UInt8 y = 49;
 	UInt8 height = 10;
@@ -363,13 +369,13 @@ void initBattle(void) {
 	// Enemy counter-attack effect
 	clearSpriteData(3);
 	setSpriteWidth(3, 4);
-	drawSprite(enemyAttackSprite, enemyAttackSpriteHeight, 3, 82);
+	drawSprite(&enemyAttackSprite, 3, 82);
 	//setSpriteHorizontalPosition(3, 48);
 
 	// Set up menu
 	initMenu();
 	menuIsHorizontal = 1;
-	setMenuCursor(mediumHeartSprite, mediumHeartSpriteHeight);
+	setMenuCursor(MediumHeartCursor);
 
 	registerMenuDidClickCallback(handleMenuClick);
 	registerMenuSelectedIndexDidChangeCallback(menuSelectionDidChange);
