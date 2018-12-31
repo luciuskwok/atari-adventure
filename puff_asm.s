@@ -5,7 +5,6 @@
 .export 	_decode_asm ; extern UInt16 __fastcall__ decode_asm(const struct huffman *h);
 .export 	_bits_asm ; extern UInt16 __fastcall__ bits_asm(UInt8 count);
 .export 	_get_one_bit ; extern UInt16 __fastcall__ get_one_bit(void);
-.import 	_puff_state
 .import 	_longjmp
 .import 	pushax
 .import		incsp4
@@ -14,15 +13,16 @@
 
 
 ; puff_state struct fields
-STATE_OUT = _puff_state
-STATE_OUTLEN = _puff_state+2
-STATE_OUTCNT = _puff_state+4
-STATE_IN = _puff_state+6
-STATE_INLEN = _puff_state+8
-STATE_INCNT = _puff_state+10
-STATE_BITBUF = _puff_state+12
-STATE_BITCNT = _puff_state+13
-STATE_ENV = _puff_state+14
+PUFF_STATE  = $9B
+PUFF_OUT    = PUFF_STATE
+PUFF_OUTLEN = PUFF_STATE+2
+PUFF_OUTCNT = PUFF_STATE+4
+PUFF_IN     = PUFF_STATE+6
+PUFF_INLEN  = PUFF_STATE+8
+PUFF_INCNT  = PUFF_STATE+10
+PUFF_BITBUF = PUFF_STATE+12
+PUFF_BITCNT = PUFF_STATE+13
+PUFF_ENV    = PUFF_STATE+14
 
 ; constants
 MAXBITS   = 15
@@ -147,47 +147,47 @@ if_length_symbol:
 	sta DIST+1
 
 	; if state.outcnt < dist: error -11: distance too far back */
-	lda STATE_OUTCNT+1
+	lda PUFF_OUTCNT+1
 	cmp DIST+1
 	bcc error_distance_too_far
 	bne check_output_space
-	lda STATE_OUTCNT
+	lda PUFF_OUTCNT
 	cmp DIST
 	bcc error_distance_too_far
 
 check_output_space: 				
 	clc 					; check for enough output space
-	lda STATE_OUTCNT		; ptr1 = state.outcnt + len
+	lda PUFF_OUTCNT		; ptr1 = state.outcnt + len
 	adc LEN
 	sta ptr1
-	lda STATE_OUTCNT+1
+	lda PUFF_OUTCNT+1
 	adc LEN+1
 	;sta ptr1+1
 
 	;lda ptr1+1
-	cmp STATE_OUTLEN+1	 	; if ptr1 > state.outlen:
+	cmp PUFF_OUTLEN+1	 	; if ptr1 > state.outlen:
 	bcc set_dist_ptr
 	bne error_output_full	;     error 1: output full
 	lda ptr1
-	cmp STATE_OUTLEN
+	cmp PUFF_OUTLEN
 	bcc set_dist_ptr
 	bne error_output_full
  
 set_dist_ptr: 				; copy length bytes from distance bytes back
 	sec 					; dist = state.outcnt - dist
-	lda STATE_OUTCNT		
+	lda PUFF_OUTCNT		
 	sbc DIST
 	sta DIST
-	lda STATE_OUTCNT+1
+	lda PUFF_OUTCNT+1
 	sbc DIST+1
 	sta DIST+1
 
 	clc						; use dist as a source pointer for the copy
 	lda DIST				; dist += state.out
-	adc STATE_OUT
+	adc PUFF_OUT
 	sta DIST
 	lda DIST+1
-	adc STATE_OUT+1
+	adc PUFF_OUT+1
 	sta DIST+1
 
 	lda #0 					; index = 0
@@ -210,20 +210,20 @@ error_distance_too_far:
 
 do_copy:
 	clc 					; output = state.out + state.outcnt
-	lda STATE_OUT
-	adc STATE_OUTCNT
+	lda PUFF_OUT
+	adc PUFF_OUTCNT
 	sta OUTPUT
-	lda STATE_OUT+1
-	adc STATE_OUTCNT+1
+	lda PUFF_OUT+1
+	adc PUFF_OUTCNT+1
 	sta OUTPUT+1
 
 	ldy #0 					; *output = *dist
 	lda (DIST),Y
 	sta (OUTPUT),Y
 
-	inc STATE_OUTCNT 		; state.outcnt += 1
+	inc PUFF_OUTCNT 		; state.outcnt += 1
 	bne inc_dist
-	inc STATE_OUTCNT+1
+	inc PUFF_OUTCNT+1
 
 inc_dist:
 	inc DIST 			; 5	; dist += 1
@@ -250,30 +250,30 @@ while_copy:
 .proc _write_out_symbol 	; appends A to puff_state.out
 .code						; uses ptr1, Y
 	tay
-	lda STATE_OUTCNT+1		; if STATE_OUTCNT >= STATE_OUTLEN: output is full
-	cmp STATE_OUTLEN+1
+	lda PUFF_OUTCNT+1		; if PUFF_OUTCNT >= PUFF_OUTLEN: output is full
+	cmp PUFF_OUTLEN+1
 	bcc set_ptr1
 	bne return_error
-	lda STATE_OUTCNT		; must check both bytes of 16-bit values
-	cmp STATE_OUTLEN
+	lda PUFF_OUTCNT		; must check both bytes of 16-bit values
+	cmp PUFF_OUTLEN
 	bcs return_error
 
 set_ptr1:
 	clc
-	lda STATE_OUT
-	adc STATE_OUTCNT
+	lda PUFF_OUT
+	adc PUFF_OUTCNT
 	sta ptr1
-	lda STATE_OUT+1
-	adc STATE_OUTCNT+1
+	lda PUFF_OUT+1
+	adc PUFF_OUTCNT+1
 	sta ptr1+1
 	tya
 
 	ldy #0
 	sta (ptr1),Y
 
-	inc STATE_OUTCNT 		; STATE_OUTCNT += 1
+	inc PUFF_OUTCNT 		; PUFF_OUTCNT += 1
 	bne return
-	inc STATE_OUTCNT+1
+	inc PUFF_OUTCNT+1
 
 return:
 	lda #0 					; return 0 for success
@@ -442,44 +442,44 @@ return:
 .proc _get_one_bit			; Returns 0 or 1 in the A/X register
 							; Uses ptr1, A, X. Does not use Y.
 	ldx #0 					; X is always 0
-	lda STATE_BITCNT		; if STATE_BITCNT == 0:
-	bne get_bit				;     load new byte into STATE_BITBUF	
+	lda PUFF_BITCNT			; if PUFF_BITCNT == 0:
+	bne get_bit				;     load new byte into PUFF_BITBUF	
 
-	lda STATE_INCNT			; if STATE_INCNT == STATE_INLEN:
-	cmp STATE_INLEN
+	lda PUFF_INCNT			; if PUFF_INCNT == PUFF_INLEN:
+	cmp PUFF_INLEN
 	bne load_bitbuf
-	lda STATE_INCNT+1		; must check both bytes of 16-bit values
-	cmp STATE_INLEN+1
+	lda PUFF_INCNT+1		; must check both bytes of 16-bit values
+	cmp PUFF_INLEN+1
 	bne load_bitbuf
 
-	lda #<(STATE_ENV) 		; error: out of input
-	ldx #>(STATE_ENV)
+	lda #<(PUFF_ENV) 		; error: out of input
+	ldx #>(PUFF_ENV)
 	jsr pushax
 	ldx #$00
 	lda #$01
 	jsr _longjmp			; longjmp(puff_state.env, 1);
 
 load_bitbuf:
-	clc						; ptr1 = STATE_IN + STATE_INCNT
-	lda STATE_IN
-	adc STATE_INCNT
+	clc						; ptr1 = PUFF_IN + PUFF_INCNT
+	lda PUFF_IN
+	adc PUFF_INCNT
 	sta ptr1
-	lda STATE_IN+1
-	adc STATE_INCNT+1
+	lda PUFF_IN+1
+	adc PUFF_INCNT+1
 	sta ptr1+1
 	lda (ptr1,X)			; A = *ptr1, the next input byte
-	sta STATE_BITBUF		; store the byte in STATE_BITBUF
+	sta PUFF_BITBUF			; store the byte in PUFF_BITBUF
 
-	lda #8 					; STATE_BITCNT = 8
-	sta STATE_BITCNT		
+	lda #8 					; PUFF_BITCNT = 8
+	sta PUFF_BITCNT		
 
-	inc STATE_INCNT 		; STATE_INCNT += 1
+	inc PUFF_INCNT 			; PUFF_INCNT += 1
 	bne get_bit
-	inc STATE_INCNT+1
+	inc PUFF_INCNT+1
 
 get_bit:					; DEFLATE specifies that bits come off the right
-	dec STATE_BITCNT		; STATE_BITCNT -= 1
-	lsr STATE_BITBUF		; shift right, 0->(bit 7), (bit 0)->carry
+	dec PUFF_BITCNT			; PUFF_BITCNT -= 1
+	lsr PUFF_BITBUF			; shift right, 0->(bit 7), (bit 0)->carry
 	lda #0					; X was always 0
 	rol a 					; put carry bit into A
 	rts 					; return bits

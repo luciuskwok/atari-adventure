@@ -14,7 +14,6 @@ extern UInt16 __fastcall__ get_one_bit(void);
 // Define for including old code that has asm replacements
 //#define OLD_CODE
 
-
 /*
  * Maximums for allocations and loops.  It is not useful to change these --
  * they are fixed by the deflate format.
@@ -27,7 +26,7 @@ extern UInt16 __fastcall__ get_one_bit(void);
 
 
 /* input and output state */
-struct {
+typedef struct PuffState {
     /* output state */
     UInt8 *out;         /* output buffer */
     UInt16 outlen;      /* available space at out */
@@ -42,7 +41,9 @@ struct {
 
     /* input limit error return state for bits() and decode() */
     jmp_buf env;
-} puff_state;
+} PuffState;
+
+#define PUFF_STATE ((PuffState *)0x9B)
 
 
 /*
@@ -243,12 +244,12 @@ SInt16 codes_old(const struct huffman *lencode,
             return -10;              /* invalid symbol */
         if (symbol < 256) {             /* literal: symbol is the byte */
             /* write out the literal */
-            if (puff_state.out != NULL) {
-                if (puff_state.outcnt == puff_state.outlen)
+            if (PUFF_STATE->out != NULL) {
+                if (PUFF_STATE->outcnt == PUFF_STATE->outlen)
                     return 1;
-                puff_state.out[puff_state.outcnt] = symbol;
+                PUFF_STATE->out[PUFF_STATE->outcnt] = symbol;
             }
-            ++puff_state.outcnt;
+            ++PUFF_STATE->outcnt;
         }
         else if (symbol > 256) {        /* length */
             /* get and compute length */
@@ -260,21 +261,20 @@ SInt16 codes_old(const struct huffman *lencode,
             if (symbol >= MAXDCODES)
                 return -10;          /* invalid symbol */
             dist = dists[symbol] + bits_asm(dext[symbol]);
-            if (dist > puff_state.outcnt)
+            if (dist > PUFF_STATE->outcnt)
                 return -11;     /* distance too far back */
 
             /* copy length bytes from distance bytes back */
-            if (puff_state.out != NULL) {
-                if (puff_state.outcnt + len > puff_state.outlen)
+            if (PUFF_STATE->out != NULL) {
+                if (PUFF_STATE->outcnt + len > PUFF_STATE->outlen)
                     return 1;
                 while (len--) {
-                    puff_state.out[puff_state.outcnt] =
-                            puff_state.out[puff_state.outcnt - dist];
-                    ++puff_state.outcnt;
+                    PUFF_STATE->out[PUFF_STATE->outcnt] = PUFF_STATE->out[PUFF_STATE->outcnt - dist];
+                    ++PUFF_STATE->outcnt;
                 }
             }
             else
-                puff_state.outcnt += len;
+                PUFF_STATE->outcnt += len;
         }
     } while (symbol != 256);            /* end of block symbol */
 
@@ -647,31 +647,31 @@ SInt16 stored(void)
 {
     UInt16 len;       /* length of stored block */
 
-    /* discard leftover bits from current byte (assumes puff_state.bitcnt < 8) */
-    puff_state.bitbuf = 0;
-    puff_state.bitcnt = 0;
+    /* discard leftover bits from current byte (assumes PUFF_STATE->bitcnt < 8) */
+    PUFF_STATE->bitbuf = 0;
+    PUFF_STATE->bitcnt = 0;
 
     /* get length and check against its one's complement */
-    if (puff_state.incnt + 4 > puff_state.inlen)
+    if (PUFF_STATE->incnt + 4 > PUFF_STATE->inlen)
         return 2;                               /* not enough input */
-    len = puff_state.in[puff_state.incnt++];
-    len |= puff_state.in[puff_state.incnt++] << 8;
-    if (puff_state.in[puff_state.incnt++] != (~len & 0xff) ||
-        puff_state.in[puff_state.incnt++] != ((~len >> 8) & 0xff))
+    len = PUFF_STATE->in[PUFF_STATE->incnt++];
+    len |= PUFF_STATE->in[PUFF_STATE->incnt++] << 8;
+    if (PUFF_STATE->in[PUFF_STATE->incnt++] != (~len & 0xff) ||
+        PUFF_STATE->in[PUFF_STATE->incnt++] != ((~len >> 8) & 0xff))
         return -2;                              /* didn't match complement! */
 
     /* copy len bytes from in to out */
-    if (puff_state.incnt + len > puff_state.inlen)
+    if (PUFF_STATE->incnt + len > PUFF_STATE->inlen)
         return 2;                               /* not enough input */
-    if (puff_state.out != NULL) {
-        if (puff_state.outcnt + len > puff_state.outlen)
+    if (PUFF_STATE->out != NULL) {
+        if (PUFF_STATE->outcnt + len > PUFF_STATE->outlen)
             return 1;                           /* not enough output space */
         while (len--)
-            puff_state.out[puff_state.outcnt++] = puff_state.in[puff_state.incnt++];
+            PUFF_STATE->out[PUFF_STATE->outcnt++] = PUFF_STATE->in[PUFF_STATE->incnt++];
     }
     else {                                      /* just scanning */
-        puff_state.outcnt += len;
-        puff_state.incnt += len;
+        PUFF_STATE->outcnt += len;
+        PUFF_STATE->incnt += len;
     }
 
     /* done with a valid stored block */
@@ -727,19 +727,19 @@ SInt16 puff(UInt8 *dest, UInt16 *destLen, const UInt8 *source, UInt16 *sourceLen
     }
 
     /* initialize output state */
-    puff_state.out = dest;
-    puff_state.outlen = *destLen;
-    puff_state.outcnt = 0;
+    PUFF_STATE->out = dest;
+    PUFF_STATE->outlen = *destLen;
+    PUFF_STATE->outcnt = 0;
 
     /* initialize input state */
-    puff_state.in = source;
-    puff_state.inlen = *sourceLen;
-    puff_state.incnt = 0;
-    puff_state.bitbuf = 0;
-    puff_state.bitcnt = 0;
+    PUFF_STATE->in = source;
+    PUFF_STATE->inlen = *sourceLen;
+    PUFF_STATE->incnt = 0;
+    PUFF_STATE->bitbuf = 0;
+    PUFF_STATE->bitcnt = 0;
 
     /* return if bits() or decode() tries to read past available input */
-    if (setjmp(puff_state.env) != 0) {           /* if came back here via longjmp() */
+    if (setjmp(PUFF_STATE->env) != 0) {           /* if came back here via longjmp() */
         err = 2;                        /* then skip do-loop, return error */
     } else {
         /* process blocks until last block or error */
@@ -760,8 +760,8 @@ SInt16 puff(UInt8 *dest, UInt16 *destLen, const UInt8 *source, UInt16 *sourceLen
 
     /* update the lengths and return */
     if (err != 0) {
-        *destLen = puff_state.outcnt;
-        *sourceLen = puff_state.incnt;
+        *destLen = PUFF_STATE->outcnt;
+        *sourceLen = PUFF_STATE->incnt;
     }
     return err;
 }

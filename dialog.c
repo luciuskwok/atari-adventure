@@ -7,6 +7,7 @@
 #include "menu.h"
 #include "sprites.h"
 #include "text.h"
+#include "atari_memmap.h"
 
 
 // Constants
@@ -494,6 +495,10 @@ static SInt8 handleMenuClick(UInt8 index) {
 }
 
 void initDialog(void) {
+	UInt16 startTime = SHORT_CLOCK;
+	UInt16 duration;
+	SInt8 err;
+
 	isExittingDialog = 0;
 
 	// Set up graphics window
@@ -533,17 +538,14 @@ void initDialog(void) {
 	}
 
 	// Draw background image
-	{
-		// UInt16 duration;
-		// UInt8 s[16] = "Time: ";
-		// UInt16 startTime = SHORT_CLOCK;
-		SInt8 err = drawImage(&temShopImage, 0, 72);
-		if (err) {
-			debugPrint("puff() error:", err, 1, 0);
-		}
-		// duration = SHORT_CLOCK - startTime;
-		// uint16toString(s+6, duration);
-		// printString(s, 1, 2);
+	err = drawImage(&temShopImage, 0, 72);
+	if (err) {
+		debugPrint("puff() error:", err, 0, 0);
+	} else {
+		UInt8 s[6];
+		duration = SHORT_CLOCK - startTime;
+		uint16toString(s, duration);
+		printString(s, 0, 6);		
 	}
 }
 
