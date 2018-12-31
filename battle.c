@@ -181,7 +181,8 @@ static void doAttack(UInt8 player) {
 }
 
 static void enterFightMenu(void) {
-	if (numberInParty() == 1) {
+	UInt8 count = numberInParty();
+	if (count == 1) {
 		doAttack(0);
 	} else {
 
@@ -189,7 +190,7 @@ static void enterFightMenu(void) {
 		printString("* Who shall fight?", 1, 0);
 
 		menuType = BattleFightMenu;
-		menuItemCount = 4;
+		menuItemCount = count;
 		menuOrigin.x = 8;
 		menuOrigin.y = 66;
 		menuItemSpacing = 40;

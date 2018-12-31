@@ -220,24 +220,22 @@ static void writeInfoViewDisplayList(void) {
 	x += writeDisplayListLines(dl+3, screen, dl_rasterLine, 16);
 	dl[x-1] |= dl_Interrupt; // 32
 
-	dl[x++] = DL_BLK2; // +2: 34
-
 	dl[x++] = dl_textWindowLine | dl_Interrupt;
-	dl[x++] = DL_BLK2; // + 10: 44
+	dl[x++] = DL_BLK2; // + 10: 42
 
-	for (i=0; i<13; ++i) {
+	for (i=0; i<14; ++i) {
 		dl[x++] = dl_textWindowLine;
 	}
-	dl[x-1] |= dl_Interrupt; // + 13*8 = +104: 148
+	dl[x-1] |= dl_Interrupt; // + 14*8 = +112: 154
 
-	dl[x++] = DL_BLK4; // +4: 152
+	dl[x++] = DL_BLK4; // +4: 158
 
 	dl[x++] = dl_textWindowLine | dl_Interrupt;
-	dl[x++] = DL_BLK2; // +2: 154
+	dl[x++] = DL_BLK2; // +10: 168
 
-	for (i=0; i<5; ++i) {
+	for (i=0; i<4; ++i) {
 		dl[x++] = dl_textWindowLine;
-	} // + 5*8 = +40: 194
+	} // + 4*8 = +32: 200
 
 	writeDisplayListEnd(dl+x);
 }

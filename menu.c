@@ -93,7 +93,6 @@ void setMenuCursor(const UInt8 *sprite, UInt8 height) {
 	setPlayerCursorColorCycling(1);
 	setSpriteWidth(1, 1);
 	setCursorSprite(sprite, height);
-	setMenuSelectedIndex(0);
 }
 
 void initMenu(void) {

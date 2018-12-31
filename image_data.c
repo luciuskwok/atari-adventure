@@ -174,7 +174,7 @@ const UInt8 infoColorTable[] = {
 	0x82, 
 	0x00, // background
 	0x0E, // text luminance
-	0x02, // text background
+	0x04, // text background
 	0x82  // bar background
 };
 

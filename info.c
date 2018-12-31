@@ -15,10 +15,6 @@ static SInt8 infoCursorHandler(UInt8 event) {
 	return (event == CursorClick) ? MessageReturnToMap : MessageNone;
 }
 
-static void fillSpacerLine(UInt8 row) {
-	memset(textWindow + row * 40, 0xFF, 40);
-}
-
 static void drawCharaInfoAtIndex(UInt8 index) {
 	GameCharaPtr chara = charaAtIndex(index);
 	UInt8 maxHp = charaMaxHp(chara);
@@ -64,7 +60,8 @@ static void drawCharaInfoAtIndex(UInt8 index) {
 }
 
 void initInfo(void) {
-	const UInt8 missileHeight = 90;
+	const UInt8 missileHeight = 91;
+	const UInt8 itemWindowRow = 15;
 	UInt8 count = numberInParty();
 	UInt8 i;
 	UInt8 s[20];
@@ -92,34 +89,34 @@ void initInfo(void) {
 	}
 
 	// Print party info
-	printString("Items", 1, 14);
+	printString("Items", 1, itemWindowRow);
 
 	stringCopy(s, "Gold: $");
 	numberString(s+stringLength(s), ',', partyMoney);
-	printString(s, 1, 15);
+	printString(s, 1, itemWindowRow+1);
 
 	stringCopy(s, "Herbs: ");
 	numberString(s+stringLength(s), 0, partyPotions);
 	stringConcat(s, "{");
-	printString(s, 1, 16);
+	printString(s, 1, itemWindowRow+2);
 
 	stringCopy(s, "Fangs: ");
 	numberString(s+stringLength(s), 0, partyFangs);
 	stringConcat(s, "}");
-	printString(s, 1, 17);
+	printString(s, 1, itemWindowRow+3);
 
 	stringCopy(s, "Nuts: ");
 	numberString(s+stringLength(s), 0, 11);
-	printString(s, 16, 15);
+	printString(s, 16, itemWindowRow+1);
 
 	stringCopy(s, "Staff: ");
 	numberString(s+stringLength(s), 0, 3);
-	printString(s, 16, 16);
+	printString(s, 16, itemWindowRow+3);
 	
-	printString("Boat", 31, 15);
-	printString("Lamp", 31, 16);
-	printString("Crystal", 31, 17);
-	printString("Mantle", 31, 18);
+	printString("Boat", 31, itemWindowRow+1);
+	printString("Lamp", 31, itemWindowRow+2);
+	printString("Crystal", 31, itemWindowRow+3);
+	printString("Mantle", 31, itemWindowRow+4);
 
 	registerCursorEventHandler(infoCursorHandler);
 }
