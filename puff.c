@@ -43,7 +43,7 @@ typedef struct PuffState {
     jmp_buf env;
 } PuffState;
 
-#define PUFF_STATE ((PuffState *)0x9B)
+#define PUFF_STATE ((PuffState *)0x9C)
 
 
 /*

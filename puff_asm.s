@@ -13,7 +13,7 @@
 
 
 ; puff_state struct fields
-PUFF_STATE  = $9B
+PUFF_STATE  = $9C
 PUFF_OUT    = PUFF_STATE
 PUFF_OUTLEN = PUFF_STATE+2
 PUFF_OUTCNT = PUFF_STATE+4
