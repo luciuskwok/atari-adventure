@@ -29,7 +29,8 @@
 
 #include "graphics.h"
 #include "atari_memmap.h"
-#include "images.h"
+#include "map_data.h"
+#include "puff.h"
 #include "sprites.h"
 #include <atari.h>
 #include <string.h>
@@ -56,48 +57,6 @@ static UInt8 *smallTextWindow;
 
 #define SCREEN_ROW_BYTES (40)
 
-
-// Init
-
-void initGraphics(void) {
-	UInt8 ramtop = PEEK(RAMTOP);
-
-	// Turn off screen during init and leave it off for main to turn back on.
-	POKE (SDMCTL, 0);
-
-	initVBI(immediateUserVBI); // Safe value: 0xE45F
-	
-	// Set color table to all black
-	loadColorTable(NULL);
-
-	initDisplayList(ramtop - 12, ramtop - 16);
-	initSprites(ramtop - 16);
-	initTileFont(ramtop - 20);
-	
-	// == Use scrolling to center the odd number of tiles ==
-	ANTIC.hscrol = 4;
-}
-
-void initDisplayList(UInt8 startPage, UInt8 textPage) {
-	const UInt8 screenLSB = startPage;
-	const UInt8 screenMSB = 128;
-	UInt8 *displayList = (UInt8 *)(startPage * 256);
-	const UInt8 *screen = displayList + 128;
-	const UInt8 textBarChartLSB = 120;
-
-	// Init globals
-	smallTextWindow = (UInt8 *)(textPage * 256); // Using the unused 384 bytes below PMGraphics
-	textWindow = smallTextWindow;
-
-	// Update OS pointers
-	POKEW (SAVMSC, (UInt16)screen);
-	POKEW (SDLSTL, (UInt16)displayList);
-
-	// Set up lines common to all display lists
-	displayList[0] = DL_BLK8; 
-	displayList[1] = DL_BLK8; 
-	displayList[2] = DL_BLK4; // 3
-}
 
 // Screen Modes
 
@@ -293,7 +252,7 @@ void setScreenMode(UInt8 mode) {
 
 // Transition Effects
 
-UInt8 applyFade(UInt8 color, UInt8 amount) {
+static UInt8 applyFade(UInt8 color, UInt8 amount) {
 	UInt8 lum = color & 0x0F;
 	if (amount > lum) {
 		color = 0;
@@ -393,7 +352,7 @@ void setBackgroundGradient(const UInt8 *data) {
 
 // Drawing
 
-void setPixel(UInt8 *screen, UInt8 x, UInt8 y, UInt8 value) {
+static void setPixel(UInt8 *screen, UInt8 x, UInt8 y, UInt8 value) {
 	UInt8 shift = (3 - (x % 4)) * 2;
 	UInt8 mask = 3 << shift;
 	UInt8 c;
@@ -418,11 +377,104 @@ void drawBarChart(UInt8 *screen, UInt8 x, UInt8 y, UInt8 width, UInt8 filled) {
 	}
 }
 
+SInt8 drawImage(const DataBlock *image, UInt8 rowOffset, UInt8 rowCount) {
+	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
+	UInt16 screenLen = rowCount * SCREEN_ROW_BYTES;
+	UInt16 dataLen = image->length;
+
+	screen += rowOffset * SCREEN_ROW_BYTES;
+	return puff(screen, &screenLen, image->bytes, &dataLen);
+}
+
+void clearRasterScreen(UInt8 rows) {
+	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
+	memset(screen, 0, SCREEN_ROW_BYTES * rows);
+}
+
 // Timing
 
 void waitVsync(UInt8 ticks) {
 	*VB_TIMER = ticks;
 	while (*VB_TIMER != 0) {} // Wait for VSYNC 
+}
+
+// Init
+
+static void initDisplayList(UInt8 startPage, UInt8 textPage) {
+	const UInt8 screenLSB = startPage;
+	const UInt8 screenMSB = 128;
+	UInt8 *displayList = (UInt8 *)(startPage * 256);
+	const UInt8 *screen = displayList + 128;
+	const UInt8 textBarChartLSB = 120;
+
+	// Init globals
+	smallTextWindow = (UInt8 *)(textPage * 256); // Using the unused 384 bytes below PMGraphics
+	textWindow = smallTextWindow;
+
+	// Update OS pointers
+	POKEW (SAVMSC, (UInt16)screen);
+	POKEW (SDLSTL, (UInt16)displayList);
+
+	// Set up lines common to all display lists
+	displayList[0] = DL_BLK8; 
+	displayList[1] = DL_BLK8; 
+	displayList[2] = DL_BLK4; // 3
+}
+
+static void initTileFont(UInt8 fontPage) {
+	const UInt8 *romFont = (UInt8 *)0xE000;
+	UInt8 *customFont = (UInt8 *) ((UInt16)fontPage * 256);
+	UInt8 *tileFont = customFont + 512;
+	UInt16 index;
+	UInt8 tileIndex, bitmapIndex;
+
+	//print8bitValue("Start Font: ", fontPage, 1, 5);
+	
+	// Copy character set from ROM to RAM, 128 characters.
+	memcpy(customFont, romFont, 1024);
+
+	// Blank out the tile with value 0 in the graphics character area
+	memset(tileFont, 0, 8);
+	
+	// Add our custom tiles into the graphics character area
+	bitmapIndex = 0;
+	while (1) {
+		// Each tile bitmap has 9 bytes. First byte indicated which character it replaces, 
+		// or nil for the end of the data.
+		tileIndex = tileBitmaps[bitmapIndex * 9];
+		if (tileIndex == 0) {
+			break;
+		}
+		for (index=0; index<8; ++index) { 
+			tileFont[tileIndex * 8 + index] = tileBitmaps[bitmapIndex * 9 + index + 1];
+		}
+		++bitmapIndex;
+	}
+	
+	// Set CHBAS to point to the graphics character set area.
+	// This lets the  map tiles show in the color map part of the screen.
+	// It seems that the text window area truncates the value to a multple of 4, 
+	// neatly allowing for regular characters there.
+	POKE(CHBAS, fontPage + 2);
+}
+
+void initGraphics(void) {
+	UInt8 ramtop = PEEK(RAMTOP);
+
+	// Turn off screen during init and leave it off for main to turn back on.
+	POKE (SDMCTL, 0);
+
+	initVBI(immediateUserVBI); // Safe value: 0xE45F
+	
+	// Set color table to all black
+	loadColorTable(NULL);
+
+	initDisplayList(ramtop - 12, ramtop - 16);
+	initSprites(ramtop - 16);
+	initTileFont(ramtop - 20);
+	
+	// == Use scrolling to center the odd number of tiles ==
+	ANTIC.hscrol = 4;
 }
 
 

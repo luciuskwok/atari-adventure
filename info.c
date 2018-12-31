@@ -5,7 +5,6 @@
 #include "cursor.h"
 #include "game_chara.h"
 #include "graphics.h"
-#include "images.h"
 #include "image_data.h"
 #include "puff.h"
 #include "sprites.h"

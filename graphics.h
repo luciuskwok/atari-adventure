@@ -16,11 +16,6 @@ extern UInt8 *textWindow; // Pointer to screen memory for text window
 #define BG_COLOR ((UInt8 *)0x0620)
 
 
-// Init
-void initGraphics(void);
-void initDisplayList(UInt8 startPage, UInt8 textPage);
-void hidePlayfieldAndSprites(void);
-
 enum ScreenMode {
 	ScreenModeOff = 0,
 	ScreenModeMap,
@@ -34,7 +29,6 @@ void setScreenMode(UInt8 mode);
 enum FadeOptions {
 	FadeGradient = 1, FadeTextBox = 2
 };
-UInt8 applyFade(UInt8 color, UInt8 amount);
 void fadeOutColorTable(UInt8 fadeOptions);
 void fadeInColorTable(UInt8 fadeOptions, const UInt8 *colorTable);
 
@@ -44,8 +38,13 @@ void setBackgroundGradient(const UInt8 *data);
 
 // Drawing
 void drawBarChart(UInt8 *screen, UInt8 x, UInt8 y, UInt8 width, UInt8 filled);
+SInt8 drawImage(const DataBlock *image, UInt8 rowOffset, UInt8 rowCount);
+void clearRasterScreen(UInt8 rows);
 
 // Timing
 void waitVsync(UInt8 ticks);
+
+// Init
+void initGraphics(void);
 
 #endif

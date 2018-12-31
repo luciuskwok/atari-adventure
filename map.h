@@ -13,8 +13,8 @@ extern UInt8 mapSightDistance;
 extern PointU8 mapOverworldLocation;
 extern PointU8 mapCurrentLocation;
 
-
 // Constants
+
 enum MapTypes {
 	OverworldMapType = 0,
 	DungeonMapType = 1,

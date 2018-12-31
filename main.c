@@ -12,7 +12,6 @@
 #include "dialog.h"
 #include "game_chara.h"
 #include "graphics.h"
-#include "images.h"
 #include "image_data.h"
 #include "info.h"
 #include "map.h"

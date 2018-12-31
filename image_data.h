@@ -14,3 +14,5 @@ extern const DataBlock battleEnemyImage;
 extern const UInt8 infoColorTable[];
 extern const DataBlock avatar1Image;
 extern const DataBlock *avatarImages[];
+
+
