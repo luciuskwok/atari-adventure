@@ -28,7 +28,6 @@
 // Globals
 UInt8 isQuitting;
 
-
 // Constants and macros
 //#define DEBUGGING
 
@@ -71,6 +70,7 @@ static void handleMessage(SInt8 message) {
 }
 
 static void handleKeyboard(void) {
+	static UInt8 previousKeycode = 0xFF;
 	UInt8 keycode = POKEY_READ.kbcode;
 	const UInt8 vol = 8;
 	const UInt8 chan = 0;
@@ -78,59 +78,62 @@ static void handleKeyboard(void) {
 	UInt8 shift = keycode & 0x40;
 	UInt8 control = keycode & 0x80;
 
-	switch (keycode & 0x3F) {
-		case KEY_A:
-			note = 0; 
-			break;
-		case KEY_W:	
-			note = 1;
-			break;
-		case KEY_S:	
-			note = 2;
-			break;
-		case KEY_E:	
-			note = 3;
-			break;
-		case KEY_D:	
-			note = 4;
-			break;
-		case KEY_F:	
-			note = 5;
-			break;
-		case KEY_T:	
-			note = 6;
-			break;
-		case KEY_G:	
-			note = 7;
-			break;
-		case KEY_Y:	
-			note = 8;
-			break;
-		case KEY_H:	
-			note = 9;
-			break;
-		case KEY_U:	
-			note = 10;
-			break;
-		case KEY_J:	
-			note = 11;
-			break;
-		case KEY_K:	
-			note = 12;
-			break;
-		default:
-			break;
-	}
-	if (note == 0xFF) {
-		noteOff(0);
-	} else {
-		if (shift) {
-			note += 12;
+	if (keycode != previousKeycode) {
+		switch (keycode & 0x3F) {
+			case KEY_A:
+				note = 0; 
+				break;
+			case KEY_W:	
+				note = 1;
+				break;
+			case KEY_S:	
+				note = 2;
+				break;
+			case KEY_E:	
+				note = 3;
+				break;
+			case KEY_D:	
+				note = 4;
+				break;
+			case KEY_F:	
+				note = 5;
+				break;
+			case KEY_T:	
+				note = 6;
+				break;
+			case KEY_G:	
+				note = 7;
+				break;
+			case KEY_Y:	
+				note = 8;
+				break;
+			case KEY_H:	
+				note = 9;
+				break;
+			case KEY_U:	
+				note = 10;
+				break;
+			case KEY_J:	
+				note = 11;
+				break;
+			case KEY_K:	
+				note = 12;
+				break;
+			default:
+				break;
 		}
-		if (control) {
-			note += 24;
+		if (note == 0xFF) {
+			noteOff(0);
+		} else {
+			if (shift) {
+				note += 12;
+			}
+			if (control) {
+				note += 24;
+			}
+			noteOn(note, vol, chan);
 		}
-		noteOn(note, vol, chan);
+		previousKeycode = keycode;
 	}
 }
 

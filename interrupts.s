@@ -134,6 +134,8 @@ set_player_color:
 ; ===== Sound Section =====
 
 sound:
+	ldy #0
+	jsr _applyEnvelopeAtY
 
 sound_vibrato:
 	ldy #0
@@ -167,6 +169,66 @@ inc_snd_timer:
 return:
 	jmp $E45F			; jump to the OS immediate VBI routine
 .endproc
+
+
+.proc _applyEnvelopeAtY					; $6B06
+	lda CHANNEL_STATE+CH_ATK_TIME,Y 	; if atk_time != 0: apply attack
+	beq decay
+
+attack:
+	sec
+	sbc #1
+	sta CHANNEL_STATE+CH_ATK_TIME,Y		; atk_time -= 1
+
+	clc
+	lda CHANNEL_STATE+CH_CUR_LVL,Y 		; cur_lvl += atk_rate
+	adc CHANNEL_STATE+CH_ATK_RATE,Y
+	cmp #16								; if cur_lvl >= 16: cur_lvl = 15
+	bcc attack_set_lvl
+	lda #15
+attack_set_lvl:
+	sta CHANNEL_STATE+CH_CUR_LVL,Y
+	rts 								; return
+
+decay:
+	lda CHANNEL_STATE+CH_SUS_TIME,Y		; if sus_time != 0: wait for sustain
+	beq release
+
+	lda CHANNEL_STATE+CH_CUR_LVL,Y		; if cur_lvl != sus_lvl: apply decay
+	cmp CHANNEL_STATE+CH_SUS_LVL,Y
+	beq sustain
+
+	sec
+	sbc CHANNEL_STATE+CH_DEC_RATE,Y 	; cur_lvl -= dec_rate
+
+	cmp CHANNEL_STATE+CH_SUS_LVL,Y		; if cur_lvl < sus_lvl: cur_lvl = sus_lvl
+	bcs set_cur_level
+	lda CHANNEL_STATE+CH_SUS_LVL,Y
+
+set_cur_level:
+	sta CHANNEL_STATE+CH_CUR_LVL,Y
+	rts 								; return
+
+sustain:
+	lda CHANNEL_STATE+CH_SUS_TIME,Y		; if sus_time != 0: wait for sustain
+	beq release
+
+	sec
+	sbc #1								; sus_time -= 1
+	sta CHANNEL_STATE+CH_SUS_TIME,Y
+	rts									; return
+
+release:
+	lda CHANNEL_STATE+CH_CUR_LVL,Y 		; if cur_lvl != 0: apply release
+	beq return	
+	sec
+	sbc #1
+	sta CHANNEL_STATE+CH_CUR_LVL,Y
+
+return:
+	rts
+.endproc
+
 
 .proc _getAudFreqCtrlAtY
 	; on input: Y=offset for channel

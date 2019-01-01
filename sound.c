@@ -24,7 +24,7 @@ typedef struct ChannelState {
 	UInt8 decayRate;
 	UInt8 sustainLevel;
 	UInt8 sustainTime;
-	UInt8 releaseTime;
+	UInt8 releaseTime; 		// should be releaseRate?
 } ChannelState;
 
 typedef struct SoundState {
@@ -100,7 +100,13 @@ void noteOn(UInt8 note, UInt8 volume, UInt8 channel) {
 
 	channelPtr->frequency = audf;
 	channelPtr->vibrato = vibrato;
-	channelPtr->currentLevel = volume;
+	channelPtr->currentLevel = 0;
+
+	channelPtr->sustainTime = 60;
+	channelPtr->sustainLevel = volume;
+	channelPtr->decayRate = 1;
+	channelPtr->attackRate = 1;
+	channelPtr->attackTime = 15;
 }
 
 void noteOff(UInt8 channel) {
@@ -109,6 +115,12 @@ void noteOff(UInt8 channel) {
 	channelPtr->frequency = 0;
 	channelPtr->vibrato = 0;
 	channelPtr->currentLevel = 0;
+
+	channelPtr->sustainTime = 0;
+	channelPtr->sustainLevel = 0;
+	channelPtr->decayRate = 1;
+	channelPtr->attackRate = 1;
+	channelPtr->attackTime = 0;
 }
 
 void stopSound(void) {
