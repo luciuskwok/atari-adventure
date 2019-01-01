@@ -18,6 +18,7 @@
 #include "info.h"
 #include "map.h"
 #include "map_data.h"
+#include "sound.h"
 #include "sprites.h"
 #include "text.h"
 #include "types.h"
@@ -40,14 +41,15 @@ UInt16 duration;
 
 // Dialog functions
 
-void fadeOutScreen(void) {
+static void fadeOutScreen(void) {
 	// Fade out
+	stopSound();
 	fadeOutColorTable(FadeTextBox);
 	clearSprite(4);
 	hideSprites();
 }
 
-void handleMessage(SInt8 message) {
+static void handleMessage(SInt8 message) {
 	switch (message) {
 		case MessageEnterDialog:
 			fadeOutScreen();
@@ -68,15 +70,81 @@ void handleMessage(SInt8 message) {
 	}
 }
 
+static void handleKeyboard(void) {
+	UInt8 keycode = POKEY_READ.kbcode;
+	const UInt8 vol = 8;
+	const UInt8 chan = 0;
+	UInt8 note = 0xFF;
+	UInt8 shift = keycode & 0x40;
+	UInt8 control = keycode & 0x80;
+
+	switch (keycode & 0x3F) {
+		case KEY_A:
+			note = 0; 
+			break;
+		case KEY_W:	
+			note = 1;
+			break;
+		case KEY_S:	
+			note = 2;
+			break;
+		case KEY_E:	
+			note = 3;
+			break;
+		case KEY_D:	
+			note = 4;
+			break;
+		case KEY_F:	
+			note = 5;
+			break;
+		case KEY_T:	
+			note = 6;
+			break;
+		case KEY_G:	
+			note = 7;
+			break;
+		case KEY_Y:	
+			note = 8;
+			break;
+		case KEY_H:	
+			note = 9;
+			break;
+		case KEY_U:	
+			note = 10;
+			break;
+		case KEY_J:	
+			note = 11;
+			break;
+		case KEY_K:	
+			note = 12;
+			break;
+		default:
+			break;
+	}
+	if (note == 0xFF) {
+		noteOff(0);
+	} else {
+		if (shift) {
+			note += 12;
+		}
+		if (control) {
+			note += 24;
+		}
+		noteOn(note, vol, chan);
+	}
+}
+
 void runLoop(void) {
 	handleMessage(handleTrigger());
 	handleMessage(handleStick());
+	handleKeyboard();
 }
 
 int main (void) {
 	// Init
 	initGraphics();
 	initCursor();
+	initSound();
 	
 	// Start new game
 	initParty();

@@ -12,7 +12,7 @@ extern UInt8 *textWindow; // Pointer to screen memory for text window
 // VBI and DLI registers
 #define CUR_TIMER ((UInt8 *)0x0600)
 #define VB_TIMER ((UInt8 *)0x0601)
-#define P3_XPOS ((UInt8 *)0x0613)
+#define P3_XPOS ((UInt8 *)0x0603)
 #define BG_COLOR ((UInt8 *)0x0620)
 
 
@@ -34,7 +34,6 @@ void fadeInColorTable(UInt8 fadeOptions, const UInt8 *colorTable);
 
 // Color Table
 void loadColorTable(const UInt8 *colors);
-void setBackgroundGradient(const UInt8 *data);
 
 // Drawing
 void drawBarChart(UInt8 *screen, UInt8 x, UInt8 y, UInt8 width, UInt8 filled);

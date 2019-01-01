@@ -10,40 +10,72 @@
 .export _battleViewDLI
 .export _infoViewDLI
 
+.import _soundState
+
 .code
-PCOLR0 = $02C0		; Player 0 color
-PCOLR1 = $02C1		; Player 1 color
-COLOR0 = $02C4		; Field 0 color (pixel value 1)
-COLOR1 = $02C5		; Field 1 color (pixel value 2)
-COLOR2 = $02C6		; Field 2 color (pixel value 3)
-COLOR3 = $02C7		; Field 3 color
-COLOR4 = $02C8		; Background color (pixel value 0)
-TXTLUM = $02C9		; Extra color: Text luminance
-TXTBKG = $02CA		; Extra color: Text box background color
-COLOR7 = $02CB		; Extra color: Bar background color
+; Constants
+	PCOLR0 = $02C0		; Player 0 color
+	PCOLR1 = $02C1		; Player 1 color
+	COLOR0 = $02C4		; Field 0 color (pixel value 1)
+	COLOR1 = $02C5		; Field 1 color (pixel value 2)
+	COLOR2 = $02C6		; Field 2 color (pixel value 3)
+	COLOR3 = $02C7		; Field 3 color
+	COLOR4 = $02C8		; Background color (pixel value 0)
+	TXTLUM = $02C9		; Extra color: Text luminance
+	TXTBKG = $02CA		; Extra color: Text box background color
+	COLOR7 = $02CB		; Extra color: Bar background color
 
-CHBASE = $D409		; Character set
-HPOSP3 = $D003		; Player 2 horizontal position
-COLPF0 = $D016		; pixel 1
-COLPF1 = $D017		; text luminance / pixel 2
-COLPF2 = $D018		; text background / pixel 3
-COLPF3 = $D019		; 
-COLPF4 = $D01A		; background / pixel 0
-WSYNC  = $D40A
-VCOUNT = $D40B		; vertical line counter
+	; GTIA
+	HPOSP3 = $D003		; Player 2 horizontal position
+	COLPF0 = $D016		; pixel 1
+	COLPF1 = $D017		; text luminance / pixel 2
+	COLPF2 = $D018		; text background / pixel 3
+	COLPF3 = $D019		; 
+	COLPF4 = $D01A		; background / pixel 0
 
-CUR_SKIP  = 15		; number of frames to skip for color cycling
-CUR_TIMER = $0600	; cursor color cycling frame skip countdown timer
-VB_TIMER = $0601	; general countdown timer that decrements every VBI
-DLI_ROW   = $0610	; for keeping track of which row the DLI is on. Easier to use this for iterating through P3_XPOS and BG_COLOR arrays than to use VCOUNT.
-P3_XPOS   = $0613	; array of 9 bytes for repositioning player 3
-BG_COLOR  = $0620	; array of 72 bytes for changing background color per raster line
+	; POKEY 
+	AUDF1 = $D200
+	AUDC1 = $D201
+	AUDF2 = $D202
+	AUDC2 = $D203
+	AUDF3 = $D204
+	AUDC3 = $D205
+	AUDF4 = $D206
+	AUDC4 = $D207
+
+	; ANTIC
+	CHBASE = $D409		; Character set
+	WSYNC  = $D40A
+	VCOUNT = $D40B		; vertical line counter
+
+	CUR_SKIP  = 15		; number of frames to skip for color cycling
+	CUR_TIMER = $0600	; cursor color cycling frame skip countdown timer
+	VB_TIMER  = $0601	; general countdown timer that decrements every VBI
+	DLI_ROW   = $0602	; for keeping track of which row the DLI is on. Easier to use this for iterating through P3_XPOS and BG_COLOR arrays than to use VCOUNT.
+	P3_XPOS   = $0603	; array of 9 bytes for repositioning player 3
+
+	VIBRATO_TIMER = _soundState	; timer for vibrato effect 
+	CHANNEL_STATE = _soundState+1
+	CHANNEL_SIZE = 9
+	CH_FREQ     = 0			; frequency divisor as AUDF value
+	CH_VIBR     = 1 		; duty cycle for vibrato
+	CH_CUR_LVL  = 2		; current volume level
+	CH_ATK_TIME = 3
+	CH_ATK_RATE = 4
+	CH_DEC_RATE = 5
+	CH_SUS_LVL  = 6
+	CH_SUS_TIME = 7
+	CH_REL_TIME = 8
+
+; End Constants
 
 
 .proc _initVBI		; on entry: X=MSB, A=LSB
 	tay				; move LSB to Y
 	lda #CUR_SKIP	; init CUR_TIMER to CUR_SKIP
 	sta CUR_TIMER	
+	lda #0
+	sta VIBRATO_TIMER
 	lda #6			; 6=Immediate, 7=Deferred.
 	jsr $E45C		; SETVBV
 	rts
@@ -63,10 +95,10 @@ BG_COLOR  = $0620	; array of 72 bytes for changing background color per raster l
 	
 update_cursor:
 	ldx CUR_TIMER
-	bmi return 			; if cur_timer > 127, leave the timer alone
+	bmi sound 			; if cur_timer > 127, leave the timer alone
 	dex 				; else --cur_timer
 	stx CUR_TIMER
-	bne return 			; if cur_timer == 0, cycle the colors
+	bne sound 			; if cur_timer == 0, cycle the colors
 
 cycle_color:
 	lda #CUR_SKIP		; reset cur_timer to cur_skip
@@ -99,10 +131,58 @@ set_player_color:
 	stx PCOLR0			; store new color value in players 0 and 1
 	stx PCOLR1
 
+; ===== Sound Section =====
+
+sound:
+
+sound_vibrato:
+	ldy #0
+	jsr _getAudFreqCtrlAtY
+	stx AUDF1
+	sta AUDC1
+
+	ldy #CHANNEL_SIZE*1
+	jsr _getAudFreqCtrlAtY
+	stx AUDF2
+	sta AUDC2
+
+	ldy #CHANNEL_SIZE*2
+	jsr _getAudFreqCtrlAtY
+	stx AUDF3
+	sta AUDC3
+
+	ldy #CHANNEL_SIZE*3
+	jsr _getAudFreqCtrlAtY
+	stx AUDF4
+	sta AUDC4
+
+
+inc_snd_timer:
+	lda VIBRATO_TIMER
+	clc
+	adc #1
+	and #$07 			; keep SND_TIMER in range from 0 to 7
+	sta VIBRATO_TIMER
+
 return:
 	jmp $E45F			; jump to the OS immediate VBI routine
 .endproc
 
+.proc _getAudFreqCtrlAtY
+	; on input: Y=offset for channel
+	; on output: X=AUDF value, A=AUDC value
+	lda VIBRATO_TIMER
+	cmp CHANNEL_STATE+CH_VIBR,Y ; if vibrato_timer >= ch_vibr, set carry
+	lda CHANNEL_STATE+CH_FREQ,Y
+	tax
+	bcs audctrl
+	inx
+audctrl:
+	lda CHANNEL_STATE+CH_CUR_LVL,Y
+	and #$0F
+	ora #$E0
+	rts
+.endproc
 
 .proc _mapViewDLI
 	pha					; push accumulator and X register onto stack

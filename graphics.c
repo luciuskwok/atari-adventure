@@ -325,6 +325,7 @@ void loadColorTable(const UInt8 *colors) {
 	}
 }
 
+/*
 void setBackgroundGradient(const UInt8 *data) {
 	// colors: array of { length, value } tuples, with NULL terminator
 	// There should be enough for 73 color values. First one goes into VBI shadow register, and
@@ -349,6 +350,7 @@ void setBackgroundGradient(const UInt8 *data) {
 		}
 	}
 }
+*/
 
 // Drawing
 

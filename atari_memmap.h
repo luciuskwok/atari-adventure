@@ -27,7 +27,7 @@
 #define STICK0 (0x0278)
 #define STRIG0 (0x0284)
 
-// Colors
+// Colors (Shadow)
 #define PCOLR0 (0x02C0)
 #define PCOLR1 (0x02C1)
 #define PCOLR2 (0x02C2)
@@ -39,13 +39,20 @@
 #define COLOR4 (0x02C8)
 #define TXTBKG (0x02CA)
 
-// Sprites
-#define HPOSP0 (0xD000)
-#define SIZEP0 (0xD008)
-
 // Memory Management
 #define MEMTOP (0x02E5)
 #define CHBAS (0x02F4)
+
+// Sprites (GTIA)
+#define HPOSP0 (0xD000)
+#define SIZEP0 (0xD008)
+
+// Sound (POKEY)
+#define AUDF1  (0xD200)
+#define AUDC1  (0xD201)
+#define AUDCTL (0xD208)
+#define SKCTL  (0xD20F)
+
 
 // Macros
 #define POKE(addr,val)  (*(unsigned char*) (addr) = (val))
