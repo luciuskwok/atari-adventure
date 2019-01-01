@@ -15,20 +15,40 @@
 #include "sound.h"
 #include "atari_memmap.h"
 
+typedef struct SequencerNoteUnit {
+	UInt8 noteNumber;
+	UInt8 duration;
+	UInt8 volume;
+	UInt8 envelope;
+} SequencerNoteUnit;
+
+typedef struct SequencerBlock {
+	UInt8 count;
+	SequencerNoteUnit note[];
+} SequencerBlock;
+
 typedef struct ChannelState {
 	UInt8 frequency; 		// clock frequency divider value
 	UInt8 vibrato;			// quickly switches between two frequencies
 	UInt8 currentLevel;		// current volume level
-	UInt8 attackTime;		// countdown of tick count for attack
-	UInt8 attackRate;		// 
+
+	UInt8 attackTime;		// envelope
+	UInt8 attackRate;	
 	UInt8 decayRate;
 	UInt8 sustainLevel;
 	UInt8 sustainTime;
 	UInt8 releaseRate; 
+
+	UInt8 sequenceIndex;
+	UInt8 noteStepsLeft;
+	SequencerBlock *sequencerBlock;
 } ChannelState;
 
 typedef struct SoundState {
 	UInt8 vibratoTimer;
+	UInt8 sequencerTimer; 			// ticks before next sequencer step
+	UInt8 sequencerStepDuration;	// ticks between sequencer steps
+
 	ChannelState channelState[4];
 } SoundState;
 

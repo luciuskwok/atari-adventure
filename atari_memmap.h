@@ -3,7 +3,7 @@
 #ifndef ATARI_MEMMAP_H
 #define ATARI_MEMMAP_H
 
-// Zero Page
+// Zero Page - OS
 #define APPMHI (0x000E)
 #define ATRACT (0x004D)
 #define LMARGN (0x0052)
@@ -13,6 +13,12 @@
 #define SAVMSC (0x0058)
 #define RAMTOP (0x006A)
 #define SHORT_CLOCK (PEEK(20) + 256 * PEEK(19))
+
+// Zero Page - User
+/* Runtime library uses locations $82 to $9B */
+#define PUFF_AREA (0x9C) /* 16 bytes */
+#define SOUND_AREA (0xAC) /* 2 bytes */
+
 
 // Page 2 - OS
 #define VDSLST (0x0200) /* Display list interrupt vector */

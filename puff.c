@@ -1,6 +1,7 @@
 // puff.c
 
 #include "puff.h"
+#include "atari_memmap.h"
 #include <setjmp.h>             /* for setjmp(), longjmp(), and jmp_buf */
 
 
@@ -43,7 +44,7 @@ typedef struct PuffState {
     jmp_buf env;
 } PuffState;
 
-#define PUFF_STATE ((PuffState *)0x9C)
+#define PUFF_STATE ((PuffState *)PUFF_AREA)
 
 
 /*

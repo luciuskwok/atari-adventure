@@ -54,18 +54,29 @@
 	DLI_ROW   = $0602	; for keeping track of which row the DLI is on. Easier to use this for iterating through P3_XPOS and BG_COLOR arrays than to use VCOUNT.
 	P3_XPOS   = $0603	; array of 9 bytes for repositioning player 3
 
-	VIBRATO_TIMER = _soundState	; timer for vibrato effect 
-	CHANNEL_STATE = _soundState+1
-	CHANNEL_SIZE = 9
-	CH_FREQ     = 0			; frequency divisor as AUDF value
-	CH_VIBR     = 1 		; duty cycle for vibrato
-	CH_CUR_LVL  = 2		; current volume level
-	CH_ATK_TIME = 3
-	CH_ATK_RATE = 4
-	CH_DEC_RATE = 5
-	CH_SUS_LVL  = 6
-	CH_SUS_TIME = 7
-	CH_REL_RATE = 8
+	vibratoTimer = _soundState	; timer for vibrato effect 
+	seqTimer   = _soundState+1  ; timer for sequencer step
+	seqStepDur = _soundState+2 ; number of ticks per sequencer step
+
+	chState    = _soundState+3
+	chSize     = 13
+	chFreq     = 0			; frequency divisor as AUDF value
+	chVibr     = 1 		; duty cycle for vibrato
+	chCurLvl   = 2		; current volume level
+	chAtkTime  = 3
+	chAtkRate  = 4
+	chDecRate  = 5
+	chSusLvl   = 6
+	chSusTime  = 7
+	chRelRate  = 8
+
+	seqIndex   = 9
+	noteStepsLeft = 10
+	seqBlock   = 11
+
+; Zero Page usage
+	ptrSound   = $AC 		; 2 bytes used for pointers
+
 
 ; End Constants
 
@@ -75,7 +86,7 @@
 	lda #CUR_SKIP	; init CUR_TIMER to CUR_SKIP
 	sta CUR_TIMER	
 	lda #0
-	sta VIBRATO_TIMER
+	sta vibratoTimer
 	lda #6			; 6=Immediate, 7=Deferred.
 	jsr $E45C		; SETVBV
 	rts
@@ -134,90 +145,120 @@ set_player_color:
 ; ===== Sound Section =====
 
 sound:
-	ldy #0
-	jsr _applyEnvelopeAtY
+	lda seqStepDur
+	beq apply_envelopes 		; if seqStepDur == 0: sequencer is disabled
 
-sound_vibrato:
+	ldx seqTimer				; seqTimer -= 1
+	dex
+	beq execute_seq_step 		; if seqTimer == 0: execute sequencer step
+	stx seqTimer				; else store seqTimer
+	jmp apply_envelopes
+
+execute_seq_step:
+	sta seqTimer 				; reset seqTimer = seqStepDur
 	ldy #0
+	jsr _stepSequenceAtY
+
+apply_envelopes:
+	ldy #0						; channel 0
+	jsr _applyEnvelopeAtY
 	jsr _getAudFreqCtrlAtY
 	stx AUDF1
 	sta AUDC1
 
-	ldy #CHANNEL_SIZE*1
+	ldy #chSize*1				; channel 1
+	jsr _applyEnvelopeAtY
 	jsr _getAudFreqCtrlAtY
 	stx AUDF2
 	sta AUDC2
 
-	ldy #CHANNEL_SIZE*2
+	ldy #chSize*2				; channel 2
+	jsr _applyEnvelopeAtY
 	jsr _getAudFreqCtrlAtY
 	stx AUDF3
 	sta AUDC3
 
-	ldy #CHANNEL_SIZE*3
+	ldy #chSize*3				; channel 3
+	jsr _applyEnvelopeAtY
 	jsr _getAudFreqCtrlAtY
 	stx AUDF4
 	sta AUDC4
 
-
-inc_snd_timer:
-	lda VIBRATO_TIMER
+inc_vibrato_timer:
+	lda vibratoTimer 			; vibratoTimer += 1
 	clc
 	adc #1
-	and #$07 			; keep SND_TIMER in range from 0 to 7
-	sta VIBRATO_TIMER
+	and #$07 					; keep vibratoTimer in range from 0 to 7
+	sta vibratoTimer
 
 return:
-	jmp $E45F			; jump to the OS immediate VBI routine
+	jmp $E45F					; jump to the OS immediate VBI routine
 .endproc
 
 
-.proc _applyEnvelopeAtY					; $6B06
-	lda CHANNEL_STATE+CH_CUR_LVL,Y 		; use X for cur_lvl
+.proc _stepSequenceAtY
+	lda chState+noteStepsLeft,Y ; if noteStepsLeft == 0: return
+	beq return
+	sec 
+	sbc #1
+	sta chState+noteStepsLeft,Y ; noteStepsLeft -= 1
+	bne return					; if noteStepsLeft != 0: return
+
+
+
+
+
+return:
+	rts
+.endproc
+
+.proc _applyEnvelopeAtY			; $6B06
+	lda chState+chCurLvl,Y 	; use X for cur_lvl
 	tax
-	lda CHANNEL_STATE+CH_ATK_TIME,Y 	; if atk_time != 0: apply attack
+	lda chState+chAtkTime,Y 	; if atk_time != 0: apply attack
 	beq decay
 
 attack:
 	sec
 	sbc #1
-	sta CHANNEL_STATE+CH_ATK_TIME,Y		; atk_time -= 1
+	sta chState+chAtkTime,Y	; atk_time -= 1
 
 	clc
 	txa
-	adc CHANNEL_STATE+CH_ATK_RATE,Y		; cur_lvl += atk_rate
-	sta CHANNEL_STATE+CH_CUR_LVL,Y
-	rts 								; return
+	adc chState+chAtkRate,Y	; cur_lvl += atk_rate
+	sta chState+chCurLvl,Y
+	rts 						; return
 
 decay:
 	txa
-	cmp CHANNEL_STATE+CH_SUS_LVL,Y		; if cur_lvl > sus_lvl: apply decay
+	cmp chState+chSusLvl,Y	; if cur_lvl > sus_lvl: apply decay
 	beq sustain
 	bcc sustain
 
 	sec
-	sbc CHANNEL_STATE+CH_DEC_RATE,Y 	; cur_lvl -= dec_rate
-	sta CHANNEL_STATE+CH_CUR_LVL,Y
-	rts 								; return
+	sbc chState+chDecRate,Y 	; cur_lvl -= dec_rate
+	sta chState+chCurLvl,Y
+	rts 						; return
 
 sustain:
-	lda CHANNEL_STATE+CH_SUS_TIME,Y		; if sus_time != 0: wait for sustain
+	lda chState+chSusTime,Y	; if sus_time != 0: wait for sustain
 	beq release
 
 	sec
-	sbc #1								; sus_time -= 1
-	sta CHANNEL_STATE+CH_SUS_TIME,Y
-	rts									; return
+	sbc #1						; sus_time -= 1
+	sta chState+chSusTime,Y
+	rts							; return
 
 release:
-	cpx #0 								; if cur_lvl != 0: apply release
+	cpx #0 						; if cur_lvl != 0: apply release
 	beq return
 	txa	
 	sec
-	sbc CHANNEL_STATE+CH_REL_RATE,Y
+	sbc chState+chRelRate,Y
 	bcs set_release_level
 	lda #0
 set_release_level:
-	sta CHANNEL_STATE+CH_CUR_LVL,Y
+	sta chState+chCurLvl,Y
 
 return:
 	rts
@@ -227,14 +268,14 @@ return:
 .proc _getAudFreqCtrlAtY
 	; on input: Y=offset for channel
 	; on output: X=AUDF value, A=AUDC value
-	lda VIBRATO_TIMER
-	cmp CHANNEL_STATE+CH_VIBR,Y ; if vibrato_timer >= ch_vibr, set carry
-	lda CHANNEL_STATE+CH_FREQ,Y
+	lda vibratoTimer
+	cmp chState+chVibr,Y ; if vibratoTimer >= chVibr, set carry
+	lda chState+chFreq,Y
 	tax
 	bcs audctrl
 	inx
 audctrl:
-	lda CHANNEL_STATE+CH_CUR_LVL,Y
+	lda chState+chCurLvl,Y
 	cmp #$10
 	bcc below_limit
 	lda #$0F
