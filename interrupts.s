@@ -65,7 +65,7 @@
 	CH_DEC_RATE = 5
 	CH_SUS_LVL  = 6
 	CH_SUS_TIME = 7
-	CH_REL_TIME = 8
+	CH_REL_RATE = 8
 
 ; End Constants
 
@@ -172,6 +172,8 @@ return:
 
 
 .proc _applyEnvelopeAtY					; $6B06
+	lda CHANNEL_STATE+CH_CUR_LVL,Y 		; use X for cur_lvl
+	tax
 	lda CHANNEL_STATE+CH_ATK_TIME,Y 	; if atk_time != 0: apply attack
 	beq decay
 
@@ -181,31 +183,19 @@ attack:
 	sta CHANNEL_STATE+CH_ATK_TIME,Y		; atk_time -= 1
 
 	clc
-	lda CHANNEL_STATE+CH_CUR_LVL,Y 		; cur_lvl += atk_rate
-	adc CHANNEL_STATE+CH_ATK_RATE,Y
-	cmp #16								; if cur_lvl >= 16: cur_lvl = 15
-	bcc attack_set_lvl
-	lda #15
-attack_set_lvl:
+	txa
+	adc CHANNEL_STATE+CH_ATK_RATE,Y		; cur_lvl += atk_rate
 	sta CHANNEL_STATE+CH_CUR_LVL,Y
 	rts 								; return
 
 decay:
-	lda CHANNEL_STATE+CH_SUS_TIME,Y		; if sus_time != 0: wait for sustain
-	beq release
-
-	lda CHANNEL_STATE+CH_CUR_LVL,Y		; if cur_lvl != sus_lvl: apply decay
-	cmp CHANNEL_STATE+CH_SUS_LVL,Y
+	txa
+	cmp CHANNEL_STATE+CH_SUS_LVL,Y		; if cur_lvl > sus_lvl: apply decay
 	beq sustain
+	bcc sustain
 
 	sec
 	sbc CHANNEL_STATE+CH_DEC_RATE,Y 	; cur_lvl -= dec_rate
-
-	cmp CHANNEL_STATE+CH_SUS_LVL,Y		; if cur_lvl < sus_lvl: cur_lvl = sus_lvl
-	bcs set_cur_level
-	lda CHANNEL_STATE+CH_SUS_LVL,Y
-
-set_cur_level:
 	sta CHANNEL_STATE+CH_CUR_LVL,Y
 	rts 								; return
 
@@ -219,10 +209,14 @@ sustain:
 	rts									; return
 
 release:
-	lda CHANNEL_STATE+CH_CUR_LVL,Y 		; if cur_lvl != 0: apply release
-	beq return	
+	cpx #0 								; if cur_lvl != 0: apply release
+	beq return
+	txa	
 	sec
-	sbc #1
+	sbc CHANNEL_STATE+CH_REL_RATE,Y
+	bcs set_release_level
+	lda #0
+set_release_level:
 	sta CHANNEL_STATE+CH_CUR_LVL,Y
 
 return:
@@ -241,6 +235,10 @@ return:
 	inx
 audctrl:
 	lda CHANNEL_STATE+CH_CUR_LVL,Y
+	cmp #$10
+	bcc below_limit
+	lda #$0F
+below_limit:
 	and #$0F
 	ora #$E0
 	rts

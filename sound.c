@@ -20,11 +20,11 @@ typedef struct ChannelState {
 	UInt8 vibrato;			// quickly switches between two frequencies
 	UInt8 currentLevel;		// current volume level
 	UInt8 attackTime;		// countdown of tick count for attack
-	UInt8 attackRate;		// 0 = instant attack; 1 = incremental attack
+	UInt8 attackRate;		// 
 	UInt8 decayRate;
 	UInt8 sustainLevel;
 	UInt8 sustainTime;
-	UInt8 releaseTime; 		// should be releaseRate?
+	UInt8 releaseRate; 
 } ChannelState;
 
 typedef struct SoundState {
@@ -92,44 +92,62 @@ const NoteFreqAdjust noteTable[] = {
 	{  16, 0 }, // B
 };
 
+enum Envelopes {
+	BasicEnvelope, 
+	Envelope1
+};
+
+static void applyEnvelope(ChannelState *ch, UInt8 envelope, UInt8 sustainLevel, UInt8 sustainTime) {
+	switch (envelope) {
+		case Envelope1:
+			ch->currentLevel = 0;
+			ch->releaseRate = 1;
+			ch->sustainTime = sustainTime;
+			ch->sustainLevel = sustainLevel;
+			ch->decayRate = 1;
+			ch->attackRate = 8;
+			ch->attackTime = 2;
+			break;
+
+		case BasicEnvelope:
+		default:
+			ch->currentLevel = 0;
+			ch->releaseRate = 1;
+			ch->sustainTime = sustainTime;
+			ch->sustainLevel = sustainLevel;
+			ch->decayRate = 1;
+			ch->attackRate = 1;
+			ch->attackTime = 15;
+			break;
+	}
+}
+
 void noteOn(UInt8 note, UInt8 volume, UInt8 channel) {
 	UInt8 audf = noteTable[note].audf;
 	UInt8 vibrato = noteTable[note].vibrato;
 	//UInt8 ctrl = (0xE0) | (volume & 0x0F);
-	ChannelState *channelPtr = &soundState.channelState[channel];
+	ChannelState *ch = &soundState.channelState[channel];
 
-	channelPtr->frequency = audf;
-	channelPtr->vibrato = vibrato;
-	channelPtr->currentLevel = 0;
-
-	channelPtr->sustainTime = 60;
-	channelPtr->sustainLevel = volume;
-	channelPtr->decayRate = 1;
-	channelPtr->attackRate = 1;
-	channelPtr->attackTime = 15;
+	ch->frequency = audf;
+	ch->vibrato = vibrato;
+	applyEnvelope(ch, Envelope1, volume, 60);
 }
 
 void noteOff(UInt8 channel) {
-	ChannelState *channelPtr = &soundState.channelState[channel];
+	ChannelState *ch = &soundState.channelState[channel];
 
-	channelPtr->frequency = 0;
-	channelPtr->vibrato = 0;
-	channelPtr->currentLevel = 0;
-
-	channelPtr->sustainTime = 0;
-	channelPtr->sustainLevel = 0;
-	channelPtr->decayRate = 1;
-	channelPtr->attackRate = 1;
-	channelPtr->attackTime = 0;
+	ch->releaseRate = 1;
+	ch->sustainTime = 0;
+	ch->sustainLevel = 0;
+	ch->decayRate = 1;
+	ch->attackRate = 1;
+	ch->attackTime = 0;
 }
 
 void stopSound(void) {
 	UInt8 i;
 	for (i=0; i<4; ++i) {
 		noteOff(i);
-	}
-		for (i=0; i<8; ++i) {
-		POKE(AUDF1 + i, 0);
 	}
 }
 
