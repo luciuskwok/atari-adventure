@@ -4,6 +4,9 @@
 // == About This Program ==
 // This program is a rogue-like game. 
 
+/* Build command on Mac:
+	/Applications/Emulation/cc65-master/bin/cl65 -O -t atari -C config.cfg -m linker_map.txt main.c battle.c cursor.c dialog.c game_chara.c graphics.c info.c map.c map_asm.s map_data.c menu.c puff.c puff_asm.s sprites.c text.c text_asm.s interrupts.s -o adv.xex
+*/
 
 // Includes
 #include "atari_memmap.h"

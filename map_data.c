@@ -78,8 +78,8 @@ const UInt8 overworldColorTable[] = {
 	0x0F, // PM3: white / tile overlay
 	0x82, // 0: blue / water
 	0x1C, // 1: yellow / desert
-	0x22, // 2: brown / plains
-	0xB4, // 3: dark green / forest
+	0x24, // 2: brown / plains
+	0xB6, // 3: dark green / forest
 	0x00, // 4: black / background
 	0x0E, 0x04, 0x82 // text box
 };

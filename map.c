@@ -74,7 +74,7 @@ static void initMapMenu(void) {
 	setPlayerCursorVisible(0);
 	clearTextRect(&r);
 	printString("* Heal  * Info  * Save  * Done", 5, 4);
-	POKE(TXTBKG, 0x24);
+	POKE(TXTBKG, 0x34);
 
 	initMenu();
 	menuOrigin.x = 6 + 5 * 4;
