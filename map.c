@@ -5,6 +5,7 @@
 #include "graphics.h"
 #include "map_data.h"
 #include "menu.h"
+#include "misc_asm.h"
 #include "sprites.h"
 #include "text.h"
 #include "atari_memmap.h"
@@ -27,9 +28,6 @@ SizeU8 currentMapSize;
 RectU8 mapFrame;
 
 #define SCREEN_WIDTH (24)
-
-// Assembly routine
-extern void __fastcall__ decodeRunLenRange(UInt8 *outData, UInt8 start, UInt8 end, const UInt8 *runLenData);
 
 // Menu
 
