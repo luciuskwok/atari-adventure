@@ -38,7 +38,7 @@ UInt16 duration;
 
 void __fastcall__ noteOn(UInt8 note);
 void __fastcall__ noteOff(void);
-void __fastcall__ startSequence(void *sequence);
+void __fastcall__ startSequence(void);
 void __fastcall__ stopSound(void);
 
 
@@ -123,7 +123,7 @@ static void handleKeyboard(void) {
 				note = 12;
 				break;
 			case KEY_Z:
-				//startSequence();
+				startSequence();
 				break;
 			case KEY_X:
 				stopSound();

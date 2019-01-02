@@ -3,7 +3,7 @@
 ; Exports
 .export _noteOn		; void __fastcall__ noteOn(UInt8 note);
 .export _noteOff	; void __fastcall__ noteOff(void);
-.export _startSequence ; void __fastcall__ startSequence(void *sequence);
+.export _startSequence ; void __fastcall__ startSequence(void);
 .export _stopSound	; void __fastcall__ stopSound(void);
 
 .export _soundVBI	; called from immediateUserVBI
@@ -30,6 +30,25 @@
 	zpUnused1	= $AE
 	zpUnused2   = $AF 
 
+
+; Note and Octave constants
+	NoteC  = 0
+	NoteDb = 1
+	NoteD  = 2
+	NoteEb = 3
+	NoteE  = 4
+	NoteF  = 5
+	NoteGb = 6
+	NoteG  = 7
+	NoteAb = 8
+	NoteA  = 9
+	NoteBb = 10
+	NoteB  = 11
+	Oct3   = 0
+	Oct4   = 12
+	Oct5   = 24
+	Oct6   = 36
+	Oct7   = 48  ; Only C7 exists. Do not use above C7.
 
 .rodata
 noteTable:
@@ -82,6 +101,26 @@ noteTable:
 	.byte  17, 0 ; A#
 	.byte  16, 0 ; B
 	.byte  15, 0 ; C7
+
+testSequence:
+	.byte 13 ; note count
+	.byte NoteC+Oct4, 4, 2, 1 ; note, duration, volume, envelope
+	.byte NoteC+Oct5, 4, 2, 1
+	.byte NoteG+Oct4, 8, 2, 1
+
+	.byte NoteF+Oct4, 4, 2, 1
+	.byte NoteC+Oct5, 4, 2, 1
+	.byte NoteC+Oct4, 8, 2, 1
+
+	.byte NoteC+Oct4, 4, 2, 1
+	.byte NoteF+Oct4, 4, 2, 1
+	.byte NoteC+Oct5, 4, 2, 1
+	.byte NoteD+Oct5, 4, 2, 1
+
+	.byte NoteC+Oct5, 4, 2, 1
+	.byte NoteG+Oct4, 4, 2, 1
+	.byte NoteF+Oct4, 8, 2, 1
+
 
 .data
 vibratoTimer:
@@ -442,6 +481,17 @@ below_limit:
 
 
 .proc _startSequence
+	ldx #0
+	lda #0
+	sta seqEnable,X
+	sta noteStepsLeft,X
+	sta seqIndex,X
+	lda #<testSequence
+	sta seqBlockPtr,X
+	lda #>testSequence
+	sta seqBlockPtr+1,X
+	lda #1
+	sta seqEnable,X
 	rts
 .endproc
 
