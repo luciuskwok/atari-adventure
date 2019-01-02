@@ -33,11 +33,10 @@ typedef struct PuffState {
     UInt16 outcnt;      /* bytes written to out so far */
 
     /* input state */
-    const UInt8 *in;    /* input buffer */
-    UInt16 inlen;       /* available input at in */
-    UInt16 incnt;       /* bytes read so far */
-    UInt8 bitbuf;       /* bit buffer */
-    UInt8 bitcnt;       /* number of bits in bit buffer */
+    const UInt8 *inPtr;     /* pointer to next input byte */
+    const UInt8 *inEndPtr;  /* pointer at end of input */
+    UInt8 bitbuf;           /* bit buffer */
+    UInt8 bitcnt;           /* number of bits in bit buffer */
 
     /* input limit error return state for bits() and decode() */
     jmp_buf env;
@@ -653,27 +652,22 @@ SInt16 stored(void)
     puffState->bitcnt = 0;
 
     /* get length and check against its one's complement */
-    if (puffState->incnt + 4 > puffState->inlen)
+    if (puffState->inPtr + 4 > puffState->inEndPtr)
         return 2;                               /* not enough input */
-    len = puffState->in[puffState->incnt++];
-    len |= puffState->in[puffState->incnt++] << 8;
-    if (puffState->in[puffState->incnt++] != (~len & 0xff) ||
-        puffState->in[puffState->incnt++] != ((~len >> 8) & 0xff))
+    len = *puffState->inPtr++;
+    len |= *puffState->inPtr++ << 8;
+    if (*puffState->inPtr++ != (~len & 0xff) ||
+        *puffState->inPtr++ != ((~len >> 8) & 0xff))
         return -2;                              /* didn't match complement! */
 
     /* copy len bytes from in to out */
-    if (puffState->incnt + len > puffState->inlen)
+    if (puffState->inPtr + len > puffState->inEndPtr)
         return 2;                               /* not enough input */
-    if (puffState->out != NULL) {
-        if (puffState->outcnt + len > puffState->outlen)
-            return 1;                           /* not enough output space */
-        while (len--)
-            puffState->out[puffState->outcnt++] = puffState->in[puffState->incnt++];
-    }
-    else {                                      /* just scanning */
-        puffState->outcnt += len;
-        puffState->incnt += len;
-    }
+    if (puffState->outcnt + len > puffState->outlen)
+        return 1;                           /* not enough output space */
+    while (len--)
+        puffState->out[puffState->outcnt++] =  *puffState->inPtr++;
+
 
     /* done with a valid stored block */
     return 0;
@@ -719,7 +713,7 @@ SInt16 stored(void)
  *   block (if it was a fixed or dynamic block) are undefined and have no
  *   expected values to check.
  */
-SInt16 puff(UInt8 *dest, UInt16 *destLen, const UInt8 *source, UInt16 *sourceLen) {
+SInt16 puff(UInt8 *dest, UInt16 destLen, const UInt8 *source, UInt16 sourceLen) {
     UInt8 last, type;             /* block information */
     SInt16 err;                    /* return value */
 
@@ -729,13 +723,12 @@ SInt16 puff(UInt8 *dest, UInt16 *destLen, const UInt8 *source, UInt16 *sourceLen
 
     /* initialize output state */
     puffState->out = dest;
-    puffState->outlen = *destLen;
+    puffState->outlen = destLen;
     puffState->outcnt = 0;
 
     /* initialize input state */
-    puffState->in = source;
-    puffState->inlen = *sourceLen;
-    puffState->incnt = 0;
+    puffState->inPtr = source;
+    puffState->inEndPtr = source + sourceLen;
     puffState->bitbuf = 0;
     puffState->bitcnt = 0;
 
@@ -759,10 +752,5 @@ SInt16 puff(UInt8 *dest, UInt16 *destLen, const UInt8 *source, UInt16 *sourceLen
         } while (!last);
     }
 
-    /* update the lengths and return */
-    if (err != 0) {
-        *destLen = puffState->outcnt;
-        *sourceLen = puffState->incnt;
-    }
     return err;
 }

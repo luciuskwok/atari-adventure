@@ -25,9 +25,7 @@ puffOutCnt:
 	.word 0
 puffInPtr:
 	.word 0
-puffInLen:
-	.word 0
-puffInCnt: 
+puffInEndPtr:
 	.word 0
 puffBitBuf:
 	.byte 0
@@ -459,14 +457,14 @@ return:
 	lda puffBitCnt			; if puffBitCnt == 0:
 	bne get_bit				;     load new byte into puffBitBuf	
 
-	lda puffInCnt			; if puffInCnt == puffInLen:
-	cmp puffInLen
+	lda puffInPtr			; if puffInPtr == puffInEndPtr:
+	cmp puffInEndPtr
 	bne load_bitbuf
-	lda puffInCnt+1		; must check both bytes of 16-bit values
-	cmp puffInLen+1
+	lda puffInPtr+1			; must check both bytes of 16-bit values
+	cmp puffInEndPtr+1
 	bne load_bitbuf
 
-	lda #<puffEnv 		; error: out of input
+	lda #<puffEnv 			; error: out of input
 	ldx #>puffEnv
 	jsr pushax
 	ldx #$00
@@ -474,22 +472,15 @@ return:
 	jsr _longjmp			; longjmp(puff_state.env, 1);
 
 load_bitbuf:
-	clc						; ptr1 = puffInPtr + puffInCnt
-	lda puffInPtr
-	adc puffInCnt
-	sta ptr1
-	lda puffInPtr+1
-	adc puffInCnt+1
-	sta ptr1+1
-	lda (ptr1,X)			; A = *ptr1, the next input byte
+	lda (puffInPtr,X)		; A = *ptr1, the next input byte
 	sta puffBitBuf			; store the byte in puffBitBuf
 
 	lda #8 					; puffBitCnt = 8
 	sta puffBitCnt		
 
-	inc puffInCnt 			; puffInCnt += 1
+	inc puffInPtr 			; puffInPtr += 1
 	bne get_bit
-	inc puffInCnt+1
+	inc puffInPtr+1
 
 get_bit:					; DEFLATE specifies that bits come off the right
 	dec puffBitCnt			; puffBitCnt -= 1

@@ -385,7 +385,7 @@ SInt8 drawImage(const DataBlock *image, UInt8 rowOffset, UInt8 rowCount) {
 	UInt16 dataLen = image->length;
 
 	screen += rowOffset * SCREEN_ROW_BYTES;
-	return puff(screen, &screenLen, image->bytes, &dataLen);
+	return puff(screen, screenLen, image->bytes, dataLen);
 }
 
 void clearRasterScreen(UInt8 rows) {
