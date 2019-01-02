@@ -60,8 +60,8 @@
 	chState    = _soundState+3
 	chSize     = 13
 	chFreq     = 0			; frequency divisor as AUDF value
-	chVibr     = 1 		; duty cycle for vibrato
-	chCurLvl   = 2		; current volume level
+	chVibr     = 1 			; duty cycle for vibrato
+	chCurLvl   = 2			; current volume level
 	chAtkTime  = 3
 	chAtkRate  = 4
 	chDecRate  = 5
@@ -254,17 +254,20 @@ return:
 	rts
 .endproc
 
-.proc _testTriggerNote
+.proc _testTriggerNote 			; $6C39
 	; on entry: A=note number
-	ldx #chSize*3
+	ldx #chSize*3 				; $926D
 	jsr _setNoteAtX
 
-	lda #8
+	lda #10
 	sta chState+chSusTime,X
+
+	lda #8
 	sta chState+chSusLvl,X
 
 	lda #1
 	jsr _setEnvelopeAtX
+	rts
 .endproc
 
 .proc _setNoteAtX
@@ -304,7 +307,7 @@ envelope_1:
 	jsr _multiplyByStepDuration
 	sec
 	sbc #$11					; and subtract time for atk, dec,& rel
-	bcc set_sustain_time 		; if sus_time < 0: sus_time = 0
+	bcs set_sustain_time 		; if sus_time < 0: sus_time = 0
 	lda #0
 	jmp set_sustain_time
 
@@ -324,7 +327,7 @@ envelope_2:
 	jsr _multiplyByStepDuration
 	sec
 	sbc #$1E					; and subtract time for atk, dec,& rel
-	bcc set_sustain_time 		; if sus_time < 0: sus_time = 0
+	bcs set_sustain_time 		; if sus_time < 0: sus_time = 0
 	lda #0
 	jmp set_sustain_time
 

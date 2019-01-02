@@ -41,7 +41,7 @@ typedef struct ChannelState {
 
 	UInt8 sequenceIndex;
 	UInt8 noteStepsLeft;
-	SequencerBlock *sequencerBlock;
+	const SequencerBlock *sequencerBlock;
 } ChannelState;
 
 typedef struct SoundState {
@@ -114,10 +114,57 @@ const NoteFreqAdjust noteTable[] = {
 };
 
 enum Envelopes {
-	BasicEnvelope, 
+	NoEnvelope, 
 	Envelope1, 
 	Envelope2
 };
+
+enum NoteNumbers {
+	NoteC = 0,
+	NoteDb,
+	NoteD,
+	NoteEb,
+	NoteE,
+	NoteF,
+	NoteGb,
+	NoteG,
+	NoteAb,
+	NoteA,
+	NoteBb,
+	NoteB
+};
+
+enum Octaves {
+	Oct3 = 0,
+	Oct4 = 12,
+	Oct5 = 24,
+	Oct6 = 36,
+	Oct7 = 48
+};
+
+const SequencerBlock sequence1 = {
+	13,
+	{
+		{ NoteC+Oct5, 4, 4, Envelope1 },
+		{ NoteC+Oct6, 4, 4, Envelope1 },
+		{ NoteG+Oct5, 8, 2, Envelope1 },
+
+		{ NoteF+Oct5, 4, 4, Envelope1 },
+		{ NoteC+Oct6, 4, 4, Envelope1 },
+		{ NoteC+Oct5, 8, 2, Envelope1 },
+
+		{ NoteC+Oct5, 4, 4, Envelope1 },
+		{ NoteF+Oct5, 4, 4, Envelope1 },
+		{ NoteC+Oct6, 4, 4, Envelope1 },
+		{ NoteD+Oct6, 4, 4, Envelope1 },
+
+		{ NoteC+Oct6, 4, 4, Envelope1 },
+		{ NoteG+Oct5, 4, 4, Envelope1 },
+		{ NoteF+Oct5, 8, 2, Envelope1 },
+	}
+};
+
+
 
 static void applyEnvelope(ChannelState *ch, UInt8 envelope, UInt8 sustainLevel, UInt8 sustainTime) {
 	switch (envelope) {
@@ -131,7 +178,6 @@ static void applyEnvelope(ChannelState *ch, UInt8 envelope, UInt8 sustainLevel, 
 			ch->attackTime = 2;
 			break;
 
-		case BasicEnvelope:
 		default:
 			ch->currentLevel = 0;
 			ch->releaseRate = 1;
@@ -168,9 +214,25 @@ void noteOff(UInt8 channel) {
 
 void stopSound(void) {
 	UInt8 i;
+	
+	// Disable sequencer
+	soundState.sequencerStepDuration = 0;
+
 	for (i=0; i<4; ++i) {
 		noteOff(i);
 	}
+}
+
+void startSequence(void) {
+	// Disable sequencer before changing pointers
+	soundState.sequencerStepDuration = 0;
+
+	soundState.channelState[0].sequencerBlock = &sequence1;
+	soundState.channelState[0].noteStepsLeft = 0;
+	soundState.channelState[0].sequenceIndex = 0;
+
+	// Enable sequencer by setting step duration
+	soundState.sequencerStepDuration = 9;
 }
 
 void initSound(void) {
@@ -179,5 +241,5 @@ void initSound(void) {
 	POKE(SKCTL, 3);
 
 	soundState.sequencerTimer = 0;
-	soundState.sequencerStepDuration = 8;
+	soundState.sequencerStepDuration = 0;
 }

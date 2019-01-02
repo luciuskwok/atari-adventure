@@ -120,6 +120,12 @@ static void handleKeyboard(void) {
 			case KEY_K:	
 				note = 12;
 				break;
+			case KEY_Z:
+				startSequence();
+				break;
+			case KEY_X:
+				stopSound();
+				break;
 			default:
 				break;
 		}
