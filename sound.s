@@ -9,7 +9,6 @@
 .export _soundVBI	; called from immediateUserVBI
 .export _initSound 	; called from initVBI
 
-
 ; Constants
 	; POKEY 
 	AUDF1 = $D200
@@ -22,14 +21,6 @@
 	AUDC4 = $D207
 	AUDCTL= $D208
 	SKCTL = $D20F
-
-
-; Zero Page usage (SOUND_AREA)
-; TODO: use proper zeropage segment for this
-	ptrSeqBlock = $AC 		; pointer to SequencerBlock
-	zpUnused1	= $AE
-	zpUnused2   = $AF 
-
 
 ; Note and Octave constants
 	NoteC  = 0
@@ -121,6 +112,10 @@ testSequence:
 	.byte NoteG+Oct4, 4, 2, 1
 	.byte NoteF+Oct4, 8, 2, 1
 
+
+.segment "EXTZP": zeropage
+ptrSeqBlock:
+	.word 0
 
 .data
 vibratoTimer:

@@ -5,6 +5,8 @@
 .export 	_decode_asm ; extern UInt16 __fastcall__ decode_asm(const struct huffman *h);
 .export 	_bits_asm ; extern UInt16 __fastcall__ bits_asm(UInt8 count);
 .export 	_get_one_bit ; extern UInt16 __fastcall__ get_one_bit(void);
+;.exportzp 	_puffState
+
 .import 	_longjmp
 .import 	pushax
 .import		incsp4
@@ -14,6 +16,7 @@
 
 ; puff_state struct fields
 .segment "EXTZP": zeropage
+_puffState:
 puffOutPtr:
 	.word 0
 puffOutLen:

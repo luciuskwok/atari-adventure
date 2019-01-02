@@ -14,12 +14,6 @@
 #define RAMTOP (0x006A)
 #define SHORT_CLOCK (PEEK(20) + 256 * PEEK(19))
 
-// Zero Page - User
-/* Runtime library uses locations $82 to $9B */
-#define PUFF_AREA (0x9C) /* 16 bytes */
-#define SOUND_AREA (0xAC) /* 4 bytes reserved */
-
-
 // Page 2 - OS
 #define VDSLST (0x0200) /* Display list interrupt vector */
 #define VVBLKI (0x0222) /* Immediate vertical blank interrupt vector */
