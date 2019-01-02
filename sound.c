@@ -110,11 +110,13 @@ const NoteFreqAdjust noteTable[] = {
 	{  18, 0 }, // A
 	{  17, 0 }, // A#
 	{  16, 0 }, // B
+	{  15, 0 }, // C7
 };
 
 enum Envelopes {
 	BasicEnvelope, 
-	Envelope1
+	Envelope1, 
+	Envelope2
 };
 
 static void applyEnvelope(ChannelState *ch, UInt8 envelope, UInt8 sustainLevel, UInt8 sustainTime) {
@@ -175,4 +177,7 @@ void initSound(void) {
 	stopSound();
 	POKE(AUDCTL, 0);
 	POKE(SKCTL, 3);
+
+	soundState.sequencerTimer = 0;
+	soundState.sequencerStepDuration = 8;
 }

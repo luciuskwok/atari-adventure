@@ -37,6 +37,7 @@ UInt16 startTime;
 UInt16 duration;
 #endif
 
+void __fastcall__ testTriggerNote(UInt8 note);
 
 // Dialog functions
 
@@ -73,7 +74,7 @@ static void handleKeyboard(void) {
 	static UInt8 previousKeycode = 0xFF;
 	UInt8 keycode = POKEY_READ.kbcode;
 	const UInt8 vol = 8;
-	const UInt8 chan = 0;
+	const UInt8 chan = 3;
 	UInt8 note = 0xFF;
 	UInt8 shift = keycode & 0x40;
 	UInt8 control = keycode & 0x80;
@@ -123,7 +124,7 @@ static void handleKeyboard(void) {
 				break;
 		}
 		if (note == 0xFF) {
-			noteOff(0);
+			noteOff(chan);
 		} else {
 			if (shift) {
 				note += 12;
@@ -131,7 +132,8 @@ static void handleKeyboard(void) {
 			if (control) {
 				note += 24;
 			}
-			noteOn(note, vol, chan);
+			// noteOn(note, vol, chan);
+			testTriggerNote(note);
 		}
 		previousKeycode = keycode;
 	}

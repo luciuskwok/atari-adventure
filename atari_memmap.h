@@ -17,7 +17,7 @@
 // Zero Page - User
 /* Runtime library uses locations $82 to $9B */
 #define PUFF_AREA (0x9C) /* 16 bytes */
-#define SOUND_AREA (0xAC) /* 2 bytes */
+#define SOUND_AREA (0xAC) /* 4 bytes reserved */
 
 
 // Page 2 - OS
