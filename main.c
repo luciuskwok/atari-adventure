@@ -18,7 +18,6 @@
 #include "info.h"
 #include "map.h"
 #include "map_data.h"
-#include "sound.h"
 #include "sprites.h"
 #include "text.h"
 #include "types.h"
@@ -37,7 +36,11 @@ UInt16 startTime;
 UInt16 duration;
 #endif
 
-void __fastcall__ testTriggerNote(UInt8 note);
+void __fastcall__ noteOn(UInt8 note);
+void __fastcall__ noteOff(void);
+void __fastcall__ startSequence(void *sequence);
+void __fastcall__ stopSound(void);
+
 
 // Dialog functions
 
@@ -74,7 +77,6 @@ static void handleKeyboard(void) {
 	static UInt8 previousKeycode = 0xFF;
 	UInt8 keycode = POKEY_READ.kbcode;
 	const UInt8 vol = 8;
-	const UInt8 chan = 3;
 	UInt8 note = 0xFF;
 	UInt8 shift = keycode & 0x40;
 	UInt8 control = keycode & 0x80;
@@ -121,7 +123,7 @@ static void handleKeyboard(void) {
 				note = 12;
 				break;
 			case KEY_Z:
-				startSequence();
+				//startSequence();
 				break;
 			case KEY_X:
 				stopSound();
@@ -130,7 +132,7 @@ static void handleKeyboard(void) {
 				break;
 		}
 		if (note == 0xFF) {
-			noteOff(chan);
+			noteOff();
 		} else {
 			if (shift) {
 				note += 12;
@@ -138,8 +140,7 @@ static void handleKeyboard(void) {
 			if (control) {
 				note += 24;
 			}
-			// noteOn(note, vol, chan);
-			testTriggerNote(note);
+			noteOn(note);
 		}
 		previousKeycode = keycode;
 	}
@@ -155,7 +156,6 @@ int main (void) {
 	// Init
 	initGraphics();
 	initCursor();
-	initSound();
 	
 	// Start new game
 	initParty();

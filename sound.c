@@ -39,7 +39,8 @@ typedef struct ChannelState {
 	UInt8 sustainTime;
 	UInt8 releaseRate; 
 
-	UInt8 sequenceIndex;
+	UInt8 sequencerEnable;
+	UInt8 noteIndex;
 	UInt8 noteStepsLeft;
 	const SequencerBlock *sequencerBlock;
 } ChannelState;
@@ -145,22 +146,22 @@ enum Octaves {
 const SequencerBlock sequence1 = {
 	13,
 	{
-		{ NoteC+Oct5, 4, 4, Envelope1 },
-		{ NoteC+Oct6, 4, 4, Envelope1 },
-		{ NoteG+Oct5, 8, 2, Envelope1 },
+		{ NoteC+Oct4, 4, 2, Envelope1 },
+		{ NoteC+Oct5, 4, 2, Envelope1 },
+		{ NoteG+Oct4, 8, 2, Envelope1 },
 
-		{ NoteF+Oct5, 4, 4, Envelope1 },
-		{ NoteC+Oct6, 4, 4, Envelope1 },
-		{ NoteC+Oct5, 8, 2, Envelope1 },
+		{ NoteF+Oct4, 4, 2, Envelope1 },
+		{ NoteC+Oct5, 4, 2, Envelope1 },
+		{ NoteC+Oct4, 8, 2, Envelope1 },
 
-		{ NoteC+Oct5, 4, 4, Envelope1 },
-		{ NoteF+Oct5, 4, 4, Envelope1 },
-		{ NoteC+Oct6, 4, 4, Envelope1 },
-		{ NoteD+Oct6, 4, 4, Envelope1 },
+		{ NoteC+Oct4, 4, 2, Envelope1 },
+		{ NoteF+Oct4, 4, 2, Envelope1 },
+		{ NoteC+Oct5, 4, 2, Envelope1 },
+		{ NoteD+Oct5, 4, 2, Envelope1 },
 
-		{ NoteC+Oct6, 4, 4, Envelope1 },
-		{ NoteG+Oct5, 4, 4, Envelope1 },
-		{ NoteF+Oct5, 8, 2, Envelope1 },
+		{ NoteC+Oct5, 4, 2, Envelope1 },
+		{ NoteG+Oct4, 4, 2, Envelope1 },
+		{ NoteF+Oct4, 8, 2, Envelope1 },
 	}
 };
 
@@ -215,31 +216,30 @@ void noteOff(UInt8 channel) {
 void stopSound(void) {
 	UInt8 i;
 	
-	// Disable sequencer
-	soundState.sequencerStepDuration = 0;
-
 	for (i=0; i<4; ++i) {
+		// Disable sequencer for each channel
+		soundState.channelState[i].sequencerEnable = 0;
 		noteOff(i);
 	}
 }
 
 void startSequence(void) {
+	ChannelState *ch = &soundState.channelState[0];
+	
 	// Disable sequencer before changing pointers
-	soundState.sequencerStepDuration = 0;
-
-	soundState.channelState[0].sequencerBlock = &sequence1;
-	soundState.channelState[0].noteStepsLeft = 0;
-	soundState.channelState[0].sequenceIndex = 0;
-
-	// Enable sequencer by setting step duration
-	soundState.sequencerStepDuration = 9;
+	ch->sequencerEnable = 0;
+	ch->sequencerBlock = &sequence1;
+	ch->noteStepsLeft = 0;
+	ch->noteIndex = 0;
+	ch->sequencerEnable = 1;
 }
 
 void initSound(void) {
 	stopSound();
 	POKE(AUDCTL, 0);
 	POKE(SKCTL, 3);
+	// initVBI() will set sequencer state to zero values
 
-	soundState.sequencerTimer = 0;
-	soundState.sequencerStepDuration = 0;
+	// Set default tempo
+	soundState.sequencerStepDuration = 9;
 }
