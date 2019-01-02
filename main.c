@@ -81,43 +81,43 @@ static void handleKeyboard(void) {
 
 	if (keycode != previousKeycode) {
 		switch (keycode & 0x3F) {
-			case KEY_A:
+			case KEY_Q:
 				note = 0; 
 				break;
-			case KEY_W:	
+			case KEY_2:	
 				note = 1;
 				break;
-			case KEY_S:	
+			case KEY_W:	
 				note = 2;
 				break;
-			case KEY_E:	
+			case KEY_3:	
 				note = 3;
 				break;
-			case KEY_D:	
+			case KEY_E:	
 				note = 4;
 				break;
-			case KEY_F:	
+			case KEY_R:	
 				note = 5;
 				break;
-			case KEY_T:	
+			case KEY_5:	
 				note = 6;
 				break;
-			case KEY_G:	
+			case KEY_T:	
 				note = 7;
 				break;
-			case KEY_Y:	
+			case KEY_6:	
 				note = 8;
 				break;
-			case KEY_H:	
+			case KEY_Y:	
 				note = 9;
 				break;
-			case KEY_U:	
+			case KEY_7:	
 				note = 10;
 				break;
-			case KEY_J:	
+			case KEY_U:	
 				note = 11;
 				break;
-			case KEY_K:	
+			case KEY_I:	
 				note = 12;
 				break;
 			case KEY_Z:
