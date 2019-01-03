@@ -1,7 +1,7 @@
 // graphics.c
 
-/*
-	== Notes on Memory Usage ==
+/*  == Notes on Memory Usage ==
+	
 	In the config.cfg file, the reserved memory is set to 0x1020, giving us 4KB 
 	of space below the 1 KB display area for a total of 5KB. The space between 
 	APPMHI and MEMTOP should be ours to use. 
@@ -121,9 +121,10 @@ static void writeMapViewDisplayList(void) {
 	dl[x-5] |= dl_Interrupt; 
 	dl[x-1] |= dl_Interrupt; 
 	x += writeDisplayListBarChartLines(dl+x, textWindow + (3 * SCREEN_ROW_BYTES));
+	dl[x-1] |= dl_Interrupt; 
 
 	// Party stats line
-	dl[x++] = DL_BLK7 | dl_Interrupt;
+	dl[x++] = DL_BLK7;
 	dl[x++] = 15;
 	dl[x++] = dl_textWindowLine; 
 	dl[x++] = 15;

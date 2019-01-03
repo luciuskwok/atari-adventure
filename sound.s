@@ -152,10 +152,11 @@ noteStepsLeft:
 seqBlockPtr:
 	.word 0
 
-chState1:
-	.res 14*3, $00
-
 chSize = 14 ; bytes per channel state block
+
+channelState1to3:
+	.res chSize*3, $00
+
 
 .code
 
