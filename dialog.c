@@ -295,7 +295,7 @@ UInt8 isStackEmpty(void) {
 void drawVerticalDivider(UInt8 x) {
 	UInt8 y;
 	for (y=0; y<7; ++y) {
-		printString("|", x, y);
+		printStringAtXY("|", x, y);
 	}
 }
 
@@ -328,9 +328,9 @@ void drawMenu(TreeNodePtr node) {
 				uint16toString(s+1, info->value);
 				stringConcat(s, " - ");
 				stringConcat(s, child->text);
-				printString(s, x, y);
+				printStringAtXY(s, x, y);
 			} else {
-				printString(child->text, x, y);
+				printStringAtXY(child->text, x, y);
 			}
 			++y;
 			++menuItemCount;
@@ -345,14 +345,14 @@ void drawStatus(void) {
 	UInt8 len;
 
 	// Draw money and potion count.
-	printString("$", 28, 6);
+	printStringAtXY("$", 28, 6);
 	uint16toString(s, partyMoney);
-	printString(s, 29, 6);
+	printStringAtXY(s, 29, 6);
 
-	printString("{", 39, 6);
+	printStringAtXY("{", 39, 6);
 	uint8toString(s, partyPotions);
 	len = stringLength(s);
-	printString(s, 39-len, 6);
+	printStringAtXY(s, 39-len, 6);
 }
 
 void drawNode(TreeNodePtr node, UInt8 selectIndex) {
@@ -545,7 +545,7 @@ void initDialog(void) {
 		UInt8 s[6];
 		duration = SHORT_CLOCK - startTime;
 		uint16toString(s, duration);
-		printString(s, 0, 6);		
+		printStringAtXY(s, 0, 6);		
 	}
 }
 

@@ -72,7 +72,7 @@ const DataBlock enemyAttackSprite = {
 static void applySelectionColor(UInt8 isMasking, UInt8 offset, UInt8 length) {
 	const UInt8 y = 49;
 	UInt8 height = 10;
-	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC) + y * 40;
+	UInt8 *screen = graphicsWindow + y * 40;
 	UInt8 x;
 	UInt8 end = offset + length;
 
@@ -117,13 +117,12 @@ static void enterRootMenu(UInt8 showText) {
 }
 
 static void drawEnemyHpBar(void) {
-	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
 	UInt8 maxHp = charaMaxHp(&enemy);
 	UInt8 width = maxHp / 2;
 	UInt8 barX = 80 - width / 2;
 	UInt8 fill = (enemy.hp + 1) / 2;
 
-	drawBarChart(screen, barX, 48, width, fill);
+	drawBarChart(graphicsWindow, barX, 48, width, fill);
 }
 
 static void enemyWasHit(UInt8 damage) {
@@ -147,7 +146,7 @@ static void enemyWasHit(UInt8 damage) {
 
 	if (enemy.hp == 0) {
 		clearTextWindow(3);
-		printString("* You are victorious.", 1, 0);
+		printStringAtXY("* You are victorious.", 1, 0);
 		waitForAnyInput();
 		isLeavingBattle = 1;
 	}
@@ -191,7 +190,7 @@ static void doAttack(UInt8 player) {
 
 	if (chara->hp != 0) {
 		stringConcat(s, " attacks.");
-		printString(s, 1, 0);
+		printStringAtXY(s, 1, 0);
 	
 		// Calculate damage to enemy or miss.
 		enemyWasHit(damage);
@@ -220,7 +219,7 @@ static void doAttack(UInt8 player) {
 		}
 	} else {
 		stringConcat(s, " seems unresponsive.");
-		printString(s, 1, 0);
+		printStringAtXY(s, 1, 0);
 	}
 }
 
@@ -231,7 +230,7 @@ static void enterFightMenu(void) {
 	} else {
 
 		clearTextWindow(3);
-		printString("* Who shall fight?", 1, 0);
+		printStringAtXY("* Who shall fight?", 1, 0);
 
 		menuType = BattleFightMenu;
 		menuItemCount = count;
@@ -265,10 +264,10 @@ static void useItem(UInt8 item) {
 
 	clearTextWindow(3);
 	if (item == 0) {
-		printString("* The Sacred Nuts cause a reaction.", 1, 0);
+		printStringAtXY("* The Sacred Nuts cause a reaction.", 1, 0);
 		damage = 8;
 	} else {
-		printString("* The Staff makes the earth move.", 1, 0);
+		printStringAtXY("* The Staff makes the earth move.", 1, 0);
 		damage = 16;
 	}
 	
@@ -291,8 +290,8 @@ static void enterItemMenu(void) {
 	const UInt8 spacing = 8;
 
 	clearTextWindow(3);
-	printString("* Nuts", x, y);
-	printString("* Staff", x + spacing, y);
+	printStringAtXY("* Nuts", x, y);
+	printStringAtXY("* Staff", x + spacing, y);
 
 	menuType = BattleItemMenu;
 	menuItemCount = 2;

@@ -71,7 +71,7 @@ static void initMapMenu(void) {
 
 	setPlayerCursorVisible(0);
 	clearTextRect(&r);
-	printString("* Heal  * Info  * Save  * Done", 5, 4);
+	printStringAtXY("* Heal  * Info  * Save  * Done", 5, 4);
 	POKE(TXTBKG, 0x34);
 
 	initMenu();
@@ -167,9 +167,7 @@ const UInt8 *colorTableForMap(UInt8 mapType) {
 }
 
 void clearMapScreen(void) {
-	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
-
-	memset(screen, 0, 9*SCREEN_WIDTH);
+	memset(graphicsWindow, 0, 9*SCREEN_WIDTH);
 	memset(P3_XPOS, 0, 9);
 }
 
@@ -197,7 +195,7 @@ void layoutCurrentMap(UInt8 mapSightDistance) {
 }
 
 void drawCurrentMap(UInt8 x, UInt8 y) {
-	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
+	UInt8 *screen = graphicsWindow;
 	const UInt8 *runLenPtr = currentRunLenMap;
 	UInt8 screenRowSkip = SCREEN_WIDTH - mapFrame.size.width;
 	UInt8 screenIndex = mapFrame.origin.x + SCREEN_WIDTH * mapFrame.origin.y;
@@ -299,7 +297,7 @@ void drawCurrentMap(UInt8 x, UInt8 y) {
 		UInt8 s[6];
 		duration = SHORT_CLOCK - startTime;
 		uint16toString(s, duration);
-		printString(s, 0, 4);
+		printStringAtXY(s, 0, 4);
 	}
 }
 

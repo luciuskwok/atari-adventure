@@ -10,7 +10,8 @@
 #include "text.h"
 #include <string.h>
 
-#define ITEM_WINDOW_ROW (13)
+#define TEXT_WINDOW_ROW (24)
+#define ITEM_WINDOW_ROW (TEXT_WINDOW_ROW+13)
 
 // Data
 
@@ -139,54 +140,54 @@ static void drawCharaInfoAtIndex(UInt8 index) {
 	UInt8 maxHp = charaMaxHp(chara);
 	UInt8 hp = chara->hp;
 	UInt8 x = 1 + index * 10;
-	UInt8 y = 0;
 	UInt8 s[11];
 
-	printString(chara->name, x, y++);
+	POKE(LMARGN, x);
+	POKEW(COLCRS, x);
+	POKE(ROWCRS, TEXT_WINDOW_ROW);
+	printLine(chara->name);
 
 	stringCopy(s, "Lv ");
 	uint8toString(s+3, chara->level);
-	printString(s, x, y++);
+	printLine(s);
 	
 	stringCopy(s, "next ");
 	uint16toString(s+5, charaXpToNextLevel(chara));
-	printString(s, x, y++);
+	printLine(s);
 
-	++y;
+	printLine(NULL);
 
-	printString("HP", x, y++);
+	printLine("HP");
 
 	uint8toString(s, hp);
 	stringConcat(s, "/");
 	uint8toString(s+stringLength(s), maxHp);
-	printString(s, x, y++);
+	printLine(s);
 	
-	++y;
+	printLine(NULL);
 
 	stringCopy(s, "ATK ");
 	uint8toString(s+4, charaAttackRating(chara));
-	printString(s, x, y++);
+	printLine(s);
 
 	stringCopy(s, "DEF ");
 	uint8toString(s+4, charaDefenseRating(chara));
-	printString(s, x, y++);
+	printLine(s);
 
-	++y;
+	printLine(NULL);
 
-	printString("Sword+1", x, y++);
-	printString("Armor+2", x, y++);
-	printString("Shield+1", x, y++);
+	printLine("Sword+1");
+	printLine("Armor+2");
+	printLine("Shield+1");
 }
 
 static void drawAvatarAtIndex(UInt8 index) {
-	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
+	UInt8 *screen = graphicsWindow + index * 10 + 1; // align with chara info text
 	UInt8 *buffer = avatarImages[index]->bytes;
 	const UInt8 bufferRowBytes = 8; // 8 bytes * 4 ppb = 32 pixels
 	const UInt8 imageHeight = 24;	
 	UInt8 i = 0;
 	UInt8 x, y;
-
-	screen += index * 10 + 1; // align with chara info text
 
 	for (y=0; y<imageHeight; ++y) {
 		for (x=0; x<bufferRowBytes; ++x) {
@@ -198,7 +199,7 @@ static void drawAvatarAtIndex(UInt8 index) {
 
 /*
 static void drawDeflatedAvatarAtIndex(UInt8 index) {
-	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
+	UInt8 *screen = graphicsWindow;
 	UInt8 *buffer = textWindow + 40 * 18; // use empty space after screen memory
 	const UInt8 bufferRowBytes = 8; // 8 bytes * 4 ppb = 32 pixels
 	const UInt8 imageHeight = 24;
@@ -267,34 +268,52 @@ void initInfo(void) {
 	}
 
 	// Print party info
-	printString("Items", 1, ITEM_WINDOW_ROW);
+
+	// Column 1
+	POKE(LMARGN, 1);
+	POKEW(COLCRS, 1);
+	POKE(ROWCRS, ITEM_WINDOW_ROW);
+
+	printLine("Items");
 
 	stringCopy(s, "Gold: $");
 	uint16toString(s+stringLength(s), partyMoney);
-	printString(s, 1, ITEM_WINDOW_ROW+1);
+	printLine(s);
 
 	stringCopy(s, "Herbs: ");
 	uint8toString(s+stringLength(s), partyPotions);
 	stringConcat(s, "{");
-	printString(s, 1, ITEM_WINDOW_ROW+2);
+	printLine(s);
 
 	stringCopy(s, "Fangs: ");
 	uint8toString(s+stringLength(s), partyFangs);
 	stringConcat(s, "}");
-	printString(s, 1, ITEM_WINDOW_ROW+3);
+	printLine(s);
+
+	// Column 2
+	POKE(LMARGN, 16);
+	POKEW(COLCRS, 16);
+	POKE(ROWCRS, ITEM_WINDOW_ROW+1);
 
 	stringCopy(s, "Nuts: ");
 	uint8toString(s+stringLength(s), 11);
-	printString(s, 16, ITEM_WINDOW_ROW+1);
+	printLine(s);
+
+	printLine(NULL);
 
 	stringCopy(s, "Staff: ");
 	uint8toString(s+stringLength(s), 3);
-	printString(s, 16, ITEM_WINDOW_ROW+3);
-	
-	printString("Boat", 31, ITEM_WINDOW_ROW+1);
-	printString("Lamp", 31, ITEM_WINDOW_ROW+2);
-	printString("Crystal", 31, ITEM_WINDOW_ROW+3);
-	printString("Mantle", 31, ITEM_WINDOW_ROW+4);
+	printLine(s);
+
+	// Column 3
+	POKE(LMARGN, 31);
+	POKEW(COLCRS, 31);
+	POKE(ROWCRS, ITEM_WINDOW_ROW+1);
+
+	printLine("Boat");
+	printLine("Lamp");
+	printLine("Crystal");
+	printLine("Mantle");
 
 	// Draw avatars after printing text because it can be slow
 	for (i=0; i<count; ++i) {
@@ -309,5 +328,7 @@ void initInfo(void) {
 
 	duration = SHORT_CLOCK - startTime;
 	uint16toString(s, duration);
-	printString(s, 0, ITEM_WINDOW_ROW+4);
+	POKEW(COLCRS, 0);
+	POKE(ROWCRS, ITEM_WINDOW_ROW+4);
+	printLine(s);
 }

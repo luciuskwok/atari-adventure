@@ -1,5 +1,8 @@
 ; misc_asm.s
 
+.export _decodeRunLenRange 
+; extern void __fastcall__ decodeRunLenRange(UInt8 *outData, UInt8 skip, UInt8 length, const UInt8 *runLenData);
+
 .export _stringConcat 		
 ; extern void __fastcall__ stringConcat(UInt8 *dst, const UInt8 *src);
 
@@ -9,13 +12,24 @@
 .export _stringLength 	
 ; extern UInt8 __fastcall__ stringLength(UInt8 *s);
 
-.export 	_decodeRunLenRange 
-; extern void __fastcall__ decodeRunLenRange(UInt8 *outData, UInt8 skip, UInt8 length, const UInt8 *runLenData);
+.export _toAtascii
+; extern UInt8 __fastcall__ toAtascii(UInt8 c);
+
+.export _printLine
+; extern void __fastcall__ printLine(UInt8 *s);
 
 .import 	pushax
 .import		incsp2, incsp4
 .importzp 	sp, sreg
 .importzp 	tmp1, tmp2, tmp3, tmp4, ptr1, ptr2, ptr3, ptr4
+
+
+; Zeropage locations
+LMARGN = $52
+RMARGN = $53
+ROWCRS = $54
+COLCRS = $55
+SAVMSC = $58
 
 
 .proc _decodeRunLenRange
@@ -222,5 +236,85 @@ loop:
 return:
 	tya
 	ldx #0
+	rts
+.endproc
+
+.proc _toAtascii
+	cmp #$20			; if A < $20: 
+	bcs mid_char
+	adc #$40			; A += $40
+	rts
+mid_char:
+	cmp #$60			; else if A < $60
+	bcs return
+	sec					; A -= $20
+	sbc #$20
+return:
+	rts
+.endproc
+
+.proc _printLine
+	; uses ptr1, ptr2, AY
+	cpx #0
+	beq next_line		; if s == NULL: jump to next line
+
+	sta ptr2			; ptr2 = s
+	stx ptr2+1
+
+	lda ROWCRS			; ptr1 = *ROWCRS
+	sta ptr1
+	ldx #0
+	stx ptr1+1
+
+	asl ptr1			; ptr1 *= 40 aka b101000
+	rol ptr1+1
+	asl ptr1
+	rol ptr1+1
+
+	clc 
+	lda ptr1
+	adc ROWCRS
+	sta ptr1
+	lda ptr1+1
+	adc #0
+	sta ptr1+1
+
+	asl ptr1
+	rol ptr1+1
+	asl ptr1
+	rol ptr1+1
+	asl ptr1
+	rol ptr1+1
+
+	clc 				; ptr1 += *SAVMSC
+	lda ptr1
+	adc SAVMSC
+	sta ptr1
+	lda ptr1+1
+	adc SAVMSC+1
+	sta ptr1+1			; ptr1 now points at beginning of screen row
+
+	clc 				; ptr1 += *COLCRS
+	lda ptr1
+	adc COLCRS
+	sta ptr1
+	lda ptr1+1
+	adc #0
+	sta ptr1+1			; ptr1 now points at screen cell to start at
+
+	ldy #0
+loop:
+	lda(ptr2),Y
+	beq next_line		; if s[Y] == 0: jump to next line
+	jsr _toAtascii
+	sta(ptr1),Y			; screen[Y] = s[Y]
+	iny
+	bne loop
+next_line:
+	inc ROWCRS
+	lda LMARGN
+	sta COLCRS
+	lda #0
+	sta COLCRS+1
 	rts
 .endproc

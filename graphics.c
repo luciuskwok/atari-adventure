@@ -42,8 +42,8 @@ extern void __fastcall__ battleViewDLI(void);
 extern void __fastcall__ infoViewDLI(void);
 
 // Globals
+UInt8 *graphicsWindow;
 UInt8 *textWindow;
-static UInt8 *smallTextWindow;
 
 
 // Display List constants
@@ -173,9 +173,6 @@ static void writeInfoViewDisplayList(void) {
 	UInt8 x = 3;
 	UInt8 i;
 
-	// Move text window
-	textWindow = screen + (24 * SCREEN_ROW_BYTES);
-
 	x += writeDisplayListLines(dl+3, screen, dl_rasterLine, 24);
 	dl[x-1] |= dl_Interrupt; // 48
 
@@ -203,8 +200,6 @@ void setScreenMode(UInt8 mode) {
 	UInt8 dma = 0x2E; // standard playfield + missile DMA + player DMA + display list DMA
 	UInt8 nmi = 0x40; // enable VBI
 	void *dli = 0;
-
-	textWindow = smallTextWindow;
 
 	switch (mode) {
 		case ScreenModeMap:
@@ -380,7 +375,7 @@ void drawBarChart(UInt8 *screen, UInt8 x, UInt8 y, UInt8 width, UInt8 filled) {
 }
 
 SInt8 drawImage(const DataBlock *image, UInt8 rowOffset, UInt8 rowCount) {
-	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
+	UInt8 *screen = graphicsWindow;
 	UInt16 screenLen = rowCount * SCREEN_ROW_BYTES;
 	UInt16 dataLen = image->length;
 
@@ -406,15 +401,14 @@ static void initDisplayList(UInt8 startPage, UInt8 textPage) {
 	const UInt8 screenLSB = startPage;
 	const UInt8 screenMSB = 128;
 	UInt8 *displayList = (UInt8 *)(startPage * 256);
-	const UInt8 *screen = displayList + 128;
 	const UInt8 textBarChartLSB = 120;
 
 	// Init globals
-	smallTextWindow = (UInt8 *)(textPage * 256); // Using the unused 384 bytes below PMGraphics
-	textWindow = smallTextWindow;
+	textWindow = (UInt8 *)(textPage * 256); // Using the unused 384 bytes below PMGraphics
+	graphicsWindow = displayList + 128;
 
 	// Update OS pointers
-	POKEW (SAVMSC, (UInt16)screen);
+	POKEW (SAVMSC, (UInt16)graphicsWindow);
 	POKEW (SDLSTL, (UInt16)displayList);
 
 	// Set up lines common to all display lists

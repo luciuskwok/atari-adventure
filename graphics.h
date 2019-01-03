@@ -6,6 +6,7 @@
 #include "types.h"
 
 // Globals
+extern UInt8 *graphicsWindow; // Pointer to screen memory for graphics
 extern UInt8 *textWindow; // Pointer to screen memory for text window
 
 

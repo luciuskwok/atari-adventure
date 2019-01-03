@@ -11,15 +11,6 @@
 #define TEXTBOX_HEIGHT (8)
 
 
-static UInt8 toAtascii(UInt8 c) {
-	if (c < 0x20) {
-		c += 0x40;
-	} else if (c < 0x60) {
-		c -= 0x20;
-	}
-	return c;
-}
-
 void drawHpBar(UInt8 x, UInt8 y, UInt8 hp, UInt8 maxHp) {
 	UInt8 width;
 	UInt8 fill;
@@ -46,15 +37,15 @@ static void printCharaStats(UInt8 x, UInt8 y, GameCharaPtr chara) {
 	UInt8 lvStr[9] = "Lv ";
 	UInt8 hpStr[9];
 
-	printString(chara->name, x, y);
+	printStringAtXY(chara->name, x, y);
 
 	uint8toString(lvStr+3, chara->level);
-	printString(lvStr, x, y+1);
+	printStringAtXY(lvStr, x, y+1);
 
 	uint8toString(hpStr, hp);
 	stringConcat(hpStr, "/");
 	uint8toString(hpStr+stringLength(hpStr), maxHp);
-	printString(hpStr, x, y+2);
+	printStringAtXY(hpStr, x, y+2);
 
 	drawHpBar(x, y+3, hp, maxHp);
 }
@@ -102,7 +93,7 @@ void printPartyStats(void) {
 	len = stringLength(s);
 	x = 20 - len / 2;
 
-	printString(s, x, 4);
+	printStringAtXY(s, x, 4);
 }
 
 void clearTextWindow(UInt8 lines) {
@@ -126,7 +117,7 @@ void clearTextRect(RectU8 *rect) {
 	}
 }
 
-void printString(const UInt8 *s, UInt8 x, UInt8 y) {
+void printStringAtXY(const UInt8 *s, UInt8 x, UInt8 y) {
 	UInt8 si = 0;
 	UInt16 ti = x + TEXTBOX_WIDTH * y;
 	UInt8 c;
@@ -251,5 +242,5 @@ void debugPrint(const UInt8 *s, UInt16 value, UInt8 x, UInt8 y) {
 	uint16toString(valStr, value);
 	stringConcat(message, s);
 	stringConcat(message, valStr);
-	printString(message, x, y);
+	printStringAtXY(message, x, y);
 }

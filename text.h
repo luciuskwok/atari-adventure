@@ -14,7 +14,7 @@ void printCharaAtIndex(UInt8 index, UInt8 y, UInt8 clear);
 void printAllCharaText(UInt8 y);
 void printPartyStats(void);
 
-void printString(const UInt8 *s, UInt8 x, UInt8 y);
+void printStringAtXY(const UInt8 *s, UInt8 x, UInt8 y);
 void drawTextBox(const UInt8 *s, UInt8 x, UInt8 y, UInt8 width, UInt8 lineSpacing, SInt8 indent);
 
 void uint8toString(UInt8 *outString, UInt8 value);
