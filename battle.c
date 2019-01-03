@@ -361,6 +361,8 @@ static void menuSelectionDidChange(UInt8 index) {
 }
 
 void initBattle(void) {
+	UInt16 startTime = SHORT_CLOCK;
+	UInt16 duration;
 	SInt8 err;
 
 	// Set up graphics window
@@ -422,5 +424,12 @@ void initBattle(void) {
 	rootMenuSelectedIndex = 0;
 	isLeavingBattle = 0;
 	enterRootMenu(1);
+
+	{
+		UInt8 s[6];
+		duration = SHORT_CLOCK - startTime;
+		uint16toString(s, duration);
+		printStringAtXY(s, 0, 3);		
+	}
 }
 

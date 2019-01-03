@@ -6,6 +6,8 @@
 #ifndef TEXT_H
 #define TEXT_H
 
+#define SET_TXT_ORIGIN(x, y)  *(UInt8*)0x52=(x);*(UInt8*)0x55=(x);*(UInt8*)0x54=(y);
+
 void clearTextWindow(UInt8 lines);
 void clearTextRect(RectU8 *rect);
 

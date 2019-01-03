@@ -1,7 +1,7 @@
 // info.c
 
 #include "info.h"
-#include "atari_memmap.h"
+#include "atari_memmap.h" // debugging
 #include "cursor.h"
 #include "game_chara.h"
 #include "graphics.h"
@@ -142,9 +142,7 @@ static void drawCharaInfoAtIndex(UInt8 index) {
 	UInt8 x = 1 + index * 10;
 	UInt8 s[11];
 
-	POKE(LMARGN, x);
-	POKEW(COLCRS, x);
-	POKE(ROWCRS, TEXT_WINDOW_ROW);
+	SET_TXT_ORIGIN(x, TEXT_WINDOW_ROW)
 	printLine(chara->name);
 
 	stringCopy(s, "Lv ");
@@ -270,9 +268,7 @@ void initInfo(void) {
 	// Print party info
 
 	// Column 1
-	POKE(LMARGN, 1);
-	POKEW(COLCRS, 1);
-	POKE(ROWCRS, ITEM_WINDOW_ROW);
+	SET_TXT_ORIGIN(1, ITEM_WINDOW_ROW)
 
 	printLine("Items");
 
@@ -291,9 +287,7 @@ void initInfo(void) {
 	printLine(s);
 
 	// Column 2
-	POKE(LMARGN, 16);
-	POKEW(COLCRS, 16);
-	POKE(ROWCRS, ITEM_WINDOW_ROW+1);
+	SET_TXT_ORIGIN(16, ITEM_WINDOW_ROW+1)
 
 	stringCopy(s, "Nuts: ");
 	uint8toString(s+stringLength(s), 11);
@@ -306,9 +300,7 @@ void initInfo(void) {
 	printLine(s);
 
 	// Column 3
-	POKE(LMARGN, 31);
-	POKEW(COLCRS, 31);
-	POKE(ROWCRS, ITEM_WINDOW_ROW+1);
+	SET_TXT_ORIGIN(31, ITEM_WINDOW_ROW+1)
 
 	printLine("Boat");
 	printLine("Lamp");
@@ -328,7 +320,6 @@ void initInfo(void) {
 
 	duration = SHORT_CLOCK - startTime;
 	uint16toString(s, duration);
-	POKEW(COLCRS, 0);
-	POKE(ROWCRS, ITEM_WINDOW_ROW+4);
+	SET_TXT_ORIGIN(0, ITEM_WINDOW_ROW+4)
 	printLine(s);
 }

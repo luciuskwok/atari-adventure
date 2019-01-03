@@ -1,6 +1,7 @@
 // text.c
 
 #include "text.h"
+#include "atari_memmap.h"
 #include "game_chara.h"
 #include "graphics.h"
 #include <atari.h>
@@ -37,15 +38,16 @@ static void printCharaStats(UInt8 x, UInt8 y, GameCharaPtr chara) {
 	UInt8 lvStr[9] = "Lv ";
 	UInt8 hpStr[9];
 
-	printStringAtXY(chara->name, x, y);
+	SET_TXT_ORIGIN(x, y)
+	printLine(chara->name);
 
 	uint8toString(lvStr+3, chara->level);
-	printStringAtXY(lvStr, x, y+1);
+	printLine(lvStr);
 
 	uint8toString(hpStr, hp);
 	stringConcat(hpStr, "/");
 	uint8toString(hpStr+stringLength(hpStr), maxHp);
-	printStringAtXY(hpStr, x, y+2);
+	printLine(hpStr);
 
 	drawHpBar(x, y+3, hp, maxHp);
 }
@@ -93,7 +95,8 @@ void printPartyStats(void) {
 	len = stringLength(s);
 	x = 20 - len / 2;
 
-	printStringAtXY(s, x, 4);
+	SET_TXT_ORIGIN(x, 4)
+	printLine(s);
 }
 
 void clearTextWindow(UInt8 lines) {
@@ -118,14 +121,8 @@ void clearTextRect(RectU8 *rect) {
 }
 
 void printStringAtXY(const UInt8 *s, UInt8 x, UInt8 y) {
-	UInt8 si = 0;
-	UInt16 ti = x + TEXTBOX_WIDTH * y;
-	UInt8 c;
-
-	while (c = s[si++]) {
-		c = toAtascii(c);
-		textWindow[ti++] = c;
-	}
+	SET_TXT_ORIGIN(x, y)
+	printLine(s);
 }
 
 void drawTextBox(const UInt8 *s, UInt8 x, UInt8 y, UInt8 width, UInt8 lineSpacing, SInt8 indent) {
