@@ -504,7 +504,7 @@ void initDialog(void) {
 	// Set up graphics window
 	setScreenMode(ScreenModeOff);
 	clearTextWindow(7);
-	clearRasterScreen(72);
+	clearGraphicsWindow(72);
 	setPlayerCursorVisible(0);
 
 	// Turn on screen

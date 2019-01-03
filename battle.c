@@ -366,7 +366,7 @@ void initBattle(void) {
 	// Set up graphics window
 	setScreenMode(ScreenModeOff);
 	clearTextWindow(7);
-	clearRasterScreen(72);
+	clearGraphicsWindow(59);
 	setPlayerCursorVisible(0);
 
 	// Turn on screen

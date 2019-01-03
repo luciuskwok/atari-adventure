@@ -32,9 +32,17 @@ RectU8 mapFrame;
 // Menu
 
 static void drawMapTextBox(void) {
+	UInt16 startTime = SHORT_CLOCK;
+	UInt16 duration;
+	UInt8 s[6];
+
 	clearTextWindow(5);
 	printAllCharaText(0);
 	printPartyStats();
+
+	duration = SHORT_CLOCK - startTime;
+	uint16toString(s, duration);
+	printStringAtXY(s, 0, 6);
 }
 
 static void exitMapMenu(void) {

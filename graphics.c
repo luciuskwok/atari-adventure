@@ -113,10 +113,9 @@ static void writeDisplayListEnd(UInt8 *dl) {
 
 static void writeMapViewDisplayList(void) {
 	UInt8 *dl = (UInt8 *)PEEKW(SDLSTL);
-	const UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
 	UInt8 x = 3;
 
-	x += writeDisplayListLines(dl+3, screen, dl_mapTileLine, 9);  // 14
+	x += writeDisplayListLines(dl+3, graphicsWindow, dl_mapTileLine, 9);  // 14
 	dl[x++] = DL_BLK8;
 	x += writeDisplayListCustomTextLines(dl+x, 3);
 	x += writeDisplayListBarChartLines(dl+x, textWindow + (3 * SCREEN_ROW_BYTES));
@@ -131,10 +130,9 @@ static void writeMapViewDisplayList(void) {
 
 static void writeStoryViewDisplayList(void) {
 	UInt8 *dl = (UInt8 *)PEEKW(SDLSTL);
-	const UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
 	UInt8 x = 3;
 
-	x += writeDisplayListLines(dl+3, screen, dl_rasterLine, 72);
+	x += writeDisplayListLines(dl+3, graphicsWindow, dl_rasterLine, 72);
 	x += writeDisplayListLines(dl+x, textWindow, dl_textWindowLine, 7);
 
 	writeDisplayListEnd(dl+x);
@@ -142,16 +140,16 @@ static void writeStoryViewDisplayList(void) {
 
 static void writeBattleViewDisplayList(void) {
 	UInt8 *dl = (UInt8 *)PEEKW(SDLSTL);
-	const UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
+	UInt8 *screen = graphicsWindow;
 	const UInt16 rasterHeight = 48;
 	UInt8 x = 3;
 
 	// Main raster area
-	x += writeDisplayListLines(dl+3, screen, dl_rasterLine, rasterHeight); // 96
+	x += writeDisplayListLines(dl+3, graphicsWindow, dl_rasterLine, rasterHeight); // 96
 	dl[x-1] |= dl_Interrupt; 
 
 	// Enemy HP bar
-	x += writeDisplayListBarChartLines(dl+x, screen + (rasterHeight * SCREEN_ROW_BYTES)); // +8 = 104
+	x += writeDisplayListBarChartLines(dl+x, graphicsWindow + (rasterHeight * SCREEN_ROW_BYTES)); // +8 = 104
 	dl[x++] = DL_BLK4; // +4 = 180
 
 	// Chara stats
@@ -169,11 +167,10 @@ static void writeBattleViewDisplayList(void) {
 
 static void writeInfoViewDisplayList(void) {
 	UInt8 *dl = (UInt8 *)PEEKW(SDLSTL);
-	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
 	UInt8 x = 3;
 	UInt8 i;
 
-	x += writeDisplayListLines(dl+3, screen, dl_rasterLine, 24);
+	x += writeDisplayListLines(dl+3, graphicsWindow, dl_rasterLine, 24);
 	dl[x-1] |= dl_Interrupt; // 48
 
 	dl[x++] = dl_textWindowLine | dl_Interrupt;
@@ -201,6 +198,8 @@ void setScreenMode(UInt8 mode) {
 	UInt8 nmi = 0x40; // enable VBI
 	void *dli = 0;
 
+	POKEW (SAVMSC, (UInt16)textWindow);
+
 	switch (mode) {
 		case ScreenModeMap:
 			writeMapViewDisplayList();
@@ -219,6 +218,7 @@ void setScreenMode(UInt8 mode) {
 			break;
 
 		case ScreenModeInfo:
+			POKEW (SAVMSC, (UInt16)graphicsWindow);
 			writeInfoViewDisplayList();
 			nmi |= 0x80; // enable DLI
 			dli = infoViewDLI;
@@ -383,9 +383,8 @@ SInt8 drawImage(const DataBlock *image, UInt8 rowOffset, UInt8 rowCount) {
 	return puff(screen, screenLen, image->bytes, dataLen);
 }
 
-void clearRasterScreen(UInt8 rows) {
-	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
-	memset(screen, 0, SCREEN_ROW_BYTES * rows);
+void clearGraphicsWindow(UInt8 rows) {
+	memset(graphicsWindow, 0, SCREEN_ROW_BYTES * rows);
 }
 
 // Timing
@@ -408,7 +407,6 @@ static void initDisplayList(UInt8 startPage, UInt8 textPage) {
 	graphicsWindow = displayList + 128;
 
 	// Update OS pointers
-	POKEW (SAVMSC, (UInt16)graphicsWindow);
 	POKEW (SDLSTL, (UInt16)displayList);
 
 	// Set up lines common to all display lists
