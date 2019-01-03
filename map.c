@@ -36,18 +36,18 @@ static void drawMapTextBox(void) {
 	UInt16 duration;
 	UInt8 s[6];
 
-	clearTextWindow(5);
 	printAllCharaText(0);
 	printPartyStats();
 
 	duration = SHORT_CLOCK - startTime;
 	uint16toString(s, duration);
-	printStringAtXY(s, 0, 6);
+	printStringAtXY(s, 0, 5);
 }
 
 static void exitMapMenu(void) {
 	POKE(TXTBKG, overworldColorTable[10]);
 	setPlayerCursorVisible(1);
+	clearTextWindow(7);
 	drawMapTextBox();
 	setCursorEventHandler(mapCursorHandler);
 }
@@ -75,11 +75,11 @@ static SInt8 handleMenuClick(UInt8 index) {
 
 
 static void initMapMenu(void) {
-	RectU8 r = { { 0, 4 }, { 40, 1 } };
+	RectU8 r = { { 0, 5 }, { 40, 1 } };
 
 	setPlayerCursorVisible(0);
 	clearTextRect(&r);
-	printStringAtXY("* Heal  * Info  * Save  * Done", 5, 4);
+	printStringAtXY("* Heal  * Info  * Save  * Done", 5, 5);
 	POKE(TXTBKG, 0x34);
 
 	initMenu();
@@ -176,7 +176,7 @@ const UInt8 *colorTableForMap(UInt8 mapType) {
 
 void clearMapScreen(void) {
 	memset(graphicsWindow, 0, 9*SCREEN_WIDTH);
-	memset(P3_XPOS, 0, 9);
+	memset(P3_XPOS, 0, 13);
 }
 
 void layoutCurrentMap(UInt8 mapSightDistance) {
@@ -197,9 +197,7 @@ void layoutCurrentMap(UInt8 mapSightDistance) {
 	mapFrame.origin.y = 4 - halfHeight;
 
 	// Clear out the sprite overlays
-	for (x=0; x<9; ++x) {
-		P3_XPOS[x] = 0;
-	}
+	memset(P3_XPOS, 0, 13);
 }
 
 void drawCurrentMap(UInt8 x, UInt8 y) {
@@ -216,8 +214,8 @@ void drawCurrentMap(UInt8 x, UInt8 y) {
 	UInt8 buffer[SCREEN_WIDTH];
 
 	// Debugging
-	UInt16 startTime = SHORT_CLOCK;
-	UInt16 duration;
+	// UInt16 startTime = SHORT_CLOCK;
+	// UInt16 duration;
 
 	// Integrity check
 	if (runLenPtr == NULL) {
@@ -251,11 +249,6 @@ void drawCurrentMap(UInt8 x, UInt8 y) {
 		decodeLength = currentMapSize.width - leftSkip;
 	}
 	colMax = currentMapSize.width + leftBlank - leftSkip;
-
-	// Debugging:
-	// printDebugInfo("B$", leftBlank, 0);
-	// printDebugInfo("S$", leftSkip, 10);
-	// printDebugInfo("E$", decodeEnd, 20);
 
 	// Main Loop
 	for (row=0; row<mapFrame.size.height; ++row) {
@@ -301,12 +294,12 @@ void drawCurrentMap(UInt8 x, UInt8 y) {
 	}
 
 	// Debugging
-	{
-		UInt8 s[6];
-		duration = SHORT_CLOCK - startTime;
-		uint16toString(s, duration);
-		printStringAtXY(s, 0, 4);
-	}
+	// {
+	// 	UInt8 s[6];
+	// 	duration = SHORT_CLOCK - startTime;
+	// 	uint16toString(s, duration);
+	// 	printStringAtXY(s, 0, 4);
+	// }
 }
 
 // Map Movement
@@ -419,7 +412,9 @@ void initMap(void) {
 	hideSprites();
 	setScreenMode(ScreenModeMap);
 	clearMapScreen();
-	drawMapTextBox();
+	clearTextWindow(7);
+
 	transitionToMap(currentMapType, 0, 1);
+	drawMapTextBox();
 	setCursorEventHandler(mapCursorHandler);
 }

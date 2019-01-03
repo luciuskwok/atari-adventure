@@ -5,11 +5,12 @@
 #include "game_chara.h"
 #include "graphics.h"
 #include <atari.h>
+#include <string.h>
 
 
 // Constants
 #define TEXTBOX_WIDTH (40)
-#define TEXTBOX_HEIGHT (8)
+#define TEXTBOX_HEIGHT (7)
 
 
 void drawHpBar(UInt8 x, UInt8 y, UInt8 hp, UInt8 maxHp) {
@@ -49,7 +50,7 @@ static void printCharaStats(UInt8 x, UInt8 y, GameCharaPtr chara) {
 	uint8toString(hpStr+stringLength(hpStr), maxHp);
 	printLine(hpStr);
 
-	drawHpBar(x, y+3, hp, maxHp);
+	drawHpBar(x, y + 3, hp, maxHp);
 }
 
 void printCharaAtIndex(UInt8 index, UInt8 y, UInt8 clear) {
@@ -95,7 +96,7 @@ void printPartyStats(void) {
 	len = stringLength(s);
 	x = 20 - len / 2;
 
-	SET_TXT_ORIGIN(x, 4)
+	SET_TXT_ORIGIN(x, TEXTBOX_HEIGHT-2)
 	printLine(s);
 }
 

@@ -74,7 +74,7 @@ UInt8 overworldTileMap[] = {
 const UInt8 overworldColorTable[] = {
 	0x58, // PM0: purple / cursor color
 	0x58, // PM1: purple / cursor color
-	0x0F, // PM2: white / unused
+	0x0C, // PM2: light grey / Lv
 	0x0F, // PM3: white / tile overlay
 	0x82, // 0: blue / water
 	0x1C, // 1: yellow / desert
@@ -164,7 +164,7 @@ UInt8 dungeonTileMap[] = {
 const UInt8 dungeonColorTable[] = {
 	0x58, // PM0: purple / cursor color
 	0x58, // PM1: purple / cursor color
-	0x0F, // PM2: white / unused
+	0x08, // PM2: light grey / Lv
 	0x0F, // PM3: white / tile overlay
 	0x90, // 0: floor: dark blue
 	0x1C, // 1: chest: gold
@@ -216,7 +216,7 @@ UInt8 townTileMap[] = {
 const UInt8 townColorTable[] = {
 	0x58, // PM0: purple / cursor color
 	0x58, // PM1: purple / cursor color
-	0x0F, // PM2: white / unused
+	0x0C, // PM2: light grey / Lv
 	0x0F, // PM3: white / tile overlay
 	0x74, // 0: blue
 	0x0A, // 1: gray

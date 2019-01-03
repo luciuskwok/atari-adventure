@@ -116,14 +116,17 @@ static void writeMapViewDisplayList(void) {
 	UInt8 x = 3;
 
 	x += writeDisplayListLines(dl+3, graphicsWindow, dl_mapTileLine, 9);  // 14
-	dl[x++] = DL_BLK8;
+	dl[x++] = DL_BLK6;
 	x += writeDisplayListCustomTextLines(dl+x, 3);
-	x += writeDisplayListBarChartLines(dl+x, textWindow + (3 * SCREEN_ROW_BYTES));
+	dl[x-5] |= dl_Interrupt; 
 	dl[x-1] |= dl_Interrupt; 
+	x += writeDisplayListBarChartLines(dl+x, textWindow + (3 * SCREEN_ROW_BYTES));
 
 	// Party stats line
-	dl[x++] = DL_BLK8;
+	dl[x++] = DL_BLK7 | dl_Interrupt;
+	dl[x++] = 15;
 	dl[x++] = dl_textWindowLine; 
+	dl[x++] = 15;
 
 	writeDisplayListEnd(dl+x);
 }

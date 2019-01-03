@@ -15,6 +15,7 @@
 ; Constants
 	PCOLR0 = $02C0		; Player 0 color
 	PCOLR1 = $02C1		; Player 1 color
+	PCOLR2 = $02C2		; Player 1 color
 	COLOR0 = $02C4		; Field 0 color (pixel value 1)
 	COLOR1 = $02C5		; Field 1 color (pixel value 2)
 	COLOR2 = $02C6		; Field 2 color (pixel value 3)
@@ -41,7 +42,7 @@
 	CUR_TIMER = $0600	; cursor color cycling frame skip countdown timer
 	VB_TIMER  = $0601	; general countdown timer that decrements every VBI
 	DLI_ROW   = $0602	; for keeping track of which row the DLI is on. Easier to use this for iterating through P3_XPOS and BG_COLOR arrays than to use VCOUNT.
-	P3_XPOS   = $0603	; array of 9 bytes for repositioning player 3
+	P3_XPOS   = $0603	; array of 13 bytes for repositioning player 3
 ; End Constants
 
 .code
@@ -124,26 +125,45 @@ return:
 	stx DLI_ROW
 	stx WSYNC			; wait for horizontal sync
 
-	cpx #9				; row 9: upper text window
-	beq upper_text_window
-	
-	cpx #10				; row 10: lower text window
-	beq lower_text_window
-	
 	lda P3_XPOS,X		; HPOSP2 = P3_XPOS[DLI_ROW]
 	sta HPOSP3
+
+	cpx #9				; 
+	beq chara_name
+	
+	cpx #10				; 
+	beq chara_level
+	
+	cpx #11				; 
+	beq chara_hp
+	
+	cpx #12				; 
+	beq party_stats
+
 	jmp return_dli
 	
-upper_text_window:
-	lda #$00	
-	sta COLPF2			; upper text window is always black
+chara_name:
+	lda #0
+	sta COLPF4			; border
+	sta COLPF3			; missiles
+	sta COLPF2			; text box background color
 	lda TXTLUM		
-	sta COLPF1			; text luminance / bar chart foreground
+	sta COLPF1			; text color
 	jmp return_dli
 
-lower_text_window:
-	lda TXTBKG			; lower text window is gray
-	sta COLPF2
+chara_level:
+	lda PCOLR2		
+	sta COLPF1			; text color
+	jmp return_dli
+
+chara_hp:
+	lda TXTLUM		
+	sta COLPF1			; text color
+	jmp return_dli
+
+party_stats:
+	lda TXTBKG			; border
+	sta COLPF2			; text box background color
 
 return_dli:	
 	pla					; restore accumulator and X register from stack
