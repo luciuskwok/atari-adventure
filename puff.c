@@ -28,9 +28,8 @@ extern UInt16 __fastcall__ get_one_bit(void);
 /* input and output state */
 typedef struct PuffState {
     /* output state */
-    UInt8 *out;         /* output buffer */
-    UInt16 outlen;      /* available space at out */
-    UInt16 outcnt;      /* bytes written to out so far */
+    UInt8 *outPtr;         /* pointer to next output location */
+    UInt8 *outEndPtr;      /* pointer at end of output */
 
     /* input state */
     const UInt8 *inPtr;     /* pointer to next input byte */
@@ -245,11 +244,11 @@ SInt16 codes_old(const struct huffman *lencode,
         if (symbol < 256) {             /* literal: symbol is the byte */
             /* write out the literal */
             if (puffState->out != NULL) {
-                if (puffState->outcnt == puffState->outlen)
+                if (puffState->outPtr == puffState->outEndPtr)
                     return 1;
-                puffState->out[puffState->outcnt] = symbol;
+                *puffState->outPtr = symbol;
             }
-            ++puffState->outcnt;
+            ++puffState->outPtr;
         }
         else if (symbol > 256) {        /* length */
             /* get and compute length */
@@ -261,20 +260,14 @@ SInt16 codes_old(const struct huffman *lencode,
             if (symbol >= MAXDCODES)
                 return -10;          /* invalid symbol */
             dist = dists[symbol] + bits_asm(dext[symbol]);
-            if (dist > puffState->outcnt)
-                return -11;     /* distance too far back */
 
             /* copy length bytes from distance bytes back */
-            if (puffState->out != NULL) {
-                if (puffState->outcnt + len > puffState->outlen)
-                    return 1;
-                while (len--) {
-                    puffState->out[puffState->outcnt] = puffState->out[puffState->outcnt - dist];
-                    ++puffState->outcnt;
-                }
+            if (puffState->outPtr + len > puffState->outEndPtr)
+                return 1;
+            while (len--) {
+                *puffState->outPtr = *(puffState->outPtr - dist);
+                ++puffState->outPtr;
             }
-            else
-                puffState->outcnt += len;
         }
     } while (symbol != 256);            /* end of block symbol */
 
@@ -663,10 +656,10 @@ SInt16 stored(void)
     /* copy len bytes from in to out */
     if (puffState->inPtr + len > puffState->inEndPtr)
         return 2;                               /* not enough input */
-    if (puffState->outcnt + len > puffState->outlen)
+    if (puffState->outPtr + len > puffState->outEndPtr)
         return 1;                           /* not enough output space */
     while (len--)
-        puffState->out[puffState->outcnt++] =  *puffState->inPtr++;
+        *puffState->outPtr++ =  *puffState->inPtr++;
 
 
     /* done with a valid stored block */
@@ -722,9 +715,8 @@ SInt16 puff(UInt8 *dest, UInt16 destLen, const UInt8 *source, UInt16 sourceLen) 
     }
 
     /* initialize output state */
-    puffState->out = dest;
-    puffState->outlen = destLen;
-    puffState->outcnt = 0;
+    puffState->outPtr = dest;
+    puffState->outEndPtr = dest + destLen;
 
     /* initialize input state */
     puffState->inPtr = source;

@@ -19,9 +19,7 @@
 _puffState:
 puffOutPtr:
 	.word 0
-puffOutLen:
-	.word 0
-puffOutCnt:
+puffOutEndPtr:
 	.word 0
 puffInPtr:
 	.word 0
@@ -65,8 +63,7 @@ LENCODE = $02 				; on parameter stack
 LEN = sreg
 DIST = ptr3
 SYMBOL = tmp4				; 1 byte
-OUTPUT = ptr1
-INDEX = ptr2
+COPY_END = ptr2
 
 loop:				; symbol = decode_asm(lencode);
 	ldy #LENCODE+1 			; get lencode from parameter stack
@@ -158,53 +155,32 @@ if_length_symbol:
 	adc DIST_BASES+1,X
 	sta DIST+1
 
-	; if state.outcnt < dist: error -11: distance too far back */
-	lda puffOutCnt+1
-	cmp DIST+1
-	bcc error_distance_too_far
-	bne check_output_space
-	lda puffOutCnt
-	cmp DIST
-	bcc error_distance_too_far
-
 check_output_space: 				
-	clc 					; check for enough output space
-	lda puffOutCnt		; ptr1 = state.outcnt + len
+	clc 					; copy_end = puffOutPtr + len 
+	lda puffOutPtr			; 
 	adc LEN
-	sta ptr1
-	lda puffOutCnt+1
+	sta COPY_END
+	lda puffOutPtr+1
 	adc LEN+1
-	;sta ptr1+1
+	sta COPY_END+1
 
-	;lda ptr1+1
-	cmp puffOutLen+1	 	; if ptr1 > state.outlen:
-	bcc set_dist_ptr
+	;lda COPY_END+1
+	cmp puffOutEndPtr+1	 	; check for enough output space
+	bcc set_dist_ptr		; if ptr1 > puffOutEndPtr:
 	bne error_output_full	;     error 1: output full
-	lda ptr1
-	cmp puffOutLen
+	lda COPY_END
+	cmp puffOutEndPtr
 	bcc set_dist_ptr
 	bne error_output_full
  
 set_dist_ptr: 				; copy length bytes from distance bytes back
-	sec 					; dist = state.outcnt - dist
-	lda puffOutCnt		
+	sec 					; dist = puffOutPtr - dist
+	lda puffOutPtr		
 	sbc DIST
 	sta DIST
-	lda puffOutCnt+1
+	lda puffOutPtr+1
 	sbc DIST+1
 	sta DIST+1
-
-	clc						; use dist as a source pointer for the copy
-	lda DIST				; dist += state.out
-	adc puffOutPtr
-	sta DIST
-	lda DIST+1
-	adc puffOutPtr+1
-	sta DIST+1
-
-	lda #0 					; index = 0
-	sta INDEX
-	sta INDEX+1
 
 	jmp while_copy
 
@@ -221,38 +197,25 @@ error_distance_too_far:
 	rts
 
 do_copy:
-	clc 					; output = state.out + state.outcnt
-	lda puffOutPtr
-	adc puffOutCnt
-	sta OUTPUT
-	lda puffOutPtr+1
-	adc puffOutCnt+1
-	sta OUTPUT+1
-
-	ldy #0 					; *output = *dist
+	ldy #0 				; *puffOutPtr = *dist
 	lda (DIST),Y
-	sta (OUTPUT),Y
+	sta (puffOutPtr),Y
 
-	inc puffOutCnt 		; state.outcnt += 1
+	inc puffOutPtr 			; puffOutPtr += 1
 	bne inc_dist
-	inc puffOutCnt+1
+	inc puffOutPtr+1
 
 inc_dist:
 	inc DIST 			; 5	; dist += 1
-	bne inc_index		; 3
+	bne while_copy		; 3
 	inc DIST+1			; 5 = 13
 
-inc_index:
-	inc INDEX
-	bne while_copy
-	inc INDEX+1
-
 while_copy:
-	lda LEN
-	cmp INDEX
+	lda puffOutPtr			; while puffOutPtr != copy_end
+	cmp COPY_END
 	bne do_copy
-	lda LEN+1
-	cmp INDEX+1
+	lda puffOutPtr+1
+	cmp COPY_END+1
 	bne do_copy
 	jmp loop
 
@@ -260,32 +223,24 @@ while_copy:
 
 
 .proc _write_out_symbol 	; appends A to puff_state.out
-.code						; uses ptr1, Y
+.code						; uses Y
 	tay
-	lda puffOutCnt+1		; if puffOutCnt >= puffOutLen: output is full
-	cmp puffOutLen+1
-	bcc set_ptr1
+	lda puffOutPtr+1			; if puffOutPtr >= puffOutEndPtr: output is full
+	cmp puffOutEndPtr+1
+	bcc write_byte
 	bne return_error
-	lda puffOutCnt		; must check both bytes of 16-bit values
-	cmp puffOutLen
+	lda puffOutPtr				; must check both bytes of 16-bit values
+	cmp puffOutEndPtr
 	bcs return_error
 
-set_ptr1:
-	clc
-	lda puffOutPtr
-	adc puffOutCnt
-	sta ptr1
-	lda puffOutPtr+1
-	adc puffOutCnt+1
-	sta ptr1+1
+write_byte:
 	tya
-
 	ldy #0
-	sta (ptr1),Y
+	sta (puffOutPtr),Y
 
-	inc puffOutCnt 		; puffOutCnt += 1
+	inc puffOutPtr 				; puffOutPtr += 1
 	bne return
-	inc puffOutCnt+1
+	inc puffOutPtr+1
 
 return:
 	lda #0 					; return 0 for success
