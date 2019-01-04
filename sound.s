@@ -9,6 +9,63 @@
 .export _soundVBI	; called from immediateUserVBI
 .export _initSound 	; called from initVBI
 
+; Global variables
+
+.segment "EXTZP": zeropage
+ptrBlockList:
+	.word 0
+ptrBlock:
+	.word 0
+chStateOffset:
+	.byte 0
+tmpMultiply:
+	.byte 0
+
+.data
+vibratoTimer:
+	.byte 0
+seqTimer:
+	.byte 0
+seqStepDur:			; controls tempo
+	.byte 5 
+
+chNote:
+	.byte 0
+chFreq: 		
+	.byte 0
+chVibr: 		; duty cycle for vibrato
+	.byte 0
+chCurLvl:		; current volume level
+	.byte 0
+chAtkTime:
+	.byte 0
+chAtkRate:
+	.byte 0
+chDecRate:
+	.byte 0
+chSusLvl:
+	.byte 0
+chSusTime:
+	.byte 0
+chRelRate:
+	.byte 0
+seqEnable:
+	.byte 0
+noteStepsLeft:
+	.byte 0
+noteIndex:
+	.byte 0
+blockIndex:
+	.byte 0
+blockListPtr:
+	.word 0
+
+chSize = 16 		; bytes per channel state block
+
+channelState1to3:
+	.res chSize*3, $00
+
+
 ; Constants
 	; POKEY 
 	AUDF1 = $D200
@@ -280,60 +337,6 @@ testBlockListB:
 	.word testBlockRest
 	.word 0
 
-.segment "EXTZP": zeropage
-ptrBlockList:
-	.word 0
-ptrBlock:
-	.word 0
-chStateOffset:
-	.byte 0
-pokeyOffset:
-	.byte 0
-
-.data
-vibratoTimer:
-	.byte 0
-seqTimer:
-	.byte 0
-seqStepDur:			; controls tempo
-	.byte 4 
-
-chNote:
-	.byte 0
-chFreq: 		
-	.byte 0
-chVibr: 		; duty cycle for vibrato
-	.byte 0
-chCurLvl:		; current volume level
-	.byte 0
-chAtkTime:
-	.byte 0
-chAtkRate:
-	.byte 0
-chDecRate:
-	.byte 0
-chSusLvl:
-	.byte 0
-chSusTime:
-	.byte 0
-chRelRate:
-	.byte 0
-seqEnable:
-	.byte 0
-noteStepsLeft:
-	.byte 0
-noteIndex:
-	.byte 0
-blockIndex:
-	.byte 0
-blockListPtr:
-	.word 0
-
-chSize = 16 		; bytes per channel state block
-
-channelState1to3:
-	.res chSize*3, $00
-
 .code
 
 .proc _soundVBI
@@ -365,42 +368,47 @@ step_ch1:
 
 envelope_ch0:
 	ldx #0
-	stx pokeyOffset
 	stx chStateOffset
 
 	jsr _stepChannelEnvelope
-	jsr _setPokeyRegisters
-	jsr _setMissilePosition	
+	jsr _getPokeyValues
+	sta AUDC1
+	stx AUDF1
+	ldy #0
+	jsr _setMissilePositionAtY	
 	
 envelope_ch1:
-	ldx #2*1
-	stx pokeyOffset
 	ldx #chSize*1
 	stx chStateOffset
 
 	jsr _stepChannelEnvelope
-	jsr _setPokeyRegisters
-	jsr _setMissilePosition	
+	jsr _getPokeyValues
+	sta AUDC2
+	stx AUDF2
+	ldy #1
+	jsr _setMissilePositionAtY	
 	
 envelope_ch2:
-	ldx #2*2
-	stx pokeyOffset
 	ldx #chSize*2
 	stx chStateOffset
 
 	jsr _stepChannelEnvelope
-	jsr _setPokeyRegisters
-	jsr _setMissilePosition	
+	jsr _getPokeyValues
+	sta AUDC3
+	stx AUDF3
+	ldy #2
+	jsr _setMissilePositionAtY	
 	
 envelope_ch3:
-	ldx #2*3
-	stx pokeyOffset
 	ldx #chSize*3
 	stx chStateOffset
 
 	jsr _stepChannelEnvelope
-	jsr _setPokeyRegisters
-	jsr _setMissilePosition	
+	jsr _getPokeyValues
+	sta AUDC4
+	stx AUDF4
+	ldy #3
+	jsr _setMissilePositionAtY	
 	
 vibrato_timer:
 	lda vibratoTimer 		; vibratoTimer += 1
@@ -478,7 +486,7 @@ get_volume:
 get_envelope:
 	iny
 	lda (ptrBlock),Y 		
-	jsr _setEnvelopeAtX
+	jsr _setEnvelope
 set_freq_vibr:
 	lda chNote,X 			; get note number
 	asl a					; noteTable has 2 bytes per item
@@ -492,7 +500,8 @@ inc_note_index:
 	rts
 .endproc
 
-.proc _setEnvelopeAtX
+.proc _setEnvelope
+	ldx chStateOffset
 	cmp #1
 	beq envelope_1
 	cmp #2
@@ -558,20 +567,30 @@ default_envelope:
 	;jmp set_sustain_time
 
 set_sustain_time:
+	ldx chStateOffset
 	sta chSusTime,X
 return:
 	rts
 .endproc
 
+.export _multiplyByStepDuration
 .proc _multiplyByStepDuration
 	; A = A * step duration
-	tay
+	sta tmpMultiply 	; save original value in tmpMultiply
+	ldy seqStepDur
 	lda #0
 	jmp while
 loop:
+	tax
+	tya 
+	lsr a 
+	tay 
+	txa
+	bcc continue
 	clc
-	adc seqStepDur
-	dey
+	adc tmpMultiply
+continue:
+	asl tmpMultiply
 while:
 	cpy #0
 	bne loop
@@ -632,55 +651,42 @@ return:
 .endproc
 
 
-.proc _setPokeyRegisters
-	; on entry: channelIndex, noteNumber, vibratoTimer, and channel state are set
-	ldx chStateOffset
+.proc _getPokeyValues
+	; on entry: chStateOffset, vibratoTimer, and channel state are set
+	ldy chStateOffset
 	lda vibratoTimer
-	cmp chVibr,X 		; if vibratoTimer < chVibr: increment audf value
-	lda chFreq,X
-	bcs store_audf
+	cmp chVibr,Y 		; if vibratoTimer < chVibr: increment audf value
+	lda chFreq,Y
+	bcs audf_to_x
 	adc #1
-store_audf:
-	ldx pokeyOffset
-	sta AUDF1,X
+audf_to_x:
+	tax
 
 audctrl:
-	ldx chStateOffset
-	lda chCurLvl,X
+	ldy chStateOffset
+	lda chCurLvl,Y
 	cmp #$10
 	bcc below_limit
 	lda #$0F
 below_limit:
 	and #$0F
 	ora #$E0
-store_audc:
-	ldx pokeyOffset
-	sta AUDC1,X
-return:
 	rts
 .endproc
 
 
-.proc _setMissilePosition
+ldy #0
+.proc _setMissilePositionAtY
 	; reads channel state and updates missile horizontal position
 	ldx chStateOffset
 	lda chCurLvl,X
-	bne show_note
-hide_missile:
-	ldy #0
-	jmp set_position
-show_note:
+	beq set_position
 	lda chNote,X		; get note
 	asl a				; else: note = note * 2 + 46
 	clc
 	adc #46 			; since notes start from 1, while 48 is the normal left edge
-	tay
 set_position:
-	lda pokeyOffset
-	lsr a
-	tax
-	tya 
-	sta HPOSM0,X
+	sta HPOSM0,Y
 return:
 	rts
 .endproc
@@ -706,7 +712,7 @@ return:
 	sta chSusLvl,X
 
 	lda #1
-	jsr _setEnvelopeAtX
+	jsr _setEnvelope
 	rts
 .endproc
 

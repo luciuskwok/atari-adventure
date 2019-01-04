@@ -45,7 +45,6 @@ void __fastcall__ noteOff(void);
 void __fastcall__ startSequence(void);
 void __fastcall__ stopSound(void);
 
-
 // Dialog functions
 
 static void fadeOutScreen(void) {
