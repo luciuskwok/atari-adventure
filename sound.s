@@ -117,16 +117,16 @@ testBlockT1:
 	.byte NoteG+Oct5, 8, 2, 1
 	.byte NoteF+Oct5, 16, 2, 1
 
-	.byte 0, 0, 0, 0 			; terminator
+	.byte 0						; terminator
 
 testBlockB1:
-	.byte NoteF+Oct3, 16, 3, 0 	; note, duration, volume, envelope
-	.byte NoteA+Oct3, 16, 3, 0
+	.byte NoteF+Oct3, 16, 2, 0 	; note, duration, volume, envelope
+	.byte NoteA+Oct3, 16, 2, 0
 	
-	.byte NoteAb+Oct3, 16, 3, 0
-	.byte NoteG+Oct3, 16, 3, 0
+	.byte NoteAb+Oct3, 16, 2, 0
+	.byte NoteG+Oct3, 16, 2, 0
 
-	.byte 0, 0, 0, 0 			; terminator
+	.byte 0						; terminator
 
 testBlockT2:
 	.byte NoteBb+Oct4, 1, 8, 0	; note, duration, volume, envelope
@@ -160,7 +160,7 @@ testBlockT2:
 	.byte NoteE+Oct5, 4, 2, 1 
 	.byte NoteF+Oct5, 2, 2, 1 
 
-	.byte 0, 0, 0, 0 			; terminator
+	.byte 0						; terminator
 
 testBlockB2:
 	.byte $FF, 2, 0, 0		 	; rest
@@ -200,11 +200,11 @@ testBlockB2:
 	.byte NoteC+Oct4, 4, 2, 1
 	.byte NoteC+Oct4, 2, 2, 1
 
-	.byte 0, 0, 0, 0 			; terminator
+	.byte 0						; terminator
 
 testBlockEigthFiller:
 	.byte $FF, 2, 0, 0
-	.byte 0, 0, 0, 0
+	.byte 0						; terminator
 
 testBlockT3:
 	.byte NoteC+Oct6, 4, 2, 1 	; note, duration, volume, envelope
@@ -227,20 +227,20 @@ testBlockT3:
 	.byte NoteF+Oct5, 4, 2, 1 
 	.byte NoteC+Oct5, 4, 2, 1 
 
-	.byte 0, 0, 0, 0 			; terminator
+	.byte 0						; terminator
 
 testBlockB3:
-	.byte NoteF+Oct4, 16, 3, 0 	; note, duration, volume, envelope
-	.byte NoteG+Oct4, 16, 3, 1
+	.byte NoteF+Oct4, 16, 2, 0 	; note, duration, volume, envelope
+	.byte NoteG+Oct4, 16, 2, 1
 
-	.byte NoteBb+Oct3, 16, 3, 0
-	.byte NoteF+Oct4, 16, 3, 0
+	.byte NoteBb+Oct3, 16, 2, 0
+	.byte NoteF+Oct4, 16, 2, 0
 
-	.byte 0, 0, 0, 0 			; terminator
+	.byte 0						; terminator
 
 testBlockRest:
 	.byte $FF, 32, 0, 0
-	.byte 0, 0, 0, 0 			; terminator
+	.byte 0						; terminator
 
 testBlockListT:
 	.word testBlockT1
@@ -285,7 +285,9 @@ ptrBlockList:
 	.word 0
 ptrBlock:
 	.word 0
-tmpNoteNumber:
+chStateOffset:
+	.byte 0
+pokeyOffset:
 	.byte 0
 
 .data
@@ -293,10 +295,12 @@ vibratoTimer:
 	.byte 0
 seqTimer:
 	.byte 0
-seqStepDur:		; controls tempo
+seqStepDur:			; controls tempo
 	.byte 4 
 
-chFreq: 		; channel state start
+chNote:
+	.byte 0
+chFreq: 		
 	.byte 0
 chVibr: 		; duty cycle for vibrato
 	.byte 0
@@ -325,11 +329,10 @@ blockIndex:
 blockListPtr:
 	.word 0
 
-chSize = 15 ; bytes per channel state block
+chSize = 16 		; bytes per channel state block
 
 channelState1to3:
 	.res chSize*3, $00
-
 
 .code
 
@@ -339,123 +342,102 @@ channelState1to3:
 
 sound:
 	lda seqStepDur
-	beq apply_envelopes 		; if seqStepDur == 0: sequencer is disabled
+	beq envelope_ch0 		; if seqStepDur == 0: sequencer is disabled
 
 	ldx seqTimer				; 
 	beq execute_seq_step 		; if seqTimer == 0: execute sequencer step
 	dex							; else: seqTimer -= 1
 	stx seqTimer
-	jmp apply_envelopes
+	jmp envelope_ch0
 
 execute_seq_step:
 	sta seqTimer 				; reset seqTimer = seqStepDur
 
-	lda #0
-	sta tmpNoteNumber			; 0 = unchanged for debugging
-
-	ldx #0 						; channel 0 sequencer
-	jsr _stepSequenceAtX
-
-	lda tmpNoteNumber
-	beq step_ch1
-	asl a						; set missile 0 position for debugging
-	clc
-	adc #46
-	sta HPOSM0
+step_ch0:
+	ldx #0
+	stx chStateOffset
+	jsr _stepChannelSequencer
 
 step_ch1:
-	lda #0
-	sta tmpNoteNumber			; $FF = unchanged for debugging
+	ldx #chSize*1
+	stx chStateOffset
+	jsr _stepChannelSequencer
 
-	ldx #chSize*1 				; channel 1 sequencer
-	jsr _stepSequenceAtX
+envelope_ch0:
+	ldx #0
+	stx pokeyOffset
+	stx chStateOffset
 
-	lda tmpNoteNumber
-	beq apply_envelopes
-	asl a						; set missile 1 position for debugging
-	clc
-	adc #46
-	sta HPOSM1
+	jsr _stepChannelEnvelope
+	jsr _setPokeyRegisters
+	jsr _setMissilePosition	
+	
+envelope_ch1:
+	ldx #2*1
+	stx pokeyOffset
+	ldx #chSize*1
+	stx chStateOffset
 
-apply_envelopes:
-	ldy #0						; channel 0 envelope
-	jsr _applyEnvelopeAtY
-	jsr _getAudFreqCtrlAtY
-	stx AUDF1
-	sta AUDC1
+	jsr _stepChannelEnvelope
+	jsr _setPokeyRegisters
+	jsr _setMissilePosition	
+	
+envelope_ch2:
+	ldx #2*2
+	stx pokeyOffset
+	ldx #chSize*2
+	stx chStateOffset
 
-	and #$0F					; if volume of ch.3 == 0:
-	bne apply_envelope_ch1		; hide missile 0 for debugging
-	lda #0
-	sta HPOSM0					
+	jsr _stepChannelEnvelope
+	jsr _setPokeyRegisters
+	jsr _setMissilePosition	
+	
+envelope_ch3:
+	ldx #2*3
+	stx pokeyOffset
+	ldx #chSize*3
+	stx chStateOffset
 
-apply_envelope_ch1:
-	ldy #chSize*1				; channel 1 envelope
-	jsr _applyEnvelopeAtY
-	jsr _getAudFreqCtrlAtY
-	stx AUDF2
-	sta AUDC2
-
-	and #$0F					; if volume of ch.3 == 0:
-	bne apply_envelope_ch2		; hide missile 1 for debugging
-	lda #0
-	sta HPOSM1					
-
-apply_envelope_ch2:
-	ldy #chSize*2				; channel 2 envelope
-	jsr _applyEnvelopeAtY
-	jsr _getAudFreqCtrlAtY
-	stx AUDF3
-	sta AUDC3
-
-apply_envelope_ch3:
-	ldy #chSize*3				; channel 3 envelope
-	jsr _applyEnvelopeAtY
-	jsr _getAudFreqCtrlAtY
-	stx AUDF4
-	sta AUDC4
-
-	and #$0F					; if volume of ch.3 == 0:
-	bne inc_vibrato_timer		; hide missile 3 for debugging
-	lda #0
-	sta HPOSM3					
-
-inc_vibrato_timer:
-	lda vibratoTimer 			; vibratoTimer += 1
+	jsr _stepChannelEnvelope
+	jsr _setPokeyRegisters
+	jsr _setMissilePosition	
+	
+vibrato_timer:
+	lda vibratoTimer 		; vibratoTimer += 1
 	clc
 	adc #1
-	and #$07 					; keep vibratoTimer in range from 0 to 7
+	and #$07 				; keep vibratoTimer in range from 0 to 7
 	sta vibratoTimer
 
 	rts
 .endproc
 
 
-.proc _stepSequenceAtX
-	; on entry: X=offset to channel state
-	; Y is not preserved on return
-	lda seqEnable,X 		; if seqEnable == 0: return
+.proc _stepChannelSequencer
+	; on entry: chStateOffset are set
+	ldx chStateOffset
+	lda seqEnable,X			; if seqEnable == 0: return
 	beq return
 
 	lda noteStepsLeft,X		; if noteStepsLeft == 0: execute next step in sequence
-	beq next_step
+	beq execute_next_step
 
 	sec  					; noteStepsLeft -= 1
 	sbc #1
-	sta noteStepsLeft,X
+	sta noteStepsLeft,X	
 return:
 	rts			
 
-next_step:
-	lda blockListPtr,X		; ptrSeqBlock = chState[X].blockListPtr
+execute_next_step:
+	lda blockListPtr,X		; ptrBlockList = chState->blockListPtr
 	sta ptrBlockList
 	lda blockListPtr+1,X
 	sta ptrBlockList+1
 
 get_block_ptr:
-	lda blockIndex,X
+	lda blockIndex,X		; get blockIndex
 	asl a
-	tay
+	tay 					; Y = blockIndex
 	lda (ptrBlockList),Y
 	sta ptrBlock
 	iny
@@ -463,59 +445,50 @@ get_block_ptr:
 	sta ptrBlock+1
 
 	bne get_note 			; if ptrBlock == NULL: reset blockIndex
-	cpy #0
-	beq return				; if blockIndex == 0: return
+	cpy #1
+	beq return				; if pointer at first index was NULL: return
 	lda #0
 	sta blockIndex,X		; else: blockIndex = 0; noteIndex = 0
 	sta noteIndex,X
 	jmp get_block_ptr
-
 get_note:
-	lda noteIndex,X 		; offset = noteIndex * 4
-	asl a					; count is 1 byte
+	lda noteIndex,X	 		; offset = noteIndex * 4
 	asl a					; sequencer note unit is 4 bytes
-
+	asl a					; 
 	tay						; use Y for offset from block start
-	lda (ptrBlock),Y		; get note number
-	sta tmpNoteNumber		; save note number
-
-	iny						; get duration
-	lda (ptrBlock),Y 
-	bne set_duration		; if duration == 0: jump to next block
-	inc blockIndex,X
+	lda (ptrBlock),Y		; get noteNumber
+	bne save_note_number 	; if noteNumber == 0: jump to next block
+jump_to_next_block:
+	inc blockIndex,X		; blockIndex += 1
 	lda #0
-	sta noteIndex,X	
+	sta noteIndex,X			; noteIndex = 0
 	jmp get_block_ptr
-
-set_duration:
+save_note_number:
+	sta chNote,X 			; save note number
+get_duration:	
+	iny				
+	lda (ptrBlock),Y 		
 	sec
-	sbc #1					; adjust by subtracting one step 
+	sbc #1					; duration -= 1
 	sta noteStepsLeft,X
-
+get_volume:
 	iny
-	lda (ptrBlock),Y 		; get volume
+	lda (ptrBlock),Y 		
 	sta chSusLvl,X
-
+get_envelope:
 	iny
-	lda (ptrBlock),Y 		; get envelope
+	lda (ptrBlock),Y 		
 	jsr _setEnvelopeAtX
-
-	lda tmpNoteNumber		; get note number again
-	jsr _setNoteAtX 		; uses Y, so offset needed to be stored
-
-	inc noteIndex,X
-	rts
-.endproc
-
-.proc _setNoteAtX
-	; on entry: A=note number
-	; uses Y register
-	asl a						; noteTable has 2 bytes per item
+set_freq_vibr:
+	lda chNote,X 			; get note number
+	asl a					; noteTable has 2 bytes per item
 	tay
-	lda noteTable-2,Y			; freq = noteTable[Y].audf
+	lda noteTable-2,Y		; freq = noteTable[Y].audf
 	sta chFreq,X
-	lda noteTable-1,Y			; vibr = noteTable[Y].vibrato
+	lda noteTable-1,Y		; vibr = noteTable[Y].vibrato
 	sta chVibr,X
+inc_note_index:
+	inc noteIndex,X
 	rts
 .endproc
 
@@ -605,99 +578,129 @@ while:
 	rts
 .endproc
 
-.proc _applyEnvelopeAtY			; $6B06
-	; on entry: Y=offset to channel state
-	; Y is preserved on return
-	lda chCurLvl,Y 	; use X for cur_lvl
-	tax
-	lda chAtkTime,Y 	; if atk_time != 0: apply attack
-	beq decay
+.proc _stepChannelEnvelope ; 
+	ldx chStateOffset
 
 attack:
+	lda chAtkTime,X 	; if atk_time != 0: apply attack
+	beq decay
+
 	sec
 	sbc #1
-	sta chAtkTime,Y	; atk_time -= 1
+	sta chAtkTime,X		; atk_time -= 1
 
 	clc
-	txa
-	adc chAtkRate,Y	; cur_lvl += atk_rate
-	sta chCurLvl,Y
-	rts 						; return
+	lda chCurLvl,X
+	adc chAtkRate,X		; cur_lvl += atk_rate
+	sta chCurLvl,X
+	rts 				; return
 
 decay:
-	txa
-	cmp chSusLvl,Y	; if cur_lvl > sus_lvl: apply decay
+	lda chCurLvl,X
+	cmp chSusLvl,X		; if cur_lvl > sus_lvl: apply decay
 	beq sustain
 	bcc sustain
 
 	sec
-	sbc chDecRate,Y 	; cur_lvl -= dec_rate
-	sta chCurLvl,Y
-	rts 						; return
+	sbc chDecRate,X 	; cur_lvl -= dec_rate
+	sta chCurLvl,X
+	rts 				; return
 
 sustain:
-	lda chSusTime,Y	; if sus_time != 0: wait for sustain
-	beq release
+	lda chSusTime,X		; if sus_time != 0: wait for sustain
+	beq release	
 
 	sec
-	sbc #1						; sus_time -= 1
-	sta chSusTime,Y
-	rts							; return
+	sbc #1				; sus_time -= 1
+	sta chSusTime,X
+	lda chSusLvl,X 		; cur_lvl = sus_lvl
+	sta chCurLvl,X
+	rts					; return
 
 release:
-	cpx #0 						; if cur_lvl != 0: apply release
+	lda chCurLvl,X
+	cmp #0 						; if cur_lvl != 0: apply release
 	beq return
-	txa	
 	sec
-	sbc chRelRate,Y
+	sbc chRelRate,X
 	bcs set_release_level
 	lda #0
 set_release_level:
-	sta chCurLvl,Y
-
+	sta chCurLvl,X
 return:
 	rts
 .endproc
 
 
-.proc _getAudFreqCtrlAtY
-	; on entry: Y=offset to channel state
-	; Y is preserved on return
-	; on return: X=AUDF value, A=AUDC value
+.proc _setPokeyRegisters
+	; on entry: channelIndex, noteNumber, vibratoTimer, and channel state are set
+	ldx chStateOffset
 	lda vibratoTimer
-	cmp chVibr,Y ; if vibratoTimer >= chVibr, set carry
-	lda chFreq,Y
-	tax
-	bcs audctrl
-	inx
+	cmp chVibr,X 		; if vibratoTimer < chVibr: increment audf value
+	lda chFreq,X
+	bcs store_audf
+	adc #1
+store_audf:
+	ldx pokeyOffset
+	sta AUDF1,X
+
 audctrl:
-	lda chCurLvl,Y
+	ldx chStateOffset
+	lda chCurLvl,X
 	cmp #$10
 	bcc below_limit
 	lda #$0F
 below_limit:
 	and #$0F
 	ora #$E0
+store_audc:
+	ldx pokeyOffset
+	sta AUDC1,X
+return:
+	rts
+.endproc
+
+
+.proc _setMissilePosition
+	; reads channel state and updates missile horizontal position
+	ldx chStateOffset
+	lda chCurLvl,X
+	bne show_note
+hide_missile:
+	ldy #0
+	jmp set_position
+show_note:
+	lda chNote,X		; get note
+	asl a				; else: note = note * 2 + 46
+	clc
+	adc #46 			; since notes start from 1, while 48 is the normal left edge
+	tay
+set_position:
+	lda pokeyOffset
+	lsr a
+	tax
+	tya 
+	sta HPOSM0,X
+return:
 	rts
 .endproc
 
 
 .proc _noteOn		 			
 	; on entry: A=note number
+	ldx #chSize*3 		; use channel 3		
 
-	pha 				; store note number for later
+	sta chNote,X
 
-	asl a 				; set missile 3 for debugging
-	clc
-	adc #46
-	sta HPOSM3
+	asl a					; noteTable has 2 bytes per item
+	tay
+	lda noteTable-2,Y		; freq = noteTable[Y].audf
+	sta chFreq,X
+	lda noteTable-1,Y		; vibr = noteTable[Y].vibrato
+	sta chVibr,X
 
-	pla
-	ldx #chSize*3 				
-	jsr _setNoteAtX
-
-	lda #10
-	sta chSusTime,X
+	lda #16
+	sta noteStepsLeft,X
 
 	lda #8
 	sta chSusLvl,X
@@ -713,7 +716,6 @@ below_limit:
 	lda #0
 	sta chSusTime,X
 	sta chAtkTime,X
-	sta HPOSM3
 	rts
 .endproc
 
