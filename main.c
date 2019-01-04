@@ -87,53 +87,53 @@ static void handleKeyboard(void) {
 
 	switch (keycode & 0x3F) {
 		case KEY_Q:
-			note = 0; 
+			note = 1; 
 			break;
 		case KEY_2:	
-			note = 1;
-			break;
-		case KEY_W:	
 			note = 2;
 			break;
-		case KEY_3:	
+		case KEY_W:	
 			note = 3;
 			break;
-		case KEY_E:	
+		case KEY_3:	
 			note = 4;
 			break;
-		case KEY_R:	
+		case KEY_E:	
 			note = 5;
 			break;
-		case KEY_5:	
+		case KEY_R:	
 			note = 6;
 			break;
-		case KEY_T:	
+		case KEY_5:	
 			note = 7;
 			break;
-		case KEY_6:	
+		case KEY_T:	
 			note = 8;
 			break;
-		case KEY_Y:	
+		case KEY_6:
 			note = 9;
 			break;
-		case KEY_7:	
+		case KEY_Y:	
 			note = 10;
 			break;
-		case KEY_U:	
+		case KEY_7:	
 			note = 11;
 			break;
-		case KEY_I:	
+		case KEY_U:	
 			note = 12;
+			break;
+		case KEY_I:	
+			note = 13;
 			break;
 		case KEY_Z:
 			startSequence();
 			break;
 		case KEY_X:
 			stopSound();
-			POKE(HPOSM0, 0); // Also hide missile 0 for debugging
 			break;
 		case KEY_SPACE:
 			note = 0xFE;
+			break;
 		default:
 			break;
 	}

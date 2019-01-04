@@ -29,18 +29,18 @@
 	HPOSM3 = $D007		; Missile 3
 
 ; Note and Octave constants
-	NoteC  = 0
-	NoteDb = 1
-	NoteD  = 2
-	NoteEb = 3
-	NoteE  = 4
-	NoteF  = 5
-	NoteGb = 6
-	NoteG  = 7
-	NoteAb = 8
-	NoteA  = 9
-	NoteBb = 10
-	NoteB  = 11
+	NoteC  = 1
+	NoteDb = 2
+	NoteD  = 3
+	NoteEb = 4
+	NoteE  = 5
+	NoteF  = 6
+	NoteGb = 7
+	NoteG  = 8
+	NoteAb = 9
+	NoteA  = 10
+	NoteBb = 11
+	NoteB  = 12
 	Oct3   = 0
 	Oct4   = 12
 	Oct5   = 24
@@ -120,17 +120,17 @@ testBlockT1:
 	.byte 0, 0, 0, 0 			; terminator
 
 testBlockB1:
-	.byte NoteF+Oct3, 16, 2, 1 	; note, duration, volume, envelope
-	.byte NoteA+Oct3, 16, 2, 1
+	.byte NoteF+Oct3, 16, 3, 0 	; note, duration, volume, envelope
+	.byte NoteA+Oct3, 16, 3, 0
 	
-	.byte NoteAb+Oct3, 16, 2, 1
-	.byte NoteG+Oct3, 16, 2, 1
+	.byte NoteAb+Oct3, 16, 3, 0
+	.byte NoteG+Oct3, 16, 3, 0
 
 	.byte 0, 0, 0, 0 			; terminator
 
 testBlockT2:
-	.byte NoteBb+Oct4, 1, 2, 1 	; note, duration, volume, envelope
-	.byte NoteB+Oct4, 1, 2, 1 
+	.byte NoteBb+Oct4, 1, 8, 0	; note, duration, volume, envelope
+	.byte NoteB+Oct4, 1, 10, 0 
 	.byte NoteC+Oct5, 8, 4, 1 
 	.byte NoteC+Oct6, 4, 2, 1 
 	.byte NoteA+Oct5, 4, 2, 1 
@@ -140,10 +140,10 @@ testBlockT2:
 	.byte NoteF+Oct5, 4, 2, 1 
 
 	.byte NoteG+Oct5, 8, 2, 1 
-	.byte NoteE+Oct6, 8, 2, 1 
-	.byte NoteEb+Oct6, 1, 2, 1 
-	.byte NoteD+Oct6, 1, 2, 1 
-	.byte NoteC+Oct6, 14, 4, 1 
+	.byte NoteE+Oct6, 6, 2, 1 
+	.byte NoteEb+Oct6, 1, 8, 0 
+	.byte NoteD+Oct6, 1, 10, 0 
+	.byte NoteC+Oct6, 16, 4, 1 
 
 	.byte NoteD+Oct5, 8, 2, 1 
 	.byte NoteC+Oct6, 4, 2, 1 
@@ -158,53 +158,53 @@ testBlockT2:
 	.byte NoteG+Oct5, 4, 2, 1 
 	.byte NoteF+Oct5, 4, 2, 1 
 	.byte NoteE+Oct5, 4, 2, 1 
-	.byte NoteF+Oct5, 4, 2, 1 
+	.byte NoteF+Oct5, 2, 2, 1 
 
 	.byte 0, 0, 0, 0 			; terminator
 
 testBlockB2:
-	.byte 0, 2, 0, 0		 	; rest
-	.byte NoteG+Oct3, 8, 2, 1  	; note, duration, volume, envelope
-	.byte NoteF+Oct4, 8, 2, 1
-	.byte NoteG+Oct4, 8, 2, 1
-	.byte NoteF+Oct4, 8, 2, 1
+	.byte $FF, 2, 0, 0		 	; rest
+	.byte NoteG+Oct3, 4, 2, 1  	; note, duration, volume, envelope
+	.byte NoteF+Oct4, 4, 2, 1
+	.byte NoteG+Oct4, 4, 2, 1
+	.byte NoteF+Oct4, 4, 2, 1
+	.byte NoteBb+Oct3, 4, 2, 1 	;
+	.byte NoteF+Oct4, 4, 2, 1
+	.byte NoteG+Oct4, 4, 2, 1
+	.byte NoteF+Oct4, 4, 2, 1
 
-	.byte NoteBb+Oct3, 8, 2, 1
-	.byte NoteF+Oct4, 8, 2, 1
-	.byte NoteG+Oct4, 8, 2, 1
-	.byte NoteF+Oct4, 8, 2, 1
+	.byte NoteA+Oct3, 4, 2, 1
+	.byte NoteF+Oct4, 4, 2, 1
+	.byte NoteG+Oct4, 4, 2, 1
+	.byte NoteF+Oct4, 4, 2, 1
+	.byte NoteAb+Oct3, 4, 2, 1 	;
+	.byte NoteF+Oct4, 4, 2, 1
+	.byte NoteG+Oct4, 4, 2, 1
+	.byte NoteF+Oct4, 4, 2, 1
 
-	.byte NoteA+Oct3, 8, 2, 1
-	.byte NoteF+Oct4, 8, 2, 1
-	.byte NoteG+Oct4, 8, 2, 1
-	.byte NoteF+Oct4, 8, 2, 1
+	.byte NoteG+Oct3, 4, 2, 1
+	.byte NoteF+Oct4, 4, 2, 1
+	.byte NoteG+Oct4, 4, 2, 1
+	.byte NoteF+Oct4, 4, 2, 1
+	.byte NoteC+Oct4, 4, 2, 1	;
+	.byte NoteF+Oct4, 4, 2, 1
+	.byte NoteG+Oct4, 4, 2, 1
+	.byte NoteF+Oct4, 4, 2, 1
 
-	.byte NoteAb+Oct3, 8, 2, 1
-	.byte NoteF+Oct4, 8, 2, 1
-	.byte NoteG+Oct4, 8, 2, 1
-	.byte NoteF+Oct4, 8, 2, 1
-
-	.byte NoteG+Oct3, 8, 2, 1
-	.byte NoteF+Oct4, 8, 2, 1
-	.byte NoteG+Oct4, 8, 2, 1
-	.byte NoteF+Oct4, 8, 2, 1
-
-	.byte NoteC+Oct4, 8, 2, 1
-	.byte NoteF+Oct4, 8, 2, 1
-	.byte NoteG+Oct4, 8, 2, 1
-	.byte NoteF+Oct4, 8, 2, 1
-
-	.byte NoteA+Oct3, 8, 2, 1
-	.byte NoteF+Oct4, 8, 2, 1
-	.byte NoteG+Oct4, 8, 2, 1
-	.byte NoteF+Oct4, 8, 2, 1
-
-	.byte NoteD+Oct4, 8, 2, 1
-	.byte NoteD+Oct4, 8, 2, 1
-	.byte NoteC+Oct4, 8, 2, 1
-	.byte NoteC+Oct4, 8, 2, 1
+	.byte NoteA+Oct3, 4, 2, 1
+	.byte NoteF+Oct4, 4, 2, 1
+	.byte NoteG+Oct4, 4, 2, 1
+	.byte NoteF+Oct4, 4, 2, 1
+	.byte NoteD+Oct4, 4, 2, 1	;
+	.byte NoteD+Oct4, 4, 2, 1
+	.byte NoteC+Oct4, 4, 2, 1
+	.byte NoteC+Oct4, 2, 2, 1
 
 	.byte 0, 0, 0, 0 			; terminator
+
+testBlockEigthFiller:
+	.byte $FF, 2, 0, 0
+	.byte 0, 0, 0, 0
 
 testBlockT3:
 	.byte NoteC+Oct6, 4, 2, 1 	; note, duration, volume, envelope
@@ -230,16 +230,16 @@ testBlockT3:
 	.byte 0, 0, 0, 0 			; terminator
 
 testBlockB3:
-	.byte NoteA+Oct3, 16, 2, 1 	; note, duration, volume, envelope
-	.byte NoteBb+Oct3, 16, 2, 1
+	.byte NoteF+Oct4, 16, 3, 0 	; note, duration, volume, envelope
+	.byte NoteG+Oct4, 16, 3, 1
 
-	.byte NoteD+Oct3, 16, 2, 1
-	.byte NoteA+Oct3, 16, 2, 1
+	.byte NoteBb+Oct3, 16, 3, 0
+	.byte NoteF+Oct4, 16, 3, 0
 
 	.byte 0, 0, 0, 0 			; terminator
 
 testBlockRest:
-	.byte 0, 32, 0, 0
+	.byte $FF, 32, 0, 0
 	.byte 0, 0, 0, 0 			; terminator
 
 testBlockListT:
@@ -248,6 +248,7 @@ testBlockListT:
 
 	.word testBlockT2
 	.word testBlockT2
+	.word testBlockEigthFiller
 
 	.word testBlockT3
 	.word testBlockT3
@@ -266,10 +267,13 @@ testBlockListB:
 
 	.word testBlockB2
 	.word testBlockB2
+	.word testBlockEigthFiller
 
 	.word testBlockB3
 	.word testBlockB3
 
+	.word testBlockRest
+	.word testBlockRest
 	.word testBlockRest
 	.word testBlockRest
 
@@ -346,33 +350,31 @@ sound:
 execute_seq_step:
 	sta seqTimer 				; reset seqTimer = seqStepDur
 
-	lda #$FF
-	sta tmpNoteNumber			; $FF = unchanged for debugging
+	lda #0
+	sta tmpNoteNumber			; 0 = unchanged for debugging
 
 	ldx #0 						; channel 0 sequencer
 	jsr _stepSequenceAtX
 
 	lda tmpNoteNumber
-	cmp #$FF
 	beq step_ch1
 	asl a						; set missile 0 position for debugging
 	clc
-	adc #48
+	adc #46
 	sta HPOSM0
 
 step_ch1:
-	lda #$FF
+	lda #0
 	sta tmpNoteNumber			; $FF = unchanged for debugging
 
 	ldx #chSize*1 				; channel 1 sequencer
 	jsr _stepSequenceAtX
 
 	lda tmpNoteNumber
-	cmp #$FF
 	beq apply_envelopes
 	asl a						; set missile 1 position for debugging
 	clc
-	adc #48
+	adc #46
 	sta HPOSM1
 
 apply_envelopes:
@@ -385,7 +387,7 @@ apply_envelopes:
 	and #$0F					; if volume of ch.3 == 0:
 	bne apply_envelope_ch1		; hide missile 0 for debugging
 	lda #0
-	;sta HPOSM0					
+	sta HPOSM0					
 
 apply_envelope_ch1:
 	ldy #chSize*1				; channel 1 envelope
@@ -397,7 +399,7 @@ apply_envelope_ch1:
 	and #$0F					; if volume of ch.3 == 0:
 	bne apply_envelope_ch2		; hide missile 1 for debugging
 	lda #0
-	;sta HPOSM1					
+	sta HPOSM1					
 
 apply_envelope_ch2:
 	ldy #chSize*2				; channel 2 envelope
@@ -486,6 +488,8 @@ get_note:
 	jmp get_block_ptr
 
 set_duration:
+	sec
+	sbc #1					; adjust by subtracting one step 
 	sta noteStepsLeft,X
 
 	iny
@@ -508,9 +512,9 @@ set_duration:
 	; uses Y register
 	asl a						; noteTable has 2 bytes per item
 	tay
-	lda noteTable,Y			; freq = noteTable[Y].audf
+	lda noteTable-2,Y			; freq = noteTable[Y].audf
 	sta chFreq,X
-	lda noteTable+1,Y			; vibr = noteTable[Y].vibrato
+	lda noteTable-1,Y			; vibr = noteTable[Y].vibrato
 	sta chVibr,X
 	rts
 .endproc
@@ -523,7 +527,7 @@ set_duration:
 	jmp default_envelope
 
 envelope_1:
-	lda #8
+	lda #7
 	sta chAtkRate,X 		; fast attack
 
 	lda #2
@@ -566,12 +570,12 @@ envelope_2:
 
 default_envelope:
 	lda #0
-	sta chAtkTime,X 		; no attack
+	sta chAtkTime,X 		; no attack/decay
 	sta chAtkRate,X
+	sta chDecRate,X
 
-	lda #15
-	sta chDecRate,X 		; instant decay & release
-	sta chRelRate,X
+	lda #2
+	sta chRelRate,X 		; fast release
 
 	lda chSusLvl,X			; start at currentLevel = sustainLevel
 	sta chCurLvl,X
@@ -685,7 +689,7 @@ below_limit:
 
 	asl a 				; set missile 3 for debugging
 	clc
-	adc #48
+	adc #46
 	sta HPOSM3
 
 	pla
