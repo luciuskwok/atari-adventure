@@ -84,7 +84,7 @@ static void initMapMenu(void) {
 
 	initMenu();
 	menuOrigin.x = 6 + 5 * 4;
-	menuOrigin.y = 3 + 23 * 4;
+	menuOrigin.y = 2 + 23 * 4;
 	menuItemCount = 4;
 	menuItemSpacing = 8 * 4;
 	menuIsHorizontal = 1;
@@ -413,6 +413,12 @@ void initMap(void) {
 	setScreenMode(ScreenModeMap);
 	clearMapScreen();
 	clearTextWindow(7);
+
+	// Set up missiles for use by sound sequencer for debuggging
+	clearSprite(0);
+	fillSprite(0, 0xFF, 0, 10);
+	setSpriteOriginX(5, 56);
+	setSpriteOriginX(6, 72);
 
 	transitionToMap(currentMapType, 0, 1);
 	drawMapTextBox();

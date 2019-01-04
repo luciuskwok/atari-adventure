@@ -26,7 +26,8 @@
 	COLOR7 = $02CB		; Extra color: Bar background color
 
 	; GTIA
-	HPOSP3 = $D003		; Player 2 horizontal position
+	HPOSP3 = $D003		; Player 3 horizontal position
+	HPOSM0 = $D004		; Missile 0 horizontal position
 	COLPF0 = $D016		; pixel 1
 	COLPF1 = $D017		; text luminance / pixel 2
 	COLPF2 = $D018		; text background / pixel 3
@@ -49,11 +50,14 @@
 
 .proc _initVBI		; on entry: X=MSB, A=LSB
 	tay				; move LSB to Y
+
 	lda #CUR_SKIP	; init CUR_TIMER to CUR_SKIP
 	sta CUR_TIMER	
+
 	jsr _initSound
+
 	lda #6			; 6=Immediate, 7=Deferred.
-	jsr $E45C		; SETVBV
+	jsr $E45C		; SETVBV: Y=LSB, X=MSB
 	rts
 .endproc
 	
@@ -145,7 +149,6 @@ return:
 chara_name:
 	lda #0
 	sta COLPF4			; border
-	sta COLPF3			; missiles
 	sta COLPF2			; text box background color
 	lda TXTLUM		
 	sta COLPF1			; text color

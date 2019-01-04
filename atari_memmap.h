@@ -43,8 +43,18 @@
 #define MEMTOP (0x02E5)
 #define CHBAS (0x02F4)
 
+// Keyboard
+#define CH_ (0x02FC)
+
 // Sprites (GTIA)
 #define HPOSP0 (0xD000)
+#define HPOSP1 (0xD001)
+#define HPOSP2 (0xD002)
+#define HPOSP3 (0xD003)
+#define HPOSM0 (0xD004)
+#define HPOSM1 (0xD005)
+#define HPOSM2 (0xD006)
+#define HPOSM3 (0xD007)
 #define SIZEP0 (0xD008)
 
 // Sound (POKEY)

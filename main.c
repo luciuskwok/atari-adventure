@@ -78,76 +78,77 @@ static void handleMessage(SInt8 message) {
 }
 
 static void handleKeyboard(void) {
-	static UInt8 previousKeycode = 0xFF;
-	UInt8 keycode = POKEY_READ.kbcode;
+	//static UInt8 previousKeycode = 0xFF;
+	UInt8 keycode = PEEK(CH_); // was POKEY_READ.kbcode
 	const UInt8 vol = 8;
 	UInt8 note = 0xFF;
 	UInt8 shift = keycode & 0x40;
 	UInt8 control = keycode & 0x80;
 
-	if (keycode != previousKeycode) {
-		switch (keycode & 0x3F) {
-			case KEY_Q:
-				note = 0; 
-				break;
-			case KEY_2:	
-				note = 1;
-				break;
-			case KEY_W:	
-				note = 2;
-				break;
-			case KEY_3:	
-				note = 3;
-				break;
-			case KEY_E:	
-				note = 4;
-				break;
-			case KEY_R:	
-				note = 5;
-				break;
-			case KEY_5:	
-				note = 6;
-				break;
-			case KEY_T:	
-				note = 7;
-				break;
-			case KEY_6:	
-				note = 8;
-				break;
-			case KEY_Y:	
-				note = 9;
-				break;
-			case KEY_7:	
-				note = 10;
-				break;
-			case KEY_U:	
-				note = 11;
-				break;
-			case KEY_I:	
-				note = 12;
-				break;
-			case KEY_Z:
-				startSequence();
-				break;
-			case KEY_X:
-				stopSound();
-				break;
-			default:
-				break;
-		}
-		if (note == 0xFF) {
-			noteOff();
-		} else {
-			if (shift) {
-				note += 12;
-			}
-			if (control) {
-				note += 24;
-			}
-			noteOn(note);
-		}
-		previousKeycode = keycode;
+	switch (keycode & 0x3F) {
+		case KEY_Q:
+			note = 0; 
+			break;
+		case KEY_2:	
+			note = 1;
+			break;
+		case KEY_W:	
+			note = 2;
+			break;
+		case KEY_3:	
+			note = 3;
+			break;
+		case KEY_E:	
+			note = 4;
+			break;
+		case KEY_R:	
+			note = 5;
+			break;
+		case KEY_5:	
+			note = 6;
+			break;
+		case KEY_T:	
+			note = 7;
+			break;
+		case KEY_6:	
+			note = 8;
+			break;
+		case KEY_Y:	
+			note = 9;
+			break;
+		case KEY_7:	
+			note = 10;
+			break;
+		case KEY_U:	
+			note = 11;
+			break;
+		case KEY_I:	
+			note = 12;
+			break;
+		case KEY_Z:
+			startSequence();
+			break;
+		case KEY_X:
+			stopSound();
+			POKE(HPOSM0, 0); // Also hide missile 0 for debugging
+			break;
+		case KEY_SPACE:
+			note = 0xFE;
+		default:
+			break;
 	}
+	if (note == 0xFE) {
+		noteOff();
+	} else if (note != 0xFF) {
+		if (shift) {
+			note += 12;
+		}
+		if (control) {
+			note += 24;
+		}
+		noteOn(note);
+	}
+	POKE(CH_, 0xFF);
 }
 
 void runLoop(void) {

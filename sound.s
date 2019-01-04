@@ -22,6 +22,12 @@
 	AUDCTL= $D208
 	SKCTL = $D20F
 
+	; GTIA
+	HPOSM0 = $D004		; Missile 0 horizontal position
+	HPOSM1 = $D005		; Missile 1
+	HPOSM2 = $D006		; Missile 2
+	HPOSM3 = $D007		; Missile 3
+
 ; Note and Octave constants
 	NoteC  = 0
 	NoteDb = 1
@@ -93,29 +99,190 @@ noteTable:
 	.byte  16, 0 ; B
 	.byte  15, 0 ; C7
 
-testSequence:
-	.byte 13 ; note count
-	.byte NoteC+Oct4, 4, 2, 1 ; note, duration, volume, envelope
-	.byte NoteC+Oct5, 4, 2, 1
+testBlockT1:
+	.byte NoteC+Oct5, 8, 2, 1 	; note, duration, volume, envelope
+	.byte NoteC+Oct6, 8, 2, 1
+	.byte NoteG+Oct5, 16, 2, 1
+
+	.byte NoteF+Oct5, 8, 2, 1
+	.byte NoteC+Oct6, 8, 2, 1
+	.byte NoteC+Oct5, 16, 2, 1
+
+	.byte NoteC+Oct5, 8, 2, 1
+	.byte NoteF+Oct5, 8, 2, 1
+	.byte NoteC+Oct6, 8, 2, 1
+	.byte NoteD+Oct6, 8, 2, 1
+
+	.byte NoteC+Oct6, 8, 2, 1
+	.byte NoteG+Oct5, 8, 2, 1
+	.byte NoteF+Oct5, 16, 2, 1
+
+	.byte 0, 0, 0, 0 			; terminator
+
+testBlockB1:
+	.byte NoteF+Oct3, 16, 2, 1 	; note, duration, volume, envelope
+	.byte NoteA+Oct3, 16, 2, 1
+	
+	.byte NoteAb+Oct3, 16, 2, 1
+	.byte NoteG+Oct3, 16, 2, 1
+
+	.byte 0, 0, 0, 0 			; terminator
+
+testBlockT2:
+	.byte NoteBb+Oct4, 1, 2, 1 	; note, duration, volume, envelope
+	.byte NoteB+Oct4, 1, 2, 1 
+	.byte NoteC+Oct5, 8, 4, 1 
+	.byte NoteC+Oct6, 4, 2, 1 
+	.byte NoteA+Oct5, 4, 2, 1 
+	.byte NoteG+Oct5, 4, 2, 1 
+	.byte NoteF+Oct5, 4, 2, 1 
+	.byte NoteE+Oct5, 4, 2, 1 
+	.byte NoteF+Oct5, 4, 2, 1 
+
+	.byte NoteG+Oct5, 8, 2, 1 
+	.byte NoteE+Oct6, 8, 2, 1 
+	.byte NoteEb+Oct6, 1, 2, 1 
+	.byte NoteD+Oct6, 1, 2, 1 
+	.byte NoteC+Oct6, 14, 4, 1 
+
+	.byte NoteD+Oct5, 8, 2, 1 
+	.byte NoteC+Oct6, 4, 2, 1 
+	.byte NoteA+Oct5, 4, 2, 1 
+	.byte NoteG+Oct5, 4, 2, 1 
+	.byte NoteF+Oct5, 4, 2, 1 
+	.byte NoteG+Oct5, 4, 2, 1 
+	.byte NoteA+Oct5, 4, 2, 1 
+
+	.byte NoteE+Oct5, 8, 2, 1 
+	.byte NoteG+Oct5, 8, 2, 1 
+	.byte NoteG+Oct5, 4, 2, 1 
+	.byte NoteF+Oct5, 4, 2, 1 
+	.byte NoteE+Oct5, 4, 2, 1 
+	.byte NoteF+Oct5, 4, 2, 1 
+
+	.byte 0, 0, 0, 0 			; terminator
+
+testBlockB2:
+	.byte 0, 2, 0, 0		 	; rest
+	.byte NoteG+Oct3, 8, 2, 1  	; note, duration, volume, envelope
+	.byte NoteF+Oct4, 8, 2, 1
 	.byte NoteG+Oct4, 8, 2, 1
-
-	.byte NoteF+Oct4, 4, 2, 1
-	.byte NoteC+Oct5, 4, 2, 1
-	.byte NoteC+Oct4, 8, 2, 1
-
-	.byte NoteC+Oct4, 4, 2, 1
-	.byte NoteF+Oct4, 4, 2, 1
-	.byte NoteC+Oct5, 4, 2, 1
-	.byte NoteD+Oct5, 4, 2, 1
-
-	.byte NoteC+Oct5, 4, 2, 1
-	.byte NoteG+Oct4, 4, 2, 1
 	.byte NoteF+Oct4, 8, 2, 1
 
+	.byte NoteBb+Oct3, 8, 2, 1
+	.byte NoteF+Oct4, 8, 2, 1
+	.byte NoteG+Oct4, 8, 2, 1
+	.byte NoteF+Oct4, 8, 2, 1
+
+	.byte NoteA+Oct3, 8, 2, 1
+	.byte NoteF+Oct4, 8, 2, 1
+	.byte NoteG+Oct4, 8, 2, 1
+	.byte NoteF+Oct4, 8, 2, 1
+
+	.byte NoteAb+Oct3, 8, 2, 1
+	.byte NoteF+Oct4, 8, 2, 1
+	.byte NoteG+Oct4, 8, 2, 1
+	.byte NoteF+Oct4, 8, 2, 1
+
+	.byte NoteG+Oct3, 8, 2, 1
+	.byte NoteF+Oct4, 8, 2, 1
+	.byte NoteG+Oct4, 8, 2, 1
+	.byte NoteF+Oct4, 8, 2, 1
+
+	.byte NoteC+Oct4, 8, 2, 1
+	.byte NoteF+Oct4, 8, 2, 1
+	.byte NoteG+Oct4, 8, 2, 1
+	.byte NoteF+Oct4, 8, 2, 1
+
+	.byte NoteA+Oct3, 8, 2, 1
+	.byte NoteF+Oct4, 8, 2, 1
+	.byte NoteG+Oct4, 8, 2, 1
+	.byte NoteF+Oct4, 8, 2, 1
+
+	.byte NoteD+Oct4, 8, 2, 1
+	.byte NoteD+Oct4, 8, 2, 1
+	.byte NoteC+Oct4, 8, 2, 1
+	.byte NoteC+Oct4, 8, 2, 1
+
+	.byte 0, 0, 0, 0 			; terminator
+
+testBlockT3:
+	.byte NoteC+Oct6, 4, 2, 1 	; note, duration, volume, envelope
+	.byte NoteF+Oct5, 4, 2, 1 
+	.byte NoteG+Oct5, 4, 2, 1 
+	.byte NoteF+Oct5, 4, 2, 1 
+
+	.byte NoteB+Oct4, 4, 2, 1 
+	.byte NoteF+Oct5, 4, 2, 1 
+	.byte NoteG+Oct5, 4, 2, 1 
+	.byte NoteF+Oct5, 4, 2, 1 
+
+	.byte NoteBb+Oct4, 4, 2, 1 
+	.byte NoteF+Oct5, 4, 2, 1 
+	.byte NoteG+Oct5, 4, 2, 1 
+	.byte NoteBb+Oct5, 4, 2, 1 
+
+	.byte NoteA+Oct5, 4, 2, 1 
+	.byte NoteG+Oct5, 4, 2, 1 
+	.byte NoteF+Oct5, 4, 2, 1 
+	.byte NoteC+Oct5, 4, 2, 1 
+
+	.byte 0, 0, 0, 0 			; terminator
+
+testBlockB3:
+	.byte NoteA+Oct3, 16, 2, 1 	; note, duration, volume, envelope
+	.byte NoteBb+Oct3, 16, 2, 1
+
+	.byte NoteD+Oct3, 16, 2, 1
+	.byte NoteA+Oct3, 16, 2, 1
+
+	.byte 0, 0, 0, 0 			; terminator
+
+testBlockRest:
+	.byte 0, 32, 0, 0
+	.byte 0, 0, 0, 0 			; terminator
+
+testBlockListT:
+	.word testBlockT1
+	.word testBlockT1
+
+	.word testBlockT2
+	.word testBlockT2
+
+	.word testBlockT3
+	.word testBlockT3
+
+	.word testBlockT3
+	.word testBlockT3
+
+	.word testBlockRest
+	.word 0
+
+testBlockListB:
+	.word testBlockB1
+	.word testBlockB1
+	.word testBlockB1
+	.word testBlockB1
+
+	.word testBlockB2
+	.word testBlockB2
+
+	.word testBlockB3
+	.word testBlockB3
+
+	.word testBlockRest
+	.word testBlockRest
+
+	.word testBlockRest
+	.word 0
 
 .segment "EXTZP": zeropage
-ptrSeqBlock:
+ptrBlockList:
 	.word 0
+ptrBlock:
+	.word 0
+tmpNoteNumber:
+	.byte 0
 
 .data
 vibratoTimer:
@@ -123,7 +290,7 @@ vibratoTimer:
 seqTimer:
 	.byte 0
 seqStepDur:		; controls tempo
-	.byte 9 
+	.byte 4 
 
 chFreq: 		; channel state start
 	.byte 0
@@ -145,14 +312,16 @@ chRelRate:
 	.byte 0
 seqEnable:
 	.byte 0
-seqIndex:
-	.byte 0
 noteStepsLeft:
 	.byte 0
-seqBlockPtr:
+noteIndex:
+	.byte 0
+blockIndex:
+	.byte 0
+blockListPtr:
 	.word 0
 
-chSize = 14 ; bytes per channel state block
+chSize = 15 ; bytes per channel state block
 
 channelState1to3:
 	.res chSize*3, $00
@@ -176,33 +345,78 @@ sound:
 
 execute_seq_step:
 	sta seqTimer 				; reset seqTimer = seqStepDur
-	ldx #0
+
+	lda #$FF
+	sta tmpNoteNumber			; $FF = unchanged for debugging
+
+	ldx #0 						; channel 0 sequencer
 	jsr _stepSequenceAtX
 
+	lda tmpNoteNumber
+	cmp #$FF
+	beq step_ch1
+	asl a						; set missile 0 position for debugging
+	clc
+	adc #48
+	sta HPOSM0
+
+step_ch1:
+	lda #$FF
+	sta tmpNoteNumber			; $FF = unchanged for debugging
+
+	ldx #chSize*1 				; channel 1 sequencer
+	jsr _stepSequenceAtX
+
+	lda tmpNoteNumber
+	cmp #$FF
+	beq apply_envelopes
+	asl a						; set missile 1 position for debugging
+	clc
+	adc #48
+	sta HPOSM1
+
 apply_envelopes:
-	ldy #0						; channel 0
+	ldy #0						; channel 0 envelope
 	jsr _applyEnvelopeAtY
 	jsr _getAudFreqCtrlAtY
 	stx AUDF1
 	sta AUDC1
 
-	ldy #chSize*1				; channel 1
+	and #$0F					; if volume of ch.3 == 0:
+	bne apply_envelope_ch1		; hide missile 0 for debugging
+	lda #0
+	;sta HPOSM0					
+
+apply_envelope_ch1:
+	ldy #chSize*1				; channel 1 envelope
 	jsr _applyEnvelopeAtY
 	jsr _getAudFreqCtrlAtY
 	stx AUDF2
 	sta AUDC2
 
-	ldy #chSize*2				; channel 2
+	and #$0F					; if volume of ch.3 == 0:
+	bne apply_envelope_ch2		; hide missile 1 for debugging
+	lda #0
+	;sta HPOSM1					
+
+apply_envelope_ch2:
+	ldy #chSize*2				; channel 2 envelope
 	jsr _applyEnvelopeAtY
 	jsr _getAudFreqCtrlAtY
 	stx AUDF3
 	sta AUDC3
 
-	ldy #chSize*3				; channel 3
+apply_envelope_ch3:
+	ldy #chSize*3				; channel 3 envelope
 	jsr _applyEnvelopeAtY
 	jsr _getAudFreqCtrlAtY
 	stx AUDF4
 	sta AUDC4
+
+	and #$0F					; if volume of ch.3 == 0:
+	bne inc_vibrato_timer		; hide missile 3 for debugging
+	lda #0
+	sta HPOSM3					
 
 inc_vibrato_timer:
 	lda vibratoTimer 			; vibratoTimer += 1
@@ -231,47 +445,61 @@ return:
 	rts			
 
 next_step:
-	lda seqBlockPtr,X		; ptrSeqBlock = chState[X].seqBlockPtr
-	sta ptrSeqBlock
-	lda seqBlockPtr+1,X
-	sta ptrSeqBlock+1
+	lda blockListPtr,X		; ptrSeqBlock = chState[X].blockListPtr
+	sta ptrBlockList
+	lda blockListPtr+1,X
+	sta ptrBlockList+1
 
-	lda seqIndex,X 			; offset = seqIndex * 4 + 1
+get_block_ptr:
+	lda blockIndex,X
+	asl a
+	tay
+	lda (ptrBlockList),Y
+	sta ptrBlock
+	iny
+	lda (ptrBlockList),Y
+	sta ptrBlock+1
+
+	bne get_note 			; if ptrBlock == NULL: reset blockIndex
+	cpy #0
+	beq return				; if blockIndex == 0: return
+	lda #0
+	sta blockIndex,X		; else: blockIndex = 0; noteIndex = 0
+	sta noteIndex,X
+	jmp get_block_ptr
+
+get_note:
+	lda noteIndex,X 		; offset = noteIndex * 4
 	asl a					; count is 1 byte
 	asl a					; sequencer note unit is 4 bytes
-	clc
-	adc #1
-	pha 					; temporarily store offset on stack
 
-	tay
-	lda (ptrSeqBlock),Y 	; ptrSeqBlock->note[seqIndex]->noteNumber
-	jsr _setNoteAtX 		; uses Y, so offset needed to be stored
+	tay						; use Y for offset from block start
+	lda (ptrBlock),Y		; get note number
+	sta tmpNoteNumber		; save note number
 
-	pla 					; pull offset off stack
-	tay
-	iny
-	lda (ptrSeqBlock),Y 	; ptrSeqBlock->note[seqIndex]->duration
+	iny						; get duration
+	lda (ptrBlock),Y 
+	bne set_duration		; if duration == 0: jump to next block
+	inc blockIndex,X
+	lda #0
+	sta noteIndex,X	
+	jmp get_block_ptr
+
+set_duration:
 	sta noteStepsLeft,X
-	sta chSusTime,X
 
 	iny
-	lda (ptrSeqBlock),Y 	; ptrSeqBlock->note[seqIndex]->volume
+	lda (ptrBlock),Y 		; get volume
 	sta chSusLvl,X
 
 	iny
-	lda (ptrSeqBlock),Y 	; ptrSeqBlock->note[seqIndex]->envelope
+	lda (ptrBlock),Y 		; get envelope
 	jsr _setEnvelopeAtX
 
-inc_seq_index:
-	lda seqIndex,X		; seqIndex += 1
-	clc 
-	adc #1
-	ldy #0
-	cmp (ptrSeqBlock),Y 		; if seqIndex == ptrSeqBlock->count:
-	bne set_seq_index
-	lda #0						; seqIndex = 0; repeat sequence block
-set_seq_index:
-	sta seqIndex,X
+	lda tmpNoteNumber		; get note number again
+	jsr _setNoteAtX 		; uses Y, so offset needed to be stored
+
+	inc noteIndex,X
 	rts
 .endproc
 
@@ -296,59 +524,59 @@ set_seq_index:
 
 envelope_1:
 	lda #8
-	sta chAtkRate,X 	; fast attack
+	sta chAtkRate,X 		; fast attack
 
 	lda #2
 	sta chAtkTime,X
 
 	lda #1
-	sta chDecRate,X 	; slow decay and release
+	sta chDecRate,X 		; slow decay and release
 	sta chRelRate,X
 
 	lda #0
-	sta chCurLvl,X 		; start at currentLevel = 0
+	sta chCurLvl,X 			; start at currentLevel = 0
 
-	lda chSusTime,X 	; multiply sustain time by step duration	
+	lda noteStepsLeft,X 	; multiply step count by step duration	
 	jsr _multiplyByStepDuration
 	sec
-	sbc #$11					; and subtract time for atk, dec,& rel
-	bcs set_sustain_time 		; if sus_time < 0: sus_time = 0
+	sbc #$11				; and subtract time for atk, dec,& rel
+	bcs set_sustain_time 	; if sus_time < 0: sus_time = 0
 	lda #0
 	jmp set_sustain_time
 
 envelope_2:
 	lda #15
-	sta chAtkTime,X		; slow attack
+	sta chAtkTime,X			; slow attack
 
 	lda #1
 	sta chAtkRate,X
-	sta chDecRate,X 	; slow decay and release
+	sta chDecRate,X 		; slow decay and release
 	sta chRelRate,X
 
 	lda #0
-	sta chCurLvl,X 		; start at currentLevel = 0
+	sta chCurLvl,X 			; start at currentLevel = 0
 
-	lda chSusTime,X 	; multiply sustain time by step duration	
+	lda noteStepsLeft,X 	; multiply sustain time by step duration	
 	jsr _multiplyByStepDuration
 	sec
-	sbc #$1E					; and subtract time for atk, dec,& rel
-	bcs set_sustain_time 		; if sus_time < 0: sus_time = 0
+	sbc #$1E				; and subtract time for atk, dec,& rel
+	bcs set_sustain_time 	; if sus_time < 0: sus_time = 0
 	lda #0
 	jmp set_sustain_time
 
 default_envelope:
 	lda #0
-	sta chAtkTime,X 	; no attack
+	sta chAtkTime,X 		; no attack
 	sta chAtkRate,X
 
 	lda #15
-	sta chDecRate,X 	; instant decay & release
+	sta chDecRate,X 		; instant decay & release
 	sta chRelRate,X
 
-	lda chSusLvl,X		; start at currentLevel = sustainLevel
+	lda chSusLvl,X			; start at currentLevel = sustainLevel
 	sta chCurLvl,X
 
-	lda chSusTime,X 	; multiply sustain time by step duration	
+	lda noteStepsLeft,X 	; multiply sustain time by step duration	
 	jsr _multiplyByStepDuration
 	;jmp set_sustain_time
 
@@ -452,6 +680,15 @@ below_limit:
 
 .proc _noteOn		 			
 	; on entry: A=note number
+
+	pha 				; store note number for later
+
+	asl a 				; set missile 3 for debugging
+	clc
+	adc #48
+	sta HPOSM3
+
+	pla
 	ldx #chSize*3 				
 	jsr _setNoteAtX
 
@@ -472,21 +709,39 @@ below_limit:
 	lda #0
 	sta chSusTime,X
 	sta chAtkTime,X
+	sta HPOSM3
 	rts
 .endproc
 
 
 .proc _startSequence
-	ldx #0
+
+	ldx #0		 				; channel 0
 	lda #0
-	sta seqEnable,X
+	sta seqEnable,X 			
 	sta noteStepsLeft,X
-	sta seqIndex,X
-	lda #<testSequence
-	sta seqBlockPtr,X
-	lda #>testSequence
-	sta seqBlockPtr+1,X
-	lda #1
+	sta noteIndex,X
+	sta blockIndex,X
+	lda #<testBlockListT
+	sta blockListPtr,X
+	lda #>testBlockListT
+	sta blockListPtr+1,X
+
+	ldx #chSize*1		 		; channel 1
+	lda #0
+	sta seqEnable,X 			
+	sta noteStepsLeft,X
+	sta noteIndex,X
+	sta blockIndex,X
+	lda #<testBlockListB
+	sta blockListPtr,X
+	lda #>testBlockListB
+	sta blockListPtr+1,X
+
+	lda #1 						; enable sequencer
+	ldx #0		 				; channel 0
+	sta seqEnable,X
+	ldx #chSize		 			; channel 1
 	sta seqEnable,X
 	rts
 .endproc
@@ -513,6 +768,10 @@ return:
 .proc _initSound
 	lda #0
 	sta AUDCTL
+	sta seqEnable+chSize*0
+	sta seqEnable+chSize*1
+	sta seqEnable+chSize*2
+	sta seqEnable+chSize*3
 	lda #3
 	sta SKCTL
 	rts 
