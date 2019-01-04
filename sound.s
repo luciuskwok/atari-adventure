@@ -22,12 +22,12 @@ tmpMultiply:
 	.byte 0
 
 .data
-vibratoTimer:
-	.byte 0
-seqTimer:
-	.byte 0
 seqStepDur:			; controls tempo
 	.byte 5 
+seqTimer:
+	.byte 0
+vibratoTimer:
+	.byte 0
 
 chNote:
 	.byte 0
@@ -157,105 +157,105 @@ noteTable:
 	.byte  15, 0 ; C7
 
 testBlockT1:
-	.byte NoteC+Oct5, 8, 2, 1 	; note, duration, volume, envelope
-	.byte NoteC+Oct6, 8, 2, 1
-	.byte NoteG+Oct5, 16, 2, 1
+	.byte NoteC+Oct5,  8, 2, 2 	; note, duration, volume, envelope
+	.byte NoteC+Oct6,  8, 2, 2
+	.byte NoteG+Oct5, 16, 2, 2
 
-	.byte NoteF+Oct5, 8, 2, 1
-	.byte NoteC+Oct6, 8, 2, 1
-	.byte NoteC+Oct5, 16, 2, 1
+	.byte NoteF+Oct5,  8, 2, 2
+	.byte NoteC+Oct6,  8, 2, 2
+	.byte NoteC+Oct5, 16, 2, 2
 
-	.byte NoteC+Oct5, 8, 2, 1
-	.byte NoteF+Oct5, 8, 2, 1
-	.byte NoteC+Oct6, 8, 2, 1
-	.byte NoteD+Oct6, 8, 2, 1
+	.byte NoteC+Oct5,  8, 2, 2
+	.byte NoteF+Oct5,  8, 2, 2
+	.byte NoteC+Oct6,  8, 2, 2
+	.byte NoteD+Oct6,  8, 2, 2
 
-	.byte NoteC+Oct6, 8, 2, 1
-	.byte NoteG+Oct5, 8, 2, 1
-	.byte NoteF+Oct5, 16, 2, 1
+	.byte NoteC+Oct6,  8, 2, 2
+	.byte NoteG+Oct5,  8, 2, 2
+	.byte NoteF+Oct5, 16, 2, 2
 
 	.byte 0						; terminator
 
 testBlockB1:
-	.byte NoteF+Oct3, 16, 2, 0 	; note, duration, volume, envelope
-	.byte NoteA+Oct3, 16, 2, 0
+	.byte NoteF+Oct3, 16, 2, 1 	; note, duration, volume, envelope
+	.byte NoteA+Oct3, 16, 2, 1
 	
-	.byte NoteAb+Oct3, 16, 2, 0
-	.byte NoteG+Oct3, 16, 2, 0
+	.byte NoteAb+Oct3, 16, 2, 1
+	.byte NoteG+Oct3, 16, 2, 1
 
 	.byte 0						; terminator
 
 testBlockT2:
-	.byte NoteBb+Oct4, 1, 8, 0	; note, duration, volume, envelope
-	.byte NoteB+Oct4, 1, 10, 0 
-	.byte NoteC+Oct5, 8, 4, 1 
-	.byte NoteC+Oct6, 4, 2, 1 
-	.byte NoteA+Oct5, 4, 2, 1 
-	.byte NoteG+Oct5, 4, 2, 1 
-	.byte NoteF+Oct5, 4, 2, 1 
-	.byte NoteE+Oct5, 4, 2, 1 
-	.byte NoteF+Oct5, 4, 2, 1 
+	.byte NoteBb+Oct4, 1, 3, 1	; note, duration, volume, envelope
+	.byte NoteB+Oct4, 1, 4, 1 
+	.byte NoteC+Oct5,  8, 4, 1 
+	.byte NoteC+Oct6,  4, 4, 1 
+	.byte NoteA+Oct5,  4, 4, 1 
+	.byte NoteG+Oct5,  4, 4, 1 
+	.byte NoteF+Oct5,  4, 4, 1 
+	.byte NoteE+Oct5,  4, 4, 1 
+	.byte NoteF+Oct5,  4, 4, 1 
 
-	.byte NoteG+Oct5, 8, 2, 1 
-	.byte NoteE+Oct6, 6, 2, 1 
-	.byte NoteEb+Oct6, 1, 8, 0 
-	.byte NoteD+Oct6, 1, 10, 0 
+	.byte NoteG+Oct5,  8, 4, 1 
+	.byte NoteE+Oct6,  6, 4, 1 
+	.byte NoteEb+Oct6, 1, 3, 1 
+	.byte NoteD+Oct6,  1, 4, 1 
 	.byte NoteC+Oct6, 16, 4, 1 
 
-	.byte NoteD+Oct5, 8, 2, 1 
-	.byte NoteC+Oct6, 4, 2, 1 
-	.byte NoteA+Oct5, 4, 2, 1 
-	.byte NoteG+Oct5, 4, 2, 1 
-	.byte NoteF+Oct5, 4, 2, 1 
-	.byte NoteG+Oct5, 4, 2, 1 
-	.byte NoteA+Oct5, 4, 2, 1 
+	.byte NoteD+Oct5, 8, 4, 1 
+	.byte NoteC+Oct6, 4, 4, 1 
+	.byte NoteA+Oct5, 4, 4, 1 
+	.byte NoteG+Oct5, 4, 4, 1 
+	.byte NoteF+Oct5, 4, 4, 1 
+	.byte NoteG+Oct5, 4, 4, 1 
+	.byte NoteA+Oct5, 4, 4, 1 
 
-	.byte NoteE+Oct5, 8, 2, 1 
-	.byte NoteG+Oct5, 8, 2, 1 
-	.byte NoteG+Oct5, 4, 2, 1 
-	.byte NoteF+Oct5, 4, 2, 1 
-	.byte NoteE+Oct5, 4, 2, 1 
-	.byte NoteF+Oct5, 2, 2, 1 
+	.byte NoteE+Oct5, 8, 4, 1 
+	.byte NoteG+Oct5, 8, 4, 1 
+	.byte NoteG+Oct5, 4, 4, 1 
+	.byte NoteF+Oct5, 4, 4, 1 
+	.byte NoteE+Oct5, 4, 4, 1 
+	.byte NoteF+Oct5, 2, 4, 1 
 
 	.byte 0						; terminator
 
 testBlockB2:
 	.byte $FF, 2, 0, 0		 	; rest
-	.byte NoteG+Oct3, 4, 2, 1  	; note, duration, volume, envelope
-	.byte NoteF+Oct4, 4, 2, 1
-	.byte NoteG+Oct4, 4, 2, 1
-	.byte NoteF+Oct4, 4, 2, 1
-	.byte NoteBb+Oct3, 4, 2, 1 	;
-	.byte NoteF+Oct4, 4, 2, 1
-	.byte NoteG+Oct4, 4, 2, 1
-	.byte NoteF+Oct4, 4, 2, 1
+	.byte NoteG+Oct3, 4, 5, 1  	; note, duration, volume, envelope
+	.byte NoteF+Oct4, 4, 5, 1
+	.byte NoteG+Oct4, 4, 5, 1
+	.byte NoteF+Oct4, 4, 5, 1
+	.byte NoteBb+Oct3,4, 5, 1 	;
+	.byte NoteF+Oct4, 4, 5, 1
+	.byte NoteG+Oct4, 4, 5, 1
+	.byte NoteF+Oct4, 4, 5, 1
 
-	.byte NoteA+Oct3, 4, 2, 1
-	.byte NoteF+Oct4, 4, 2, 1
-	.byte NoteG+Oct4, 4, 2, 1
-	.byte NoteF+Oct4, 4, 2, 1
-	.byte NoteAb+Oct3, 4, 2, 1 	;
-	.byte NoteF+Oct4, 4, 2, 1
-	.byte NoteG+Oct4, 4, 2, 1
-	.byte NoteF+Oct4, 4, 2, 1
+	.byte NoteA+Oct3, 4, 5, 1
+	.byte NoteF+Oct4, 4, 5, 1
+	.byte NoteG+Oct4, 4, 5, 1
+	.byte NoteF+Oct4, 4, 5, 1
+	.byte NoteAb+Oct3,4, 5, 1 	;
+	.byte NoteF+Oct4, 4, 5, 1
+	.byte NoteG+Oct4, 4, 5, 1
+	.byte NoteF+Oct4, 4, 5, 1
 
-	.byte NoteG+Oct3, 4, 2, 1
-	.byte NoteF+Oct4, 4, 2, 1
-	.byte NoteG+Oct4, 4, 2, 1
-	.byte NoteF+Oct4, 4, 2, 1
-	.byte NoteC+Oct4, 4, 2, 1	;
-	.byte NoteF+Oct4, 4, 2, 1
-	.byte NoteG+Oct4, 4, 2, 1
-	.byte NoteF+Oct4, 4, 2, 1
+	.byte NoteG+Oct3, 4, 5, 1
+	.byte NoteF+Oct4, 4, 5, 1
+	.byte NoteG+Oct4, 4, 5, 1
+	.byte NoteF+Oct4, 4, 5, 1
+	.byte NoteC+Oct4, 4, 5, 1	;
+	.byte NoteF+Oct4, 4, 5, 1
+	.byte NoteG+Oct4, 4, 5, 1
+	.byte NoteF+Oct4, 4, 5, 1
 
-	.byte NoteA+Oct3, 4, 2, 1
-	.byte NoteF+Oct4, 4, 2, 1
-	.byte NoteG+Oct4, 4, 2, 1
-	.byte NoteF+Oct4, 4, 2, 1
-	.byte NoteD+Oct4, 4, 2, 1	;
-	.byte NoteD+Oct4, 4, 2, 1
-	.byte NoteC+Oct4, 4, 2, 1
-	.byte NoteC+Oct4, 2, 2, 1
+	.byte NoteA+Oct3, 4, 5, 1
+	.byte NoteF+Oct4, 4, 5, 1
+	.byte NoteG+Oct4, 4, 5, 1
+	.byte NoteF+Oct4, 4, 5, 1
+	.byte NoteD+Oct4, 4, 5, 1	;
+	.byte NoteD+Oct4, 4, 5, 1
+	.byte NoteC+Oct4, 4, 5, 1
+	.byte NoteC+Oct4, 2, 5, 1
 
 	.byte 0						; terminator
 
@@ -264,34 +264,34 @@ testBlockEigthFiller:
 	.byte 0						; terminator
 
 testBlockT3:
-	.byte NoteC+Oct6, 4, 2, 1 	; note, duration, volume, envelope
-	.byte NoteF+Oct5, 4, 2, 1 
-	.byte NoteG+Oct5, 4, 2, 1 
-	.byte NoteF+Oct5, 4, 2, 1 
+	.byte NoteC+Oct6, 4, 2, 2 	; note, duration, volume, envelope
+	.byte NoteF+Oct5, 4, 2, 2 
+	.byte NoteG+Oct5, 4, 2, 2 
+	.byte NoteF+Oct5, 4, 2, 2 
 
-	.byte NoteB+Oct4, 4, 2, 1 
-	.byte NoteF+Oct5, 4, 2, 1 
-	.byte NoteG+Oct5, 4, 2, 1 
-	.byte NoteF+Oct5, 4, 2, 1 
+	.byte NoteB+Oct4, 4, 2, 2 
+	.byte NoteF+Oct5, 4, 2, 2 
+	.byte NoteG+Oct5, 4, 2, 2 
+	.byte NoteF+Oct5, 4, 2, 2 
 
-	.byte NoteBb+Oct4, 4, 2, 1 
-	.byte NoteF+Oct5, 4, 2, 1 
-	.byte NoteG+Oct5, 4, 2, 1 
-	.byte NoteBb+Oct5, 4, 2, 1 
+	.byte NoteBb+Oct4, 4, 2, 2 
+	.byte NoteF+Oct5, 4, 2, 2 
+	.byte NoteG+Oct5, 4, 2, 2 
+	.byte NoteBb+Oct5, 4, 2, 2 
 
-	.byte NoteA+Oct5, 4, 2, 1 
-	.byte NoteG+Oct5, 4, 2, 1 
-	.byte NoteF+Oct5, 4, 2, 1 
-	.byte NoteC+Oct5, 4, 2, 1 
+	.byte NoteA+Oct5, 4, 2, 2 
+	.byte NoteG+Oct5, 4, 2, 2 
+	.byte NoteF+Oct5, 4, 2, 2 
+	.byte NoteC+Oct5, 4, 2, 2 
 
 	.byte 0						; terminator
 
 testBlockB3:
-	.byte NoteF+Oct4, 16, 2, 0 	; note, duration, volume, envelope
-	.byte NoteG+Oct4, 16, 2, 1
+	.byte NoteF+Oct4, 16, 3, 1 	; note, duration, volume, envelope
+	.byte NoteG+Oct4, 16, 3, 1
 
-	.byte NoteBb+Oct3, 16, 2, 0
-	.byte NoteF+Oct4, 16, 2, 0
+	.byte NoteBb+Oct3,16, 3, 1
+	.byte NoteF+Oct4, 16, 3, 1
 
 	.byte 0						; terminator
 
@@ -509,14 +509,38 @@ inc_note_index:
 	jmp default_envelope
 
 envelope_1:
-	lda #7
-	sta chAtkRate,X 		; fast attack
+	lda #1
+	sta chAtkTime,X			; fast attack to sustain level
 
-	lda #2
-	sta chAtkTime,X
+	lda chSusLvl, X
+	lsr a
+	sta chAtkRate,X
 
 	lda #1
 	sta chDecRate,X 		; slow decay and release
+	sta chRelRate,X
+
+	lda #0
+	sta chCurLvl,X 			; start at currentLevel = sustainLevel
+
+	lda noteStepsLeft,X 	; multiply sustain time by step duration	
+	jsr _multiplyByStepDuration
+	sec
+	sbc #1
+	sec
+	sbc chSusLvl, X			; and subtract time for release
+	bcs set_sustain_time 	; if sus_time < 0: sus_time = 0
+	lda #0
+	jmp set_sustain_time
+
+envelope_2:
+	lda #2		 			; fast attack
+	sta chAtkTime,X
+	lda #4
+	sta chAtkRate,X
+
+	lda #2
+	sta chDecRate,X 		; fast decay and release
 	sta chRelRate,X
 
 	lda #0
@@ -525,27 +549,7 @@ envelope_1:
 	lda noteStepsLeft,X 	; multiply step count by step duration	
 	jsr _multiplyByStepDuration
 	sec
-	sbc #$11				; and subtract time for atk, dec,& rel
-	bcs set_sustain_time 	; if sus_time < 0: sus_time = 0
-	lda #0
-	jmp set_sustain_time
-
-envelope_2:
-	lda #15
-	sta chAtkTime,X			; slow attack
-
-	lda #1
-	sta chAtkRate,X
-	sta chDecRate,X 		; slow decay and release
-	sta chRelRate,X
-
-	lda #0
-	sta chCurLvl,X 			; start at currentLevel = 0
-
-	lda noteStepsLeft,X 	; multiply sustain time by step duration	
-	jsr _multiplyByStepDuration
-	sec
-	sbc #$1E				; and subtract time for atk, dec,& rel
+	sbc #10					; and subtract time for atk, dec,& rel
 	bcs set_sustain_time 	; if sus_time < 0: sus_time = 0
 	lda #0
 	jmp set_sustain_time
