@@ -187,7 +187,7 @@ testBlockB1:
 
 testBlockT2:
 	.byte NoteBb+Oct4, 1, 3, 1	; note, duration, volume, envelope
-	.byte NoteB+Oct4, 1, 4, 1 
+	.byte NoteB+Oct4,  1, 4, 1 
 	.byte NoteC+Oct5,  8, 4, 1 
 	.byte NoteC+Oct6,  4, 4, 1 
 	.byte NoteA+Oct5,  4, 4, 1 
