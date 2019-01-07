@@ -549,7 +549,7 @@ envelope_2:
 	lda noteStepsLeft,X 	; multiply step count by step duration	
 	jsr _multiplyByStepDuration
 	sec
-	sbc #10					; and subtract time for atk, dec,& rel
+	sbc #4					; and subtract time for atk, dec,& rel
 	bcs set_sustain_time 	; if sus_time < 0: sus_time = 0
 	lda #0
 	jmp set_sustain_time
