@@ -28,7 +28,7 @@ seqTimer:
 	.byte 0
 vibratoTimer:
 	.byte 0
-	
+
 ; == Channel State ==
 chNote: 			
 	.byte 0
@@ -372,9 +372,10 @@ envelope_ch0:
 	stx chStateOffset
 
 	jsr _stepChannelEnvelope
-	jsr _getPokeyValues
+	jsr _getPokeyAudFreqValue
+	sta AUDF1
+	jsr _getPokeyAudCtrlValue
 	sta AUDC1
-	stx AUDF1
 	ldy #0
 	jsr _setMissilePositionAtY	
 	
@@ -383,9 +384,10 @@ envelope_ch1:
 	stx chStateOffset
 
 	jsr _stepChannelEnvelope
-	jsr _getPokeyValues
+	jsr _getPokeyAudFreqValue
+	sta AUDF2
+	jsr _getPokeyAudCtrlValue
 	sta AUDC2
-	stx AUDF2
 	ldy #1
 	jsr _setMissilePositionAtY	
 	
@@ -394,9 +396,10 @@ envelope_ch2:
 	stx chStateOffset
 
 	jsr _stepChannelEnvelope
-	jsr _getPokeyValues
+	jsr _getPokeyAudFreqValue
+	sta AUDF3
+	jsr _getPokeyAudCtrlValue
 	sta AUDC3
-	stx AUDF3
 	ldy #2
 	jsr _setMissilePositionAtY	
 	
@@ -405,9 +408,10 @@ envelope_ch3:
 	stx chStateOffset
 
 	jsr _stepChannelEnvelope
-	jsr _getPokeyValues
+	jsr _getPokeyAudFreqValue
+	sta AUDF4
+	jsr _getPokeyAudCtrlValue
 	sta AUDC4
-	stx AUDF4
 	ldy #3
 	jsr _setMissilePositionAtY	
 	
@@ -488,14 +492,6 @@ get_envelope:
 	iny
 	lda (ptrBlock),Y 		
 	jsr _setEnvelope
-set_freq_vibr:
-	lda chNote,X 			; get note number
-	asl a					; noteTable has 2 bytes per item
-	tay
-	lda noteTable-2,Y		; freq = noteTable[Y].audf
-	sta chFreq,X
-	lda noteTable-1,Y		; vibr = noteTable[Y].vibrato
-	sta chVibr,X
 inc_note_index:
 	inc noteIndex,X
 	rts
@@ -656,18 +652,24 @@ return:
 .endproc
 
 
-.proc _getPokeyValues
-	; on entry: chStateOffset, vibratoTimer, and channel state are set
-	ldy chStateOffset
-	lda vibratoTimer
-	cmp chVibr,Y 		; if vibratoTimer < chVibr: increment audf value
-	lda chFreq,Y
-	bcs audf_to_x
-	adc #1
-audf_to_x:
+.proc _getPokeyAudFreqValue
+	; uses chStateOffset & vibratoTimer to return AUDF# value
+	ldx chStateOffset
+	lda chNote,X 			; X = note
+	asl a
 	tax
+	lda noteTable-2,X		; freq = noteTable[note].audf
+	tay 
+	lda vibratoTimer 		; if vibratoTimer < vibr: increment freq
+	cmp noteTable-1,X 		; vibr = noteTable[note].vibr
+	bcs return
+	iny
+return:
+	tya 
+	rts
+.endproc
 
-audctrl:
+.proc _getPokeyAudCtrlValue
 	ldy chStateOffset
 	lda chCurLvl,Y
 	cmp #$10
