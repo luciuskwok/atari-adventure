@@ -336,10 +336,8 @@ chSize = 16 		; bytes per channel state block
 channelState1to3:
 	.res chSize*3, $00
 
-	
-.code
-.proc _soundVBI
 
+.code
 	; POKEY 
 	AUDF1 = $D200
 	AUDC1 = $D201
@@ -349,6 +347,8 @@ channelState1to3:
 	AUDC3 = $D205
 	AUDF4 = $D206
 	AUDC4 = $D207
+
+.proc _soundVBI
 
 sound:
 	lda seqStepDur
@@ -390,6 +390,10 @@ envelope_ch0:
 	jsr _stepChannelEnvelope
 	jsr _getPokeyAudFreqValue
 	sta AUDF1
+	lda chCurLvl
+	jsr _setWaveTableEnabled
+	lda chCurLvl
+	jsr _setWaveTableLevel
 	;jsr _getPokeyAudCtrlValue ; channel 0 uses wavetable
 	;sta AUDC1
 	ldy #0
@@ -604,7 +608,7 @@ return:
 	rts
 .endproc
 
-.export _multiplyByStepDuration
+
 .proc _multiplyByStepDuration
 	; A = A * step duration
 	sta tmpMultiply 	; save original value in tmpMultiply
@@ -717,12 +721,72 @@ waveLength:
 waveIndex:
 	.byte 0
 waveTable:
-	.byte $10, $14, $18, $14
+	.byte $10, $10, $10, $10
 
 .code
 .proc _waveTableTimerInterrupt
+	txa
+	pha
+
+	ldx waveIndex
+	lda waveTable,X
+	sta AUDC1
+
+	inx 
+	cpx waveLength
+	bne store_index
+	ldx #0
+store_index:
+	stx waveIndex
+
+return:
+	pla
+	tax
 	pla
 	rti
+.endproc
+
+.proc _setWaveTableLevel
+	cmp #$0F
+	bcc skip_limiter
+	lda #$0F
+skip_limiter:
+	tax
+	ora #$10
+	sta waveTable+2
+	txa
+	lsr a
+	ora #$10
+	sta waveTable+1
+	sta waveTable+3
+	rts
+.endproc
+
+
+.proc _setWaveTableEnabled
+	POKMSK = $10
+	STIMER = $D209
+	IRQEN  = $D20E
+
+	cmp #0
+	bne set_enabled
+
+set_disabled:
+	lda #$C0 
+	sta POKMSK
+	sta IRQEN
+	rts
+
+set_enabled:
+	lda POKMSK
+	cmp #$C1
+	beq return
+	lda #$C1 
+	sta POKMSK
+	sta IRQEN
+	sta STIMER
+return:
+	rts
 .endproc
 
 
@@ -752,6 +816,7 @@ return:
 .proc _noteOn		 			
 	; on entry: A=note number
 	ldx #chSize*0 		; use channel 0		
+	stx chStateOffset
 
 	sta chNote,X
 
@@ -761,11 +826,12 @@ return:
 	lda #8
 	sta noteStepsLeft,X
 
-	lda #4
+	lda #7
 	sta chSusLvl,X
 
 	lda #1
 	jsr _setEnvelope
+
 	rts
 .endproc
 
@@ -775,6 +841,11 @@ return:
 	lda #0
 	sta chSusTime,X
 	sta chAtkTime,X
+	jsr _setWaveTableLevel
+
+	lda #0
+	jsr _setWaveTableEnabled
+
 	rts
 .endproc
 
@@ -815,6 +886,9 @@ return:
 
 
 .proc _stopSound
+	lda #0
+	jsr _setWaveTableEnabled
+
 	ldx #chSize*3
 loop:
 	lda #0
@@ -832,9 +906,16 @@ return:
 	rts
 .endproc
 
+
 .proc _initSound
-	AUDCTL= $D208
-	SKCTL = $D20F
+	VTIMR1 = $0210
+	AUDCTL = $D208
+	SKCTL  = $D20F
+
+	lda #<_waveTableTimerInterrupt
+	sta VTIMR1
+	lda #>_waveTableTimerInterrupt
+	sta VTIMR1+1
 
 	lda #0
 	sta AUDCTL
