@@ -28,14 +28,15 @@ seqTimer:
 	.byte 0
 vibratoTimer:
 	.byte 0
-
-chNote:
+	
+; == Channel State ==
+chNote: 			
 	.byte 0
 chFreq: 		
 	.byte 0
-chVibr: 		; duty cycle for vibrato
+chVibr: 			; duty cycle for vibrato
 	.byte 0
-chCurLvl:		; current volume level
+chCurLvl:			; current volume level
 	.byte 0
 chAtkTime:
 	.byte 0
@@ -549,7 +550,7 @@ envelope_2:
 	lda noteStepsLeft,X 	; multiply step count by step duration	
 	jsr _multiplyByStepDuration
 	sec
-	sbc #4					; and subtract time for atk, dec,& rel
+	sbc #5					; and subtract time for atk, dec,& rel
 	bcs set_sustain_time 	; if sus_time < 0: sus_time = 0
 	lda #0
 	jmp set_sustain_time
