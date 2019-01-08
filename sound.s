@@ -9,80 +9,6 @@
 .export _soundVBI	; called from immediateUserVBI
 .export _initSound 	; called from initVBI
 
-; Global variables
-
-.segment "EXTZP": zeropage
-ptrBlockList:
-	.word 0
-ptrBlock:
-	.word 0
-chStateOffset:
-	.byte 0
-tmpMultiply:
-	.byte 0
-
-.data
-seqStepDur:			; controls tempo
-	.byte 5 
-seqTimer:
-	.byte 0
-vibratoTimer:
-	.byte 0
-
-; == Channel State ==
-chNote: 			
-	.byte 0
-chCtrlMask: 			
-	.byte 0
-chCurLvl:			; current volume level
-	.byte 0
-chAtkTime:
-	.byte 0
-chAtkRate:
-	.byte 0
-chDecRate:
-	.byte 0
-chSusLvl:
-	.byte 0
-chSusTime:
-	.byte 0
-chRelRate:
-	.byte 0
-seqEnable:
-	.byte 0
-noteStepsLeft:
-	.byte 0
-noteIndex:
-	.byte 0
-blockIndex:
-	.byte 0
-blockListPtr:
-	.word 0
-
-chSize = 16 		; bytes per channel state block
-
-channelState1to3:
-	.res chSize*3, $00
-
-
-; Constants
-	; POKEY 
-	AUDF1 = $D200
-	AUDC1 = $D201
-	AUDF2 = $D202
-	AUDC2 = $D203
-	AUDF3 = $D204
-	AUDC3 = $D205
-	AUDF4 = $D206
-	AUDC4 = $D207
-	AUDCTL= $D208
-	SKCTL = $D20F
-
-	; GTIA
-	HPOSM0 = $D004		; Missile 0 horizontal position
-	HPOSM1 = $D005		; Missile 1
-	HPOSM2 = $D006		; Missile 2
-	HPOSM3 = $D007		; Missile 3
 
 ; Note and Octave constants
 	NoteC  = 1
@@ -356,11 +282,73 @@ testBlockListP:
 	.word testBlockEigthFiller
 	.word 0
 
-.code
 
+; Global variables
+
+.segment "EXTZP": zeropage
+ptrBlockList:
+	.word 0
+ptrBlock:
+	.word 0
+chStateOffset:
+	.byte 0
+tmpMultiply:
+	.byte 0
+
+.data
+seqStepDur:			; controls tempo
+	.byte 5 
+seqTimer:
+	.byte 0
+vibratoTimer:
+	.byte 0
+
+; == Channel State ==
+chNote: 			
+	.byte 0
+chCtrlMask: 			
+	.byte 0
+chCurLvl:			; current volume level
+	.byte 0
+chAtkTime:
+	.byte 0
+chAtkRate:
+	.byte 0
+chDecRate:
+	.byte 0
+chSusLvl:
+	.byte 0
+chSusTime:
+	.byte 0
+chRelRate:
+	.byte 0
+seqEnable:
+	.byte 0
+noteStepsLeft:
+	.byte 0
+noteIndex:
+	.byte 0
+blockIndex:
+	.byte 0
+blockListPtr:
+	.word 0
+chSize = 16 		; bytes per channel state block
+channelState1to3:
+	.res chSize*3, $00
+
+	
+.code
 .proc _soundVBI
 
-; ===== Sound Section =====
+	; POKEY 
+	AUDF1 = $D200
+	AUDC1 = $D201
+	AUDF2 = $D202
+	AUDC2 = $D203
+	AUDF3 = $D204
+	AUDC3 = $D205
+	AUDF4 = $D206
+	AUDC4 = $D207
 
 sound:
 	lda seqStepDur
@@ -390,6 +378,11 @@ step_ch2:
 	stx chStateOffset
 	jsr _stepChannelSequencer
 
+step_ch3:
+	ldx #chSize*3
+	stx chStateOffset
+	jsr _stepChannelSequencer
+
 envelope_ch0:
 	ldx #0
 	stx chStateOffset
@@ -397,8 +390,8 @@ envelope_ch0:
 	jsr _stepChannelEnvelope
 	jsr _getPokeyAudFreqValue
 	sta AUDF1
-	jsr _getPokeyAudCtrlValue
-	sta AUDC1
+	;jsr _getPokeyAudCtrlValue ; channel 0 uses wavetable
+	;sta AUDC1
 	ldy #0
 	jsr _setMissilePositionAtY	
 	
@@ -718,10 +711,30 @@ below_limit:
 	rts
 .endproc
 
+.data
+waveLength:
+	.byte 4
+waveIndex:
+	.byte 0
+waveTable:
+	.byte $10, $14, $18, $14
 
-ldy #0
+.code
+.proc _waveTableTimerInterrupt
+	pla
+	rti
+.endproc
+
+
 .proc _setMissilePositionAtY
 	; reads channel state and updates missile horizontal position
+
+	; GTIA
+	HPOSM0 = $D004		; Missile 0 horizontal position
+	HPOSM1 = $D005		; Missile 1
+	HPOSM2 = $D006		; Missile 2
+	HPOSM3 = $D007		; Missile 3
+
 	ldx chStateOffset
 	lda chCurLvl,X
 	beq set_position
@@ -738,7 +751,7 @@ return:
 
 .proc _noteOn		 			
 	; on entry: A=note number
-	ldx #chSize*3 		; use channel 3		
+	ldx #chSize*0 		; use channel 0		
 
 	sta chNote,X
 
@@ -758,7 +771,7 @@ return:
 
 
 .proc _noteOff
-	ldx #chSize*3
+	ldx #chSize*0
 	lda #0
 	sta chSusTime,X
 	sta chAtkTime,X
@@ -768,7 +781,7 @@ return:
 
 .proc _startSequence
 
-	ldx #0		 				; channel 0
+	ldx #chSize*1 				; channel 1
 	lda #0
 	sta seqEnable,X 			
 	sta noteStepsLeft,X
@@ -781,7 +794,7 @@ return:
 	lda #$E0
 	sta chCtrlMask,X 			; tone
 
-	ldx #chSize*1		 		; channel 1
+	ldx #chSize*2		 		; channel 2
 	lda #0
 	sta seqEnable,X 			
 	sta noteStepsLeft,X
@@ -794,21 +807,7 @@ return:
 	lda #$E0
 	sta chCtrlMask,X 			; tone
 
-	; ldx #chSize*2		 		; channel 2
-	; lda #0
-	; sta seqEnable,X 			
-	; sta noteStepsLeft,X
-	; sta noteIndex,X
-	; sta blockIndex,X
-	; lda #<testBlockListP
-	; sta blockListPtr,X
-	; lda #>testBlockListP
-	; sta blockListPtr+1,X
-	; lda #$80
-	; sta chCtrlMask,X 			; noise
-
 	lda #1 						; enable sequencer
-	sta seqEnable+chSize*0		; channel 0
 	sta seqEnable+chSize*1		; channel 1
 	sta seqEnable+chSize*2		; channel 2
 	rts
@@ -834,6 +833,9 @@ return:
 .endproc
 
 .proc _initSound
+	AUDCTL= $D208
+	SKCTL = $D20F
+
 	lda #0
 	sta AUDCTL
 	sta seqEnable+chSize*0
