@@ -44,6 +44,7 @@
 #define CHBAS (0x02F4)
 
 // Keyboard
+#define CH1 (0x02F2)
 #define CH_ (0x02FC)
 
 // Sprites (GTIA)

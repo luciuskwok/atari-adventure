@@ -77,7 +77,6 @@ static void handleMessage(SInt8 message) {
 }
 
 static void handleKeyboard(void) {
-	//static UInt8 previousKeycode = 0xFF;
 	UInt8 keycode = PEEK(CH_); // was POKEY_READ.kbcode
 	const UInt8 vol = 8;
 	UInt8 note = 0xFF;
@@ -126,28 +125,28 @@ static void handleKeyboard(void) {
 			break;
 		case KEY_Z:
 			startSequence();
+			note = 0xFE;
 			break;
 		case KEY_X:
 			stopSound();
-			break;
-		case KEY_SPACE:
 			note = 0xFE;
 			break;
 		default:
 			break;
 	}
-	if (note == 0xFE) {
-		noteOff();
-	} else if (note != 0xFF) {
-		if (shift) {
-			note += 12;
+	
+	if (note != 0xFF) {
+		if (note != 0xFE) {
+			if (shift) {
+				note += 12;
+			}
+			if (control) {
+				note += 24;
+			}
+			noteOn(note);
 		}
-		if (control) {
-			note += 24;
-		}
-		noteOn(note);
+		POKE(CH_, 0xFF);
 	}
-	POKE(CH_, 0xFF);
 }
 
 void runLoop(void) {

@@ -888,6 +888,8 @@ return:
 .proc _stopSound
 	lda #0
 	jsr _setWaveTableEnabled
+	lda #0
+	jsr _setWaveTableLevel
 
 	ldx #chSize*3
 loop:
