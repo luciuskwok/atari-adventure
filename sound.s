@@ -531,7 +531,7 @@ inc_note_index:
 	jmp default_envelope
 
 envelope_1:
-	lda #1
+	lda #2
 	sta chAtkTime,X			; fast attack to sustain level
 
 	lda chSusLvl, X
@@ -547,8 +547,7 @@ envelope_1:
 
 	lda noteStepsLeft,X 	; multiply sustain time by step duration	
 	jsr _multiplyByStepDuration
-	sec
-	sbc #1
+	ldx chStateOffset
 	sec
 	sbc chSusLvl, X			; and subtract time for release
 	bcs set_sustain_time 	; if sus_time < 0: sus_time = 0
@@ -746,10 +745,10 @@ return:
 	lda #$E0
 	sta chCtrlMask,X
 
-	lda #16
+	lda #8
 	sta noteStepsLeft,X
 
-	lda #8
+	lda #4
 	sta chSusLvl,X
 
 	lda #1
@@ -780,7 +779,7 @@ return:
 	lda #>testBlockListT
 	sta blockListPtr+1,X
 	lda #$E0
-	sta chCtrlMask,X
+	sta chCtrlMask,X 			; tone
 
 	ldx #chSize*1		 		; channel 1
 	lda #0
@@ -793,20 +792,20 @@ return:
 	lda #>testBlockListB
 	sta blockListPtr+1,X
 	lda #$E0
-	sta chCtrlMask,X
+	sta chCtrlMask,X 			; tone
 
-	ldx #chSize*2		 		; channel 2
-	lda #0
-	sta seqEnable,X 			
-	sta noteStepsLeft,X
-	sta noteIndex,X
-	sta blockIndex,X
-	lda #<testBlockListP
-	sta blockListPtr,X
-	lda #>testBlockListP
-	sta blockListPtr+1,X
-	lda #$80
-	sta chCtrlMask,X
+	; ldx #chSize*2		 		; channel 2
+	; lda #0
+	; sta seqEnable,X 			
+	; sta noteStepsLeft,X
+	; sta noteIndex,X
+	; sta blockIndex,X
+	; lda #<testBlockListP
+	; sta blockListPtr,X
+	; lda #>testBlockListP
+	; sta blockListPtr+1,X
+	; lda #$80
+	; sta chCtrlMask,X 			; noise
 
 	lda #1 						; enable sequencer
 	sta seqEnable+chSize*0		; channel 0
