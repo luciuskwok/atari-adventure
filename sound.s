@@ -32,9 +32,7 @@ vibratoTimer:
 ; == Channel State ==
 chNote: 			
 	.byte 0
-chFreq: 		
-	.byte 0
-chVibr: 			; duty cycle for vibrato
+chCtrlMask: 			
 	.byte 0
 chCurLvl:			; current volume level
 	.byte 0
@@ -296,6 +294,14 @@ testBlockB3:
 
 	.byte 0						; terminator
 
+testBlockP1:
+	.byte NoteC+Oct3, 8, 6, 3 	; note, duration, volume, envelope
+	.byte NoteC+Oct7, 8, 6, 3
+	.byte NoteF+Oct4, 8, 6, 3
+	.byte NoteC+Oct7, 8, 6, 3
+
+	.byte 0						; terminator
+
 testBlockRest:
 	.byte $FF, 32, 0, 0
 	.byte 0						; terminator
@@ -338,6 +344,18 @@ testBlockListB:
 	.word testBlockRest
 	.word 0
 
+testBlockListP:
+	.word testBlockP1
+	.word testBlockP1
+	.word testBlockP1
+	.word testBlockP1
+	.word testBlockP1
+	.word testBlockP1
+	.word testBlockP1
+	.word testBlockP1
+	.word testBlockEigthFiller
+	.word 0
+
 .code
 
 .proc _soundVBI
@@ -364,6 +382,11 @@ step_ch0:
 
 step_ch1:
 	ldx #chSize*1
+	stx chStateOffset
+	jsr _stepChannelSequencer
+
+step_ch2:
+	ldx #chSize*2
 	stx chStateOffset
 	jsr _stepChannelSequencer
 
@@ -470,7 +493,7 @@ get_note:
 	asl a					; 
 	tay						; use Y for offset from block start
 	lda (ptrBlock),Y		; get noteNumber
-	bne save_note_number 	; if noteNumber == 0: jump to next block
+	bne save_note_number	; if noteNumber == 0: jump to next block
 jump_to_next_block:
 	inc blockIndex,X		; blockIndex += 1
 	lda #0
@@ -503,6 +526,8 @@ inc_note_index:
 	beq envelope_1
 	cmp #2
 	beq envelope_2
+	cmp #3
+	beq envelope_3
 	jmp default_envelope
 
 envelope_1:
@@ -549,6 +574,19 @@ envelope_2:
 	sbc #5					; and subtract time for atk, dec,& rel
 	bcs set_sustain_time 	; if sus_time < 0: sus_time = 0
 	lda #0
+	jmp set_sustain_time
+
+envelope_3:
+	lda #0		 			; no attack
+	sta chAtkTime,X
+
+	lda #1
+	sta chAtkRate,X
+	sta chDecRate,X 		; slow decay and release
+	sta chRelRate,X
+
+	lda chSusLvl,X
+	sta chCurLvl,X 			; start at currentLevel = sustainLevel
 	jmp set_sustain_time
 
 default_envelope:
@@ -670,14 +708,14 @@ return:
 .endproc
 
 .proc _getPokeyAudCtrlValue
-	ldy chStateOffset
-	lda chCurLvl,Y
+	ldx chStateOffset
+	lda chCurLvl,X
 	cmp #$10
 	bcc below_limit
 	lda #$0F
 below_limit:
 	and #$0F
-	ora #$E0
+	ora chCtrlMask,X
 	rts
 .endproc
 
@@ -705,12 +743,8 @@ return:
 
 	sta chNote,X
 
-	asl a					; noteTable has 2 bytes per item
-	tay
-	lda noteTable-2,Y		; freq = noteTable[Y].audf
-	sta chFreq,X
-	lda noteTable-1,Y		; vibr = noteTable[Y].vibrato
-	sta chVibr,X
+	lda #$E0
+	sta chCtrlMask,X
 
 	lda #16
 	sta noteStepsLeft,X
@@ -745,6 +779,8 @@ return:
 	sta blockListPtr,X
 	lda #>testBlockListT
 	sta blockListPtr+1,X
+	lda #$E0
+	sta chCtrlMask,X
 
 	ldx #chSize*1		 		; channel 1
 	lda #0
@@ -756,12 +792,26 @@ return:
 	sta blockListPtr,X
 	lda #>testBlockListB
 	sta blockListPtr+1,X
+	lda #$E0
+	sta chCtrlMask,X
+
+	ldx #chSize*2		 		; channel 2
+	lda #0
+	sta seqEnable,X 			
+	sta noteStepsLeft,X
+	sta noteIndex,X
+	sta blockIndex,X
+	lda #<testBlockListP
+	sta blockListPtr,X
+	lda #>testBlockListP
+	sta blockListPtr+1,X
+	lda #$80
+	sta chCtrlMask,X
 
 	lda #1 						; enable sequencer
-	ldx #0		 				; channel 0
-	sta seqEnable,X
-	ldx #chSize		 			; channel 1
-	sta seqEnable,X
+	sta seqEnable+chSize*0		; channel 0
+	sta seqEnable+chSize*1		; channel 1
+	sta seqEnable+chSize*2		; channel 2
 	rts
 .endproc
 
