@@ -143,6 +143,9 @@ return:
 	
 	cpx #12				; 
 	beq party_stats
+	
+	cpx #13				; 
+	beq last_line
 
 	jmp return_dli
 	
@@ -167,6 +170,11 @@ chara_hp:
 party_stats:
 	lda TXTBKG			; border
 	sta COLPF2			; text box background color
+	jmp return_dli
+
+last_line:
+	lda COLOR2 			; restore colors for map in case VBI is missed
+	sta COLPF2
 
 return_dli:	
 	pla					; restore accumulator and X register from stack

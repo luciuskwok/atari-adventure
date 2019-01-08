@@ -127,7 +127,7 @@ static void writeMapViewDisplayList(void) {
 	dl[x++] = DL_BLK7;
 	dl[x++] = 15;
 	dl[x++] = dl_textWindowLine; 
-	dl[x++] = 15;
+	dl[x++] = 15 | dl_Interrupt;
 
 	writeDisplayListEnd(dl+x);
 }
