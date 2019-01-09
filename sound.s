@@ -591,7 +591,7 @@ sound:
 	beq execute_seq_step 		; if seqTimer == 0: execute sequencer step
 	dex							; else: seqTimer -= 1
 	stx seqTimer
-	jmp envelope_ch0
+	jmp check_seq_end
 
 execute_seq_step:
 	sta seqTimer 				; reset seqTimer = seqStepDur
@@ -599,13 +599,30 @@ execute_seq_step:
 	lda #chSize*4
 	sta chStateOffset
 
-step_seq_ch_loop:
+step_seq_loop:
 	sec 
 	sbc #chSize 
 	sta chStateOffset
+
 	jsr _stepChannelSequencer
+
 	lda chStateOffset
-	bne step_seq_ch_loop
+	bne step_seq_loop
+	jmp envelope_ch0
+
+check_seq_end:
+	lda #chSize*4
+	sta chStateOffset
+
+check_seq_end_loop:
+	sec 
+	sbc #chSize 
+	sta chStateOffset
+
+	jsr _checkForSeqenceEnd
+
+	lda chStateOffset
+	bne check_seq_end_loop
 
 envelope_ch0:
 	ldx #0
@@ -691,27 +708,21 @@ get_block_ptr:
 	lda (ptrBlockList),Y
 	sta ptrBlock+1
 
-	bne get_note 			; if ptrBlock == NULL: reset blockIndex
-	cpy #1
-	beq return				; if pointer at first index was NULL: return
-	lda #0
-	sta blockIndex,X		; else: blockIndex = 0; noteIndex = 0
-	sta noteIndex,X
-	jmp get_block_ptr
+	bne get_note 			; if ptrBlock == NULL: return
+	rts 
+
 get_note:
 	lda noteIndex,X	 		; offset = noteIndex * 4
 	asl a					; sequencer note unit is 4 bytes
 	asl a					; 
 	tay						; use Y for offset from block start
 	lda (ptrBlock),Y		; get noteNumber
-	bne save_note_number	; if noteNumber == 0: jump to next block
-jump_to_next_block:
-	inc blockIndex,X		; blockIndex += 1
-	lda #0
-	sta noteIndex,X			; noteIndex = 0
-	jmp get_block_ptr
+	bne save_note_number	; if noteNumber == 0: return
+	rts 
+
 save_note_number:
 	sta chNote,X 			; save note number
+
 get_duration:	
 	iny				
 	lda (ptrBlock),Y 		
@@ -734,16 +745,46 @@ inc_note_index:
 
 .proc _checkForSeqenceEnd
 	ldx chStateOffset
-	lda seqEnable,X			; if seqEnable == 0: return
-	beq return
+	lda seqEnable,X			; if seqEnable != 0: get block list ptr
+	bne get_block_list_ptr
+	rts
 
+get_block_list_ptr:
 	lda blockListPtr,X		; ptrBlockList = chState->blockListPtr
 	sta ptrBlockList
 	lda blockListPtr+1,X
 	sta ptrBlockList+1
 
-return:
+get_block_ptr:
+	lda blockIndex,X		; get blockIndex
+	asl a
+	tay 					; Y = blockIndex
+	lda (ptrBlockList),Y
+	sta ptrBlock
+	iny
+	lda (ptrBlockList),Y
+	sta ptrBlock+1
+
+	bne get_note 			; if ptrBlock == NULL: 
+	lda #0
+	sta blockIndex,X		; blockIndex = 0
+	sta noteIndex,X 		; noteIndex = 0
 	rts 
+
+get_note:
+	lda noteIndex,X	 		; offset = noteIndex * 4
+	asl a					; sequencer note unit is 4 bytes
+	asl a					; 
+	tay						; use Y for offset from block start
+	lda (ptrBlock),Y		; get noteNumber
+	beq jump_to_next_block	; if noteNumber == 0: jump to next block
+	rts 
+
+jump_to_next_block:
+	inc blockIndex,X		; blockIndex += 1
+	lda #0
+	sta noteIndex,X			; noteIndex = 0
+	jmp get_block_ptr
 .endproc
 
 
