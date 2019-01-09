@@ -3,6 +3,7 @@
 ; Exports
 .export _initVBI			; void __fastcall__ initVBI(void *addr);
 .export _immediateUserVBI
+.export _deferredUserVBI
 .export _mapViewDLI
 .export _battleViewDLI
 .export _infoViewDLI
@@ -39,6 +40,10 @@
 	WSYNC  = $D40A
 	VCOUNT = $D40B		; vertical line counter
 
+	; OS Vectors
+	SYSVBV = $E45F 		; exit immediate user VBI routine
+	XITVBV = $E462 		; exit deferred user VBI routine
+
 	CUR_SKIP  = 15		; number of frames to skip for color cycling
 	CUR_TIMER = $0600	; cursor color cycling frame skip countdown timer
 	VB_TIMER  = $0601	; general countdown timer that decrements every VBI
@@ -48,16 +53,22 @@
 
 .code
 
-.proc _initVBI		; on entry: X=MSB, A=LSB
-	tay				; move LSB to Y
-
+.proc _initVBI		; 
 	lda #CUR_SKIP	; init CUR_TIMER to CUR_SKIP
 	sta CUR_TIMER	
 
 	jsr _initSound
 
+	ldy #<_immediateUserVBI
+	ldx #>_immediateUserVBI
 	lda #6			; 6=Immediate, 7=Deferred.
 	jsr $E45C		; SETVBV: Y=LSB, X=MSB
+
+	ldy #<_deferredUserVBI
+	ldx #>_deferredUserVBI
+	lda #7			; 6=Immediate, 7=Deferred.
+	jsr $E45C		; SETVBV: Y=LSB, X=MSB
+
 	rts
 .endproc
 	
@@ -67,12 +78,16 @@
 	sta DLI_ROW
 	lda P3_XPOS			; HPOSP3 = P3_XPOS[0]
 	sta HPOSP3
+	jmp SYSVBV			; jump to the OS immediate VBI routine
+.endproc
 
+
+.proc _deferredUserVBI	
 	ldx VB_TIMER		; 4 ; sets Z flag if zero
 	beq update_cursor	; 2 ; skip decrement if already at zero
 	dex					; 2 
 	stx VB_TIMER		; 4
-	
+
 update_cursor:
 	ldx CUR_TIMER
 	bmi sound 			; if cur_timer > 127, leave the timer alone
@@ -115,7 +130,7 @@ sound:
 	jsr _soundVBI
 
 return:
-	jmp $E45F			; jump to the OS immediate VBI routine
+	jmp XITVBV
 .endproc
 
 
