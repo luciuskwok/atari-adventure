@@ -45,11 +45,11 @@
 	sta ptr2
 	lda _graphicsWindow+1
 	sta ptr2+1
-
 	ldx #9
 	lda #DL_TILE|DL_DLI|DL_HSCROL
 	jsr _writeDisplayListLinesInternal
 
+	; Add 6 blank lines
 	lda #DL_BLK6
 	sta (ptr1),Y
 	iny
@@ -59,7 +59,6 @@
 	sta ptr2
 	lda _textWindow+1
 	sta ptr2+1
-
 	ldx #3
 	lda #DL_TEXT|DL_DLI
 	jsr _writeDisplayListLinesInternal
@@ -108,7 +107,6 @@
 	sta ptr2
 	lda _graphicsWindow+1
 	sta ptr2+1
-
 	ldx #72
 	lda #DL_RASTER
 	jsr _writeDisplayListLinesInternal
@@ -118,7 +116,6 @@
 	sta ptr2
 	lda _textWindow+1
 	sta ptr2+1
-
 	ldx #7
 	lda #DL_TEXT|DL_DLI
 	jsr _writeDisplayListLinesInternal
@@ -131,6 +128,8 @@
 ; extern void __fastcall__ initBattleViewDisplay(void);
 .export _initBattleViewDisplay
 .proc _initBattleViewDisplay
+	rasterHeight = 48
+
 	jsr _initDisplayListVarsInternal
 
 	; Use graphicsWindow screen memory for raster
@@ -138,7 +137,6 @@
 	sta ptr2
 	lda _graphicsWindow+1
 	sta ptr2+1
-
 	ldx #48
 	lda #DL_RASTER
 	jsr _writeDisplayListLinesInternal
@@ -148,10 +146,10 @@
 	; Continue graphicsWindow for enemy HP bar chart
 	clc
 	lda ptr2
-	adc #$80 ; 48*40 = 1920 = $780
+	adc #<(rasterHeight*40) ; 48 * 40 = 1920 = $780
 	sta ptr2 
 	lda ptr2+1
-	adc #$07
+	adc #>(rasterHeight*40)
 	sta ptr2+1
 	jsr _writeDisplayListBarChartInternal
 
@@ -165,9 +163,40 @@
 	sta ptr2
 	lda _textWindow+1
 	sta ptr2+1
-
 	ldx #7
 	lda #DL_TEXT
+	jsr _writeDisplayListLinesInternal
+
+	; Continue using textWindow for bar chart
+	lda ptr2
+	clc 
+	adc #$18  ; 7 * 40 = 280 = $118
+	sta ptr2
+	lda ptr2+1
+	adc #$01
+	sta ptr2+1
+	jsr _writeDisplayListBarChartInternal
+
+	; Add 4-line spacer with DLI
+	lda #DL_BLK4|DL_DLI
+	sta (ptr1),Y
+	iny
+
+	; Add 4-line spacer
+	lda #DL_BLK4
+	sta (ptr1),Y
+	iny
+
+	; Return to raster graphics for button area
+	clc
+	lda _graphicsWindow 
+	adc #<((1+rasterHeight)*40)
+	sta ptr2
+	lda _graphicsWindow+1
+	adc #>((1+rasterHeight)*40)
+	sta ptr2+1
+	ldx #10
+	lda #DL_RASTER
 	jsr _writeDisplayListLinesInternal
 
 	jsr _writeDisplayListEndInternal

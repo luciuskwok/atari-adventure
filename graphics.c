@@ -110,33 +110,6 @@ static void writeDisplayListEnd(UInt8 *dl) {
 	dl[2] = PEEK(SDLSTL+1);
 }
 
-static void writeBattleViewDisplayList(void) {
-	UInt8 *dl = (UInt8 *)PEEKW(SDLSTL);
-	UInt8 *screen = graphicsWindow;
-	const UInt16 rasterHeight = 48;
-	UInt8 x = 3;
-
-	// Main raster area
-	x += writeDisplayListLines(dl+3, graphicsWindow, dl_rasterLine, rasterHeight); // 96
-	dl[x-1] |= dl_Interrupt; 
-
-	// Enemy HP bar
-	x += writeDisplayListBarChartLines(dl+x, graphicsWindow + (rasterHeight * SCREEN_ROW_BYTES)); // +8 = 104
-	dl[x++] = DL_BLK4; // +4 = 180
-
-	// Chara stats
-	x += writeDisplayListCustomTextLines(dl+x, 7); // +56 = 164
-	x += writeDisplayListBarChartLines(dl+x, textWindow + (7 * SCREEN_ROW_BYTES)); // +8 = 172
-	dl[x-1] |= dl_Interrupt; 
-
-	dl[x++] = DL_BLK8; // +8 = 180
-
-	screen += (rasterHeight + 1) * SCREEN_ROW_BYTES;
-	x += writeDisplayListLines(dl+x, screen, dl_rasterLine, 10); // +20 = 200
-
-	writeDisplayListEnd(dl+x);
-}
-
 static void writeInfoViewDisplayList(void) {
 	UInt8 *dl = (UInt8 *)PEEKW(SDLSTL);
 	UInt8 x = 3;
