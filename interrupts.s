@@ -78,6 +78,7 @@
 	sta DLI_ROW
 	lda P3_XPOS			; HPOSP3 = P3_XPOS[0]
 	sta HPOSP3
+	jsr _soundVBI
 	jmp SYSVBV			; jump to the OS immediate VBI routine
 .endproc
 
@@ -90,10 +91,10 @@
 
 update_cursor:
 	ldx CUR_TIMER
-	bmi sound 			; if cur_timer > 127, leave the timer alone
+	bmi return 			; if cur_timer > 127, leave the timer alone
 	dex 				; else --cur_timer
 	stx CUR_TIMER
-	bne sound 			; if cur_timer == 0, cycle the colors
+	bne return 			; if cur_timer == 0, cycle the colors
 
 cycle_color:
 	lda #CUR_SKIP		; reset cur_timer to cur_skip
@@ -125,9 +126,6 @@ color_is_even:
 set_player_color:
 	stx PCOLR0			; store new color value in players 0 and 1
 	stx PCOLR1
-
-sound:
-	jsr _soundVBI
 
 return:
 	jmp XITVBV
