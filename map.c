@@ -328,6 +328,7 @@ void transitionToMap(UInt8 mapType, UInt8 shouldFadeOut, UInt8 shouldFadeIn) {
 }
 
 void exitToOverworld(void) {
+	stopSong();
 	mapCurrentLocation = mapOverworldLocation;
 	mapSightDistance = 0xFF;
 	transitionToMap(OverworldMapType, 1, 1);
@@ -341,6 +342,7 @@ void enterDungeon(void) {
 }
 
 void enterTown(void) {
+	startSong(4);
 	mapSightDistance = 0xFF;
 	mapOverworldLocation = mapCurrentLocation;
 	mapCurrentLocation = townEntryPoint;

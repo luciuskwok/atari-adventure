@@ -271,160 +271,160 @@ song4_env = 4
 song4_vol = 4
 
 song4_block1t:
-	.byte NoteGb+Oct5, 4, song4_vol, song4_env
-	.byte NoteDb+Oct5, 4, song4_vol, song4_env
-	.byte NoteGb+Oct5, 4, song4_vol, song4_env
-	.byte NoteDb+Oct5, 4, song4_vol, song4_env
-	.byte NoteGb+Oct5, 4, song4_vol, song4_env
-	.byte NoteDb+Oct5, 4, song4_vol, song4_env
+	.byte NoteGb+Oct5, 2, song4_vol, song4_env
+	.byte NoteDb+Oct5, 2, song4_vol-1, song4_env
+	.byte NoteGb+Oct5, 2, song4_vol, song4_env
+	.byte NoteDb+Oct5, 2, song4_vol-1, song4_env
+	.byte NoteGb+Oct5, 2, song4_vol, song4_env
+	.byte NoteDb+Oct5, 2, song4_vol-1, song4_env
 	.byte 0 	; note, duration, volume, envelope
 
 song4_block1u:
-	.byte NoteD +Oct4, 4, song4_vol, song4_env
-	.byte NoteGb+Oct4, 4, song4_vol, song4_env
-	.byte NoteA +Oct4, 4, song4_vol, song4_env
-	.byte NoteGb+Oct4, 4, song4_vol, song4_env
-	.byte NoteA +Oct4, 4, song4_vol, song4_env
-	.byte NoteGb+Oct4, 4, song4_vol, song4_env
+	.byte NoteD +Oct4, 2, song4_vol, song4_env
+	.byte NoteGb+Oct4, 2, song4_vol-1, song4_env
+	.byte NoteA +Oct4, 2, song4_vol, song4_env
+	.byte NoteGb+Oct4, 2, song4_vol-1, song4_env
+	.byte NoteA +Oct4, 2, song4_vol, song4_env
+	.byte NoteGb+Oct4, 2, song4_vol-1, song4_env
 	.byte 0 	; note, duration, volume, envelope
 
 song4_block3t:
-	.byte NoteB +Oct4, 4, song4_vol, song4_env
-	.byte NoteA +Oct4, 4, song4_vol, song4_env
-	.byte NoteDb+Oct5, 7, song4_vol, song4_env
+	.byte NoteB +Oct4, 2, song4_vol, song4_env
+	.byte NoteA +Oct4, 2, song4_vol-1, song4_env
+	.byte NoteDb+Oct5, 3, song4_vol+1, song4_env
 	.byte Rest, 1, 0, 0
-	.byte NoteA +Oct4, 4, song4_vol, song4_env
-	.byte NoteB +Oct4, 4, song4_vol, song4_env
+	.byte NoteA +Oct4, 2, song4_vol, song4_env
+	.byte NoteB +Oct4, 2, song4_vol-1, song4_env
 	.byte 0 	; note, duration, volume, envelope
 
 song4_block3u:
-	.byte NoteB +Oct3, 4, song4_vol, song4_env
-	.byte NoteEb+Oct4, 4, song4_vol, song4_env
-	.byte NoteGb+Oct4, 4, song4_vol, song4_env
-	.byte NoteEb+Oct4, 4, song4_vol, song4_env
-	.byte NoteGb+Oct4, 4, song4_vol, song4_env
-	.byte NoteEb+Oct4, 4, song4_vol, song4_env
+	.byte NoteB +Oct3, 2, song4_vol, song4_env
+	.byte NoteEb+Oct4, 2, song4_vol-1, song4_env
+	.byte NoteGb+Oct4, 2, song4_vol, song4_env
+	.byte NoteEb+Oct4, 2, song4_vol-1, song4_env
+	.byte NoteGb+Oct4, 2, song4_vol, song4_env
+	.byte NoteEb+Oct4, 2, song4_vol-1, song4_env
 	.byte 0 	; note, duration, volume, envelope
 
 song4_block4t:
-	.byte NoteE +Oct5, 4, song4_vol, song4_env
-	.byte NoteEb+Oct5, 4, song4_vol, song4_env
-	.byte NoteE +Oct5, 4, song4_vol, song4_env
-	.byte NoteGb+Oct5, 4, song4_vol, song4_env
-	.byte NoteEb+Oct5, 4, song4_vol, song4_env
-	.byte NoteB +Oct4, 4, song4_vol, song4_env
+	.byte NoteE +Oct5, 2, song4_vol, song4_env
+	.byte NoteEb+Oct5, 2, song4_vol-1, song4_env
+	.byte NoteE +Oct5, 2, song4_vol, song4_env
+	.byte NoteGb+Oct5, 2, song4_vol-1, song4_env
+	.byte NoteEb+Oct5, 2, song4_vol, song4_env
+	.byte NoteB +Oct4, 2, song4_vol-1, song4_env
 	.byte 0 	; note, duration, volume, envelope
 
 song4_block5t:
-	.byte NoteGb+Oct5, 4, song4_vol, song4_env
-	.byte NoteB +Oct4, 4, song4_vol, song4_env
-	.byte NoteGb+Oct5, 4, song4_vol, song4_env
-	.byte NoteB +Oct4, 4, song4_vol, song4_env
-	.byte NoteGb+Oct5, 4, song4_vol, song4_env
-	.byte NoteB +Oct4, 4, song4_vol, song4_env
+	.byte NoteGb+Oct5, 2, song4_vol, song4_env
+	.byte NoteB +Oct4, 2, song4_vol-1, song4_env
+	.byte NoteGb+Oct5, 2, song4_vol, song4_env
+	.byte NoteB +Oct4, 2, song4_vol-1, song4_env
+	.byte NoteGb+Oct5, 2, song4_vol, song4_env
+	.byte NoteB +Oct4, 2, song4_vol-1, song4_env
 	.byte 0 	; note, duration, volume, envelope
 
 song4_block5u:
-	.byte NoteG +Oct3, 4, song4_vol, song4_env
-	.byte NoteB +Oct3, 4, song4_vol, song4_env
-	.byte NoteD +Oct4, 4, song4_vol, song4_env
-	.byte NoteB +Oct3, 4, song4_vol, song4_env
-	.byte NoteD +Oct4, 4, song4_vol, song4_env
-	.byte NoteB +Oct3, 4, song4_vol, song4_env
+	.byte NoteG +Oct3, 2, song4_vol, song4_env
+	.byte NoteB +Oct3, 2, song4_vol-1, song4_env
+	.byte NoteD +Oct4, 2, song4_vol, song4_env
+	.byte NoteB +Oct3, 2, song4_vol-1, song4_env
+	.byte NoteD +Oct4, 2, song4_vol, song4_env
+	.byte NoteB +Oct3, 2, song4_vol-1, song4_env
 	.byte 0 	; note, duration, volume, envelope
 
 song4_block6t:
-	.byte NoteGb+Oct5, 4, song4_vol, song4_env
-	.byte NoteBb+Oct4, 4, song4_vol, song4_env
-	.byte NoteGb+Oct5, 4, song4_vol, song4_env
-	.byte NoteBb+Oct4, 4, song4_vol, song4_env
-	.byte NoteG +Oct5, 7, song4_vol, song4_env
+	.byte NoteGb+Oct5, 2, song4_vol, song4_env
+	.byte NoteBb+Oct4, 2, song4_vol-1, song4_env
+	.byte NoteGb+Oct5, 2, song4_vol, song4_env
+	.byte NoteBb+Oct4, 2, song4_vol-1, song4_env
+	.byte NoteG +Oct5, 3, song4_vol+1, song4_env
 	.byte Rest, 1, 0, 0
 	.byte 0 	; note, duration, volume, envelope
 
 song4_block6u:
-	.byte NoteG +Oct3, 4, song4_vol, song4_env
-	.byte NoteBb+Oct3, 4, song4_vol, song4_env
-	.byte NoteD +Oct4, 4, song4_vol, song4_env
-	.byte NoteBb+Oct3, 4, song4_vol, song4_env
-	.byte NoteD +Oct4, 4, song4_vol, song4_env
-	.byte NoteBb+Oct3, 4, song4_vol, song4_env
+	.byte NoteG +Oct3, 2, song4_vol, song4_env
+	.byte NoteBb+Oct3, 2, song4_vol-1, song4_env
+	.byte NoteD +Oct4, 2, song4_vol, song4_env
+	.byte NoteBb+Oct3, 2, song4_vol-1, song4_env
+	.byte NoteD +Oct4, 2, song4_vol, song4_env
+	.byte NoteBb+Oct3, 2, song4_vol-1, song4_env
 	.byte 0 	; note, duration, volume, envelope
 
 song4_block7t:
-	.byte NoteGb+Oct5, 4, song4_vol, song4_env
-	.byte NoteD +Oct5, 4, song4_vol, song4_env
-	.byte NoteGb+Oct5, 4, song4_vol, song4_env
-	.byte NoteD +Oct5, 4, song4_vol, song4_env
-	.byte NoteE +Oct5, 4, song4_vol, song4_env
-	.byte NoteGb+Oct5, 4, song4_vol, song4_env
+	.byte NoteGb+Oct5, 2, song4_vol, song4_env
+	.byte NoteD +Oct5, 2, song4_vol-1, song4_env
+	.byte NoteGb+Oct5, 2, song4_vol, song4_env
+	.byte NoteD +Oct5, 2, song4_vol-1, song4_env
+	.byte NoteE +Oct5, 2, song4_vol, song4_env
+	.byte NoteGb+Oct5, 2, song4_vol-1, song4_env
 	.byte 0 	; note, duration, volume, envelope
 
 song4_block7u:
-	.byte NoteD +Oct4, 4, song4_vol, song4_env
-	.byte NoteGb+Oct4, 4, song4_vol, song4_env
-	.byte NoteA +Oct4, 4, song4_vol, song4_env
-	.byte NoteGb+Oct4, 4, song4_vol, song4_env
-	.byte NoteA +Oct4, 4, song4_vol, song4_env
-	.byte NoteGb+Oct4, 4, song4_vol, song4_env
+	.byte NoteD +Oct4, 2, song4_vol, song4_env
+	.byte NoteGb+Oct4, 2, song4_vol-1, song4_env
+	.byte NoteA +Oct4, 2, song4_vol, song4_env
+	.byte NoteGb+Oct4, 2, song4_vol-1, song4_env
+	.byte NoteA +Oct4, 2, song4_vol, song4_env
+	.byte NoteGb+Oct4, 2, song4_vol-1, song4_env
 	.byte 0 	; note, duration, volume, envelope
 
 song4_block8t:
-	.byte NoteE +Oct5, 7, song4_vol, song4_env
+	.byte NoteE +Oct5, 3, song4_vol+1, song4_env
 	.byte Rest, 1, 0, 0
-	.byte NoteD +Oct5, 7, song4_vol, song4_env
+	.byte NoteD +Oct5, 3, song4_vol, song4_env
 	.byte Rest, 1, 0, 0
-	.byte NoteDb+Oct5, 7, song4_vol, song4_env
+	.byte NoteDb+Oct5, 3, song4_vol-1, song4_env
 	.byte Rest, 1, 0, 0
 	.byte 0 	; note, duration, volume, envelope
 
 song4_block8u:
-	.byte NoteDb+Oct4, 4, song4_vol, song4_env
-	.byte NoteE +Oct4, 4, song4_vol, song4_env
-	.byte NoteA +Oct4, 4, song4_vol, song4_env
-	.byte NoteE +Oct4, 4, song4_vol, song4_env
-	.byte NoteA +Oct4, 4, song4_vol, song4_env
-	.byte NoteE +Oct4, 4, song4_vol, song4_env
+	.byte NoteDb+Oct4, 2, song4_vol+1, song4_env
+	.byte NoteE +Oct4, 2, song4_vol, song4_env
+	.byte NoteA +Oct4, 2, song4_vol, song4_env
+	.byte NoteE +Oct4, 2, song4_vol-1, song4_env
+	.byte NoteA +Oct4, 2, song4_vol-1, song4_env
+	.byte NoteE +Oct4, 2, song4_vol-2, song4_env
 	.byte 0 	; note, duration, volume, envelope
 
 song4_measureRest:
-	.byte Rest, 24, 0, 0
+	.byte Rest, 12, 0, 0
 	.byte 0
 
 song4_block8b1:
-	.byte Rest, 16, 0, 0
-	.byte NoteA +Oct4, 8, 8, 3
+	.byte Rest, 8, 0, 0
+	.byte NoteA +Oct4, 4, 8, 3
 	.byte 0
 
 song4_block1b:
-	.byte NoteD +Oct4, 24, 12, 3 ; 1
+	.byte NoteD +Oct4, 12, 12, 3 ; 1
 
-	.byte NoteA +Oct3, 16, 14, 3 ; 2
-	.byte NoteDb+Oct4,  8, 12, 3
+	.byte NoteA +Oct3,  8, 14, 3 ; 2
+	.byte NoteDb+Oct4,  4, 12, 3
 
-	.byte NoteB +Oct3, 24, 14, 3 ; 3
+	.byte NoteB +Oct3, 12, 14, 3 ; 3
 
-	.byte NoteGb+Oct3, 24, 14, 3 ; 4
+	.byte NoteGb+Oct3, 12, 14, 3 ; 4
 
-	.byte NoteG +Oct3,  8, 14, 3 ; 5
-	.byte Rest, 4, 0, 0
-	.byte NoteD +Oct4, 24, 12, 3
+	.byte NoteG +Oct3,  4, 14, 3 ; 5
+	.byte Rest, 2, 0, 0
+	.byte NoteD +Oct4, 12, 12, 3
 
-	.byte NoteBb+Oct3, 12, 14, 3 ; 6.5
+	.byte NoteBb+Oct3,  6, 14, 3 ; 6.5
 	.byte 0
 
 song4_block2b1:
-	.byte NoteA +Oct3, 24, 14, 3
+	.byte NoteA +Oct3, 12, 14, 3
 
-	.byte NoteA +Oct3, 8, 14, 3
-	.byte NoteG +Oct4, 4, 12, 3
-	.byte NoteG +Oct3, 4, 14, 3
-	.byte NoteDb+Oct4, 8, 12, 3
+	.byte NoteA +Oct3, 4, 14, 3
+	.byte NoteG +Oct4, 2, 12, 3
+	.byte NoteG +Oct3, 2, 14, 3
+	.byte NoteDb+Oct4, 4, 12, 3
 	.byte 0
 
 song4_block2b2:
-	.byte NoteD +Oct4, 24, 10, 3
-	.byte NoteD +Oct4, 24, 8, 3
+	.byte NoteD +Oct4, 12, 10, 3
+	.byte NoteD +Oct4, 12, 8, 3
 	.byte 0
 
 song4_blockListCh1:
@@ -1230,7 +1230,7 @@ switch:
 	jmp default
 
 play_song_4:
-	lda #3
+	lda #7
 	sta seqStepDur
 
 	lda #<song4_blockListCh0
