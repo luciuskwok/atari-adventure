@@ -311,34 +311,34 @@ song8_block2t:
 	.byte 0
 
 song8_block1b:
-	.byte NoteDb+Oct3, 5, 6, 1
-	.byte NoteD+Oct3, 3, 7, 1 
+	.byte NoteDb+Oct3, 5, 8, 1
+	.byte NoteD+Oct3, 3, 9, 1 
 	.byte $FF, 16, 0, 0 
-	.byte NoteA+Oct3, 3, 8, 1 
+	.byte NoteA+Oct3, 3, 10, 1 
 	.byte $FF, 1, 0, 0 
-	.byte NoteAb+Oct3, 3, 8, 1 
+	.byte NoteAb+Oct3, 3, 10, 1 
 	.byte $FF, 1, 0, 0 
 
-	.byte NoteDb+Oct3, 6, 7, 1
-	.byte NoteD+Oct3, 2, 7, 1 
+	.byte NoteDb+Oct3, 6, 9, 1
+	.byte NoteD+Oct3, 2, 9, 1 
 	.byte $FF, 5, 0, 0 
-	.byte NoteGb+Oct3, 3, 7, 11 
-	.byte NoteAb+Oct3, 16, 8, 1 
+	.byte NoteGb+Oct3, 3, 9, 11 
+	.byte NoteAb+Oct3, 16, 10, 1 
 	.byte 0
 
 song8_block2b:
-	.byte NoteD+Oct3, 5, 6, 1
-	.byte NoteEb+Oct3, 3, 7, 1 
+	.byte NoteD+Oct3, 5, 8, 1
+	.byte NoteEb+Oct3, 3, 9, 1 
 	.byte $FF, 16, 0, 0 
-	.byte NoteB+Oct3, 3, 8, 1 
+	.byte NoteB+Oct3, 3, 10, 1 
 	.byte $FF, 1, 0, 0 
-	.byte NoteBb+Oct3, 3, 8, 1 
+	.byte NoteBb+Oct3, 3, 10, 1 
 	.byte $FF, 1, 0, 0 
 
-	.byte NoteD+Oct3, 6, 7, 1
-	.byte NoteEb+Oct3, 2, 7, 1 
+	.byte NoteD+Oct3, 6, 9, 1
+	.byte NoteEb+Oct3, 2, 9, 1 
 	.byte $FF, 5, 0, 0 
-	.byte NoteBb+Oct3, 19, 8, 1 
+	.byte NoteBb+Oct3, 19, 10, 1 
 	.byte 0
 
 song8_blockListT:

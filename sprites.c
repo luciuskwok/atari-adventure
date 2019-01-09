@@ -68,10 +68,25 @@ void setCursorColorCycling(UInt8 cycle) {
 // Drawing
 
 void setTileSprite(UInt8 spriteIndex, UInt8 column, UInt8 row) {
-	// Set horizontal position for tile
+	// Add an overlay sprite for certain tiles. Mask sprites at edge of window, because of the half-width tiles at the left and right edges.
+	UInt8 y = row * 8 + PM_TOP_MARGIN;
+	UInt8 *p = (UInt8 *) ((384 + 128 * 4) + y + spriteArea);
+	const UInt8 *src = tileOverlaySprites[spriteIndex]->bytes;
+	UInt8 mask = 0xFF;
+	UInt8 i;
+
+	if (column == 0) {
+		mask = 0x0F;
+	} else if (column == 20) {
+		mask = 0xF0;
+	}
+
+	for (i=0; i<8; ++i) {
+		p[i] = src[i] & mask;
+	}	
+
 	P3_XPOS[row] = PM_LEFT_MARGIN - 4 + column * 8;
 	GTIA_WRITE.sizep3 = 0;
-	drawSprite(tileOverlaySprites[spriteIndex], 4, row * 8 + PM_TOP_MARGIN);
 }
 
 void drawSprite(const DataBlock *sprite, UInt8 player, UInt8 y) {
