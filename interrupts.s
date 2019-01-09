@@ -10,6 +10,7 @@
 
 ; Imports
 .import _soundVBI
+.import _updateSoundSprites
 .import _initSound
 
 
@@ -85,9 +86,12 @@
 
 .proc _deferredUserVBI	
 	ldx VB_TIMER		; 4 ; sets Z flag if zero
-	beq update_cursor	; 2 ; skip decrement if already at zero
+	beq update_sound_sprites	; 2 ; skip decrement if already at zero
 	dex					; 2 
 	stx VB_TIMER		; 4
+
+update_sound_sprites:
+	jsr _updateSoundSprites
 
 update_cursor:
 	ldx CUR_TIMER

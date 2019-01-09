@@ -2,6 +2,7 @@
 
 
 .export _soundVBI	; called from immediateUserVBI
+.export _updateSoundSprites	; called from deferredUserVBI
 .export _initSound 	; called from initVBI
 .importzp sp
 
@@ -595,25 +596,16 @@ sound:
 execute_seq_step:
 	sta seqTimer 				; reset seqTimer = seqStepDur
 
-step_ch0:
-	ldx #0
-	stx chStateOffset
-	jsr _stepChannelSequencer
+	lda #chSize*4
+	sta chStateOffset
 
-step_ch1:
-	ldx #chSize*1
-	stx chStateOffset
+step_seq_ch_loop:
+	sec 
+	sbc #chSize 
+	sta chStateOffset
 	jsr _stepChannelSequencer
-
-step_ch2:
-	ldx #chSize*2
-	stx chStateOffset
-	jsr _stepChannelSequencer
-
-step_ch3:
-	ldx #chSize*3
-	stx chStateOffset
-	jsr _stepChannelSequencer
+	lda chStateOffset
+	bne step_seq_ch_loop
 
 envelope_ch0:
 	ldx #0
@@ -624,10 +616,8 @@ envelope_ch0:
 	sta AUDF1
 	lda chCurLvl
 	jsr _setSquarishWaveTable
-	;jsr _getPokeyAudCtrlValue ; channel 0 uses wavetable
-	;sta AUDC1
-	ldy #0
-	jsr _setMissilePositionAtY	
+	lda chCurLvl
+	jsr _setWaveTableEnabled
 	
 envelope_ch1:
 	ldx #chSize*1
@@ -638,8 +628,6 @@ envelope_ch1:
 	sta AUDF2
 	jsr _getPokeyAudCtrlValue
 	sta AUDC2
-	ldy #1
-	jsr _setMissilePositionAtY	
 	
 envelope_ch2:
 	ldx #chSize*2
@@ -650,8 +638,6 @@ envelope_ch2:
 	sta AUDF3
 	jsr _getPokeyAudCtrlValue
 	sta AUDC3
-	ldy #2
-	jsr _setMissilePositionAtY	
 	
 envelope_ch3:
 	ldx #chSize*3
@@ -662,8 +648,6 @@ envelope_ch3:
 	sta AUDF4
 	jsr _getPokeyAudCtrlValue
 	sta AUDC4
-	ldy #3
-	jsr _setMissilePositionAtY	
 	
 vibrato_timer:
 	lda vibratoTimer 		; vibratoTimer += 1
@@ -746,6 +730,22 @@ inc_note_index:
 	inc noteIndex,X
 	rts
 .endproc
+
+
+.proc _checkForSeqenceEnd
+	ldx chStateOffset
+	lda seqEnable,X			; if seqEnable == 0: return
+	beq return
+
+	lda blockListPtr,X		; ptrBlockList = chState->blockListPtr
+	sta ptrBlockList
+	lda blockListPtr+1,X
+	sta ptrBlockList+1
+
+return:
+	rts 
+.endproc
+
 
 .proc _setEnvelope
 	pha
@@ -1094,40 +1094,11 @@ set_enabled:
 	lda #$C1 
 	sta POKMSK
 	sta IRQEN
-	sta STIMER 			; poke nonzero value to restart timers
+	;sta STIMER 			; poke nonzero value to restart timers
 return:
 	rts
 .endproc
 
-
-.proc _setMissilePositionAtY
-	; reads channel state and updates missile horizontal position
-
-	; GTIA
-	HPOSM0 = $D004		; Missile 0 horizontal position
-	HPOSM1 = $D005		; Missile 1
-	HPOSM2 = $D006		; Missile 2
-	HPOSM3 = $D007		; Missile 3
-
-	ldx chStateOffset
-	lda chCurLvl,X
-	beq set_position	; if currentLevel == 0: hide note
-	lda chNote,X		; get note
-
-	cpx #0 				; channel 0 is two octaves lower than others
-	beq shift_note
-	clc 
-	adc #24 			; if not ch=0: shift 2 octaves up
-
-shift_note:
-	asl a				; else: note = note * 2 + 46
-	clc
-	adc #46 			; since notes start from 1, while 48 is the normal left edge
-set_position:
-	sta HPOSM0,Y
-return:
-	rts
-.endproc
 
 ; void __fastcall__ noteOn(UInt8 note, UInt8 duration, UInt8 volume, UInt8 envelope, UInt8 noise, UInt8 channel);
 .export _noteOn			
@@ -1219,7 +1190,7 @@ switch:
 
 play_song_4:
 	lda #3
-	sta seqStepDur 				; fast tempo
+	sta seqStepDur
 
 	lda #<song4_blockListCh0
 	sta blockListPtr+chSize*0
@@ -1240,12 +1211,11 @@ play_song_4:
 	sta seqEnable+chSize*0
 	sta seqEnable+chSize*1
 	sta seqEnable+chSize*2
-	jsr _setWaveTableEnabled
 	rts
 
 play_song_8:
 	lda #5
-	sta seqStepDur 				; fast tempo
+	sta seqStepDur
 
 	lda #<song8_blockListB
 	sta blockListPtr+chSize*0
@@ -1268,7 +1238,6 @@ play_song_8:
 	sta seqEnable+chSize*0
 	sta seqEnable+chSize*1
 	sta seqEnable+chSize*2
-	jsr _setWaveTableEnabled
 	rts
 
 default:
@@ -1317,6 +1286,39 @@ loop:
 	lda #0 				
 	jsr _setWaveTableEnabled
 
+	rts
+.endproc
+
+
+.export _updateSoundSprites
+.proc _updateSoundSprites
+	HPOSM0 = $D004		; Missile 0 horizontal position
+
+	ldx #chSize*4
+	ldy #4
+loop: 
+	lda chCurLvl,X
+	beq set_position
+get_note:
+	lda chNote,X		; get note
+	cpx #0 				; channel 0 is two octaves lower than others
+	beq shift_note
+if_not_ch0:
+	clc 
+	adc #24 			; if not ch=0: shift 2 octaves up
+shift_note:
+	asl a				; else: note = note * 2 + 46
+	clc
+	adc #46 			; since notes start from 1, while 48 is the normal left edge
+set_position:
+	sta HPOSM0,Y 
+
+	dey 
+	txa 
+	sec 
+	sbc #chSize 
+	tax 
+	bcs loop
 	rts
 .endproc
 
