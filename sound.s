@@ -1,14 +1,9 @@
 ; sound.s
 
-; Exports
-.export _noteOn		; void __fastcall__ noteOn(UInt8 note);
-.export _noteOff	; void __fastcall__ noteOff(void);
-.export _startSequence ; void __fastcall__ startSequence(UInt8 song);
-.export _stopSound	; void __fastcall__ stopSound(void);
 
 .export _soundVBI	; called from immediateUserVBI
 .export _initSound 	; called from initVBI
-
+.importzp sp
 
 ; Note and Octave constants
 	NoteC  = 1
@@ -116,8 +111,8 @@ testBlockB1:
 	.byte 0						; terminator
 
 testBlockT2:
-	.byte NoteBb+Oct4, 1, 3, 11	; note, duration, volume, envelope
-	.byte NoteB+Oct4,  1, 4, 11 
+	.byte NoteBb+Oct4, 1, 3, 3	; note, duration, volume, envelope
+	.byte NoteB+Oct4,  1, 4, 3 
 	.byte NoteC+Oct5,  8, 4, 1 
 	.byte NoteC+Oct6,  4, 4, 1 
 	.byte NoteA+Oct5,  4, 4, 1 
@@ -128,8 +123,8 @@ testBlockT2:
 
 	.byte NoteG+Oct5,  8, 4, 1 
 	.byte NoteE+Oct6,  6, 4, 1 
-	.byte NoteEb+Oct6, 1, 3, 11 
-	.byte NoteD+Oct6,  1, 4, 11 
+	.byte NoteEb+Oct6, 1, 3, 3 
+	.byte NoteD+Oct6,  1, 4, 3 
 	.byte NoteC+Oct6, 16, 4, 1 
 
 	.byte NoteD+Oct5, 8, 4, 1 
@@ -273,10 +268,10 @@ testBlockListB:
 
 
 testBlockP1:
-	.byte NoteC+Oct3, 8, 6, 10 	; note, duration, volume, envelope
-	.byte NoteC+Oct7, 8, 6, 10
-	.byte NoteF+Oct4, 8, 6, 10
-	.byte NoteC+Oct7, 8, 6, 10
+	.byte NoteC+Oct3, 8, 6, 15 	; note, duration, volume, envelope
+	.byte NoteC+Oct7, 8, 6, 15
+	.byte NoteF+Oct4, 8, 6, 15
+	.byte NoteC+Oct7, 8, 6, 15
 
 	.byte 0						; terminator
 
@@ -297,48 +292,48 @@ testBlockListP:
 ; ==== Song: Unnecessary Tension ====
 
 song8_block1t:
-	.byte NoteDb+Oct6, 2, 3, 10 	; note, duration, volume, envelope
-	.byte NoteDb+Oct5, 2, 4, 10 
-	.byte NoteDb+Oct5, 2, 4, 10 
-	.byte NoteDb+Oct5, 2, 3, 10 
+	.byte NoteDb+Oct6, 2, 3, 15 	; note, duration, volume, envelope
+	.byte NoteDb+Oct5, 2, 4, 15 
+	.byte NoteDb+Oct5, 2, 4, 15 
+	.byte NoteDb+Oct5, 2, 3, 15 
 	.byte 0
 
 song8_block2t:
-	.byte NoteD+Oct6, 2, 3, 10
-	.byte NoteD+Oct5, 2, 4, 10 
-	.byte NoteD+Oct5, 2, 4, 10 
-	.byte NoteD+Oct5, 2, 3, 10 
+	.byte NoteD+Oct6, 2, 3, 15
+	.byte NoteD+Oct5, 2, 4, 15 
+	.byte NoteD+Oct5, 2, 4, 15 
+	.byte NoteD+Oct5, 2, 3, 15 
 	.byte 0
 
 song8_block1b:
-	.byte NoteDb+Oct3, 5, 8, 1
-	.byte NoteD+Oct3, 3, 9, 1 
+	.byte NoteDb+Oct3, 5, 9, 3
+	.byte NoteD+Oct3, 3, 12, 1 
 	.byte $FF, 16, 0, 0 
 	.byte NoteA+Oct3, 3, 10, 1 
 	.byte $FF, 1, 0, 0 
 	.byte NoteAb+Oct3, 3, 10, 1 
 	.byte $FF, 1, 0, 0 
 
-	.byte NoteDb+Oct3, 6, 9, 1
-	.byte NoteD+Oct3, 2, 9, 1 
-	.byte $FF, 5, 0, 0 
-	.byte NoteGb+Oct3, 3, 9, 11 
-	.byte NoteAb+Oct3, 16, 10, 1 
+	.byte NoteDb+Oct3, 6, 9, 3
+	.byte NoteD+Oct3, 2, 12, 1 
+	.byte $FF, 6, 0, 0 
+	.byte NoteGb+Oct3, 2, 9, 3 
+	.byte NoteAb+Oct3, 16, 11, 1 
 	.byte 0
 
 song8_block2b:
-	.byte NoteD+Oct3, 5, 8, 1
-	.byte NoteEb+Oct3, 3, 9, 1 
+	.byte NoteD+Oct3, 5, 8, 3
+	.byte NoteEb+Oct3, 3, 12, 1 
 	.byte $FF, 16, 0, 0 
 	.byte NoteB+Oct3, 3, 10, 1 
 	.byte $FF, 1, 0, 0 
 	.byte NoteBb+Oct3, 3, 10, 1 
 	.byte $FF, 1, 0, 0 
 
-	.byte NoteD+Oct3, 6, 9, 1
-	.byte NoteEb+Oct3, 2, 9, 1 
+	.byte NoteD+Oct3, 6, 9, 3
+	.byte NoteEb+Oct3, 2, 12, 1 
 	.byte $FF, 5, 0, 0 
-	.byte NoteBb+Oct3, 19, 10, 1 
+	.byte NoteBb+Oct3, 19, 11, 1 
 	.byte 0
 
 song8_blockListT:
@@ -598,10 +593,10 @@ inc_note_index:
 	beq envelope_1
 	cmp #2
 	beq envelope_2
-	cmp #10
-	beq envelope_10
-	cmp #11
-	beq envelope_11
+	cmp #3
+	beq envelope_3
+	cmp #15
+	beq envelope_15
 	jmp default_envelope
 
 envelope_1: 				; == Soft pad envelope ==
@@ -634,20 +629,7 @@ envelope_2: 				; == Typical melody envelope ==
 	jsr _calculateSustainTimeMinusA
 	rts
 
-envelope_10: 				; == Percussion envelope, no sustain ==
-	lda #0		 			; no attack
-	sta chAtkTime,X
-
-	lda #1
-	sta chAtkRate,X
-	sta chDecRate,X 		; slow decay and release
-	sta chRelRate,X
-
-	lda #0	
-	jsr _calculateSustainTimeMinusA
-	rts
-
-envelope_11: 				; == Soft pad envelope with sustain ==
+envelope_3: 				; == Soft pad envelope with sustain ==
 	lda #2
 	sta chAtkTime,X			; fast attack to sustain level
 
@@ -658,6 +640,19 @@ envelope_11: 				; == Soft pad envelope with sustain ==
 	sta chRelRate,X
 
 	lda #0
+	jsr _calculateSustainTimeMinusA
+	rts
+
+envelope_15: 				; == Percussion envelope, no sustain ==
+	lda #0		 			; no attack
+	sta chAtkTime,X
+
+	lda #2
+	sta chAtkRate,X
+	sta chDecRate,X 		; fast decay and release
+	sta chRelRate,X
+
+	lda #0	
 	jsr _calculateSustainTimeMinusA
 	rts
 
@@ -898,45 +893,55 @@ return:
 	rts
 .endproc
 
-
+; void __fastcall__ noteOn(UInt8 note, UInt8 duration, UInt8 volume, UInt8 envelope, UInt8 noise, UInt8 channel);
+.export _noteOn			
 .proc _noteOn		 			
-	; on entry: A=note number
-	ldx #chSize*3
-	stx chStateOffset
+	ldx #chSize  			; X = channel * chSize
+	jsr _multiplyAX
+	sta chStateOffset
+	tax 
 
+	ldy #4 					; get note
+	lda (sp),Y
 	sta chNote,X
 
-	lda #$E0
-	sta chCtrlMask,X
-
-	lda #8
+	ldy #3 					; get duration
+	lda (sp),Y
 	sta noteStepsLeft,X
 
-	lda #7
+	ldy #2 					; get volume
+	lda (sp),Y
 	sta chSusLvl,X
 
-	lda #11
+	ldy #0 					; get noise
+	lda (sp),Y
+	sta chCtrlMask,X
+
+	ldy #1 					; get envelope
+	lda (sp),Y
 	jsr _setEnvelope
 
 	rts
 .endproc
 
-
+; void __fastcall__ noteOff(UInt8 channel);
+.export _noteOff	
 .proc _noteOff
-	ldx #chSize*3
+	; This will allow notes to use their natural release rate
+	ldx #chSize 		; A = channel * chSize
+	jsr _multiplyAX
+	tax
+
 	lda #0
 	sta chSusTime,X
 	sta chAtkTime,X
-	jsr _setWaveTableLevel
-
-	lda #0
-	jsr _setWaveTableEnabled
 
 	rts
 .endproc
 
-
-.proc _startSequence
+; void __fastcall__ startSong(UInt8 song);
+.export _startSong 
+.proc _startSong
 	tay 					; save song parameter in Y
 
 	ldx #chSize*4 			; reset all channels
@@ -1002,15 +1007,16 @@ default:
 	rts
 .endproc
 
-
-.proc _stopSound
-	lda #0
-	jsr _setWaveTableEnabled
-	lda #0
-	jsr _setWaveTableLevel
-
-	ldx #chSize*3
+; void __fastcall__ stopSong(void);
+.export _stopSong	
+.proc _stopSong
+	ldx #chSize*4
 loop:
+	txa 				; X -= chSize
+	sec
+	sbc #chSize
+	tax
+
 	lda #0
 	sta seqEnable,X
 	sta chSusTime,X
@@ -1018,14 +1024,10 @@ loop:
 	sta noteStepsLeft,X
 	sta noteIndex,X
 	sta blockIndex,X
-	cpx #0
-	beq return
-	txa
-	sec
-	sbc #chSize
-	tax
-	jmp loop
-return:
+
+	cpx #0 				; while X > 0: loop
+	bne loop
+
 	rts
 .endproc
 

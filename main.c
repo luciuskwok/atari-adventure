@@ -40,16 +40,16 @@ UInt16 startTime;
 UInt16 duration;
 #endif
 
-void __fastcall__ noteOn(UInt8 note);
-void __fastcall__ noteOff(void);
-void __fastcall__ startSequence(UInt8 song);
-void __fastcall__ stopSound(void);
+void __fastcall__ noteOn(UInt8 note, UInt8 duration, UInt8 volume, UInt8 envelope, UInt8 noise, UInt8 channel);
+void __fastcall__ noteOff(UInt8 channel);
+void __fastcall__ startSong(UInt8 song);
+void __fastcall__ stopSong(void);
 
 // Dialog functions
 
 static void fadeOutScreen(void) {
 	// Fade out
-	stopSound();
+	stopSong();
 	fadeOutColorTable(FadeTextBox);
 	clearSprite(4);
 	hideSprites();
@@ -124,15 +124,15 @@ static void handleKeyboard(void) {
 			note = 13;
 			break;
 		case KEY_Z:
-			startSequence(0);
+			startSong(0);
 			note = 0xFE;
 			break;
 		case KEY_X:
-			startSequence(1);
+			startSong(1);
 			note = 0xFE;
 			break;
 		case KEY_SPACE:
-			stopSound();
+			stopSong();
 			note = 0xFE;
 			break;
 		default:
@@ -147,7 +147,8 @@ static void handleKeyboard(void) {
 			if (control) {
 				note += 24;
 			}
-			noteOn(note);
+			//noteOn(note, 8, 7, 11, 0xE0, 3);
+			noteOn(note, 2, 7, 3, 0x80, 0);
 		}
 		POKE(CH_, 0xFF);
 	}
