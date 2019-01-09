@@ -1,9 +1,7 @@
 ; interrupts.s
 
 ; Exports
-.export _initVBI			; void __fastcall__ initVBI(void *addr);
-.export _immediateUserVBI
-.export _deferredUserVBI
+.export _initVBI			; void __fastcall__ initVBI(void);
 .export _mapViewDLI
 .export _battleViewDLI
 .export _infoViewDLI

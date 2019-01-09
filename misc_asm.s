@@ -1,22 +1,5 @@
 ; misc_asm.s
 
-.export _decodeRunLenRange 
-; extern void __fastcall__ decodeRunLenRange(UInt8 *outData, UInt8 skip, UInt8 length, const UInt8 *runLenData);
-
-.export _stringConcat 		
-; extern void __fastcall__ stringConcat(UInt8 *dst, const UInt8 *src);
-
-.export _stringCopy 	
-; extern void __fastcall__ stringCopy(UInt8 *dst, const UInt8 *src);
-
-.export _stringLength 	
-; extern UInt8 __fastcall__ stringLength(UInt8 *s);
-
-.export _toAtascii
-; extern UInt8 __fastcall__ toAtascii(UInt8 c);
-
-.export _printLine
-; extern void __fastcall__ printLine(UInt8 *s);
 
 .import 	pushax
 .import		incsp2, incsp4
@@ -32,6 +15,8 @@ COLCRS = $55
 SAVMSC = $58
 
 
+; extern void __fastcall__ decodeRunLenRange(UInt8 *outData, UInt8 skip, UInt8 length, const UInt8 *runLenData);
+.export _decodeRunLenRange 
 .proc _decodeRunLenRange
 .code
 IN = ptr1				; $8A
@@ -155,6 +140,9 @@ return:
 	rts
 .endproc
 
+
+; extern void __fastcall__ stringConcat(UInt8 *dst, const UInt8 *src);
+.export _stringConcat 		
 .proc _stringConcat
 ; uses ptr1, ptr2
 ; ptr1 is _stringLength parameter.
@@ -182,6 +170,9 @@ DST = ptr1
 	rts
 .endproc
 
+
+; extern void __fastcall__ stringCopy(UInt8 *dst, const UInt8 *src);
+.export _stringCopy 	
 .proc _stringCopy
 ; uses ptr1, ptr2
 SRC = ptr2
@@ -215,6 +206,9 @@ return:
 	rts
 .endproc
 
+
+; extern UInt8 __fastcall__ stringLength(UInt8 *s);
+.export _stringLength 	
 .proc _stringLength
 ; uses ptr1
 STR = ptr1
@@ -239,6 +233,9 @@ return:
 	rts
 .endproc
 
+
+; extern UInt8 __fastcall__ toAtascii(UInt8 c);
+.export _toAtascii
 .proc _toAtascii
 	cmp #$20			; if A < $20: 
 	bcs mid_char
@@ -253,38 +250,53 @@ return:
 	rts
 .endproc
 
+
+
+.proc _multiplyAXtoPtr1
+	; Uses ptr2. Returns result in ptr1
+	sta ptr2 			; ptr2 = A
+	lda #0
+	sta ptr2+1
+	sta ptr1 
+	sta ptr1+1
+	jmp while
+loop:
+	txa  				; X >>= 1
+	lsr a 
+	tax 
+	bcc shift_ptr2 		; if a bit fell off, add ptr2 to ptr1
+add_ptr2:
+	clc
+	lda ptr1 
+	adc ptr2 
+	sta ptr1 
+	lda ptr1+1  		; add any carry to MSB
+	adc ptr2+1
+	sta ptr1+1
+shift_ptr2:
+	asl ptr2 
+	rol ptr2+1
+while:
+	cpx #0
+	bne loop
+	rts
+.endproc
+
+
+; extern void __fastcall__ printLine(UInt8 *s);
+.export _printLine
 .proc _printLine
 	; uses ptr1, ptr2, AY
 	cpx #0
 	beq next_line		; if s == NULL: jump to next line
 
-	sta ptr2			; ptr2 = s
-	stx ptr2+1
+	pha  				; push s onto stack
+	txa 
+	pha 
 
 	lda ROWCRS			; ptr1 = *ROWCRS
-	sta ptr1
-	ldx #0
-	stx ptr1+1
-
-	asl ptr1			; ptr1 *= 40 aka b101000
-	rol ptr1+1
-	asl ptr1
-	rol ptr1+1
-
-	clc 
-	lda ptr1
-	adc ROWCRS
-	sta ptr1
-	lda ptr1+1
-	adc #0
-	sta ptr1+1
-
-	asl ptr1
-	rol ptr1+1
-	asl ptr1
-	rol ptr1+1
-	asl ptr1
-	rol ptr1+1
+	ldx #40
+	jsr _multiplyAXtoPtr1
 
 	clc 				; ptr1 += *SAVMSC
 	lda ptr1
@@ -301,6 +313,11 @@ return:
 	lda ptr1+1
 	adc #0
 	sta ptr1+1			; ptr1 now points at screen cell to start at
+
+	pla  				; ptr2 = s
+	sta ptr2+1
+	pla 
+	sta ptr2 
 
 	ldy #0
 loop:

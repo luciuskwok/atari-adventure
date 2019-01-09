@@ -35,8 +35,7 @@
 #include <atari.h>
 #include <string.h>
 
-extern void __fastcall__ initVBI(void *addr);
-extern void __fastcall__ immediateUserVBI(void);
+extern void __fastcall__ initVBI(void);
 extern void __fastcall__ mapViewDLI(void);
 extern void __fastcall__ battleViewDLI(void);
 extern void __fastcall__ infoViewDLI(void);
@@ -312,18 +311,6 @@ void fadeInColorTable(UInt8 fadeOptions, const UInt8 *colorTable) {
 
 // Color Table
 
-void loadColorTable(const UInt8 *colors) {
-	UInt8 *p = (UInt8*)(PCOLR0);
-	UInt8 i;
-	if (colors) {
-		for (i=0; i<12; ++i) {
-			p[i] = colors[i];
-		}
-	} else {
-		memset(p, 0, 12);
-	}
-}
-
 /*
 void setBackgroundGradient(const UInt8 *data) {
 	// colors: array of { length, value } tuples, with NULL terminator
@@ -462,7 +449,7 @@ void initGraphics(void) {
 	// Turn off screen during init and leave it off for main to turn back on.
 	POKE (SDMCTL, 0);
 
-	initVBI(immediateUserVBI); // Safe value: 0xE45F
+	initVBI(); // Safe value: 0xE45F
 	
 	// Set color table to all black
 	loadColorTable(NULL);

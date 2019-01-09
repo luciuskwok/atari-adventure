@@ -33,9 +33,6 @@ enum FadeOptions {
 void fadeOutColorTable(UInt8 fadeOptions);
 void fadeInColorTable(UInt8 fadeOptions, const UInt8 *colorTable);
 
-// Color Table
-void loadColorTable(const UInt8 *colors);
-
 // Drawing
 void drawBarChart(UInt8 *screen, UInt8 x, UInt8 y, UInt8 width, UInt8 filled);
 SInt8 drawImage(const DataBlock *image, UInt8 rowOffset, UInt8 rowCount);
@@ -46,5 +43,8 @@ void waitVsync(UInt8 ticks);
 
 // Init
 void initGraphics(void);
+
+// Assembly routines
+extern void __fastcall__ loadColorTable(const UInt8 *colors);
 
 #endif

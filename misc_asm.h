@@ -10,4 +10,3 @@ extern UInt8 __fastcall__ stringLength(UInt8 *s);
 extern UInt8 __fastcall__ toAtascii(UInt8 c);
 
 extern void __fastcall__ printLine(const UInt8 *s);
-

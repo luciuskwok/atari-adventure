@@ -525,7 +525,7 @@ ptrBlock:
 	.word 0
 chStateOffset:
 	.byte 0
-tmpMultiply:
+vbiTmp1:
 	.byte 0
 
 .data
@@ -901,7 +901,7 @@ default_envelope:
 	ldx chStateOffset
 	lda noteStepsLeft,X 	; multiply note steps * step duration	
 	ldx seqStepDur
-	jsr _multiplyAX
+	jsr _vbiMultiplyAX
 
 	tsx 
 	sec 
@@ -918,9 +918,10 @@ set_sustain_time:
 	rts
 .endproc
 
-.proc _multiplyAX
+.proc _vbiMultiplyAX
 	; returns A * X in A
-	sta tmpMultiply 	; save original value in tmpMultiply
+	; for use in VBI only
+	sta vbiTmp1 	; save original value in vbiTmp1
 	lda #0
 	jmp while
 loop:
@@ -931,9 +932,9 @@ loop:
 	tya
 	bcc continue
 	clc
-	adc tmpMultiply
+	adc vbiTmp1
 continue:
-	asl tmpMultiply
+	asl vbiTmp1
 while:
 	cpx #0
 	bne loop
@@ -1145,7 +1146,7 @@ return:
 .export _noteOn			
 .proc _noteOn		 			
 	ldx #chSize  			; X = channel * chSize
-	jsr _multiplyAX
+	jsr _vbiMultiplyAX
 	sta chStateOffset
 	tax 
 
@@ -1185,7 +1186,7 @@ return:
 ;.proc _noteOff
 ;	; This will allow notes to use their natural release rate
 ;	ldx #chSize 		; A = channel * chSize
-;	jsr _multiplyAX
+;	jsr _vbiMultiplyAX
 ;	tax
 ;
 ;	lda #0
