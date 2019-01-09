@@ -124,6 +124,10 @@ static void handleKeyboard(void) {
 			note = 0xFE;
 			break;
 		case KEY_X:
+			startSong(4);
+			note = 0xFE;
+			break;
+		case KEY_C:
 			startSong(8);
 			note = 0xFE;
 			break;

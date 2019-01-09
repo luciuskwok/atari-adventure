@@ -264,6 +264,185 @@ song0_blockListB: 				; bass
 	.word 0
 
 ; =================================================================
+; ==== Song 4: Fallen Down ====
+
+song4_env = 4
+
+song4_block1t:
+	.byte NoteGb+Oct5, 4, 4, song4_env
+	.byte NoteDb+Oct5, 4, 4, song4_env
+	.byte NoteGb+Oct5, 4, 4, song4_env
+	.byte NoteDb+Oct5, 4, 4, song4_env
+	.byte NoteGb+Oct5, 4, 4, song4_env
+	.byte NoteDb+Oct5, 4, 4, song4_env
+	.byte 0 	; note, duration, volume, envelope
+
+song4_block1u:
+	.byte NoteD +Oct4, 4, 4, song4_env
+	.byte NoteGb+Oct4, 4, 4, song4_env
+	.byte NoteA +Oct4, 4, 4, song4_env
+	.byte NoteGb+Oct4, 4, 4, song4_env
+	.byte NoteA +Oct4, 4, 4, song4_env
+	.byte NoteGb+Oct4, 4, 4, song4_env
+	.byte 0 	; note, duration, volume, envelope
+
+song4_block3t:
+	.byte NoteB +Oct4, 4, 4, song4_env
+	.byte NoteA +Oct4, 4, 4, song4_env
+	.byte NoteDb+Oct5, 7, 4, song4_env
+	.byte Rest, 1, 0, 0
+	.byte NoteA +Oct4, 4, 4, song4_env
+	.byte NoteB +Oct4, 4, 4, song4_env
+	.byte 0 	; note, duration, volume, envelope
+
+song4_block3u:
+	.byte NoteB +Oct3, 4, 4, song4_env
+	.byte NoteEb+Oct4, 4, 4, song4_env
+	.byte NoteGb+Oct4, 4, 4, song4_env
+	.byte NoteEb+Oct4, 4, 4, song4_env
+	.byte NoteGb+Oct4, 4, 4, song4_env
+	.byte NoteEb+Oct4, 4, 4, song4_env
+	.byte 0 	; note, duration, volume, envelope
+
+song4_block4t:
+	.byte NoteE +Oct5, 4, 4, song4_env
+	.byte NoteEb+Oct5, 4, 4, song4_env
+	.byte NoteE +Oct5, 4, 4, song4_env
+	.byte NoteGb+Oct5, 4, 4, song4_env
+	.byte NoteEb+Oct5, 4, 4, song4_env
+	.byte NoteB +Oct4, 4, 4, song4_env
+	.byte 0 	; note, duration, volume, envelope
+
+song4_block5t:
+	.byte NoteGb+Oct5, 4, 4, song4_env
+	.byte NoteB +Oct4, 4, 4, song4_env
+	.byte NoteGb+Oct5, 4, 4, song4_env
+	.byte NoteB +Oct4, 4, 4, song4_env
+	.byte NoteGb+Oct5, 4, 4, song4_env
+	.byte NoteB +Oct4, 4, 4, song4_env
+	.byte 0 	; note, duration, volume, envelope
+
+song4_block5u:
+	.byte NoteG +Oct3, 4, 4, song4_env
+	.byte NoteB +Oct3, 4, 4, song4_env
+	.byte NoteD +Oct4, 4, 4, song4_env
+	.byte NoteB +Oct3, 4, 4, song4_env
+	.byte NoteD +Oct4, 4, 4, song4_env
+	.byte NoteB +Oct3, 4, 4, song4_env
+	.byte 0 	; note, duration, volume, envelope
+
+song4_block6t:
+	.byte NoteGb+Oct5, 4, 4, song4_env
+	.byte NoteBb+Oct4, 4, 4, song4_env
+	.byte NoteGb+Oct5, 4, 4, song4_env
+	.byte NoteBb+Oct4, 4, 4, song4_env
+	.byte NoteG +Oct5, 7, 4, song4_env
+	.byte Rest, 1, 0, 0
+	.byte 0 	; note, duration, volume, envelope
+
+song4_block6u:
+	.byte NoteG +Oct3, 4, 4, song4_env
+	.byte NoteBb+Oct3, 4, 4, song4_env
+	.byte NoteD +Oct4, 4, 4, song4_env
+	.byte NoteBb+Oct3, 4, 4, song4_env
+	.byte NoteD +Oct4, 4, 4, song4_env
+	.byte NoteBb+Oct3, 4, 4, song4_env
+	.byte 0 	; note, duration, volume, envelope
+
+song4_block7t:
+	.byte NoteGb+Oct5, 4, 4, song4_env
+	.byte NoteD +Oct5, 4, 4, song4_env
+	.byte NoteGb+Oct5, 4, 4, song4_env
+	.byte NoteD +Oct5, 4, 4, song4_env
+	.byte NoteE +Oct5, 4, 4, song4_env
+	.byte NoteGb+Oct5, 4, 4, song4_env
+	.byte 0 	; note, duration, volume, envelope
+
+song4_block7u:
+	.byte NoteD +Oct4, 4, 4, song4_env
+	.byte NoteGb+Oct4, 4, 4, song4_env
+	.byte NoteA +Oct4, 4, 4, song4_env
+	.byte NoteGb+Oct4, 4, 4, song4_env
+	.byte NoteA +Oct4, 4, 4, song4_env
+	.byte NoteGb+Oct4, 4, 4, song4_env
+	.byte 0 	; note, duration, volume, envelope
+
+song4_block8t:
+	.byte NoteE +Oct5, 7, 4, song4_env
+	.byte Rest, 1, 0, 0
+	.byte NoteD +Oct5, 7, 4, song4_env
+	.byte Rest, 1, 0, 0
+	.byte NoteDb+Oct5, 7, 4, song4_env
+	.byte Rest, 1, 0, 0
+	.byte 0 	; note, duration, volume, envelope
+
+song4_block8u:
+	.byte NoteDb+Oct4, 4, 4, song4_env
+	.byte NoteE +Oct4, 4, 4, song4_env
+	.byte NoteA +Oct4, 4, 4, song4_env
+	.byte NoteE +Oct4, 4, 4, song4_env
+	.byte NoteA +Oct4, 4, 4, song4_env
+	.byte NoteE +Oct4, 4, 4, song4_env
+	.byte 0 	; note, duration, volume, envelope
+
+song4_measureRest:
+	.byte Rest, 24, 0, 0
+	.byte 0
+
+song4_block8b1:
+	.byte Rest, 16, 0, 0
+	.byte NoteA +Oct4, 8, 8, 3
+	.byte 0
+
+song4_block1b:
+	.byte NoteD +Oct4, 24, 12, 3 ; 1
+
+	.byte NoteA +Oct3, 16, 14, 3 ; 2
+	.byte NoteDb+Oct4,  8, 12, 3
+
+	.byte NoteB +Oct3, 24, 14, 3 ; 3
+
+	.byte NoteGb+Oct3, 24, 14, 3 ; 4
+
+	.byte NoteG +Oct3,  8, 14, 3 ; 5
+	.byte Rest, 4, 0, 0
+	.byte NoteD +Oct4, 24, 12, 3
+
+	.byte NoteBb+Oct3, 12, 14, 3 ; 6.5
+	.byte 0
+
+song4_block2b1:
+	.byte NoteA +Oct3, 24, 14, 3
+
+	.byte NoteA +Oct3, 8, 14, 3
+	.byte NoteG +Oct4, 4, 12, 3
+	.byte NoteG +Oct3, 4, 14, 3
+	.byte NoteDb+Oct4, 8, 12, 3
+	.byte 0
+
+song4_block2b2:
+	.byte NoteD +Oct4, 24, 10, 3
+	.byte NoteD +Oct4, 24, 8, 3
+	.byte 0
+
+song4_blockListCh1:
+	.word song4_block1t, song4_block1t, song4_block3t, song4_block4t
+	.word song4_block5t, song4_block6t, song4_block7t, song4_block8t
+	.word 0
+
+song4_blockListCh2:
+	.word song4_block1u, song4_block1u, song4_block3u, song4_block3u
+	.word song4_block5u, song4_block6u, song4_block7u, song4_block8u
+	.word 0
+
+song4_blockListCh0:
+	.word song4_measureRest, song4_measureRest, song4_measureRest, song4_measureRest
+	.word song4_measureRest, song4_measureRest, song4_measureRest, song4_block8b1
+	.word song4_block1b, song4_block2b1
+	.word song4_block1b, song4_block2b2
+	.word 0
+
+; =================================================================
 ; ==== Song 8: Unnecessary Tension ====
 
 song8_block1t:
@@ -281,30 +460,30 @@ song8_block2t:
 	.byte 0
 
 song8_block1b:
-	.byte NoteDb+Oct3, 3, 8, 3
-	.byte NoteD+Oct3, 2, 11, 1 
-	.byte Rest, 6, 0, 0 
-	.byte NoteA+Oct3, 3, 9, 1 
-	.byte NoteAb+Oct3, 2, 9, 1 
+	.byte NoteDb+Oct3, 3, 14, 3
+	.byte NoteD+Oct3, 3, 13, 1 
+	.byte Rest, 5, 0, 0 
+	.byte NoteA+Oct3, 3, 11, 1 
+	.byte NoteAb+Oct3, 2, 11, 1 
 
-	.byte NoteDb+Oct3, 3, 8, 3
-	.byte NoteD+Oct3, 3, 11, 1 
-	.byte NoteGb+Oct3, 2, 8, 3 
-	.byte NoteAb+Oct3, 7, 9, 1 
+	.byte NoteDb+Oct3, 3, 14, 3
+	.byte NoteD+Oct3, 3, 13, 1 
+	.byte NoteGb+Oct3, 2, 11, 3 
+	.byte NoteAb+Oct3, 7, 11, 1 
 	.byte Rest, 1, 0, 0 
 	.byte 0
 
 song8_block2b:
-	.byte NoteD+Oct3, 3, 8, 3
-	.byte NoteEb+Oct3, 2, 11, 1 
-	.byte Rest, 6, 0, 0 
-	.byte NoteB+Oct3, 3, 9, 1 
-	.byte NoteBb+Oct3, 2, 9, 1 
+	.byte NoteD+Oct3, 3, 14, 3
+	.byte NoteEb+Oct3, 3, 13, 1 
+	.byte Rest, 5, 0, 0 
+	.byte NoteB+Oct3, 3, 11, 1 
+	.byte NoteBb+Oct3, 2, 11, 1 
 
-	.byte NoteD+Oct3, 3, 8, 3
-	.byte NoteEb+Oct3, 3, 11, 1 
+	.byte NoteD+Oct3, 3, 14, 3
+	.byte NoteEb+Oct3, 3, 13, 1 
 	.byte Rest, 2, 0, 0 
-	.byte NoteBb+Oct3, 7, 9, 1 
+	.byte NoteBb+Oct3, 7, 11, 1 
 	.byte Rest, 1, 0, 0 
 	.byte 0
 
@@ -445,7 +624,7 @@ envelope_ch0:
 	lda chCurLvl
 	jsr _setWaveTableEnabled
 	lda chCurLvl
-	jsr _setWaveTableLevel
+	jsr _setSquarishWaveTable
 	;jsr _getPokeyAudCtrlValue ; channel 0 uses wavetable
 	;sta AUDC1
 	ldy #0
@@ -582,6 +761,8 @@ inc_note_index:
 	beq envelope_2
 	cmp #3
 	beq envelope_3
+	cmp #4
+	beq envelope_4
 	cmp #15
 	beq envelope_15
 	jmp default_envelope
@@ -627,6 +808,20 @@ envelope_3: 				; == Soft pad envelope with sustain ==
 	sta chRelRate,X
 
 	lda #0
+	jsr _calculateSustainTimeMinusA
+	rts
+
+envelope_4: 				; == Piano with sustain ==
+	lda #2		 			; fast attack
+	sta chAtkTime,X
+	lda chSusLvl, X
+	sta chAtkRate,X
+
+	lda #1
+	sta chDecRate,X 		; fast decay and release
+	sta chRelRate,X
+
+	lda #1
 	jsr _calculateSustainTimeMinusA
 	rts
 
@@ -788,11 +983,11 @@ below_limit:
 
 .data
 waveLength:
-	.byte 4
+	.byte 8
 waveIndex:
 	.byte 0
 waveTable:
-	.byte 0, 0, 0, 0
+	.byte 0, 0, 0, 0, 0, 0, 0, 0
 
 .code
 .proc _waveTableTimerInterrupt
@@ -818,15 +1013,52 @@ return:
 	rti
 .endproc
 
-.proc _setWaveTableLevel
+.proc _setTriangleWaveTable
+	; on entry: A = waveform level
 	cmp #$0F
 	bcc skip_limiter
 	lda #$0F
 skip_limiter:
-	sta waveTable+2
+	sta waveTable+4
+	
 	lsr a
+	sta waveTable+2
+	sta waveTable+6
+	
+	lsr a 
 	sta waveTable+1
+	sta waveTable+7
+	
+	adc waveTable+2
 	sta waveTable+3
+	sta waveTable+5
+
+	lda #0
+	sta waveTable
+
+	rts
+.endproc
+
+
+.proc _setSquarishWaveTable
+	; on entry: A = waveform level
+	cmp #$0F
+	bcc skip_limiter
+	lda #$0F
+skip_limiter:
+	sta waveTable+3
+	sta waveTable+4
+	sta waveTable+5
+	
+	lsr a
+	sta waveTable+2
+	sta waveTable+6
+
+	lda #0
+	sta waveTable
+	sta waveTable+1
+	sta waveTable+7
+
 	rts
 .endproc
 
@@ -959,9 +1191,36 @@ loop_init:
 	bne loop_init
 
 switch:
+	cpy #4
+	beq play_song_4
 	cpy #8
 	beq play_song_8
 	jmp default
+
+play_song_4:
+	lda #3
+	sta seqStepDur 				; fast tempo
+
+	lda #<song4_blockListCh0
+	sta blockListPtr+chSize*0
+	lda #>song4_blockListCh0
+	sta blockListPtr+chSize*0+1
+
+	lda #<song4_blockListCh1
+	sta blockListPtr+chSize*1
+	lda #>song4_blockListCh1
+	sta blockListPtr+chSize*1+1
+
+	lda #<song4_blockListCh2
+	sta blockListPtr+chSize*2
+	lda #>song4_blockListCh2
+	sta blockListPtr+chSize*2+1
+
+	lda #1 						; enable channels that are used
+	sta seqEnable+chSize*0
+	sta seqEnable+chSize*1
+	sta seqEnable+chSize*2
+	rts
 
 play_song_8:
 	lda #5
