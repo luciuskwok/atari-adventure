@@ -1060,31 +1060,31 @@ return:
 	rti
 .endproc
 
-.proc _setTriangleWaveTable
-	; on entry: A = waveform level
-	cmp #$0F
-	bcc skip_limiter
-	lda #$0F
-skip_limiter:
-	sta waveTable+4
-	
-	lsr a
-	sta waveTable+2
-	sta waveTable+6
-	
-	lsr a 
-	sta waveTable+1
-	sta waveTable+7
-	
-	adc waveTable+2
-	sta waveTable+3
-	sta waveTable+5
-
-	lda #0
-	sta waveTable
-
-	rts
-.endproc
+; .proc _setTriangleWaveTable
+; 	; on entry: A = waveform level
+; 	cmp #$0F
+; 	bcc skip_limiter
+; 	lda #$0F
+; skip_limiter:
+; 	sta waveTable+4
+; 	
+; 	lsr a
+; 	sta waveTable+2
+; 	sta waveTable+6
+; 	
+; 	lsr a 
+; 	sta waveTable+1
+; 	sta waveTable+7
+; 	
+; 	adc waveTable+2
+; 	sta waveTable+3
+; 	sta waveTable+5
+; 
+; 	lda #0
+; 	sta waveTable
+; 
+; 	rts
+; .endproc
 
 
 .proc _setSquarishWaveTable
@@ -1181,19 +1181,19 @@ return:
 .endproc
 
 ; void __fastcall__ noteOff(UInt8 channel);
-.export _noteOff	
-.proc _noteOff
-	; This will allow notes to use their natural release rate
-	ldx #chSize 		; A = channel * chSize
-	jsr _multiplyAX
-	tax
-
-	lda #0
-	sta chSusTime,X
-	sta chAtkTime,X
-
-	rts
-.endproc
+;.export _noteOff	
+;.proc _noteOff
+;	; This will allow notes to use their natural release rate
+;	ldx #chSize 		; A = channel * chSize
+;	jsr _multiplyAX
+;	tax
+;
+;	lda #0
+;	sta chSusTime,X
+;	sta chAtkTime,X
+;
+;	rts
+;.endproc
 
 ; void __fastcall__ startSong(UInt8 song);
 .export _startSong 
