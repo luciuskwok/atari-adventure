@@ -57,10 +57,8 @@
 	; Use textWindow screen memory for text box
 	lda _textWindow  			
 	sta ptr2
-	sta SAVMSC
 	lda _textWindow+1
 	sta ptr2+1
-	sta SAVMSC+1
 
 	ldx #3
 	lda #DL_TEXT|DL_DLI
@@ -99,6 +97,84 @@
 	rts
 .endproc
 
+
+; extern void __fastcall__ initStoryViewDisplay(void);
+.export _initStoryViewDisplay
+.proc _initStoryViewDisplay
+	jsr _initDisplayListVarsInternal
+
+	; Use graphicsWindow screen memory for raster
+	lda _graphicsWindow 		
+	sta ptr2
+	lda _graphicsWindow+1
+	sta ptr2+1
+
+	ldx #72
+	lda #DL_RASTER
+	jsr _writeDisplayListLinesInternal
+
+	; Use textWindow screen memory for text box
+	lda _textWindow  			
+	sta ptr2
+	lda _textWindow+1
+	sta ptr2+1
+
+	ldx #7
+	lda #DL_TEXT|DL_DLI
+	jsr _writeDisplayListLinesInternal
+
+	jsr _writeDisplayListEndInternal
+	rts
+.endproc
+
+
+; extern void __fastcall__ initBattleViewDisplay(void);
+.export _initBattleViewDisplay
+.proc _initBattleViewDisplay
+	jsr _initDisplayListVarsInternal
+
+	; Use graphicsWindow screen memory for raster
+	lda _graphicsWindow 		
+	sta ptr2
+	lda _graphicsWindow+1
+	sta ptr2+1
+
+	ldx #48
+	lda #DL_RASTER
+	jsr _writeDisplayListLinesInternal
+
+	jsr _applyTrailingDLI
+
+	; Continue graphicsWindow for enemy HP bar chart
+	clc
+	lda ptr2
+	adc #$80 ; 48*40 = 1920 = $780
+	sta ptr2 
+	lda ptr2+1
+	adc #$07
+	sta ptr2+1
+	jsr _writeDisplayListBarChartInternal
+
+	; Add 4-line spacer
+	lda #DL_BLK4
+	sta (ptr1),Y
+	iny
+
+	; Use textWindow screen memory for text box
+	lda _textWindow  			
+	sta ptr2
+	lda _textWindow+1
+	sta ptr2+1
+
+	ldx #7
+	lda #DL_TEXT
+	jsr _writeDisplayListLinesInternal
+
+	jsr _writeDisplayListEndInternal
+	rts
+.endproc
+
+
 .proc _initDisplayListVarsInternal
 	lda SDLSTL 
 	sta ptr1
@@ -107,6 +183,7 @@
 	ldy #3
 	rts
 .endproc
+
 
 .proc _writeDisplayListLinesInternal
 	; on entry: A=mode, X=count, Y=index, ptr1=DL_ptr, ptr2=screen_ptr
@@ -139,6 +216,7 @@ while:
 	rts
 .endproc
 
+
 .proc _writeDisplayListBarChartInternal
 	; on entry: Y=index, ptr1=DL_ptr, ptr2=screen_ptr
 	lda #DL_BLK1
@@ -168,6 +246,17 @@ loop:
 
 	rts
 .endproc
+
+
+.proc _applyTrailingDLI
+	dey 
+	lda (ptr1),Y
+	ora #DL_DLI
+	sta (ptr1),Y
+	iny
+	rts 
+.endproc 
+
 
 .proc _writeDisplayListEndInternal
 	; on entry: ptr1=DL_ptr, Y=index

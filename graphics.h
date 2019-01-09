@@ -46,6 +46,8 @@ void initGraphics(void);
 
 // Assembly routines
 extern void __fastcall__ initMapViewDisplay(void);
+extern void __fastcall__ initStoryViewDisplay(void);
+extern void __fastcall__ initBattleViewDisplay(void);
 extern void __fastcall__ loadColorTable(const UInt8 *colors);
 extern void __fastcall__ initFont(UInt8 fontPage);
 

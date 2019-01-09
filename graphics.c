@@ -110,37 +110,6 @@ static void writeDisplayListEnd(UInt8 *dl) {
 	dl[2] = PEEK(SDLSTL+1);
 }
 
-static void writeMapViewDisplayList(void) {
-	UInt8 *dl = (UInt8 *)PEEKW(SDLSTL);
-	UInt8 x = 3;
-
-	x += writeDisplayListLines(dl+3, graphicsWindow, dl_mapTileLine, 9);  // 14
-	dl[x++] = DL_BLK6;
-	x += writeDisplayListCustomTextLines(dl+x, 3);
-	dl[x-5] |= dl_Interrupt; 
-	dl[x-1] |= dl_Interrupt; 
-	x += writeDisplayListBarChartLines(dl+x, textWindow + (3 * SCREEN_ROW_BYTES));
-	dl[x-1] |= dl_Interrupt; 
-
-	// Party stats line
-	dl[x++] = DL_BLK7;
-	dl[x++] = 15;
-	dl[x++] = dl_textWindowLine; 
-	dl[x++] = 15 | dl_Interrupt;
-
-	writeDisplayListEnd(dl+x);
-}
-
-static void writeStoryViewDisplayList(void) {
-	UInt8 *dl = (UInt8 *)PEEKW(SDLSTL);
-	UInt8 x = 3;
-
-	x += writeDisplayListLines(dl+3, graphicsWindow, dl_rasterLine, 72);
-	x += writeDisplayListLines(dl+x, textWindow, dl_textWindowLine, 7);
-
-	writeDisplayListEnd(dl+x);
-}
-
 static void writeBattleViewDisplayList(void) {
 	UInt8 *dl = (UInt8 *)PEEKW(SDLSTL);
 	UInt8 *screen = graphicsWindow;
@@ -217,11 +186,11 @@ void setScreenMode(UInt8 mode) {
 			break;
 
 		case ScreenModeDialog:
-			writeStoryViewDisplayList();
+			initStoryViewDisplay();
 			break;
 
 		case ScreenModeBattle:
-			writeBattleViewDisplayList();
+			initBattleViewDisplay();
 			dli = battleViewDLI;
 			break;
 
