@@ -6,6 +6,7 @@
 #include "map_data.h"
 #include "menu.h"
 #include "misc_asm.h"
+#include "sound.h"
 #include "sprites.h"
 #include "text.h"
 #include "atari_memmap.h"
@@ -394,6 +395,7 @@ SInt8 mapCursorHandler(UInt8 event) {
 		// Check map bounds. Because newLoc is unsigned, it wraps around from 0 to 255.
 		if (newLoc.x < currentMapSize.width && newLoc.y < currentMapSize.height) {
 			if (canMoveTo(newLoc.x, newLoc.y)) {
+				noteOn(NoteF+Oct3, 1, 4, 15, 0x00, 3);
 				mapCurrentLocation = newLoc;
 				drawCurrentMap(newLoc.x, newLoc.y);
 			}

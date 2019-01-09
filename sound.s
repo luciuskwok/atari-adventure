@@ -6,6 +6,7 @@
 .importzp sp
 
 ; Note and Octave constants
+	Rest   = $FF
 	NoteC  = 1
 	NoteDb = 2
 	NoteD  = 3
@@ -78,10 +79,10 @@ noteTable:
 
 
 ; =================================================================
-; ==== Song: Once Upon A Time ====
+; ==== Song 0: Once Upon A Time ====
 
 
-testBlockT1:
+song0_block1t:
 	.byte NoteC+Oct5,  8, 2, 2 	; note, duration, volume, envelope
 	.byte NoteC+Oct6,  8, 2, 2
 	.byte NoteG+Oct5, 16, 2, 2
@@ -101,7 +102,7 @@ testBlockT1:
 
 	.byte 0						; terminator
 
-testBlockB1:
+song0_block1b:
 	.byte NoteF+Oct3, 16, 2, 1 	; note, duration, volume, envelope
 	.byte NoteA+Oct3, 16, 2, 1
 	
@@ -110,7 +111,7 @@ testBlockB1:
 
 	.byte 0						; terminator
 
-testBlockT2:
+song0_block2t:
 	.byte NoteBb+Oct4, 1, 3, 3	; note, duration, volume, envelope
 	.byte NoteB+Oct4,  1, 4, 3 
 	.byte NoteC+Oct5,  8, 4, 1 
@@ -144,8 +145,8 @@ testBlockT2:
 
 	.byte 0						; terminator
 
-testBlockB2:
-	.byte $FF, 2, 0, 0		 	; rest
+song0_block2b:
+	.byte Rest, 2, 0, 0		 	; rest
 	.byte NoteG+Oct3, 4, 5, 1  	; note, duration, volume, envelope
 	.byte NoteF+Oct4, 4, 5, 1
 	.byte NoteG+Oct4, 4, 5, 1
@@ -184,11 +185,7 @@ testBlockB2:
 
 	.byte 0						; terminator
 
-testBlockEigthFiller:
-	.byte $FF, 2, 0, 0
-	.byte 0						; terminator
-
-testBlockT3:
+song0_block3t:
 	.byte NoteC+Oct6, 4, 2, 2 	; note, duration, volume, envelope
 	.byte NoteF+Oct5, 4, 2, 2 
 	.byte NoteG+Oct5, 4, 2, 2 
@@ -211,7 +208,7 @@ testBlockT3:
 
 	.byte 0						; terminator
 
-testBlockB3:
+song0_block3b:
 	.byte NoteF+Oct4, 16, 3, 1 	; note, duration, volume, envelope
 	.byte NoteG+Oct4, 16, 3, 1
 
@@ -220,120 +217,105 @@ testBlockB3:
 
 	.byte 0						; terminator
 
-testBlockRest:
-	.byte $FF, 32, 0, 0
+song0_eighthRest:
+	.byte Rest, 2, 0, 0
 	.byte 0						; terminator
 
-testBlockListT:
-	.word testBlockT1
-	.word testBlockT1
-
-	.word testBlockT2
-	.word testBlockT2
-	.word testBlockEigthFiller
-
-	.word testBlockT3
-	.word testBlockT3
-
-	.word testBlockT3
-	.word testBlockT3
-
-	.word testBlockRest
-	.word 0
-
-testBlockListB:
-	.word testBlockB1
-	.word testBlockB1
-	.word testBlockB1
-	.word testBlockB1
-
-	.word testBlockB2
-	.word testBlockB2
-	.word testBlockEigthFiller
-
-	.word testBlockB3
-	.word testBlockB3
-
-	.word testBlockRest
-	.word testBlockRest
-	.word testBlockRest
-	.word testBlockRest
-
-	.word testBlockRest
-	.word 0
-
-
-; =================================================================
-; ==== Song: Percussion Test ====
-
-
-testBlockP1:
-	.byte NoteC+Oct3, 8, 6, 15 	; note, duration, volume, envelope
-	.byte NoteC+Oct7, 8, 6, 15
-	.byte NoteF+Oct4, 8, 6, 15
-	.byte NoteC+Oct7, 8, 6, 15
-
+song0_wholeRest:
+	.byte Rest, 32, 0, 0
 	.byte 0						; terminator
 
-testBlockListP:
-	.word testBlockP1
-	.word testBlockP1
-	.word testBlockP1
-	.word testBlockP1
-	.word testBlockP1
-	.word testBlockP1
-	.word testBlockP1
-	.word testBlockP1
-	.word testBlockEigthFiller
+song0_blockListT: 				; treble
+	.word song0_block1t
+	.word song0_block1t
+
+	.word song0_block2t
+	.word song0_block2t
+	.word song0_eighthRest
+
+	.word song0_block3t
+	.word song0_block3t
+
+	.word song0_block3t
+	.word song0_block3t
+
+	.word song0_wholeRest
 	.word 0
 
+song0_blockListB: 				; bass 
+	.word song0_block1b
+	.word song0_block1b
+	.word song0_block1b
+	.word song0_block1b
+
+	.word song0_block2b
+	.word song0_block2b
+	.word song0_eighthRest
+
+	.word song0_block3b
+	.word song0_block3b
+
+	.word song0_wholeRest
+	.word song0_wholeRest
+	.word song0_wholeRest
+	.word song0_wholeRest
+
+	.word song0_wholeRest
+	.word 0
 
 ; =================================================================
-; ==== Song: Unnecessary Tension ====
+; ==== Song 8: Unnecessary Tension ====
 
 song8_block1t:
-	.byte NoteDb+Oct6, 2, 3, 15 	; note, duration, volume, envelope
-	.byte NoteDb+Oct5, 2, 4, 15 
-	.byte NoteDb+Oct5, 2, 4, 15 
-	.byte NoteDb+Oct5, 2, 3, 15 
-	.byte 0
+	.byte NoteDb+Oct6, 1, 4, 15
+	.byte NoteDb+Oct5, 1, 3, 15 
+	.byte NoteDb+Oct5, 1, 3, 15 
+	.byte NoteDb+Oct5, 1, 3, 15 
+	.byte 0 	; note, duration, volume, envelope
 
 song8_block2t:
-	.byte NoteD+Oct6, 2, 3, 15
-	.byte NoteD+Oct5, 2, 4, 15 
-	.byte NoteD+Oct5, 2, 4, 15 
-	.byte NoteD+Oct5, 2, 3, 15 
+	.byte NoteD+Oct6, 1, 4, 15
+	.byte NoteD+Oct5, 1, 3, 15 
+	.byte NoteD+Oct5, 1, 3, 15 
+	.byte NoteD+Oct5, 1, 3, 15 
 	.byte 0
 
 song8_block1b:
-	.byte NoteDb+Oct3, 5, 9, 3
-	.byte NoteD+Oct3, 3, 12, 1 
-	.byte $FF, 16, 0, 0 
-	.byte NoteA+Oct3, 3, 10, 1 
-	.byte $FF, 1, 0, 0 
-	.byte NoteAb+Oct3, 3, 10, 1 
-	.byte $FF, 1, 0, 0 
-
-	.byte NoteDb+Oct3, 6, 9, 3
+	.byte NoteDb+Oct3, 3, 9, 3
 	.byte NoteD+Oct3, 2, 12, 1 
-	.byte $FF, 6, 0, 0 
+	.byte Rest, 6, 0, 0 
+	.byte NoteA+Oct3, 3, 10, 1 
+	.byte NoteAb+Oct3, 2, 10, 1 
+
+	.byte NoteDb+Oct3, 3, 9, 3
+	.byte NoteD+Oct3, 3, 12, 1 
 	.byte NoteGb+Oct3, 2, 9, 3 
-	.byte NoteAb+Oct3, 16, 11, 1 
+	.byte NoteAb+Oct3, 7, 11, 1 
+	.byte Rest, 1, 0, 0 
 	.byte 0
 
 song8_block2b:
-	.byte NoteD+Oct3, 5, 8, 3
-	.byte NoteEb+Oct3, 3, 12, 1 
-	.byte $FF, 16, 0, 0 
-	.byte NoteB+Oct3, 3, 10, 1 
-	.byte $FF, 1, 0, 0 
-	.byte NoteBb+Oct3, 3, 10, 1 
-	.byte $FF, 1, 0, 0 
-
-	.byte NoteD+Oct3, 6, 9, 3
+	.byte NoteD+Oct3, 3, 9, 3
 	.byte NoteEb+Oct3, 2, 12, 1 
-	.byte $FF, 5, 0, 0 
-	.byte NoteBb+Oct3, 19, 11, 1 
+	.byte Rest, 6, 0, 0 
+	.byte NoteB+Oct3, 3, 10, 1 
+	.byte NoteBb+Oct3, 2, 10, 1 
+
+	.byte NoteD+Oct3, 3, 9, 3
+	.byte NoteEb+Oct3, 3, 12, 1 
+	.byte Rest, 2, 0, 0 
+	.byte NoteBb+Oct3, 7, 11, 1 
+	.byte Rest, 1, 0, 0 
+	.byte 0
+
+song8_block1p:
+	.byte NoteD+Oct3, 2, 13, 15
+	.byte NoteA+Oct6, 2, 2, 15
+	.byte NoteA+Oct6, 2, 2, 15
+	.byte NoteA+Oct6, 2, 2, 15
+	.byte NoteA+Oct6, 3, 7, 1
+	.byte NoteA+Oct6, 3, 2, 15
+	.byte NoteA+Oct6, 2, 2, 15
 	.byte 0
 
 song8_blockListT:
@@ -346,6 +328,11 @@ song8_blockListT:
 song8_blockListB:
 	.word song8_block1b
 	.word song8_block2b
+	.word 0
+
+song8_blockListP:
+	.word song8_block1p
+	.word song8_block1p
 	.word 0
 
 ; Global variables
@@ -644,16 +631,16 @@ envelope_3: 				; == Soft pad envelope with sustain ==
 	rts
 
 envelope_15: 				; == Percussion envelope, no sustain ==
-	lda #0		 			; no attack
-	sta chAtkTime,X
-
-	lda #2
+	lda chSusLvl,X			; no attack
 	sta chAtkRate,X
-	sta chDecRate,X 		; fast decay and release
+
+	lda #1
+	sta chAtkTime,X 		; fast decay and release
+	sta chDecRate,X
 	sta chRelRate,X
 
-	lda #0	
-	jsr _calculateSustainTimeMinusA
+	lda #1
+	sta chSusTime,X
 	rts
 
 default_envelope:
@@ -921,6 +908,14 @@ return:
 	lda (sp),Y
 	jsr _setEnvelope
 
+	lda sp 					; pop parameters off stack
+	clc
+	adc #5
+	sta sp
+	lda sp+1
+	adc #0
+	sta sp+1
+
 	rts
 .endproc
 
@@ -964,12 +959,12 @@ loop_init:
 	bne loop_init
 
 switch:
-	cpy #1
-	beq play_song_1
+	cpy #8
+	beq play_song_8
 	jmp default
 
-play_song_1:
-	lda #3
+play_song_8:
+	lda #5
 	sta seqStepDur 				; fast tempo
 
 	lda #<song8_blockListB
@@ -978,28 +973,36 @@ play_song_1:
 	sta blockListPtr+chSize*0+1
 
 	lda #<song8_blockListT
-	sta  blockListPtr+chSize*1
+	sta blockListPtr+chSize*1
 	lda #>song8_blockListT
-	sta  blockListPtr+chSize*1+1
+	sta blockListPtr+chSize*1+1
+
+	lda #<song8_blockListP
+	sta blockListPtr+chSize*2
+	lda #>song8_blockListP
+	sta blockListPtr+chSize*2+1
+	lda #$80
+	sta chCtrlMask+chSize*2
 
 	lda #1 						; enable channels that are used
 	sta seqEnable+chSize*0
 	sta seqEnable+chSize*1
+	sta seqEnable+chSize*2
 	rts
 
 default:
 	lda #5
 	sta seqStepDur 				; medium tempo
 
-	lda #<testBlockListT
+	lda #<song0_blockListT
 	sta blockListPtr+chSize*1
-	lda #>testBlockListT
+	lda #>song0_blockListT
 	sta blockListPtr+chSize*1+1
 
-	lda #<testBlockListB
-	sta  blockListPtr+chSize*2
-	lda #>testBlockListB
-	sta  blockListPtr+chSize*2+1
+	lda #<song0_blockListB
+	sta blockListPtr+chSize*2
+	lda #>song0_blockListB
+	sta blockListPtr+chSize*2+1
 
 	lda #1 						; enable channels that are used
 	sta seqEnable+chSize*1

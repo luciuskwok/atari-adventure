@@ -22,6 +22,7 @@
 #include "info.h"
 #include "map.h"
 #include "map_data.h"
+#include "sound.h"
 #include "sprites.h"
 #include "text.h"
 #include "types.h"
@@ -39,11 +40,6 @@ UInt8 isQuitting;
 UInt16 startTime;
 UInt16 duration;
 #endif
-
-void __fastcall__ noteOn(UInt8 note, UInt8 duration, UInt8 volume, UInt8 envelope, UInt8 noise, UInt8 channel);
-void __fastcall__ noteOff(UInt8 channel);
-void __fastcall__ startSong(UInt8 song);
-void __fastcall__ stopSong(void);
 
 // Dialog functions
 
@@ -128,7 +124,7 @@ static void handleKeyboard(void) {
 			note = 0xFE;
 			break;
 		case KEY_X:
-			startSong(1);
+			startSong(8);
 			note = 0xFE;
 			break;
 		case KEY_SPACE:
@@ -147,8 +143,8 @@ static void handleKeyboard(void) {
 			if (control) {
 				note += 24;
 			}
-			//noteOn(note, 8, 7, 11, 0xE0, 3);
-			noteOn(note, 2, 7, 3, 0x80, 0);
+			//noteOn(note, 4, 7, 3, 0xE0, 3);
+			noteOn(note, 1, 7, 15, 0x80, 3);
 		}
 		POKE(CH_, 0xFF);
 	}
