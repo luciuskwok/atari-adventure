@@ -45,6 +45,8 @@ void waitVsync(UInt8 ticks);
 void initGraphics(void);
 
 // Assembly routines
+extern void __fastcall__ initMapViewDisplay(void);
 extern void __fastcall__ loadColorTable(const UInt8 *colors);
+extern void __fastcall__ initFont(UInt8 fontPage);
 
 #endif

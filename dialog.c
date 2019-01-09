@@ -353,7 +353,7 @@ void drawStatus(void) {
 	printStringAtXY(s, 28, 6);
 
 	uint8toString(s, partyPotions);
-	stringConcat(s, "{");
+	stringConcat(s, "\x11");
 	len = stringLength(s);
 	printStringAtXY(s, 40-len, 6);
 }

@@ -153,13 +153,13 @@ return:
 	cpx #10				; 
 	beq chara_level
 	
-	cpx #11				; 
+	cpx #12				; 
 	beq chara_hp
 	
-	cpx #12				; 
+	cpx #13				; 
 	beq party_stats
 	
-	cpx #13				; 
+	cpx #14				; 
 	beq last_line
 
 	jmp return_dli

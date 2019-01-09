@@ -197,16 +197,22 @@ static void writeInfoViewDisplayList(void) {
 }
 
 void setScreenMode(UInt8 mode) {
-	UInt8 dma = 0x2E; // standard playfield + missile DMA + player DMA + display list DMA
-	UInt8 nmi = 0x40; // enable VBI
+	const UInt8 dma = 0x2E; // standard playfield + missile DMA + player DMA + display list DMA
 	void *dli = 0;
 
-	POKEW (SAVMSC, (UInt16)textWindow);
+	// Turn off screen
+	POKE (SDMCTL, 0);
+	ANTIC.nmien = 0x40;
+
+	if (mode == ScreenModeInfo) {
+		POKEW (SAVMSC, (UInt16)graphicsWindow);
+	} else {
+		POKEW (SAVMSC, (UInt16)textWindow);
+	}
 
 	switch (mode) {
 		case ScreenModeMap:
-			writeMapViewDisplayList();
-			nmi |= 0x80; // enable DLI
+			initMapViewDisplay();
 			dli = mapViewDLI;
 			break;
 
@@ -216,36 +222,27 @@ void setScreenMode(UInt8 mode) {
 
 		case ScreenModeBattle:
 			writeBattleViewDisplayList();
-			nmi |= 0x80; // enable DLI
 			dli = battleViewDLI;
 			break;
 
 		case ScreenModeInfo:
-			POKEW (SAVMSC, (UInt16)graphicsWindow);
 			writeInfoViewDisplayList();
-			nmi |= 0x80; // enable DLI
 			dli = infoViewDLI;
 			break;
 
 		case ScreenModeOff:
 		default:
-			dma = 0;
-			break;
+			return;
 	}
-
-	// Turn off screen
-	POKE (SDMCTL, 0);
-	ANTIC.nmien = 0x40;
 
 	// Wait for vblank to prevent flicker
 	waitVsync(1);
 
 	if (dli != 0) {
 		POKEW (VDSLST, (UInt16)dli);
+		ANTIC.nmien = 0xC0; // enable DLI + VBI
 	}
-
 	POKE (SDMCTL, dma);
-	ANTIC.nmien = nmi;
 }
 
 // Transition Effects
@@ -406,43 +403,6 @@ static void initDisplayList(UInt8 startPage, UInt8 textPage) {
 	displayList[2] = DL_BLK4; // 3
 }
 
-static void initTileFont(UInt8 fontPage) {
-	const UInt8 *romFont = (UInt8 *)0xE000;
-	UInt8 *customFont = (UInt8 *) ((UInt16)fontPage * 256);
-	UInt8 *tileFont = customFont + 512;
-	UInt16 index;
-	UInt8 tileIndex, bitmapIndex;
-
-	//print8bitValue("Start Font: ", fontPage, 1, 5);
-	
-	// Copy character set from ROM to RAM, 128 characters.
-	memcpy(customFont, romFont, 1024);
-
-	// Blank out the tile with value 0 in the graphics character area
-	memset(tileFont, 0, 8);
-	
-	// Add our custom tiles into the graphics character area
-	bitmapIndex = 0;
-	while (1) {
-		// Each tile bitmap has 9 bytes. First byte indicated which character it replaces, 
-		// or nil for the end of the data.
-		tileIndex = tileBitmaps[bitmapIndex * 9];
-		if (tileIndex == 0) {
-			break;
-		}
-		for (index=0; index<8; ++index) { 
-			tileFont[tileIndex * 8 + index] = tileBitmaps[bitmapIndex * 9 + index + 1];
-		}
-		++bitmapIndex;
-	}
-	
-	// Set CHBAS to point to the graphics character set area.
-	// This lets the  map tiles show in the color map part of the screen.
-	// It seems that the text window area truncates the value to a multple of 4, 
-	// neatly allowing for regular characters there.
-	POKE(CHBAS, fontPage + 2);
-}
-
 void initGraphics(void) {
 	UInt8 ramtop = PEEK(RAMTOP);
 
@@ -456,7 +416,7 @@ void initGraphics(void) {
 
 	initDisplayList(ramtop - 12, ramtop - 16);
 	initSprites(ramtop - 16);
-	initTileFont(ramtop - 20);
+	initFont(ramtop - 20);
 	
 	// == Use scrolling to center the odd number of tiles ==
 	ANTIC.hscrol = 4;

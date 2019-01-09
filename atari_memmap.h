@@ -20,7 +20,7 @@
 #define VVBLKD (0x0224) /* Deferred vertical blank interrupt vector */
 
 #define SDMCTL (0x022F)
-#define SDLSTL (0x0230)
+#define SDLSTL (0x0230) /* Pointer to display list */
 #define GPRIOR (0x026F)
 
 // Joystick

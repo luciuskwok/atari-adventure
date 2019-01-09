@@ -11,8 +11,6 @@ If low nybble is 0xF, the next byte contains an 8-bit value to add to the repeat
 */
 
 
-extern const UInt8 tileBitmaps[];
-
 extern const UInt8 overworldRleMap[];
 extern const SizeU8 overworldMapSize;
 extern UInt8 overworldTileMap[];
@@ -55,16 +53,17 @@ enum TileValues {
 	tHouse3,
 	tHouse4,
 
+	tPotion, // 17
+	tFang,
+
 	// Tiles with sprite overlays
-	tCastle = 24,
+	tCastle, // 19
 	tTown,
 	tVillage,
 	tMonument,
 	tCave, 
 	tHouseDoor,
 
-	tPotion = 0x3B,
-	tFang = 0x3D,
 };
 
 

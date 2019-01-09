@@ -278,12 +278,12 @@ void initInfo(void) {
 
 	stringCopy(s, "Herbs: ");
 	uint8toString(s+stringLength(s), partyPotions);
-	stringConcat(s, "{");
+	stringConcat(s, "\x11");
 	printLine(s);
 
 	stringCopy(s, "Fangs: ");
 	uint8toString(s+stringLength(s), partyFangs);
-	stringConcat(s, "}");
+	stringConcat(s, "\x12");
 	printLine(s);
 
 	// Column 2

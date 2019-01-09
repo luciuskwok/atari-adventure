@@ -88,10 +88,10 @@ void printPartyStats(void) {
 	stringConcat(s, "  ");
 
 	uint8toString(s+stringLength(s), partyPotions);
-	stringConcat(s, "{  ");
+	stringConcat(s, "\x11  ");
 
 	uint8toString(s+stringLength(s), partyFangs);
-	stringConcat(s, "}");
+	stringConcat(s, "\x12");
 
 	len = stringLength(s);
 	x = 20 - len / 2;
