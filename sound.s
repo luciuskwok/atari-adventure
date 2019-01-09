@@ -267,53 +267,53 @@ song0_blockListB: 				; bass
 ; ==== Song 8: Unnecessary Tension ====
 
 song8_block1t:
-	.byte NoteDb+Oct6, 1, 4, 15
-	.byte NoteDb+Oct5, 1, 3, 15 
-	.byte NoteDb+Oct5, 1, 3, 15 
-	.byte NoteDb+Oct5, 1, 3, 15 
+	.byte NoteDb+Oct6, 1, 3, 15
+	.byte NoteDb+Oct5, 1, 2, 15 
+	.byte NoteDb+Oct5, 1, 2, 15 
+	.byte NoteDb+Oct5, 1, 2, 15 
 	.byte 0 	; note, duration, volume, envelope
 
 song8_block2t:
-	.byte NoteD+Oct6, 1, 4, 15
-	.byte NoteD+Oct5, 1, 3, 15 
-	.byte NoteD+Oct5, 1, 3, 15 
-	.byte NoteD+Oct5, 1, 3, 15 
+	.byte NoteD+Oct6, 1, 3, 15
+	.byte NoteD+Oct5, 1, 2, 15 
+	.byte NoteD+Oct5, 1, 2, 15 
+	.byte NoteD+Oct5, 1, 2, 15 
 	.byte 0
 
 song8_block1b:
-	.byte NoteDb+Oct3, 3, 9, 3
-	.byte NoteD+Oct3, 2, 12, 1 
+	.byte NoteDb+Oct3, 3, 8, 3
+	.byte NoteD+Oct3, 2, 11, 1 
 	.byte Rest, 6, 0, 0 
-	.byte NoteA+Oct3, 3, 10, 1 
-	.byte NoteAb+Oct3, 2, 10, 1 
+	.byte NoteA+Oct3, 3, 9, 1 
+	.byte NoteAb+Oct3, 2, 9, 1 
 
-	.byte NoteDb+Oct3, 3, 9, 3
-	.byte NoteD+Oct3, 3, 12, 1 
-	.byte NoteGb+Oct3, 2, 9, 3 
-	.byte NoteAb+Oct3, 7, 11, 1 
+	.byte NoteDb+Oct3, 3, 8, 3
+	.byte NoteD+Oct3, 3, 11, 1 
+	.byte NoteGb+Oct3, 2, 8, 3 
+	.byte NoteAb+Oct3, 7, 9, 1 
 	.byte Rest, 1, 0, 0 
 	.byte 0
 
 song8_block2b:
-	.byte NoteD+Oct3, 3, 9, 3
-	.byte NoteEb+Oct3, 2, 12, 1 
+	.byte NoteD+Oct3, 3, 8, 3
+	.byte NoteEb+Oct3, 2, 11, 1 
 	.byte Rest, 6, 0, 0 
-	.byte NoteB+Oct3, 3, 10, 1 
-	.byte NoteBb+Oct3, 2, 10, 1 
+	.byte NoteB+Oct3, 3, 9, 1 
+	.byte NoteBb+Oct3, 2, 9, 1 
 
-	.byte NoteD+Oct3, 3, 9, 3
-	.byte NoteEb+Oct3, 3, 12, 1 
+	.byte NoteD+Oct3, 3, 8, 3
+	.byte NoteEb+Oct3, 3, 11, 1 
 	.byte Rest, 2, 0, 0 
-	.byte NoteBb+Oct3, 7, 11, 1 
+	.byte NoteBb+Oct3, 7, 9, 1 
 	.byte Rest, 1, 0, 0 
 	.byte 0
 
 song8_block1p:
-	.byte NoteD+Oct3, 2, 13, 15
+	.byte NoteD+Oct3, 2, 8, 15
 	.byte NoteA+Oct6, 2, 2, 15
 	.byte NoteA+Oct6, 2, 2, 15
 	.byte NoteA+Oct6, 2, 2, 15
-	.byte NoteA+Oct6, 3, 7, 1
+	.byte NoteA+Oct6, 3, 5, 1
 	.byte NoteA+Oct6, 3, 2, 15
 	.byte NoteA+Oct6, 2, 2, 15
 	.byte 0

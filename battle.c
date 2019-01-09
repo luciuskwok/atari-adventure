@@ -5,6 +5,7 @@
 #include "game_chara.h"
 #include "graphics.h"
 #include "menu.h"
+#include "sound.h"
 #include "sprites.h"
 #include "text.h"
 #include "atari_memmap.h"
@@ -160,6 +161,9 @@ static void charaAtIndexWasHit(UInt8 index, UInt8 damage) {
 	GameCharaPtr chara = charaAtIndex(index);
 	UInt8 i;
 
+	// Play sound
+	noteOn(NoteC+Oct5, 2, 15, 1, 0x80, 3);
+
 	// Show animation for player getting hit.
 	for (i=0; i<4; ++i) {
 		setSpriteOriginX(3, 48 + index * 40);
@@ -191,6 +195,9 @@ static void doAttack(UInt8 player) {
 	if (chara->hp != 0) {
 		stringConcat(s, " attacks.");
 		printStringAtXY(s, 1, 0);
+
+		// Play sound
+		noteOn(NoteF+Oct5, 2, 15, 1, 0x80, 3);
 	
 		// Calculate damage to enemy or miss.
 		enemyWasHit(damage);
@@ -264,9 +271,14 @@ static void useItem(UInt8 item) {
 
 	clearTextWindow(3);
 	if (item == 0) {
+		// Play sound
+		noteOn(NoteC+Oct5, 8, 15, 1, 0x80, 3);
 		printStringAtXY("* The Sacred Nuts cause a reaction.", 1, 0);
 		damage = 8;
 	} else {
+		// Play sound
+		noteOn(NoteF+Oct4, 16, 15, 1, 0x80, 3);
+
 		printStringAtXY("* The Staff makes the earth move.", 1, 0);
 		damage = 16;
 	}
@@ -374,6 +386,9 @@ void initBattle(void) {
 	// Turn on screen
 	loadColorTable(battleColorTable); // battleColorTable
 	setScreenMode(ScreenModeBattle);
+
+	// Start battle music
+	startSong(8);
 
 	printAllCharaText(4);
 

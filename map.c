@@ -402,6 +402,7 @@ SInt8 mapCursorHandler(UInt8 event) {
 		} else {
 			// Handle moving off the map for towns
 			if (currentMapType == TownMapType) {
+				noteOn(NoteC+Oct4, 1, 4, 15, 0x00, 3);
 				exitToOverworld();
 			}
 		}
