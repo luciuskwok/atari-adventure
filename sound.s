@@ -76,7 +76,7 @@ noteTable:
 	.byte  17, 0 ; A#
 	.byte  16, 0 ; B
 	.byte  15, 0 ; C7
-noteTableLength = ((* - noteTable) / 2)
+noteTableLength = 49
 
 ; =================================================================
 ; ==== Song 0: Once Upon A Time ====
@@ -958,7 +958,7 @@ return:
 	ldx chStateOffset
 	lda chNote,X 			; X = note
 	cmp noteTableLength
-	bcc get_note 			; if note >= noteTableLength: return 255
+	bcs get_note 			; if note >= noteTableLength: return 255
 	lda #$FF
 	rts
 
@@ -991,7 +991,7 @@ below_limit:
 .data
 waveTable:
 	.byte 0, 0, 0, 0, 0, 0, 0, 0
-waveLength = (* - waveTable)
+waveLength = 8
 waveIndex:
 	.byte 0
 
@@ -1006,7 +1006,7 @@ waveIndex:
 	sta AUDC1
 
 	inx 
-	cpx waveLength
+	cpx #waveLength
 	bne store_index
 	ldx #0
 store_index:
@@ -1187,6 +1187,9 @@ return:
 .export _startSong 
 .proc _startSong
 	tay 					; save song parameter in Y
+
+	lda #0 					; disable wave table
+	jsr _setWaveTableEnabled
 
 	ldx #chSize*4 			; reset all channels
 loop_init:
