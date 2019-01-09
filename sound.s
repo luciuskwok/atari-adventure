@@ -297,17 +297,17 @@ testBlockListP:
 ; ==== Song: Unnecessary Tension ====
 
 song8_block1t:
-	.byte NoteDb+Oct6, 2, 4, 2 	; note, duration, volume, envelope
-	.byte NoteDb+Oct5, 2, 4, 2 
-	.byte NoteDb+Oct5, 2, 4, 2 
-	.byte NoteDb+Oct5, 2, 4, 2 
+	.byte NoteDb+Oct6, 2, 3, 10 	; note, duration, volume, envelope
+	.byte NoteDb+Oct5, 2, 4, 10 
+	.byte NoteDb+Oct5, 2, 4, 10 
+	.byte NoteDb+Oct5, 2, 3, 10 
 	.byte 0
 
 song8_block2t:
-	.byte NoteD+Oct6, 2, 4, 2
-	.byte NoteD+Oct5, 2, 4, 2 
-	.byte NoteD+Oct5, 2, 4, 2 
-	.byte NoteD+Oct5, 2, 4, 2 
+	.byte NoteD+Oct6, 2, 3, 10
+	.byte NoteD+Oct5, 2, 4, 10 
+	.byte NoteD+Oct5, 2, 4, 10 
+	.byte NoteD+Oct5, 2, 3, 10 
 	.byte 0
 
 song8_block1b:
