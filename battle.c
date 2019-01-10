@@ -123,7 +123,10 @@ static void drawEnemyHpBar(void) {
 	UInt8 barX = 80 - width / 2;
 	UInt8 fill = (enemy.hp + 1) / 2;
 
-	drawBarChart(graphicsWindow, barX, 48, width, fill);
+	POKE(COLCRS, barX);
+	POKE(ROWCRS, 48);
+
+	drawBarChart(graphicsWindow, width, fill);
 }
 
 static void enemyWasHit(UInt8 damage) {
@@ -180,7 +183,8 @@ static void charaAtIndexWasHit(UInt8 index, UInt8 damage) {
 	}
 
 	// Redraw the character's stats
-	printCharaAtIndex(index, 4, 1);
+	eraseCharaBoxAtIndex(index, 4);
+	printCharaAtIndex(index, 4);
 }
 
 static void doAttack(UInt8 player) {

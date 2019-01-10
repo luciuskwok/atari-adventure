@@ -13,11 +13,27 @@
 #define TEXTBOX_HEIGHT (7)
 
 
-void drawHpBar(UInt8 x, UInt8 y, UInt8 hp, UInt8 maxHp) {
+static void clearTextRect(RectU8 *rect) {
+	UInt8 rowSkip = TEXTBOX_WIDTH - rect->size.width;
+	UInt16 i = rect->origin.x + TEXTBOX_WIDTH * rect->origin.y;
+	UInt8 x, y;
+
+	for (y=0; y<rect->size.height; ++y) {
+		for (x=0; x<rect->size.width; ++x) {
+			textWindow[i++] = 0;
+		}
+		i += rowSkip;
+	}
+}
+
+static void drawHpBar(UInt8 hp, UInt8 maxHp) {
 	UInt8 width;
 	UInt8 fill;
 	UInt8 remainder;
 	UInt16 n;
+
+	// Multiple COLCRS by 4 to switch from text to raster coordinates
+	POKE(COLCRS, PEEK(COLCRS) << 2);
 
 	if (maxHp >= 72) {
 		width = 36;
@@ -30,16 +46,15 @@ void drawHpBar(UInt8 x, UInt8 y, UInt8 hp, UInt8 maxHp) {
 	if (remainder) {
 		++fill;
 	}
-	drawBarChart(textWindow, x * 4, y, width, fill);
+	drawBarChart(textWindow, width, fill);
 }
 
-static void printCharaStats(UInt8 x, UInt8 y, GameCharaPtr chara) {
+static void printCharaStats(GameCharaPtr chara) {
 	UInt8 hp = chara->hp;
 	UInt8 maxHp = charaMaxHp(chara);
 	UInt8 lvStr[9] = "Lv ";
 	UInt8 hpStr[9];
 
-	SET_TXT_ORIGIN(x, y)
 	printLine(chara->name);
 
 	uint8toString(lvStr+3, chara->level);
@@ -50,23 +65,26 @@ static void printCharaStats(UInt8 x, UInt8 y, GameCharaPtr chara) {
 	uint8toString(hpStr+stringLength(hpStr), maxHp);
 	printLine(hpStr);
 
-	drawHpBar(x, y + 3, hp, maxHp);
+	drawHpBar(hp, maxHp);
 }
 
-void printCharaAtIndex(UInt8 index, UInt8 y, UInt8 clear) {
+void eraseCharaBoxAtIndex(UInt8 index, UInt8 y) {
 	UInt8 x = 1 + index * 10;
-	GameCharaPtr chara = charaAtIndex(index);
 	RectU8 r;
 
-	if (clear) {
-		r.origin.x = x;
-		r.origin.y = y;
-		r.size.width = 10;
-		r.size.height = 4;
-		clearTextRect(&r);
-	}
+	r.origin.x = x;
+	r.origin.y = y;
+	r.size.width = 10;
+	r.size.height = 4;
+	clearTextRect(&r);
+}
 
-	printCharaStats(x, y, chara);
+void printCharaAtIndex(UInt8 index, UInt8 y) {
+	UInt8 x = 1 + index * 10;
+	GameCharaPtr chara = charaAtIndex(index);
+
+	SET_TXT_ORIGIN(x, y)
+	printCharaStats(chara);
 }
 
 void printAllCharaText(UInt8 y) {
@@ -74,7 +92,7 @@ void printAllCharaText(UInt8 y) {
 	UInt8 i;
 
 	for (i=0; i<count; ++i) {
-		printCharaAtIndex(i, y, 0);
+		printCharaAtIndex(i, y);
 	}
 }
 
@@ -94,23 +112,10 @@ void printPartyStats(void) {
 	stringConcat(s, "\x12");
 
 	len = stringLength(s);
-	x = 20 - len / 2;
+	x = 20 - (len >> 1);
 
 	SET_TXT_ORIGIN(x, TEXTBOX_HEIGHT-2)
 	printLine(s);
-}
-
-void clearTextRect(RectU8 *rect) {
-	UInt8 rowSkip = TEXTBOX_WIDTH - rect->size.width;
-	UInt16 i = rect->origin.x + TEXTBOX_WIDTH * rect->origin.y;
-	UInt8 x, y;
-
-	for (y=0; y<rect->size.height; ++y) {
-		for (x=0; x<rect->size.width; ++x) {
-			textWindow[i++] = 0;
-		}
-		i += rowSkip;
-	}
 }
 
 void drawTextBox(const UInt8 *s, UInt8 x, UInt8 y, UInt8 width, UInt8 lineSpacing, SInt8 indent) {
@@ -194,7 +199,7 @@ void hexString(UInt8 *outString, UInt8 length, UInt16 value) {
 
 void debugPrint(const UInt8 *s, UInt16 value, UInt8 x, UInt8 y) {
 	UInt8 message[40];
-	
+
 	stringCopy(message, s);
 	uint16toString(message+stringLength(message), value);
 	printStringAtXY(message, x, y);

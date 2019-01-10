@@ -35,7 +35,7 @@ extern void loadColorTable(const UInt8 *colors);
 
 // Drawing
 SInt8 drawImage(const DataBlock *image, UInt8 rowOffset, UInt8 rowCount);
-extern void drawBarChart(UInt8 *screen, UInt8 x, UInt8 y, UInt8 width, UInt8 filled);
+extern void drawBarChart(UInt8 *screen, UInt8 width, UInt8 filled);
 extern void zeroOut16(UInt8 *ptr, UInt16 length);
 extern void zeroOut8(UInt8 *ptr, UInt8 length);
 

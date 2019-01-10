@@ -597,9 +597,10 @@
 .endproc
 
 
-; extern void drawBarChart(UInt8 *screen, UInt8 x, UInt8 y, UInt8 width, UInt8 filled);
+; extern void drawBarChart(UInt8 *screen, UInt8 width, UInt8 filled);
 .export _drawBarChart
 .proc _drawBarChart
+	; on entry: COLCRS, ROWCRS set to origin of bar chart.
 	rowBytes = 40
 
 	; Store parameter 'filled'
@@ -610,14 +611,6 @@
 	width = tmp2
 	jsr popa
 	sta width
-
-	; Store parameter 'y' in ROWCRS
-	jsr popa 
-	sta ROWCRS
-
-	; Store parameter 'x' in COLCRS
-	jsr popa 
-	sta COLCRS
 
 	; Get the screen address
 	jsr popsreg
