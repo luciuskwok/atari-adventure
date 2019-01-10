@@ -252,7 +252,7 @@ const DataBlock temFaceSpriteR = {
 // UInt8 papyrusMessage[] = "Papyrus: Nyeh Heh Heh!";
 
 
-void pushStack(StackItem *item) {
+void pushDialogStack(StackItem *item) {
 	if (dialogStackCount < DIALOG_STACK_CAPACITY) {
 		dialogStack[dialogStackCount].node = item->node;
 		dialogStack[dialogStackCount].selectedRow = item->selectedRow;
@@ -274,18 +274,18 @@ void topOfStack(StackItem *outItem) {
 	}
 }
 
-void popStack(StackItem *outItem) {
+void popDialogStack(StackItem *outItem) {
 	topOfStack(outItem);
 	if (dialogStackCount > 0) { 
 		--dialogStackCount;
 	}
 }
 
-void popStackRoot(StackItem *outItem) {
+void popDialogStackRoot(StackItem *outItem) {
 	if (dialogStackCount > 1) {
 		dialogStackCount = 1;
 	}
-	popStack(outItem);
+	popDialogStack(outItem);
 }
 
 UInt8 isStackEmpty(void) {
@@ -394,7 +394,7 @@ void drawNode(TreeNodePtr node, UInt8 selectIndex) {
 }
 
 void exitCurrentNode(void) {
-	popStack(NULL);
+	popDialogStack(NULL);
 
 	if (isStackEmpty()) {
 		isExittingDialog = 1;
@@ -430,7 +430,7 @@ static void handleMenuItemNode(TreeNodePtr node) {
 		// Push the selected node.
 		item.node = menu;
 		item.selectedRow = 0;
-		pushStack(&item);
+		pushDialogStack(&item);
 		drawNode(menu, 0);
 	}
 }
@@ -441,7 +441,7 @@ static void handleTalkNode(TreeNodePtr node) {
 	item.selectedRow = 0;
 	menuItemCount = 0;
 	messageIndex = 0;
-	pushStack(&item);
+	pushDialogStack(&item);
 	hideCursor();
 	drawNode(node, 0);
 }
@@ -473,9 +473,9 @@ static SInt8 handleMenuClick(UInt8 index) {
 		TreeNodePtr choice = item.node->children[index];
 
 		// Save selected row of current node.
-		popStack(&item);
+		popDialogStack(&item);
 		item.selectedRow = index;
-		pushStack(&item);
+		pushDialogStack(&item);
 
 		switch (choice->value) {
 			case ExitNode:
@@ -536,7 +536,7 @@ void initDialog(void) {
 		StackItem item;
 		item.node = &temShopRootNode;
 		item.selectedRow = 0;
-		pushStack(&item);
+		pushDialogStack(&item);
 		drawNode(item.node, 0);
 	}
 

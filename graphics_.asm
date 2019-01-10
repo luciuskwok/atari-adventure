@@ -13,11 +13,21 @@
 .import _battleViewDLI
 .import _infoViewDLI
 
+.import _multiplyAXtoPtr1
+.import _popStack
+
 
 ; Memory locations
 	RTCLOK_LSB = $14 		; LSB of internal clock
+	LMARGN    = $52
+	ROWCRS    = $54 		; cursor row
+	COLCRS    = $55 		; cursor column
 	SAVMSC 	  = $58 		; Pointer to screen memory
+	SAVADR    = $68 		; Temporary pointer for screen memory
 	RAMTOP 	  = $6A
+	BUFSTR    = $6C
+	BITMSK    = $6E
+	SHFAMT    = $6F
 	VDSLST    = $0200 		; Pointer to current display list handler
 	SDMCTL    = $022F 		; Shadow register for ANTIC options
 	SDLSTL    = $0230		; Pointer to display list
@@ -70,83 +80,81 @@
 	lda #$40 			; disable DLI, leave VBI enabled
 	sta NMIEN
 
-	lda RTCLOK_LSB 		; Wait for vertical blank
-wait_vbi:
-	cmp RTCLOK_LSB
-	beq wait_vbi
+	lda #1
+	jsr _delayTicks
 
 	lda mode 			; if mode == ScreenModeInfo: init Info screen
 	cmp #ScreenModeInfo
 	bne non_info_screen
 
-init_info:
-	lda _graphicsWindow  ; set SAVMSC to graphcsWindow
-	sta SAVMSC
-	lda _graphicsWindow+1
-	sta SAVMSC+1
+	init_info:
+		lda _graphicsWindow  ; set SAVMSC to graphcsWindow
+		sta SAVMSC
+		lda _graphicsWindow+1
+		sta SAVMSC+1
 
-	jsr _initInfoViewDisplay
+		jsr _initInfoViewDisplay
 
-	lda #<_infoViewDLI
-	sta VDSLST
-	lda #>_infoViewDLI
-	sta VDSLST+1
+		lda #<_infoViewDLI
+		sta VDSLST
+		lda #>_infoViewDLI
+		sta VDSLST+1
 
-	jmp enable_screen
+		jmp enable_screen
 
-non_info_screen: 		; else: set SAVMSC to textWindow
-	lda _textWindow 
-	sta SAVMSC
-	lda _textWindow+1
-	sta SAVMSC+1
+	non_info_screen: 		; else: set SAVMSC to textWindow
+		lda _textWindow 
+		sta SAVMSC
+		lda _textWindow+1
+		sta SAVMSC+1
 
-	lda mode
-	cmp #ScreenModeMap
-	beq init_map
-	cmp #ScreenModeDialog
-	beq init_dialog
-	cmp #ScreenModeBattle
-	beq init_battle
-	rts 				; default: screen off
+		lda mode
+		cmp #ScreenModeMap
+		beq init_map
+		cmp #ScreenModeDialog
+		beq init_dialog
+		cmp #ScreenModeBattle
+		beq init_battle
+		rts 				; default: screen off
 
-init_map:
-	jsr _initMapViewDisplay
+	init_map:
+		jsr _initMapViewDisplay
 
-	lda #<_mapViewDLI
-	sta VDSLST
-	lda #>_mapViewDLI
-	sta VDSLST+1
+		lda #<_mapViewDLI
+		sta VDSLST
+		lda #>_mapViewDLI
+		sta VDSLST+1
 
-	jmp enable_screen
+		jmp enable_screen
 
-init_dialog:
-	jsr _initDialogViewDisplay
+	init_dialog:
+		jsr _initDialogViewDisplay
 
-	lda #0
-	sta VDSLST
-	sta VDSLST+1
+		lda #0
+		sta VDSLST
+		sta VDSLST+1
 
-	jmp enable_screen
+		jmp enable_screen
 
-init_battle:
-	jsr _initBattleViewDisplay
+	init_battle:
+		jsr _initBattleViewDisplay
 
-	lda #<_battleViewDLI
-	sta VDSLST
-	lda #>_battleViewDLI
-	sta VDSLST+1
+		lda #<_battleViewDLI
+		sta VDSLST
+		lda #>_battleViewDLI
+		sta VDSLST+1
 
-	jmp enable_screen
+		jmp enable_screen
 
-enable_screen:
-	lda VDSLST+1
-	beq enable_dma 
-enable_dli:
-	lda #enableDLI
-	sta NMIEN
-enable_dma:
-	lda #anticOptions
-	sta SDMCTL
+	enable_screen:
+		lda VDSLST+1
+		beq enable_dma 
+	enable_dli:
+		lda #enableDLI
+		sta NMIEN
+	enable_dma:
+		lda #anticOptions
+		sta SDMCTL
 	rts
 .endproc 
 
@@ -348,11 +356,11 @@ enable_dma:
 	; Chara stats: 12 lines 
 	lda #DL_TEXT
 	ldx #11
-loop1:
-	sta (ptr1),Y
-	iny
-	dex 
-	bne loop1
+	loop1:
+		sta (ptr1),Y
+		iny
+		dex 
+		bne loop1
 
 	lda #DL_TEXT|DL_DLI
 	sta (ptr1),Y
@@ -369,11 +377,11 @@ loop1:
 
 	lda #DL_TEXT
 	ldx #4
-loop2:
-	sta (ptr1),Y
-	iny
-	dex 
-	bne loop2
+	loop2:
+		sta (ptr1),Y
+		iny
+		dex 
+		bne loop2
 
 	jsr _writeDisplayListEndInternal
 	rts
@@ -409,15 +417,13 @@ loop2:
 
 	pla 				; pull mode value from stack
 	jmp while
-loop:
-	sta (ptr1),Y
-	iny 
-	dex
-
-while:
-	cpx #0
-	bne loop
-
+	loop:
+		sta (ptr1),Y
+		iny 
+		dex
+	while:
+		cpx #0
+		bne loop
 	rts
 .endproc
 
@@ -429,21 +435,21 @@ while:
 	iny 
 
 	ldx #3
-loop:
-	lda #DL_RASTER|DL_LMS
-	sta (ptr1),Y
-	iny 
+	loop:
+		lda #DL_RASTER|DL_LMS
+		sta (ptr1),Y
+		iny 
 
-	lda ptr2
-	sta (ptr1),Y
-	iny 
+		lda ptr2
+		sta (ptr1),Y
+		iny 
 
-	lda ptr2+1
-	sta (ptr1),Y
-	iny 
-	
-	dex
-	bne loop
+		lda ptr2+1
+		sta (ptr1),Y
+		iny 
+		
+		dex
+		bne loop
 
 	lda #DL_BLK1
 	sta (ptr1),Y
@@ -489,25 +495,136 @@ loop:
 	stx ptr1+1
 	cpx #0
 	beq zero_out
-copy_colors:
-	ldy #0 
-loop_copy_colors:
-	lda (ptr1),Y
-	sta PCOLR0,Y
-	iny 
-	cpy #12 
-	bne loop_copy_colors
+	copy_colors:
+		ldy #0 
+	loop_copy_colors:
+		lda (ptr1),Y
+		sta PCOLR0,Y
+		iny 
+		cpy #12 
+		bne loop_copy_colors
 	rts
-zero_out:
-	ldy #0 
-loop_zero_out:
-	lda #0
-	sta PCOLR0,Y
-	iny 
-	cpy #12 
-	bne loop_zero_out
+
+	zero_out:
+		ldy #0 
+	loop_zero_out:
+		lda #0
+		sta PCOLR0,Y
+		iny 
+		cpy #12 
+		bne loop_zero_out
 	rts
 .endproc
+
+
+; extern void __fastcall__ drawBarChart(UInt8 *screen, UInt8 x, UInt8 y, UInt8 width, UInt8 filled);
+.export _drawBarChart
+.proc _drawBarChart
+	rowBytes = 40
+
+	; Store parameter 'filled'
+	filled = tmp1
+	sta filled 
+
+	; Store parameter 'width'
+	width = tmp2
+	ldy #0
+	lda (sp),Y
+	sta width
+
+	; Store parameter 'x' in COLCRS
+	ldy #2
+	lda (sp),Y
+	sta COLCRS
+
+	; Get the screen address
+	ldy #3
+	lda (sp),Y
+	sta SAVADR
+	iny 
+	lda (sp),Y
+	sta SAVADR+1
+
+	; Calculate byte offset to screen row start & store in ptr1
+	ldy #1
+	lda (sp),Y 
+	ldx #rowBytes
+	jsr _multiplyAXtoPtr1
+
+	; Add ptr1 to screen address, to point it at start of screen row
+	clc 
+	lda SAVADR
+	adc ptr1 
+	sta SAVADR
+	lda SAVADR+1
+	adc ptr1+1
+	sta SAVADR+1
+
+	; Loop over pixels
+	ldx #0
+	loop: 
+		lda #1 			; value = 1
+		cpx filled 		; if X >= filled: x += 1
+		adc #0
+		eor #3
+
+		jsr _setPixel
+
+		inc COLCRS
+		inx 
+	while: 
+		cpx width
+		bne loop
+
+	; pop parameters off stack
+	lda #5
+	jsr _popStack
+
+	rts
+.endproc
+
+.proc _setPixel
+	; on entry: SAVADR points to screen row, COLCRS is x-position, A=pixel value
+	; uses AY
+
+	and #3 				; Use BUFSTR to store the shifted pixel value
+	sta BUFSTR
+
+	lda #3 				; Use BITMSK as the bit mask
+	sta BITMSK
+
+	lda COLCRS 			; Get the low 2-bits of cursor column
+	and #3
+	tay 
+
+	jmp while_shift		; shift left, where position 0 requires 3 shifts
+	loop_shift: 
+		asl BUFSTR ; 5
+		asl BUFSTR ; 5
+		asl BITMSK
+		asl BITMSK
+		iny 
+
+	while_shift:
+		cpy #3
+		bne loop_shift
+
+	lda COLCRS  		; divided cursor column by 4 to get the byte offset
+	lsr a 
+	lsr a 
+	tay
+
+	lda BITMSK 			; invert the bit mask
+	eor #$FF
+	sta BITMSK
+
+	lda (SAVADR),Y 		; mask out the pixel and apply the new value
+	and BITMSK
+	ora BUFSTR
+	sta (SAVADR),Y
+
+	rts
+.endproc 
 
 
 ; extern void __fastcall__ clearGraphicsWindow(UInt8 rows);
@@ -543,9 +660,9 @@ loop_zero_out:
 .proc _delayTicks
 	clc
 	adc RTCLOK_LSB
-loop:
-	cmp RTCLOK_LSB
-	bne loop 
+	loop:
+		cmp RTCLOK_LSB
+		bne loop 
 	rts
 .endproc
 

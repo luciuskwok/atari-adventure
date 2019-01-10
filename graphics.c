@@ -33,7 +33,6 @@
 #include "puff.h"
 #include "sprites.h"
 #include <atari.h>
-#include <string.h>
 
 
 // Globals
@@ -134,31 +133,6 @@ void setBackgroundGradient(const UInt8 *data) {
 */
 
 // Drawing
-
-static void setPixel(UInt8 *screen, UInt8 x, UInt8 y, UInt8 value) {
-	UInt8 shift = (3 - (x % 4)) * 2;
-	UInt8 mask = 3 << shift;
-	UInt8 c;
-
-	screen += x / 4 + SCREEN_ROW_BYTES * y;
-	c = *screen;
-	c &= ~mask;
-
-	value <<= shift;
-	c |= value;
-
-	*screen = c;
-}
-
-void drawBarChart(UInt8 *screen, UInt8 x, UInt8 y, UInt8 width, UInt8 filled) {
-	UInt8 i, value;
-
-	for (i=0; i<width; ++i) {
-		value = (i >= filled) ? 1 : 2;
-		setPixel(screen, x, y, value);
-		++x;
-	}
-}
 
 SInt8 drawImage(const DataBlock *image, UInt8 rowOffset, UInt8 rowCount) {
 	UInt8 *screen = graphicsWindow;

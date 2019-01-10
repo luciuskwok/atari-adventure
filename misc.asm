@@ -2,7 +2,6 @@
 
 
 .import 	pushax
-.import		incsp2, incsp4
 .importzp 	sp, sreg
 .importzp 	tmp1, tmp2, tmp3, tmp4, ptr1, ptr2, ptr3, ptr4
 
@@ -13,6 +12,22 @@ RMARGN = $53
 ROWCRS = $54
 COLCRS = $55
 SAVMSC = $58
+
+
+.export _popStack
+.proc _popStack
+	; on entry: A=number of bytes to pop 
+	; uses tmp1
+	sta tmp1
+	clc 
+	lda sp 
+	adc tmp1
+	sta sp
+	lda sp+1
+	adc #0
+	sta sp+1
+	rts
+.endproc 
 
 
 ; extern void __fastcall__ decodeRunLenRange(UInt8 *outData, UInt8 skip, UInt8 length, const UInt8 *runLenData);
@@ -136,7 +151,8 @@ while_input:			; while (in_index < in_len && out_index < out_len)
 	jmp loop_input
 
 return:
-	jsr incsp4
+	lda #4
+	jsr _popStack
 	rts
 .endproc
 
@@ -144,12 +160,12 @@ return:
 ; extern void __fastcall__ stringConcat(UInt8 *dst, const UInt8 *src);
 .export _stringConcat 		
 .proc _stringConcat
-; uses ptr1, ptr2
-; ptr1 is _stringLength parameter.
-SRC = ptr2
+	; uses ptr1, ptr2
+	; ptr1 is _stringLength parameter.
+	SRC = ptr2
 	sta SRC
 	stx SRC+1
-DST = ptr1
+	DST = ptr1
 	ldy #1				; MSB
 	lda (sp),Y
 	sta DST+1
@@ -166,7 +182,9 @@ DST = ptr1
 	sta DST+1
 
 	jsr _stringCopyInternal
-	jsr incsp2
+
+	lda #2
+	jsr _popStack
 	rts
 .endproc
 
@@ -174,11 +192,11 @@ DST = ptr1
 ; extern void __fastcall__ stringCopy(UInt8 *dst, const UInt8 *src);
 .export _stringCopy 	
 .proc _stringCopy
-; uses ptr1, ptr2
-SRC = ptr2
+	; uses ptr1, ptr2
+	SRC = ptr2
 	stx SRC+1
 	sta SRC
-DST = ptr1
+	DST = ptr1
 	ldy #1				; MSB
 	lda (sp),Y
 	sta DST+1
@@ -187,7 +205,9 @@ DST = ptr1
 	sta DST
 
 	jsr _stringCopyInternal
-	jsr incsp2
+	
+	lda #2
+	jsr _popStack
 	rts
 .endproc
 
@@ -251,7 +271,7 @@ return:
 .endproc
 
 
-
+.export _multiplyAXtoPtr1
 .proc _multiplyAXtoPtr1
 	; Uses ptr2. Returns result in ptr1
 	sta ptr2 			; ptr2 = A
