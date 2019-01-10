@@ -273,3 +273,56 @@ SAVMSC = $58
 		bne loop
 	rts
 .endproc
+
+
+; void uint16toString(UInt8 *string, UInt16 value);
+.export _uint16toString
+.proc _uint16toString
+	sta ptr1 			; value
+	stx ptr1+1
+
+	jsr popsreg 		; string
+	string = ptr2
+	lda sreg 			; copy string to ptr2
+	sta string
+	lda sreg+1
+	sta string+1
+
+	index = tmp1
+	lda #0
+	sta index
+
+	loop_push:
+		lda #10 		; reset ptr4 to 10 because udiv16 will modify it
+		sta ptr4
+		lda #0
+		sta ptr4+1
+
+		jsr udiv16 		; divide ptr1 / ptr4: ptr1=result, sreg=remainder
+
+		lda sreg 		; get remainder
+		clc 
+		adc #$30 		; add ascii '0' char to remainder to get digits
+
+		pha 			; push digit onto stack
+		inc index 
+
+		lda ptr1 		; if ptr1 != 0: next loop
+		bne loop_push
+		lda ptr1+1
+		bne loop_push 
+
+	ldy #0 
+	loop_pull:
+		pla  			; pull digits
+		sta (string),Y	; and add them in the correct order
+		iny 
+		cpy index 
+		bne loop_pull
+
+	lda #0 				; terminate string with NULL
+	sta (string),Y
+
+	rts
+.endproc
+

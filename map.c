@@ -34,15 +34,11 @@ RectU8 mapFrame;
 
 static void drawMapTextBox(void) {
 	UInt16 startTime = SHORT_CLOCK;
-	UInt16 duration;
-	UInt8 s[10] = "Text:";
 
 	printAllCharaText(0);
 	printPartyStats();
 
-	duration = SHORT_CLOCK - startTime;
-	uint16toString(s+5, duration);
-	printStringAtXY(s, 0, 5);
+	debugPrint("Text:", SHORT_CLOCK - startTime, 0, 5);
 }
 
 static void exitMapMenu(void) {
@@ -76,12 +72,13 @@ static SInt8 handleMenuClick(UInt8 index) {
 
 
 static void initMapMenu(void) {
-	RectU8 r = { { 0, 5 }, { 40, 1 } };
+	const UInt8 bottomRow = 5;
 
-	setPlayerCursorVisible(0);
-	clearTextRect(&r);
+	zeroOut8(textWindow + (bottomRow * SCREEN_ROW_BYTES), 40);
 	printStringAtXY("* Heal  * Info  * Save  * Done", 5, 5);
 	POKE(TXTBKG, 0x34);
+	
+	setPlayerCursorVisible(0);
 
 	initMenu();
 	menuOrigin.x = 6 + 5 * 4;
@@ -216,7 +213,6 @@ void drawCurrentMap(UInt8 x, UInt8 y) {
 
 	// Debugging
 	// UInt16 startTime = SHORT_CLOCK;
-	// UInt16 duration;
 
 	// Integrity check
 	if (runLenPtr == NULL) {
@@ -295,12 +291,7 @@ void drawCurrentMap(UInt8 x, UInt8 y) {
 	}
 
 	// Debugging
-	// {
-	// 	UInt8 s[6];
-	// 	duration = SHORT_CLOCK - startTime;
-	// 	uint16toString(s, duration);
-	// 	printStringAtXY(s, 0, 4);
-	// }
+	// debugPrint("Map:", SHORT_CLOCK - startTime, 0, 5);
 }
 
 // Map Movement

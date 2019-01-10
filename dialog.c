@@ -499,7 +499,6 @@ static SInt8 handleMenuClick(UInt8 index) {
 
 void initDialog(void) {
 	UInt16 startTime = SHORT_CLOCK;
-	UInt16 duration;
 	SInt8 err;
 
 	isExittingDialog = 0;
@@ -545,10 +544,7 @@ void initDialog(void) {
 	if (err) {
 		debugPrint("puff() error:", err, 0, 0);
 	} else {
-		UInt8 s[6];
-		duration = SHORT_CLOCK - startTime;
-		uint16toString(s, duration);
-		printStringAtXY(s, 0, 6);		
+		debugPrint("Init:", SHORT_CLOCK - startTime, 0, 6);
 	}
 }
 

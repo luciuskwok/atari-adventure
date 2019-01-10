@@ -177,34 +177,6 @@ void drawTextBox(const UInt8 *s, UInt8 x, UInt8 y, UInt8 width, UInt8 lineSpacin
 	}
 }
 
-void uint8toStringOLD(UInt8 *outString, UInt8 value) {
-	if (value >= 100) {
-		*outString++ = value / 100 + 0x30;
-	}
-	if (value >= 10) {
-		*outString++ = (value / 10) % 10 + 0x30;
-	}
-	*outString++ = value % 10 + 0x30;
-	*outString = 0;
-}
-
-void uint16toString(UInt8 *outString, UInt16 value) {
-	if (value >= 10000) {
-		*outString++ = value / 10000 + 0x30;
-	}
-	if (value >= 1000) {
-		*outString++ = (value / 1000) % 10 + 0x30;
-	}
-	if (value >= 100) {
-		*outString++ = (value / 100) % 10 + 0x30;
-	}
-	if (value >= 10) {
-		*outString++ = (value / 10) % 10 + 0x30;
-	}
-	*outString++ = value % 10 + 0x30;
-	*outString = 0;	
-}
-
 void hexString(UInt8 *outString, UInt8 length, UInt16 value) {
 	UInt8 i, c;	
 	for (i=0; i<length; ++i) {
@@ -221,11 +193,9 @@ void hexString(UInt8 *outString, UInt8 length, UInt16 value) {
 }
 
 void debugPrint(const UInt8 *s, UInt16 value, UInt8 x, UInt8 y) {
-	UInt8 message[40] = { 0 };
-	UInt8 valStr[6];
-
-	uint16toString(valStr, value);
-	stringConcat(message, s);
-	stringConcat(message, valStr);
+	UInt8 message[40];
+	
+	stringCopy(message, s);
+	uint16toString(message+stringLength(message), value);
 	printStringAtXY(message, x, y);
 }

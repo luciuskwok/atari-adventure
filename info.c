@@ -239,7 +239,6 @@ void initInfo(void) {
 	UInt8 s[20];
 
 	UInt16 startTime = SHORT_CLOCK;
-	UInt16 duration;
 
 	// Set up graphics window
 	setScreenMode(ScreenModeOff);
@@ -317,8 +316,5 @@ void initInfo(void) {
 	setHiglightSprite(3, &avatar2SpriteL, 124 + 11, 8);
 	setHiglightSprite(4, &avatar4SpriteR, 124 + 22, 9);
 
-	duration = SHORT_CLOCK - startTime;
-	uint16toString(s, duration);
-	SET_TXT_ORIGIN(0, ITEM_WINDOW_ROW+4)
-	printLine(s);
+	debugPrint("Init:", SHORT_CLOCK - startTime, 0, ITEM_WINDOW_ROW+4);
 }

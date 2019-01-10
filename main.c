@@ -59,15 +59,6 @@
 // Globals
 UInt8 isQuitting;
 
-// Constants and macros
-//#define DEBUGGING
-
-// Debugging
-#ifdef DEBUGGING
-UInt16 startTime;
-UInt16 duration;
-#endif
-
 // Dialog functions
 
 static void fadeOutScreen(void) {
