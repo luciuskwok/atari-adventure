@@ -9,22 +9,9 @@
 
 
 // Constants
-#define TEXTBOX_WIDTH (40)
 #define TEXTBOX_HEIGHT (7)
 
 
-static void clearTextRect(RectU8 *rect) {
-	UInt8 rowSkip = TEXTBOX_WIDTH - rect->size.width;
-	UInt16 i = rect->origin.x + TEXTBOX_WIDTH * rect->origin.y;
-	UInt8 x, y;
-
-	for (y=0; y<rect->size.height; ++y) {
-		for (x=0; x<rect->size.width; ++x) {
-			textWindow[i++] = 0;
-		}
-		i += rowSkip;
-	}
-}
 
 static void drawHpBar(UInt8 hp, UInt8 maxHp) {
 	UInt8 width;
@@ -68,22 +55,28 @@ static void printCharaStats(GameCharaPtr chara) {
 	drawHpBar(hp, maxHp);
 }
 
-void eraseCharaBoxAtIndex(UInt8 index, UInt8 y) {
+void eraseCharaBoxAtIndex(UInt8 index) {
 	UInt8 x = 1 + index * 10;
-	RectU8 r;
+	UInt8 y = PEEK(ROWCRS);
+	const UInt8 width = 9;
+	const UInt8 height = 4;
+	UInt8 *ptr = textWindow;
+	UInt8 row;
 
-	r.origin.x = x;
-	r.origin.y = y;
-	r.size.width = 10;
-	r.size.height = 4;
-	clearTextRect(&r);
+	ptr += y * SCREEN_ROW_BYTES + x;
+
+	for (row=0; row<height; ++row) {
+		zeroOut8(ptr, width);
+		ptr += SCREEN_ROW_BYTES;
+	}
 }
 
-void printCharaAtIndex(UInt8 index, UInt8 y) {
+void printCharaAtIndex(UInt8 index) {
 	UInt8 x = 1 + index * 10;
 	GameCharaPtr chara = charaAtIndex(index);
 
-	SET_TXT_ORIGIN(x, y)
+	POKE(COLCRS, x);
+	POKE(LMARGN, x);
 	printCharaStats(chara);
 }
 
@@ -92,7 +85,8 @@ void printAllCharaText(UInt8 y) {
 	UInt8 i;
 
 	for (i=0; i<count; ++i) {
-		printCharaAtIndex(i, y);
+		POKE(ROWCRS, y);
+		printCharaAtIndex(i);
 	}
 }
 
@@ -145,7 +139,7 @@ void drawTextBox(const UInt8 *s, UInt8 x, UInt8 y, UInt8 width, UInt8 lineSpacin
 				while (i > previousBreakable + 1) {
 					--i;
 					--x;
-					textWindow[x + TEXTBOX_WIDTH * y] = 0; // space char
+					textWindow[x + SCREEN_ROW_BYTES * y] = 0; // space char
 				}			
 			}
 
@@ -175,7 +169,7 @@ void drawTextBox(const UInt8 *s, UInt8 x, UInt8 y, UInt8 width, UInt8 lineSpacin
 
 		if (c == 0) { return; } // End of string
 
-		textWindow[x + TEXTBOX_WIDTH * y] = toAtascii(c);
+		textWindow[x + SCREEN_ROW_BYTES * y] = toAtascii(c);
 		++x;
 		++i;
 		c = s[i];

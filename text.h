@@ -7,8 +7,8 @@
 
 #define SET_TXT_ORIGIN(x, y)  *(UInt8*)0x52=(x);*(UInt8*)0x55=(x);*(UInt8*)0x54=(y);
 
-void eraseCharaBoxAtIndex(UInt8 index, UInt8 y);
-void printCharaAtIndex(UInt8 index, UInt8 y);
+void eraseCharaBoxAtIndex(UInt8 index);
+void printCharaAtIndex(UInt8 index);
 void printAllCharaText(UInt8 y);
 void printPartyStats(void);
 

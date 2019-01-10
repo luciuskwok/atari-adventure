@@ -183,8 +183,9 @@ static void charaAtIndexWasHit(UInt8 index, UInt8 damage) {
 	}
 
 	// Redraw the character's stats
-	eraseCharaBoxAtIndex(index, 4);
-	printCharaAtIndex(index, 4);
+	POKE(ROWCRS, 4);
+	eraseCharaBoxAtIndex(index);
+	printCharaAtIndex(index);
 }
 
 static void doAttack(UInt8 player) {
