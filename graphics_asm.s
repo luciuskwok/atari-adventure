@@ -6,13 +6,23 @@
 .import _graphicsWindow
 .import _textWindow
 
+.import _mapViewDLI
+.import _battleViewDLI
+.import _infoViewDLI
 
-; Constants
+
+; Memory locations
+	RTCLOK_LSB = $14 		; LSB of internal clock
 	SAVMSC 	  = $58 		; Pointer to screen memory
+	VDSLST    = $0200 		; Pointer to current display list handler
+	SDMCTL    = $022F 		; Shadow register for ANTIC options
 	SDLSTL    = $0230		; Pointer to display list
 	PCOLR0    = $02C0		; Player 0 color
 	CHBAS     = $02F4
+	DMACTL    = $D400 		; ANTIC options
+	NMIEN     = $D40E 		; ANTIC NMI enable
 
+; Display List instructions
 	DL_JVB    = $41
 	DL_BLK1   = $00
 	DL_BLK2   = $10
@@ -33,10 +43,109 @@
 
 	ROW_BYTES = 40
 
+; Screen modes
+	ScreenModeMap    = 1
+	ScreenModeDialog = 2
+	ScreenModeBattle = 3
+	ScreenModeInfo   = 4
 
 
-; extern void __fastcall__ _initMapViewDisplay(void);
-.export _initMapViewDisplay
+; extern void __fastcall__ setScreenMode(UInt8 mode);
+.export _setScreenMode
+.proc _setScreenMode
+	anticOptions = $2E 	; normal playfield, enable players & missiles, enable DMA
+	enableDLI    = $C0  ; enable VBI + DLI
+	mode = tmp1 		; use tmp1 for mode
+
+	sta mode  			; save mode in tmp1
+	
+	lda #0 				; Turn off screen
+	sta SDMCTL
+	;sta DMLCTL
+	lda #$40 			; disable DLI, leave VBI enabled
+	sta NMIEN
+
+	lda RTCLOK_LSB 		; Wait for vertical blank
+wait_vbi:
+	cmp RTCLOK_LSB
+	beq wait_vbi
+
+	lda mode 			; if mode == ScreenModeInfo: init Info screen
+	cmp #ScreenModeInfo
+	bne non_info_screen
+
+init_info:
+	lda _graphicsWindow  ; set SAVMSC to graphcsWindow
+	sta SAVMSC
+	lda _graphicsWindow+1
+	sta SAVMSC+1
+
+	jsr _initInfoViewDisplay
+
+	lda #<_infoViewDLI
+	sta VDSLST
+	lda #>_infoViewDLI
+	sta VDSLST+1
+
+	jmp enable_screen
+
+non_info_screen: 		; else: set SAVMSC to textWindow
+	lda _textWindow 
+	sta SAVMSC
+	lda _textWindow+1
+	sta SAVMSC+1
+
+	lda mode
+	cmp #ScreenModeMap
+	beq init_map
+	cmp #ScreenModeDialog
+	beq init_dialog
+	cmp #ScreenModeBattle
+	beq init_battle
+	rts 				; default: screen off
+
+init_map:
+	jsr _initMapViewDisplay
+
+	lda #<_mapViewDLI
+	sta VDSLST
+	lda #>_mapViewDLI
+	sta VDSLST+1
+
+	jmp enable_screen
+
+init_dialog:
+	jsr _initDialogViewDisplay
+
+	lda #0
+	sta VDSLST
+	sta VDSLST+1
+
+	jmp enable_screen
+
+init_battle:
+	jsr _initBattleViewDisplay
+
+	lda #<_battleViewDLI
+	sta VDSLST
+	lda #>_battleViewDLI
+	sta VDSLST+1
+
+	jmp enable_screen
+
+enable_screen:
+	lda VDSLST+1
+	beq enable_dma 
+enable_dli:
+	lda #enableDLI
+	sta NMIEN
+enable_dma:
+	lda #anticOptions
+	sta SDMCTL
+	rts
+.endproc 
+
+
 .proc _initMapViewDisplay
 	jsr _initDisplayListVarsInternal
 
@@ -76,7 +185,11 @@
 	; Add DLI
 
 	; Party stats
-	lda #DL_BLK7|DL_DLI
+	lda #DL_BLK3|DL_DLI
+	sta (ptr1),Y
+	iny
+
+	lda #DL_BLK4
 	sta (ptr1),Y
 	iny
 
@@ -97,9 +210,7 @@
 .endproc
 
 
-; extern void __fastcall__ initStoryViewDisplay(void);
-.export _initStoryViewDisplay
-.proc _initStoryViewDisplay
+.proc _initDialogViewDisplay
 	jsr _initDisplayListVarsInternal
 
 	; Use graphicsWindow screen memory for raster
@@ -125,8 +236,6 @@
 .endproc
 
 
-; extern void __fastcall__ initBattleViewDisplay(void);
-.export _initBattleViewDisplay
 .proc _initBattleViewDisplay
 	rasterHeight = 48
 
@@ -137,7 +246,7 @@
 	sta ptr2
 	lda _graphicsWindow+1
 	sta ptr2+1
-	ldx #48
+	ldx #rasterHeight
 	lda #DL_RASTER
 	jsr _writeDisplayListLinesInternal
 
@@ -198,6 +307,68 @@
 	ldx #10
 	lda #DL_RASTER
 	jsr _writeDisplayListLinesInternal
+
+	jsr _writeDisplayListEndInternal
+	rts
+.endproc
+
+
+; extern void __fastcall__ initInfoViewDisplay(void);
+.export _initInfoViewDisplay
+.proc _initInfoViewDisplay
+	rasterHeight = 24
+
+	jsr _initDisplayListVarsInternal
+
+	; Use graphicsWindow screen memory for both raster and text
+	lda _graphicsWindow 		
+	sta ptr2
+	lda _graphicsWindow+1
+	sta ptr2+1
+	ldx #rasterHeight
+	lda #DL_RASTER
+	jsr _writeDisplayListLinesInternal
+
+	jsr _applyTrailingDLI
+
+	; Chara name
+	lda #DL_TEXT|DL_DLI
+	sta (ptr1),Y
+	iny
+
+	lda #DL_BLK2
+	sta (ptr1),Y
+	iny
+
+	; Chara stats: 12 lines 
+	lda #DL_TEXT
+	ldx #11
+loop1:
+	sta (ptr1),Y
+	iny
+	dex 
+	bne loop1
+
+	lda #DL_TEXT|DL_DLI
+	sta (ptr1),Y
+	iny
+
+	lda #DL_BLK4
+	sta (ptr1),Y
+	iny
+
+	; Party stats
+	lda #DL_TEXT|DL_DLI
+	sta (ptr1),Y
+	iny
+
+	lda #DL_TEXT
+	ldx #4
+loop2:
+	sta (ptr1),Y
+	iny
+	dex 
+	bne loop2
 
 	jsr _writeDisplayListEndInternal
 	rts

@@ -24,14 +24,15 @@ enum ScreenMode {
 	ScreenModeBattle,
 	ScreenModeInfo,
 };
-void setScreenMode(UInt8 mode);
+extern void __fastcall__ setScreenMode(UInt8 mode);
 
-// Transition Effects
+// Color Table
 enum FadeOptions {
 	FadeGradient = 1, FadeTextBox = 2
 };
 void fadeOutColorTable(UInt8 fadeOptions);
 void fadeInColorTable(UInt8 fadeOptions, const UInt8 *colorTable);
+extern void __fastcall__ loadColorTable(const UInt8 *colors);
 
 // Drawing
 void drawBarChart(UInt8 *screen, UInt8 x, UInt8 y, UInt8 width, UInt8 filled);
@@ -42,13 +43,7 @@ void clearGraphicsWindow(UInt8 rows);
 void waitVsync(UInt8 ticks);
 
 // Init
-void initGraphics(void);
-
-// Assembly routines
-extern void __fastcall__ initMapViewDisplay(void);
-extern void __fastcall__ initStoryViewDisplay(void);
-extern void __fastcall__ initBattleViewDisplay(void);
-extern void __fastcall__ loadColorTable(const UInt8 *colors);
 extern void __fastcall__ initFont(UInt8 fontPage);
+void initGraphics(void);
 
 #endif

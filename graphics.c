@@ -44,101 +44,12 @@ extern void __fastcall__ infoViewDLI(void);
 UInt8 *graphicsWindow;
 UInt8 *textWindow;
 
-
-// Display List constants
-#define dl_Interrupt (0x80)
-#define dl_LMS (0x40)
-#define dl_VScroll (0x20)
-#define dl_HScroll (0x10)
-#define dl_mapTileLine (dl_Interrupt | dl_HScroll | 7)
-#define dl_rasterLine (13)
-#define dl_textWindowLine (2)
-
 #define SCREEN_ROW_BYTES (40)
 
 
 // Screen Modes
 
-static UInt8 writeDisplayListLines(UInt8 *dl, const UInt8 *screen, UInt8 mode, UInt8 count) {
-	UInt8 i;
-
-	dl[0] = mode | dl_LMS; 
-	dl[1] = (UInt16)screen % 256; 
-	dl[2] = (UInt16)screen / 256; // 6
-	
-	for (i=0; i<count; ++i) {
-		dl[i+3] = mode;
-	}
-	return count + 2; // number of bytes written
-}
-
-static UInt8 writeDisplayListCustomTextLines(UInt8 *dl, UInt8 count) {
-	UInt8 textPage = (UInt16)textWindow / 256;
-	UInt8 x = 0;
-
-	// Text window
-	dl[x++] = dl_textWindowLine | dl_LMS;
-	dl[x++] = 0;
-	dl[x++] = textPage;
-
-	while (--count > 0) {
-		dl[x++] = dl_textWindowLine; 
-	}
-
-	return x;
-}
-
-static UInt8 writeDisplayListBarChartLines(UInt8 *dl, const UInt8 *screen) {
-	const UInt8 screenLSB = (UInt16)screen % 256;
-	const UInt8 screenMSB = (UInt16)screen / 256;
-	UInt8 x = 0;
-	UInt8 count;
-
-	dl[x++] = DL_BLK1;
-	for (count=0; count<3; ++count) {
-		dl[x++] = dl_rasterLine | dl_LMS; // Bar chart uses 3 repeating rows
-		dl[x++] = screenLSB;
-		dl[x++] = screenMSB;
-	}
-	dl[x++] = DL_BLK1;
-	return x;
-}
-
-static void writeDisplayListEnd(UInt8 *dl) {
-	dl[0] = DL_JVB; // Vertical blank + jump to DL start
-	dl[1] = PEEK(SDLSTL);
-	dl[2] = PEEK(SDLSTL+1);
-}
-
-static void writeInfoViewDisplayList(void) {
-	UInt8 *dl = (UInt8 *)PEEKW(SDLSTL);
-	UInt8 x = 3;
-	UInt8 i;
-
-	x += writeDisplayListLines(dl+3, graphicsWindow, dl_rasterLine, 24);
-	dl[x-1] |= dl_Interrupt; // 48
-
-	dl[x++] = dl_textWindowLine | dl_Interrupt;
-	dl[x++] = DL_BLK2; // + 10: 58
-
-	for (i=0; i<12; ++i) {
-		dl[x++] = dl_textWindowLine;
-	}
-	dl[x-1] |= dl_Interrupt; // + 12*8 = +96: 154
-
-	dl[x++] = DL_BLK4; // +4: 158
-
-	dl[x++] = dl_textWindowLine | dl_Interrupt;
-	dl[x++] = DL_BLK2; // +10: 168
-
-	for (i=0; i<4; ++i) {
-		dl[x++] = dl_textWindowLine;
-	} // + 4*8 = +32: 200
-
-	writeDisplayListEnd(dl+x);
-}
-
-void setScreenMode(UInt8 mode) {
+void setScreenModeOLD(UInt8 mode) {
 	const UInt8 dma = 0x2E; // standard playfield + missile DMA + player DMA + display list DMA
 	void *dli = 0;
 
@@ -154,21 +65,21 @@ void setScreenMode(UInt8 mode) {
 
 	switch (mode) {
 		case ScreenModeMap:
-			initMapViewDisplay();
+			// initMapViewDisplay();
 			dli = mapViewDLI;
 			break;
 
 		case ScreenModeDialog:
-			initStoryViewDisplay();
+			// initStoryViewDisplay();
 			break;
 
 		case ScreenModeBattle:
-			initBattleViewDisplay();
+			// initBattleViewDisplay();
 			dli = battleViewDLI;
 			break;
 
 		case ScreenModeInfo:
-			writeInfoViewDisplayList();
+			// initInfoViewDisplay();
 			dli = infoViewDLI;
 			break;
 
