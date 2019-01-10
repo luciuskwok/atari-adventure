@@ -2,6 +2,7 @@
 
 .importzp 	sp, sreg
 .importzp 	tmp1, tmp2, tmp3, tmp4, ptr1, ptr2, ptr3, ptr4
+.import popa, popptr1, popsreg
 
 .import _graphicsWindow
 .import _textWindow
@@ -529,35 +530,31 @@
 
 	; Store parameter 'width'
 	width = tmp2
-	ldy #0
-	lda (sp),Y
+	jsr popa
 	sta width
 
+	; Store parameter 'y' in ROWCRS
+	jsr popa 
+	sta ROWCRS
+
 	; Store parameter 'x' in COLCRS
-	ldy #2
-	lda (sp),Y
+	jsr popa 
 	sta COLCRS
 
 	; Get the screen address
-	ldy #3
-	lda (sp),Y
-	sta SAVADR
-	iny 
-	lda (sp),Y
-	sta SAVADR+1
+	jsr popsreg
 
 	; Calculate byte offset to screen row start & store in ptr1
-	ldy #1
-	lda (sp),Y 
+	lda ROWCRS
 	ldx #rowBytes
 	jsr _multiplyAXtoPtr1
 
 	; Add ptr1 to screen address, to point it at start of screen row
 	clc 
-	lda SAVADR
+	lda sreg
 	adc ptr1 
 	sta SAVADR
-	lda SAVADR+1
+	lda sreg+1
 	adc ptr1+1
 	sta SAVADR+1
 
@@ -576,10 +573,6 @@
 	while: 
 		cpx width
 		bne loop
-
-	; pop parameters off stack
-	lda #5
-	jsr _popStack
 
 	rts
 .endproc
@@ -634,9 +627,7 @@
 	sta ptr2			; get parmeter 'length'
 	stx ptr2+1
 
-	jsr _popXA			; get parameter 'ptr'
-	stx ptr1
-	sta ptr1+1
+	jsr popptr1			; get parameter 'ptr'
 
 	clc 				; set ptr2 to point at end of area to zero out
 	lda ptr2
@@ -671,9 +662,7 @@
 .proc _zeroOut8
 	sta tmp1 			; get parmeter 'length'
 
-	jsr _popXA			; get parameter 'ptr'
-	stx ptr1
-	sta ptr1+1
+	jsr popptr1			; get parameter 'ptr'
 
 	lda #0
 	ldy tmp1

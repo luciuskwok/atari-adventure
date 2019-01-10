@@ -14,19 +14,6 @@ COLCRS = $55
 SAVMSC = $58
 
 
-.export _popXA
-.proc _popXA
-	; pops 2-byte value off of stack & returns X=LSB, A=MSB
-	ldy #0
-	lda (sp),Y
-	tax
-	inc sp
-	lda (sp),Y
-	inc sp 
-	rts
-.endproc
-
-
 .export _popStack
 .proc _popStack
 	; on entry: A=number of bytes to pop 
