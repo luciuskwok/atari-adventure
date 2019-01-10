@@ -3,6 +3,7 @@ __*
 
 #cc65
 linker_map.txt
+*.s
 *.o
 *.xex
 
