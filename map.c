@@ -35,13 +35,13 @@ RectU8 mapFrame;
 static void drawMapTextBox(void) {
 	UInt16 startTime = SHORT_CLOCK;
 	UInt16 duration;
-	UInt8 s[6];
+	UInt8 s[10] = "Text:";
 
 	printAllCharaText(0);
 	printPartyStats();
 
 	duration = SHORT_CLOCK - startTime;
-	uint16toString(s, duration);
+	uint16toString(s+5, duration);
 	printStringAtXY(s, 0, 5);
 }
 

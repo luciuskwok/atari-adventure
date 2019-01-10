@@ -1,6 +1,7 @@
 ; text_.asm
 
-.import 	popptr1, popa
+.import 	popa, popptr1, popsreg, udiv16
+.import 	mulax10
 .importzp 	sp, sreg
 .importzp 	tmp1, tmp2, tmp3, tmp4, ptr1, ptr2, ptr3, ptr4
 
@@ -143,7 +144,7 @@ SAVMSC = $58
 .endproc
 
 
-; extern void printLine(UInt8 *s);
+; void printLine(UInt8 *s);
 .export _printLine
 .proc _printLine
 	; uses ptr1, ptr2, AY
@@ -214,3 +215,61 @@ SAVMSC = $58
 	rts
 .endproc
 
+
+; void uint8toString(UInt8 *string, UInt8 value);
+.export _uint8toString
+.proc _uint8toString
+	sta ptr1 			; value
+	lda #0
+	sta ptr1+1
+
+	jsr popsreg 		; string
+	string = ptr2
+	lda sreg 			; copy string to ptr2
+	sta string
+	lda sreg+1
+	sta string+1
+
+	index = tmp1
+
+	; compute length of output string
+	lda ptr1
+	cmp #100 
+	bcs gte_100
+	cmp #10
+	bcs gte_10
+	under_10: 
+		ldy #1
+		jmp set_terminator
+	gte_10:
+		ldy #2
+		jmp set_terminator
+	gte_100:
+		ldy #3
+
+	set_terminator:
+	lda #0
+	sta (string),Y
+	sty index
+
+	loop:
+		lda #10
+		sta ptr4
+		lda #0
+		sta ptr4+1
+
+		jsr udiv16 		; divide ptr1 by ptr4, result in ptr1, remainder in sreg
+
+		lda sreg
+		clc 
+		adc #$30
+
+		ldy index 
+		dey 
+		sta (string),Y
+		sty index
+
+		cpy #0
+		bne loop
+	rts
+.endproc

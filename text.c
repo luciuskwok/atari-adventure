@@ -177,7 +177,7 @@ void drawTextBox(const UInt8 *s, UInt8 x, UInt8 y, UInt8 width, UInt8 lineSpacin
 	}
 }
 
-void uint8toString(UInt8 *outString, UInt8 value) {
+void uint8toStringOLD(UInt8 *outString, UInt8 value) {
 	if (value >= 100) {
 		*outString++ = value / 100 + 0x30;
 	}
