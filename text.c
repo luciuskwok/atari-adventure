@@ -96,18 +96,26 @@ void printPartyStats(void) {
 	printLine(s);
 }
 
-void drawTextBox(const UInt8 *s, UInt8 x, UInt8 y, UInt8 width, UInt8 lineSpacing, SInt8 indent) {
+void drawTextBox(const UInt8 *s) {
+	// On entry:
+	// COLCRS: starting & newline X-position.
+	// ROWCRS: starting Y-position.
+	// LMARGN: X-position after wrapping line
+	// RMARGN: X-position of right margin
+	// ROWINC: line spacing
+
+	UInt8 x = PEEK(COLCRS);
+	UInt8 y = PEEK(ROWCRS);
+	UInt8 newlineMargin = x;
+	UInt8 wrapMargin = PEEK(LMARGN);
+	UInt8 xMax = PEEK(RMARGN);
+	UInt8 lineSpacing = PEEK(ROWINC);
+
 	UInt8 i = 0;
 	UInt8 previousBreakable = 0;
 	UInt8 lineStartIndex = 0;
-	UInt8 xMax = x + width;
 	UInt8 isNewLine = 1;
-	UInt8 left = x;
 	UInt8 c;
-
-	if (indent < 0) {
-		left -= indent;
-	}
 
 	while (y < TEXTBOX_HEIGHT) {
 		c = s[i];
@@ -143,9 +151,10 @@ void drawTextBox(const UInt8 *s, UInt8 x, UInt8 y, UInt8 width, UInt8 lineSpacin
 
 			// Start new line
 			y += lineSpacing;
-			x = left;
 			if (isNewLine != 0) {
-				x += indent;
+				x = newlineMargin;
+			} else {
+				x = wrapMargin;
 			}
 			lineStartIndex = i;
 			previousBreakable = i;

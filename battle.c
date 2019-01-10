@@ -92,6 +92,26 @@ static void applySelectionColor(UInt8 isMasking, UInt8 offset, UInt8 length) {
 	}
 }
 
+static void drawStringInDefaultTextBox(const UInt8 *s) {
+	// COLCRS: starting & newline X-position.
+	POKE(COLCRS, 1);
+
+	// ROWCRS: starting Y-position.
+	POKE(ROWCRS, 0);
+
+	// LMARGN: X-position after wrapping line
+	POKE(LMARGN, 3);
+
+	// RMARGN: X-position of right margin
+	POKE(RMARGN, 39);
+
+	// ROWINC: line spacing
+	POKE(ROWINC, 2);
+
+	// Print text within default text box
+	drawTextBox(s);
+}
+
 static void showEncounterText(void) {
 	UInt8 s[64] = "* ";
 
@@ -99,7 +119,7 @@ static void showEncounterText(void) {
 	stringConcat(s, " blocks your path!");
 
 	zeroOut8(textWindow, 3*SCREEN_ROW_BYTES);
-	drawTextBox(s, 1, 0, 38, 2, -2);
+	drawStringInDefaultTextBox(s);
 	shouldRedrawEncounterTextOnMove = 0;
 }
 
@@ -219,7 +239,7 @@ static void doAttack(UInt8 player) {
 			stringConcat(s, chara->name);
 			stringConcat(s, ".");
 			zeroOut8(textWindow, 3*SCREEN_ROW_BYTES);
-			drawTextBox(s, 1, 0, 38, 2, -2);
+			drawStringInDefaultTextBox(s);
 	
 			// Calculate to player character or miss.
 			charaAtIndexWasHit(player, damage);
@@ -261,7 +281,7 @@ static void enterTalk(void) {
 	stringConcat(s, " doesn't care what you think!");
 
 	zeroOut8(textWindow, 3*SCREEN_ROW_BYTES);
-	drawTextBox(s, 1, 0, 38, 2, -2);
+	drawStringInDefaultTextBox(s);
 	shouldRedrawEncounterTextOnMove = 1;
 }
 

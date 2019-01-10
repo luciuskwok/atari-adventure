@@ -12,6 +12,9 @@
 #define COLCRS (0x0055)
 #define SAVMSC (0x0058)
 #define RAMTOP (0x006A)
+#define ROWINC (0x0079)
+#define COLINC (0x007A)
+
 #define SHORT_CLOCK (PEEK(20) + 256 * PEEK(19))
 
 // Page 2 - OS

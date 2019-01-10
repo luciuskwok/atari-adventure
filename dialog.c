@@ -358,11 +358,9 @@ void drawStatus(void) {
 	printStringAtXY(s, 40-len, 6);
 }
 
+
 void drawNode(TreeNodePtr node, UInt8 selectIndex) {
 	const UInt8 y = 1;
-	UInt8 lineSpacing;
-	UInt8 width;
-	UInt8 x;
 
 	zeroOut16(textWindow, 7*SCREEN_ROW_BYTES);
 
@@ -370,25 +368,29 @@ void drawNode(TreeNodePtr node, UInt8 selectIndex) {
 		drawVerticalDivider(28);
 
 		if (node->value == MenuNodeTypeA) {
-			x = 4;
-			width = 24;
-			lineSpacing = 2;
+			POKE(COLCRS, 4);
+			POKE(RMARGN, 4 + 24); 	// right margin
+			POKE(ROWINC, 2); 		// line spacing
 		} else {
-			x = 30;
-			width = 10;
-			lineSpacing = 1;
+			POKE(COLCRS, 30);
+			POKE(RMARGN, 40); 		// right margin
+			POKE(ROWINC, 1); 		// line spacing
 		}
-		drawTextBox(node->text, x, y, width, lineSpacing, 0);
+		POKE(LMARGN, PEEK(COLCRS));
+		POKE(ROWCRS, 1); 			// Y-position
+		drawTextBox(node->text);
 		drawMenu(node);
 		setMenuSelectedIndex(selectIndex);
 		drawStatus();
 	} else if (node->value == TalkNode) {
 		TreeNodePtr message = node->children[messageIndex];
 		if (message) {
-			x = 2;
-			width = 32;
-			lineSpacing = 2;
-			drawTextBox(message->text, x, y, width, lineSpacing, -2);
+			POKE(COLCRS, 2);
+			POKE(LMARGN, 4);
+			POKE(ROWCRS, 1); 		// Y-position
+			POKE(RMARGN, 34); 		// right margin
+			POKE(ROWINC, 2); 		// line spacing
+			drawTextBox(message->text);
 		}
 	}
 }
