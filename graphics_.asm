@@ -6,6 +6,9 @@
 .import _graphicsWindow
 .import _textWindow
 
+.import _initVBI
+.import _initSprites
+
 .import _mapViewDLI
 .import _battleViewDLI
 .import _infoViewDLI
@@ -14,12 +17,14 @@
 ; Memory locations
 	RTCLOK_LSB = $14 		; LSB of internal clock
 	SAVMSC 	  = $58 		; Pointer to screen memory
+	RAMTOP 	  = $6A
 	VDSLST    = $0200 		; Pointer to current display list handler
 	SDMCTL    = $022F 		; Shadow register for ANTIC options
 	SDLSTL    = $0230		; Pointer to display list
 	PCOLR0    = $02C0		; Player 0 color
 	CHBAS     = $02F4
 	DMACTL    = $D400 		; ANTIC options
+	HSCROL    = $D404 		; ANTIC horizontal scroll
 	NMIEN     = $D40E 		; ANTIC NMI enable
 
 ; Display List instructions
@@ -505,7 +510,18 @@ loop_zero_out:
 	cpy #12 
 	bne loop_zero_out
 	rts
+.endproc
 
+
+; extern void __fastcall__ delayTicks(UInt8 ticks);
+.export _delayTicks
+.proc _delayTicks
+	clc
+	adc RTCLOK_LSB
+loop:
+	cmp RTCLOK_LSB
+	bne loop 
+	rts
 .endproc
 
 
@@ -591,3 +607,65 @@ loop_custom:
 
 	rts
 .endproc
+
+
+; extern void __fastcall__ initGraphics(void);
+.export _initGraphics
+.proc _initGraphics
+	; Turn off screen during init and leave it off for main to turn back on.
+	lda #0
+	sta SDMCTL
+
+	; Set color table to all black
+	ldx #0
+	jsr _loadColorTable 
+
+	; Init VBI
+	jsr _initVBI
+
+	; Init Display List
+	lda RAMTOP 
+	sec 
+	sbc #12 
+	sta ptr1+1
+	sta SDLSTL+1			; set SDLSTL to point at 12 pages below ramtop (3 KB)
+	sta _graphicsWindow+1 	; place graphicsWindow 128 bytes after display list
+
+	ldx #0 					; set LSB
+	stx ptr1
+	stx SDLSTL
+	ldx #$80
+	stx _graphicsWindow
+
+	; Set up lines common to all display lists
+	ldy #0
+	lda #DL_BLK8
+	sta (ptr1),Y
+	iny
+	sta (ptr1),Y
+	iny
+	lda #DL_BLK4
+	sta (ptr1),Y
+
+	; Init Sprites
+	ldx #0
+	stx _textWindow 		; textWindow.LSB
+	lda RAMTOP
+	sec 
+	sbc #16
+	sta _textWindow+1 		; textWindow.MSB = sprite page
+	jsr _initSprites
+
+	; Init Font
+	lda RAMTOP
+	sec 
+	sbc #20
+	jsr _initFont
+
+	; Use scrolling to center the odd number of tiles
+	lda #4
+	sta HSCROL
+
+	rts
+.endproc
+

@@ -132,9 +132,9 @@ static void enemyWasHit(UInt8 damage) {
 	// Show animation for when enemy was hit.
 	for (i=0; i<4; ++i) {
 		POKE(COLOR0, 0x32);
-		waitVsync(4);
+		delayTicks(4);
 		POKE(COLOR0, 0x0E);
-		waitVsync(4);
+		delayTicks(4);
 	}
 
 	// Decrement enemy HP
@@ -167,9 +167,9 @@ static void charaAtIndexWasHit(UInt8 index, UInt8 damage) {
 	// Show animation for player getting hit.
 	for (i=0; i<4; ++i) {
 		setSpriteOriginX(3, 48 + index * 40);
-		waitVsync(4);
+		delayTicks(4);
 		setSpriteOriginX(3, 0);
-		waitVsync(4);
+		delayTicks(4);
 	}
 
 	// Decrement player HP
@@ -207,7 +207,7 @@ static void doAttack(UInt8 player) {
 
 		if (isLeavingBattle == 0) {
 			// Pause before counter-attack
-			waitVsync(15);
+			delayTicks(15);
 			stringCopy(s, "* ");
 			stringConcat(s, enemy.name);
 			stringConcat(s, " counter-attacks ");

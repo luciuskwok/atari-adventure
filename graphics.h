@@ -40,10 +40,9 @@ SInt8 drawImage(const DataBlock *image, UInt8 rowOffset, UInt8 rowCount);
 void clearGraphicsWindow(UInt8 rows);
 
 // Timing
-void waitVsync(UInt8 ticks);
+extern void __fastcall__ delayTicks(UInt8 ticks);
 
 // Init
-extern void __fastcall__ initFont(UInt8 fontPage);
-void initGraphics(void);
+extern void __fastcall__ initGraphics(void);
 
 #endif
