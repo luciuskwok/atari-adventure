@@ -15,8 +15,6 @@
 .import _infoViewDLI
 
 .import _multiplyAXtoPtr1
-.import _popXA
-.import _popStack
 
 
 ; Memory locations

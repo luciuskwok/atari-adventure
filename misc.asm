@@ -1,7 +1,7 @@
 ; misc.asm
 
 
-.import 	pushax
+.import 	popptr1, popa
 .importzp 	sp, sreg
 .importzp 	tmp1, tmp2, tmp3, tmp4, ptr1, ptr2, ptr3, ptr4
 
@@ -34,7 +34,7 @@ SAVMSC = $58
 .export _decodeRunLenRange 
 .proc _decodeRunLenRange
 .code
-IN = ptr1				; $8A
+IN = ptr2				; $8A
 	sta IN
 	stx IN+1
 
@@ -47,23 +47,16 @@ IN_INDEX = tmp2			; $93
 	lda #1
 	sta IN_INDEX
 
-OUT = ptr2				; $8C
-	ldy #2
-	lda (sp),Y
-	sta OUT
-	ldy #3
-	lda (sp),Y
-	sta OUT+1
+OUT_LEN = tmp3			; $94
+	jsr popa
+	sta OUT_LEN
 
 SKIP = ptr4				; $90
-	ldy #1
-	lda (sp),Y
+	jsr popa 
 	sta SKIP
 
-OUT_LEN = tmp3			; $94
-	ldy #0
-	lda (sp),Y
-	sta OUT_LEN
+OUT = ptr1				; $8C
+	jsr popptr1
 
 OUT_INDEX = tmp4		; $95
 	lda #0
@@ -151,8 +144,6 @@ while_input:			; while (in_index < in_len && out_index < out_len)
 	jmp loop_input
 
 return:
-	lda #4
-	jsr _popStack
 	rts
 .endproc
 
@@ -166,12 +157,7 @@ return:
 	sta SRC
 	stx SRC+1
 	DST = ptr1
-	ldy #1				; MSB
-	lda (sp),Y
-	sta DST+1
-	ldy #0				; LSB
-	lda (sp),Y
-	sta DST
+	jsr popptr1
 
 	jsr _stringLengthInternal ; DST += stringLength(DST)
 	clc
@@ -183,8 +169,6 @@ return:
 
 	jsr _stringCopyInternal
 
-	lda #2
-	jsr _popStack
 	rts
 .endproc
 
@@ -197,17 +181,10 @@ return:
 	stx SRC+1
 	sta SRC
 	DST = ptr1
-	ldy #1				; MSB
-	lda (sp),Y
-	sta DST+1
-	ldy #0				; LSB
-	lda (sp),Y
-	sta DST
+	jsr popptr1
 
 	jsr _stringCopyInternal
 	
-	lda #2
-	jsr _popStack
 	rts
 .endproc
 
