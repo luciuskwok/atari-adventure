@@ -1,4 +1,4 @@
-; interrupts.s
+; interrupts.asm
 
 ; Exports
 .export _initVBI			; void __fastcall__ initVBI(void);

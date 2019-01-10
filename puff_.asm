@@ -1,4 +1,4 @@
-; puff_asm.s
+; puff_.asm
 
 
 .export 	_codes_asm ; extern SInt16 __fastcall__ codes_asm(const struct huffman *lencode, const struct huffman *distcode);

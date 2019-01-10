@@ -1,4 +1,4 @@
-; sound.s
+; sound.asm
 
 
 .export _soundVBI	; called from immediateUserVBI

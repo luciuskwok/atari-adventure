@@ -1,4 +1,4 @@
-; graphics_asm.s
+; graphics_.asm
 
 .importzp 	sp, sreg
 .importzp 	tmp1, tmp2, tmp3, tmp4, ptr1, ptr2, ptr3, ptr4
