@@ -55,22 +55,6 @@ static void printCharaStats(GameCharaPtr chara) {
 	drawHpBar(hp, maxHp);
 }
 
-void eraseCharaBoxAtIndex(UInt8 index) {
-	UInt8 x = 1 + index * 10;
-	UInt8 y = PEEK(ROWCRS);
-	const UInt8 width = 9;
-	const UInt8 height = 4;
-	UInt8 *ptr = textWindow;
-	UInt8 row;
-
-	ptr += y * SCREEN_ROW_BYTES + x;
-
-	for (row=0; row<height; ++row) {
-		zeroOut8(ptr, width);
-		ptr += SCREEN_ROW_BYTES;
-	}
-}
-
 void printCharaAtIndex(UInt8 index) {
 	UInt8 x = 1 + index * 10;
 	GameCharaPtr chara = charaAtIndex(index);

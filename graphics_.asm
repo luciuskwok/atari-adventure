@@ -731,17 +731,15 @@
 ; extern void zeroOut8(UInt8 *ptr, UInt8 length);
 .export _zeroOut8
 .proc _zeroOut8
-	sta tmp1 			; get parmeter 'length'
-
+	pha		 			; get parmeter 'length'
 	jsr popptr1			; get parameter 'ptr'
-
+	pla 
+	tay 
 	lda #0
-	ldy tmp1
 	loop:
 		dey
 		sta (ptr1),Y
 		bne loop
-
 	rts 
 .endproc
 

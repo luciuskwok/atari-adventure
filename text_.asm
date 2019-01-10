@@ -1,16 +1,78 @@
 ; text_.asm
 
-.import 	popa, popptr1, popsreg, udiv16
+.import 	popa, popptr1, popsreg, pushax, udiv16
 .import 	mulax10
+.import 	_textWindow
+.import 	_zeroOut8
 .importzp 	sp, sreg
 .importzp 	tmp1, tmp2, tmp3, tmp4, ptr1, ptr2, ptr3, ptr4
 
 ; Zeropage locations
-LMARGN = $52
-RMARGN = $53
-ROWCRS = $54
-COLCRS = $55
-SAVMSC = $58
+	LMARGN = $52
+	RMARGN = $53
+	ROWCRS = $54
+	COLCRS = $55
+	SAVMSC = $58
+
+; Constants
+	ROW_BYTES = 40
+
+
+; void eraseCharaBoxAtIndex(UInt8 index);
+.export _eraseCharaBoxAtIndex
+.proc _eraseCharaBoxAtIndex
+	width = 9
+	height = 4
+
+	ldx #0 				; colcrs = 1 + index * 10
+	jsr mulax10
+	clc 
+	adc #1 
+	sta COLCRS
+
+	lda ROWCRS			; ptr1 = y * row_bytes
+	ldx #ROW_BYTES
+	jsr _multiplyAXtoPtr1
+
+	clc 				; ptr1 += textWindow
+	lda ptr1
+	adc _textWindow 
+	sta ptr1
+	lda ptr1+1
+	adc _textWindow+1
+	sta ptr1+1
+
+	clc 				; ptr1 += colcrs
+	lda ptr1
+	adc COLCRS 
+	sta ptr1
+	lda ptr1+1
+	adc #0
+	sta ptr1+1
+
+	index = tmp1
+	lda #height
+	sta index
+	loop: 
+		lda ptr1 
+		ldx ptr1+1
+		jsr pushax 
+
+		lda #width
+		jsr _zeroOut8
+
+		clc 				; ptr1 += row_bytes
+		lda ptr1
+		adc #ROW_BYTES 
+		sta ptr1
+		lda ptr1+1
+		adc #0
+		sta ptr1+1
+
+		dec index
+		bne loop
+	rts
+.endproc
 
 ; extern void stringConcat(UInt8 *dst, const UInt8 *src);
 .export _stringConcat 		
@@ -35,7 +97,6 @@ SAVMSC = $58
 
 	rts
 .endproc
-
 
 ; extern void stringCopy(UInt8 *dst, const UInt8 *src);
 .export _stringCopy 	
@@ -67,7 +128,6 @@ SAVMSC = $58
 		rts
 .endproc
 
-
 ; extern UInt8 stringLength(UInt8 *s);
 .export _stringLength 	
 .proc _stringLength
@@ -93,7 +153,6 @@ SAVMSC = $58
 		ldx #0
 		rts
 .endproc
-
 
 ; extern UInt8 toAtascii(UInt8 c);
 .export _toAtascii
