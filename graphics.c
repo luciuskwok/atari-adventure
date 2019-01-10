@@ -47,57 +47,6 @@ UInt8 *textWindow;
 #define SCREEN_ROW_BYTES (40)
 
 
-// Screen Modes
-
-void setScreenModeOLD(UInt8 mode) {
-	const UInt8 dma = 0x2E; // standard playfield + missile DMA + player DMA + display list DMA
-	void *dli = 0;
-
-	// Turn off screen
-	POKE (SDMCTL, 0);
-	ANTIC.nmien = 0x40;
-
-	if (mode == ScreenModeInfo) {
-		POKEW (SAVMSC, (UInt16)graphicsWindow);
-	} else {
-		POKEW (SAVMSC, (UInt16)textWindow);
-	}
-
-	switch (mode) {
-		case ScreenModeMap:
-			// initMapViewDisplay();
-			dli = mapViewDLI;
-			break;
-
-		case ScreenModeDialog:
-			// initStoryViewDisplay();
-			break;
-
-		case ScreenModeBattle:
-			// initBattleViewDisplay();
-			dli = battleViewDLI;
-			break;
-
-		case ScreenModeInfo:
-			// initInfoViewDisplay();
-			dli = infoViewDLI;
-			break;
-
-		case ScreenModeOff:
-		default:
-			return;
-	}
-
-	// Wait for vblank to prevent flicker
-	waitVsync(1);
-
-	if (dli != 0) {
-		POKEW (VDSLST, (UInt16)dli);
-		ANTIC.nmien = 0xC0; // enable DLI + VBI
-	}
-	POKE (SDMCTL, dma);
-}
-
 // Transition Effects
 
 static UInt8 applyFade(UInt8 color, UInt8 amount) {
@@ -238,10 +187,7 @@ void waitVsync(UInt8 ticks) {
 // Init
 
 static void initDisplayList(UInt8 startPage, UInt8 textPage) {
-	const UInt8 screenLSB = startPage;
-	const UInt8 screenMSB = 128;
 	UInt8 *displayList = (UInt8 *)(startPage * 256);
-	const UInt8 textBarChartLSB = 120;
 
 	// Init globals
 	textWindow = (UInt8 *)(textPage * 256); // Using the unused 384 bytes below PMGraphics
@@ -262,7 +208,7 @@ void initGraphics(void) {
 	// Turn off screen during init and leave it off for main to turn back on.
 	POKE (SDMCTL, 0);
 
-	initVBI(); // Safe value: 0xE45F
+	initVBI(); 
 	
 	// Set color table to all black
 	loadColorTable(NULL);
