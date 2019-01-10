@@ -113,11 +113,6 @@ void clearTextRect(RectU8 *rect) {
 	}
 }
 
-void printStringAtXY(const UInt8 *s, UInt8 x, UInt8 y) {
-	SET_TXT_ORIGIN(x, y)
-	printLine(s);
-}
-
 void drawTextBox(const UInt8 *s, UInt8 x, UInt8 y, UInt8 width, UInt8 lineSpacing, SInt8 indent) {
 	UInt8 i = 0;
 	UInt8 previousBreakable = 0;
