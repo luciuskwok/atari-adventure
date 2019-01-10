@@ -26,23 +26,23 @@ enum ScreenMode {
 	ScreenModeBattle,
 	ScreenModeInfo,
 };
-extern void __fastcall__ setScreenMode(UInt8 mode);
+extern void setScreenMode(UInt8 mode);
 
 // Color Table
-void fadeOutColorTable(void);
-void fadeInColorTable(const UInt8 *colorTable);
-extern void __fastcall__ loadColorTable(const UInt8 *colors);
+extern void fadeOutColorTable(void);
+extern void fadeInColorTable(const UInt8 *colorTable);
+extern void loadColorTable(const UInt8 *colors);
 
 // Drawing
 SInt8 drawImage(const DataBlock *image, UInt8 rowOffset, UInt8 rowCount);
-extern void __fastcall__ drawBarChart(UInt8 *screen, UInt8 x, UInt8 y, UInt8 width, UInt8 filled);
-extern void __fastcall__ zeroOut16(UInt8 *ptr, UInt16 length);
-extern void __fastcall__ zeroOut8(UInt8 *ptr, UInt8 length);
+extern void drawBarChart(UInt8 *screen, UInt8 x, UInt8 y, UInt8 width, UInt8 filled);
+extern void zeroOut16(UInt8 *ptr, UInt16 length);
+extern void zeroOut8(UInt8 *ptr, UInt8 length);
 
 // Timing
-extern void __fastcall__ delayTicks(UInt8 ticks);
+extern void delayTicks(UInt8 ticks);
 
 // Init
-extern void __fastcall__ initGraphics(void);
+extern void initGraphics(void);
 
 #endif

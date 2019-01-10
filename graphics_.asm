@@ -16,6 +16,9 @@
 
 .import _multiplyAXtoPtr1
 
+.import _setCursorColorCycling
+
+
 
 ; Memory locations
 	RTCLOK_LSB = $14 		; LSB of internal clock
@@ -64,8 +67,7 @@
 	ScreenModeBattle = 3
 	ScreenModeInfo   = 4
 
-
-; extern void __fastcall__ setScreenMode(UInt8 mode);
+; extern void setScreenMode(UInt8 mode);
 .export _setScreenMode
 .proc _setScreenMode
 	anticOptions = $2E 	; normal playfield, enable players & missiles, enable DMA
@@ -326,8 +328,6 @@
 .endproc
 
 
-; extern void __fastcall__ initInfoViewDisplay(void);
-.export _initInfoViewDisplay
 .proc _initInfoViewDisplay
 	rasterHeight = 24
 
@@ -487,7 +487,87 @@
 .endproc
 
 
-; extern void __fastcall__ loadColorTable(UInt8 *colors);
+; extern void fadeOutColorTable(void);
+.export _fadeOutColorTable
+.proc _fadeOutColorTable
+	; uses tmp1
+
+	; Disable player color cycling to avoid conflicts
+	lda #0
+	ldx #0
+	jsr _setCursorColorCycling
+
+	ldx #2 						; tmp1 = amount to fade, loop from 2 to <16
+	loop_frame:
+		stx tmp1
+		ldy #0
+		loop_color:
+			lda PCOLR0,Y
+			jsr _applyColorFade
+			sta PCOLR0,Y
+			iny 
+			cpy #12
+			bne loop_color
+
+		lda #2
+		jsr _delayTicks 		; delay 2 frames
+
+		inx	 	 				; next tmp1 += 2
+		inx 
+		cpx #16
+		bcc loop_frame
+	rts
+.endproc
+
+
+; extern void fadeInColorTable(const UInt8 *colorTable);
+.export _fadeInColorTable
+.proc _fadeInColorTable
+	; uses tmp1, ptr1
+	sta ptr1
+	stx ptr1+1
+
+	ldx #16 					; tmp1 = amount to fade, loop from 14 to 0
+	loop_frame:
+		dex 
+		dex 
+		stx tmp1
+
+		ldy #0
+		loop_color:
+			lda (ptr1),Y
+			jsr _applyColorFade
+			sta PCOLR0,Y
+			iny 
+			cpy #12
+			bne loop_color
+
+		lda #2
+		jsr _delayTicks 		; delay 2 frames
+
+		cpx #0
+		bne loop_frame
+	rts
+.endproc
+
+
+.proc _applyColorFade
+	; on entry: A = color, tmp1 = amount to fade
+	pha 
+	and #$0F	; A = lum
+	cmp tmp1 	; if lum < amount: color = 0
+	pla
+	bcc return_zero
+	subtract_color:
+		sbc tmp1
+		rts 
+	return_zero:
+		lda #0
+		rts 
+.endproc
+
+
+; extern void loadColorTable(UInt8 *colors);
 .export _loadColorTable
 .proc _loadColorTable
 	; uses ptr1 
@@ -517,7 +597,7 @@
 .endproc
 
 
-; extern void __fastcall__ drawBarChart(UInt8 *screen, UInt8 x, UInt8 y, UInt8 width, UInt8 filled);
+; extern void drawBarChart(UInt8 *screen, UInt8 x, UInt8 y, UInt8 width, UInt8 filled);
 .export _drawBarChart
 .proc _drawBarChart
 	rowBytes = 40
@@ -619,7 +699,7 @@
 .endproc 
 
 
-; extern void __fastcall__ zeroOut16(UInt8 *ptr, UInt16 length);
+; extern void zeroOut16(UInt8 *ptr, UInt16 length);
 .export _zeroOut16
 .proc _zeroOut16
 	sta ptr2			; get parmeter 'length'
@@ -655,7 +735,7 @@
 .endproc 
 
 
-; extern void __fastcall__ zeroOut8(UInt8 *ptr, UInt8 length);
+; extern void zeroOut8(UInt8 *ptr, UInt8 length);
 .export _zeroOut8
 .proc _zeroOut8
 	sta tmp1 			; get parmeter 'length'
@@ -673,7 +753,7 @@
 .endproc
 
 
-; extern void __fastcall__ delayTicks(UInt8 ticks);
+; extern void delayTicks(UInt8 ticks);
 .export _delayTicks
 .proc _delayTicks
 	clc
@@ -721,8 +801,6 @@ customTiles:
 .code
 
 
-; extern void __fastcall__ initFont(UInt8 fontPage);
-.export _initFont
 .proc _initFont
 	; uses ptr1, ptr2, TBD
 
@@ -740,35 +818,34 @@ customTiles:
 	lda #$E0 
 	sta ptr2+1
 	ldy #0 
-loop_rom: 			
-	lda (ptr2),Y		; copy ROM font into custom font area
-	sta (ptr1),Y
-	iny
-	bne loop_rom
-	inc ptr1+1
-	inc ptr2+1
-	lda ptr2+1
-	cmp #$E4
-	bne loop_rom
+	loop_rom: 			
+		lda (ptr2),Y		; copy ROM font into custom font area
+		sta (ptr1),Y
+		iny
+		bne loop_rom
+		inc ptr1+1
+		inc ptr2+1
+		lda ptr2+1
+		cmp #$E4
+		bne loop_rom
 
-	; Copy our custom tiles into the control character area starting at fontPage + 2.
-	lda ptr1+1
-	sec 
-	sbc #2  			; at this point, ptr1 is at end of font area, so subtract 2 
-	sta ptr1+1
-	ldy #0
-loop_custom:
-	lda customTiles,Y
-	sta (ptr1),Y
-	iny
-	cpy #customTilesLength
-	bne loop_custom
-
+		; Copy our custom tiles into the control character area starting at fontPage + 2.
+		lda ptr1+1
+		sec 
+		sbc #2  			; at this point, ptr1 is at end of font area, so subtract 2 
+		sta ptr1+1
+		ldy #0
+	loop_custom:
+		lda customTiles,Y
+		sta (ptr1),Y
+		iny
+		cpy #customTilesLength
+		bne loop_custom
 	rts
 .endproc
 
 
-; extern void __fastcall__ initGraphics(void);
+; extern void initGraphics(void);
 .export _initGraphics
 .proc _initGraphics
 	; Turn off screen during init and leave it off for main to turn back on.
