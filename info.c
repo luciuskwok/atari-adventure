@@ -11,7 +11,7 @@
 #include <string.h>
 
 #define TEXT_WINDOW_ROW (24)
-#define ITEM_WINDOW_ROW (TEXT_WINDOW_ROW+13)
+#define ITEM_ROW (13)
 
 // Data
 
@@ -142,7 +142,7 @@ static void drawCharaInfoAtIndex(UInt8 index) {
 	UInt8 x = 1 + index * 10;
 	UInt8 s[11];
 
-	SET_TXT_ORIGIN(x, TEXT_WINDOW_ROW)
+	SET_TXT_ORIGIN(x, 0)
 	printLine(chara->name);
 
 	stringCopy(s, "Lv ");
@@ -180,7 +180,7 @@ static void drawCharaInfoAtIndex(UInt8 index) {
 }
 
 static void drawAvatarAtIndex(UInt8 index) {
-	UInt8 *screen = graphicsWindow + index * 10 + 1; // align with chara info text
+	UInt8 *screen = SCREEN_WINDOW + index * 10 + 1; // align with chara info text
 	UInt8 *buffer = avatarImages[index]->bytes;
 	const UInt8 bufferRowBytes = 8; // 8 bytes * 4 ppb = 32 pixels
 	const UInt8 imageHeight = 24;	
@@ -197,8 +197,8 @@ static void drawAvatarAtIndex(UInt8 index) {
 
 /*
 static void drawDeflatedAvatarAtIndex(UInt8 index) {
-	UInt8 *screen = graphicsWindow;
-	UInt8 *buffer = textWindow + 40 * 18; // use empty space after screen memory
+	UInt8 *screen = SCREEN_WINDOW;
+	UInt8 *buffer = TEXT_WINDOW + 40 * 18; // use empty space after screen memory
 	const UInt8 bufferRowBytes = 8; // 8 bytes * 4 ppb = 32 pixels
 	const UInt8 imageHeight = 24;
 	UInt16 bufferLength = imageHeight * bufferRowBytes;
@@ -207,7 +207,7 @@ static void drawDeflatedAvatarAtIndex(UInt8 index) {
 	SInt8 err = puff(buffer, &bufferLength, avatarImages[index]->bytes, &compressedLength);
 
 	if (err) {
-		debugPrint("puff() error:", err, 1, ITEM_WINDOW_ROW);
+		debugPrint("puff() error:", err, 1, ITEM_ROW);
 	} else {
 		// Copy image from buffer to screen
 		UInt8 i = 0;
@@ -234,6 +234,7 @@ static void setHiglightSprite(UInt8 index, const DataBlock *sprite, UInt8 x, UIn
 
 void initInfo(void) {
 	const UInt8 missileHeight = 91;
+	UInt16 oldTextWindow = PEEKW(TXTMSC);
 	UInt8 count = numberInParty();
 	UInt8 i;
 	UInt8 s[20];
@@ -243,8 +244,11 @@ void initInfo(void) {
 	// Set up graphics window
 	setScreenMode(ScreenModeOff);
 	setPlayerCursorVisible(0);
-	zeroOut16(graphicsWindow, (24+18)*SCREEN_ROW_BYTES); // Clear graphics and text windows
+	zeroOut16(SCREEN_WINDOW, (24+18)*SCREEN_ROW_BYTES); // Clear graphics and text windows
 	setCursorEventHandler(infoCursorHandler);
+
+	// Set TXTMSC to SAVMSC temporarily
+	POKEW(TXTMSC, PEEKW(SAVMSC) + TEXT_WINDOW_ROW * SCREEN_ROW_BYTES);
 
 	// Position missile sprites as borders
 	fillSprite(0, 0xFF, 0, missileHeight);
@@ -266,7 +270,7 @@ void initInfo(void) {
 	// Print party info
 
 	// Column 1
-	SET_TXT_ORIGIN(1, ITEM_WINDOW_ROW)
+	SET_TXT_ORIGIN(1, ITEM_ROW)
 
 	printLine("Items");
 
@@ -285,7 +289,7 @@ void initInfo(void) {
 	printLine(s);
 
 	// Column 2
-	SET_TXT_ORIGIN(16, ITEM_WINDOW_ROW+1)
+	SET_TXT_ORIGIN(16, ITEM_ROW+1)
 
 	stringCopy(s, "Nuts: ");
 	uint8toString(s+stringLength(s), 11);
@@ -298,7 +302,7 @@ void initInfo(void) {
 	printLine(s);
 
 	// Column 3
-	SET_TXT_ORIGIN(31, ITEM_WINDOW_ROW+1)
+	SET_TXT_ORIGIN(31, ITEM_ROW+1)
 
 	printLine("Boat");
 	printLine("Lamp");
@@ -316,5 +320,8 @@ void initInfo(void) {
 	setHiglightSprite(3, &avatar2SpriteL, 124 + 11, 8);
 	setHiglightSprite(4, &avatar4SpriteR, 124 + 22, 9);
 
-	debugPrint("Init:", SHORT_CLOCK - startTime, 0, ITEM_WINDOW_ROW+4);
+	debugPrint("Init:", SHORT_CLOCK - startTime, 0, ITEM_ROW+4);
+
+	// Restore TXTMSC
+	POKEW(TXTMSC, oldTextWindow);
 }

@@ -73,7 +73,7 @@ const DataBlock enemyAttackSprite = {
 static void applySelectionColor(UInt8 isMasking, UInt8 offset, UInt8 length) {
 	const UInt8 y = 49;
 	UInt8 height = 10;
-	UInt8 *screen = graphicsWindow + y * 40;
+	UInt8 *screen = SCREEN_WINDOW + y * 40;
 	UInt8 x;
 	UInt8 end = offset + length;
 
@@ -118,7 +118,7 @@ static void showEncounterText(void) {
 	stringConcat(s, enemy.name);
 	stringConcat(s, " blocks your path!");
 
-	zeroOut8(textWindow, 3*SCREEN_ROW_BYTES);
+	zeroOut8(TEXT_WINDOW, 3*SCREEN_ROW_BYTES);
 	drawStringInDefaultTextBox(s);
 	shouldRedrawEncounterTextOnMove = 0;
 }
@@ -146,7 +146,7 @@ static void drawEnemyHpBar(void) {
 	POKE(COLCRS, barX);
 	POKE(ROWCRS, 48);
 
-	drawBarChart(graphicsWindow, width, fill);
+	drawBarChart(SCREEN_WINDOW, width, fill);
 }
 
 static void enemyWasHit(UInt8 damage) {
@@ -169,7 +169,7 @@ static void enemyWasHit(UInt8 damage) {
 	drawEnemyHpBar();
 
 	if (enemy.hp == 0) {
-		zeroOut8(textWindow, 3*SCREEN_ROW_BYTES);
+		zeroOut8(TEXT_WINDOW, 3*SCREEN_ROW_BYTES);
 		printStringAtXY("* You are victorious.", 1, 0);
 		waitForAnyInput();
 		isLeavingBattle = 1;
@@ -215,7 +215,7 @@ static void doAttack(UInt8 player) {
 
 	hideCursor();
 	stringConcat(s, chara->name);
-	zeroOut8(textWindow, 3*SCREEN_ROW_BYTES);
+	zeroOut8(TEXT_WINDOW, 3*SCREEN_ROW_BYTES);
 
 	if (chara->hp != 0) {
 		stringConcat(s, " attacks.");
@@ -238,7 +238,7 @@ static void doAttack(UInt8 player) {
 			stringConcat(s, " counter-attacks ");
 			stringConcat(s, chara->name);
 			stringConcat(s, ".");
-			zeroOut8(textWindow, 3*SCREEN_ROW_BYTES);
+			zeroOut8(TEXT_WINDOW, 3*SCREEN_ROW_BYTES);
 			drawStringInDefaultTextBox(s);
 	
 			// Calculate to player character or miss.
@@ -260,7 +260,7 @@ static void enterFightMenu(void) {
 	if (count == 1) {
 		doAttack(0);
 	} else {
-		zeroOut8(textWindow, 3*SCREEN_ROW_BYTES);
+		zeroOut8(TEXT_WINDOW, 3*SCREEN_ROW_BYTES);
 		printStringAtXY("* Who shall fight?", 1, 0);
 
 		menuType = BattleFightMenu;
@@ -280,7 +280,7 @@ static void enterTalk(void) {
 	stringConcat(s, enemy.name);
 	stringConcat(s, " doesn't care what you think!");
 
-	zeroOut8(textWindow, 3*SCREEN_ROW_BYTES);
+	zeroOut8(TEXT_WINDOW, 3*SCREEN_ROW_BYTES);
 	drawStringInDefaultTextBox(s);
 	shouldRedrawEncounterTextOnMove = 1;
 }
@@ -293,7 +293,7 @@ static void useItem(UInt8 item) {
 
 	hideCursor();
 
-	zeroOut8(textWindow, 3*SCREEN_ROW_BYTES);
+	zeroOut8(TEXT_WINDOW, 3*SCREEN_ROW_BYTES);
 	if (item == 0) {
 		// Play sound
 		noteOn(NoteC+Oct5, 8, 15, 1, 0x80, 3);
@@ -325,7 +325,7 @@ static void enterItemMenu(void) {
 	const UInt8 y = 1;
 	const UInt8 spacing = 8;
 
-	zeroOut8(textWindow, 3*SCREEN_ROW_BYTES);
+	zeroOut8(TEXT_WINDOW, 3*SCREEN_ROW_BYTES);
 	printStringAtXY("* Nuts", x, y);
 	printStringAtXY("* Staff", x + spacing, y);
 
@@ -402,8 +402,8 @@ void initBattle(void) {
 
 	// Set up graphics window
 	setScreenMode(ScreenModeOff);
-	zeroOut16(textWindow, 7*SCREEN_ROW_BYTES);
-	zeroOut16(graphicsWindow, 59*SCREEN_ROW_BYTES);
+	zeroOut16(TEXT_WINDOW, 7*SCREEN_ROW_BYTES);
+	zeroOut16(SCREEN_WINDOW, 59*SCREEN_ROW_BYTES);
 	setPlayerCursorVisible(0);
 
 	// Turn on screen
@@ -418,7 +418,7 @@ void initBattle(void) {
 	// { // Debugging
 	// 	UInt8 i;
 	// 	for (i=0; i<128; ++i) {
-	// 		textWindow[i+40] = i;
+	// 		TEXT_WINDOW[i+40] = i;
 	// 	}
 	// }
 

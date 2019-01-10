@@ -12,7 +12,7 @@ void printCharaAtIndex(UInt8 index);
 void printAllCharaText(UInt8 y);
 void printPartyStats(void);
 
-void drawTextBox(const UInt8 *s);
+extern void drawTextBox(const UInt8 *s);
 
 extern void uint8toString(UInt8 *outString, UInt8 value);
 extern void uint16toString(UInt8 *outString, UInt16 value);

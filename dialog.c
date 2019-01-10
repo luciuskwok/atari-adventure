@@ -362,7 +362,7 @@ void drawStatus(void) {
 void drawNode(TreeNodePtr node, UInt8 selectIndex) {
 	const UInt8 y = 1;
 
-	zeroOut16(textWindow, 7*SCREEN_ROW_BYTES);
+	zeroOut16(TEXT_WINDOW, 7*SCREEN_ROW_BYTES);
 
 	if (node->value == MenuNodeTypeA || node->value == MenuNodeTypeB) {
 		drawVerticalDivider(28);
@@ -507,8 +507,8 @@ void initDialog(void) {
 
 	// Set up graphics window
 	setScreenMode(ScreenModeOff);
-	zeroOut16(textWindow, 7*SCREEN_ROW_BYTES);
-	zeroOut16(graphicsWindow, 72*SCREEN_ROW_BYTES);
+	zeroOut16(TEXT_WINDOW, 7*SCREEN_ROW_BYTES);
+	zeroOut16(SCREEN_WINDOW, 72*SCREEN_ROW_BYTES);
 	setPlayerCursorVisible(0);
 
 	// Turn on screen

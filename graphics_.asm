@@ -2,10 +2,7 @@
 
 .importzp 	sp, sreg
 .importzp 	tmp1, tmp2, tmp3, tmp4, ptr1, ptr2, ptr3, ptr4
-.import popa, popptr1, popsreg
-
-.import _graphicsWindow
-.import _textWindow
+.import 	popa, popptr1, popsreg
 
 .import _initVBI
 .import _initSprites
@@ -18,27 +15,8 @@
 
 .import _setCursorColorCycling
 
+.include "atari_memmap.asm"
 
-
-; Memory locations
-	RTCLOK_LSB = $14 		; LSB of internal clock
-	LMARGN    = $52
-	ROWCRS    = $54 		; cursor row
-	COLCRS    = $55 		; cursor column
-	SAVMSC 	  = $58 		; Pointer to screen memory
-	SAVADR    = $68 		; Temporary pointer for screen memory
-	RAMTOP 	  = $6A
-	BUFSTR    = $6C
-	BITMSK    = $6E
-	SHFAMT    = $6F
-	VDSLST    = $0200 		; Pointer to current display list handler
-	SDMCTL    = $022F 		; Shadow register for ANTIC options
-	SDLSTL    = $0230		; Pointer to display list
-	PCOLR0    = $02C0		; Player 0 color
-	CHBAS     = $02F4
-	DMACTL    = $D400 		; ANTIC options
-	HSCROL    = $D404 		; ANTIC horizontal scroll
-	NMIEN     = $D40E 		; ANTIC NMI enable
 
 ; Display List instructions
 	DL_JVB    = $41
@@ -90,11 +68,6 @@
 	bne non_info_screen
 
 	init_info:
-		lda _graphicsWindow  ; set SAVMSC to graphcsWindow
-		sta SAVMSC
-		lda _graphicsWindow+1
-		sta SAVMSC+1
-
 		jsr _initInfoViewDisplay
 
 		lda #<_infoViewDLI
@@ -105,11 +78,6 @@
 		jmp enable_screen
 
 	non_info_screen: 		; else: set SAVMSC to textWindow
-		lda _textWindow 
-		sta SAVMSC
-		lda _textWindow+1
-		sta SAVMSC+1
-
 		lda mode
 		cmp #ScreenModeMap
 		beq init_map
@@ -164,10 +132,10 @@
 .proc _initMapViewDisplay
 	jsr _initDisplayListVarsInternal
 
-	; Use graphicsWindow screen memory for tiles
-	lda _graphicsWindow 		
+	; Use SAVMSC screen memory for tiles
+	lda SAVMSC 		
 	sta ptr2
-	lda _graphicsWindow+1
+	lda SAVMSC+1
 	sta ptr2+1
 	ldx #9
 	lda #DL_TILE|DL_DLI|DL_HSCROL
@@ -179,9 +147,9 @@
 	iny
 
 	; Use textWindow screen memory for text box
-	lda _textWindow  			
+	lda TXTMSC  			
 	sta ptr2
-	lda _textWindow+1
+	lda TXTMSC+1
 	sta ptr2+1
 	ldx #3
 	lda #DL_TEXT|DL_DLI
@@ -228,19 +196,19 @@
 .proc _initDialogViewDisplay
 	jsr _initDisplayListVarsInternal
 
-	; Use graphicsWindow screen memory for raster
-	lda _graphicsWindow 		
+	; Use SAVMSC screen memory for raster
+	lda SAVMSC 		
 	sta ptr2
-	lda _graphicsWindow+1
+	lda SAVMSC+1
 	sta ptr2+1
 	ldx #72
 	lda #DL_RASTER
 	jsr _writeDisplayListLinesInternal
 
 	; Use textWindow screen memory for text box
-	lda _textWindow  			
+	lda TXTMSC  			
 	sta ptr2
-	lda _textWindow+1
+	lda TXTMSC+1
 	sta ptr2+1
 	ldx #7
 	lda #DL_TEXT|DL_DLI
@@ -256,10 +224,10 @@
 
 	jsr _initDisplayListVarsInternal
 
-	; Use graphicsWindow screen memory for raster
-	lda _graphicsWindow 		
+	; Use SAVMSC screen memory for raster
+	lda SAVMSC 		
 	sta ptr2
-	lda _graphicsWindow+1
+	lda SAVMSC+1
 	sta ptr2+1
 	ldx #rasterHeight
 	lda #DL_RASTER
@@ -267,7 +235,7 @@
 
 	jsr _applyTrailingDLI
 
-	; Continue graphicsWindow for enemy HP bar chart
+	; Continue SAVMSC for enemy HP bar chart
 	clc
 	lda ptr2
 	adc #<(rasterHeight*40) ; 48 * 40 = 1920 = $780
@@ -283,9 +251,9 @@
 	iny
 
 	; Use textWindow screen memory for text box
-	lda _textWindow  			
+	lda TXTMSC  			
 	sta ptr2
-	lda _textWindow+1
+	lda TXTMSC+1
 	sta ptr2+1
 	ldx #7
 	lda #DL_TEXT
@@ -313,10 +281,10 @@
 
 	; Return to raster graphics for button area
 	clc
-	lda _graphicsWindow 
+	lda SAVMSC 
 	adc #<((1+rasterHeight)*40)
 	sta ptr2
-	lda _graphicsWindow+1
+	lda SAVMSC+1
 	adc #>((1+rasterHeight)*40)
 	sta ptr2+1
 	ldx #10
@@ -333,10 +301,10 @@
 
 	jsr _initDisplayListVarsInternal
 
-	; Use graphicsWindow screen memory for both raster and text
-	lda _graphicsWindow 		
+	; Use SAVMSC screen memory for both raster and text
+	lda SAVMSC 		
 	sta ptr2
-	lda _graphicsWindow+1
+	lda SAVMSC+1
 	sta ptr2+1
 	ldx #rasterHeight
 	lda #DL_RASTER
@@ -612,13 +580,13 @@
 	jsr popa
 	sta width
 
-	; Get the screen address
-	jsr popsreg
-
 	; Calculate byte offset to screen row start & store in ptr1
 	lda ROWCRS
 	ldx #rowBytes
 	jsr _multiplyAXtoPtr1
+
+	; Get the screen address
+	jsr popsreg
 
 	; Add ptr1 to screen address, to point it at start of screen row
 	clc 
@@ -858,36 +826,37 @@ customTiles:
 	jsr _initVBI
 
 	; Init Display List
+	dispList = ptr1
 	lda RAMTOP 
 	sec 
 	sbc #12 
-	sta ptr1+1
-	sta SDLSTL+1			; set SDLSTL to point at 12 pages below ramtop (3 KB)
-	sta _graphicsWindow+1 	; place graphicsWindow 128 bytes after display list
+	sta dispList+1
+	sta SDLSTL+1	; set SDLSTL to point at 12 pages below ramtop (3 KB)
+	sta SAVMSC+1	; screen memory is on same page
 
-	ldx #0 					; set LSB
-	stx ptr1
+	ldx #0			; set LSB
+	stx dispList
 	stx SDLSTL
 	ldx #$80
-	stx _graphicsWindow
+	stx SAVMSC		; screen memory is 128 bytes after display list
 
 	; Set up lines common to all display lists
 	ldy #0
 	lda #DL_BLK8
-	sta (ptr1),Y
+	sta (dispList),Y
 	iny
-	sta (ptr1),Y
+	sta (dispList),Y
 	iny
 	lda #DL_BLK4
-	sta (ptr1),Y
+	sta (dispList),Y
 
 	; Init Sprites
 	ldx #0
-	stx _textWindow 		; textWindow.LSB
+	stx TXTMSC 			; Text window goes on same page as sprites
 	lda RAMTOP
 	sec 
 	sbc #16
-	sta _textWindow+1 		; textWindow.MSB = sprite page
+	sta TXTMSC+1 		
 	jsr _initSprites
 
 	; Init Font

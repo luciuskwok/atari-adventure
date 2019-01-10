@@ -5,10 +5,6 @@
 
 #include "types.h"
 
-// Globals
-extern UInt8 *graphicsWindow; // Pointer to screen memory for graphics
-extern UInt8 *textWindow; // Pointer to screen memory for text window
-
 
 // VBI and DLI registers
 #define CUR_TIMER ((UInt8 *)0x0600)
@@ -17,6 +13,8 @@ extern UInt8 *textWindow; // Pointer to screen memory for text window
 #define BG_COLOR ((UInt8 *)0x0620)
 
 #define SCREEN_ROW_BYTES (40)
+#define SCREEN_WINDOW ((UInt8 *)PEEKW(SAVMSC))
+#define TEXT_WINDOW ((UInt8 *)PEEKW(TXTMSC))
 
 
 enum ScreenMode {

@@ -2,20 +2,18 @@
 
 .import 	popa, popptr1, popsreg, pushax, udiv16
 .import 	mulax10
-.import 	_textWindow
 .import 	_zeroOutYAtPtr1
 .importzp 	sp, sreg
 .importzp 	tmp1, tmp2, tmp3, tmp4, ptr1, ptr2, ptr3, ptr4
 
-; Zeropage locations
-	LMARGN = $52
-	RMARGN = $53
-	ROWCRS = $54
-	COLCRS = $55
-	SAVMSC = $58
+.include "atari_memmap.asm"
+
 
 ; Constants
 	ROW_BYTES = 40
+	SPACE     = $20
+	NEWLINE   = $0A
+
 
 
 ; void eraseCharaBoxAtIndex(UInt8 index);
@@ -36,10 +34,10 @@
 
 	clc 				; ptr1 += textWindow
 	lda ptr1
-	adc _textWindow 
+	adc TXTMSC 
 	sta ptr1
 	lda ptr1+1
-	adc _textWindow+1
+	adc TXTMSC+1
 	sta ptr1+1
 
 	clc 				; ptr1 += colcrs
@@ -69,6 +67,155 @@
 		bne loop
 	rts
 .endproc
+
+; extern void drawTextBox(const UInt8 *s);
+.export _drawTextBox
+.proc _drawTextBox
+	; COLCRS: starting & newline X-position.
+	; ROWCRS: starting Y-position.
+	; LMARGN: X-position after wrapping line
+	; RMARGN: X-position of right margin
+	; ROWINC: line spacing
+
+	string = ptr2
+	sta string 
+	stx string+1
+
+	screenRow = SAVADR  	; screenRow points at start of current row
+	lda ROWCRS
+	ldx #ROW_BYTES
+	jsr _multiplyAXtoPtr1 	; ptr1 = rowcrs * row_bytes
+
+	clc 					; screenRow = TXTMSC + ptr1
+	lda TXTMSC
+	adc ptr1
+	sta screenRow
+	lda TXTMSC+1
+	adc ptr1+1
+	sta screenRow+1
+
+	newlineMargin = tmp1 
+	lda COLCRS
+	sta newlineMargin
+
+	length = tmp2
+
+	loop: 
+		ldy #0
+		lda (string),Y
+		beq return  		; return upon reaching null terminator
+		cmp #SPACE
+		beq print_space 	; print space between words
+		cmp #NEWLINE
+		beq print_newline 	; jump to next line
+		print_word:
+			jsr _wordLengthAtPtr2 	; check if word will fit
+			sta length 
+			sec						; add 1 to length so that bcs will work
+			adc COLCRS
+			cmp RMARGN
+			bcs wrap_line 			; print a newline and try again
+			jsr _printStringAtPtr2
+			jsr _ptr2AddTmp2		; string += length
+			jmp loop 				; next loop
+		wrap_line:
+			lda LMARGN 				; move cursor to left margin
+			sta COLCRS
+			jmp next_row
+		print_space:
+			lda COLCRS  			; if colcrs >= rmargn: print newline instead
+			cmp RMARGN
+			bcs print_newline 
+			lda #1 					; print 1 space 
+			sta length 
+			jsr _printStringAtPtr2
+			jsr _ptr2AddTmp2		; string += length
+			jmp loop
+		print_newline:
+			lda #1 					; skip 1 newline char 
+			sta length 
+			jsr _ptr2AddTmp2
+			lda newlineMargin
+			sta COLCRS 				; fall through to next_row
+		next_row:
+			inc ROWCRS  			; move cursor to next row
+			clc 					; move screenRow to next row
+			lda screenRow
+			adc #ROW_BYTES
+			sta screenRow
+			lda screenRow+1
+			adc #0
+			sta screenRow+1
+			jmp loop 				; next loop
+	return:
+		rts
+.endproc
+
+
+.proc _ptr2AddTmp2 
+	clc 					; ptr2 += tmp2
+	lda ptr2 
+	adc tmp2 
+	sta ptr2
+	lda ptr2+1
+	adc #0
+	sta ptr2 
+	rts
+.endproc 
+
+
+.proc _printStringAtPtr2 
+	; uses ptr1
+	; SAVADR = start of screen row
+	; COLCRS = x-position of cursor
+	; ptr2 = string
+	; tmp2 = length
+
+	clc  				; ptr1 = savadr + colcrs
+	lda SAVADR
+	adc COLCRS
+	sta ptr1 
+	lda SAVADR+1
+	adc #0
+	sta ptr1+1
+
+	ldy #0
+	jmp while
+	loop:
+		lda (ptr2),Y 	; copy ptr2 to ptr1
+		sta (ptr1),Y
+		iny 
+	while:
+		cpy tmp2 
+		bne loop
+
+	lda COLCRS 			; colcrs += length
+	adc tmp2
+	sta COLCRS 
+
+	rts 
+.endproc 
+
+.proc _wordLengthAtPtr2
+	; ptr2: string
+	; returns length up to but not including space or newline char
+
+	ldy #0
+	loop:
+		lda (ptr2),Y
+		beq return 		; null termintor
+		cmp #SPACE
+		beq return 		; space
+		cmp #NEWLINE
+		beq return  	; newline
+		iny  	
+		beq return 		; max length
+		jmp loop
+	return:
+		tya 
+		rts 
+.endproc
+
 
 ; extern void stringConcat(UInt8 *dst, const UInt8 *src);
 .export _stringConcat 		
@@ -169,10 +316,10 @@
 
 .export _multiplyAXtoPtr1
 .proc _multiplyAXtoPtr1
-	; Uses ptr2. Returns result in ptr1
-	sta ptr2 			; ptr2 = A
-	lda #0
-	sta ptr2+1
+	; Uses sreg. Returns result in ptr1
+	sta sreg 				; sreg = A
+	lda #0	
+	sta sreg+1
 	sta ptr1 
 	sta ptr1+1
 	jmp while
@@ -180,18 +327,18 @@
 		txa  				; X >>= 1
 		lsr a 
 		tax 
-		bcc shift_ptr2 		; if a bit fell off, add ptr2 to ptr1
-	add_ptr2:
+		bcc shift_sreg 		; if a bit fell off, add sreg to ptr1
+	add_sreg:
 		clc
 		lda ptr1 
-		adc ptr2 
+		adc sreg 
 		sta ptr1 
 		lda ptr1+1  		; add any carry to MSB
-		adc ptr2+1
+		adc sreg+1
 		sta ptr1+1
-	shift_ptr2:
-		asl ptr2 
-		rol ptr2+1
+	shift_sreg:
+		asl sreg 
+		rol sreg+1
 	while:
 		cpx #0
 		bne loop
@@ -214,12 +361,12 @@
 	ldx #40
 	jsr _multiplyAXtoPtr1
 
-	clc 				; ptr1 += *SAVMSC
+	clc 				; ptr1 += *TXTMSC
 	lda ptr1
-	adc SAVMSC
+	adc TXTMSC
 	sta ptr1
 	lda ptr1+1
-	adc SAVMSC+1
+	adc TXTMSC+1
 	sta ptr1+1			; ptr1 now points at beginning of screen row
 
 	clc 				; ptr1 += *COLCRS

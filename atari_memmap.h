@@ -10,7 +10,7 @@
 #define RMARGN (0x0053)
 #define ROWCRS (0x0054)
 #define COLCRS (0x0055)
-#define SAVMSC (0x0058)
+#define SAVMSC (0x0058) /* Pointer to screen memory */
 #define RAMTOP (0x006A)
 #define ROWINC (0x0079)
 #define COLINC (0x007A)
@@ -29,6 +29,10 @@
 // Joystick
 #define STICK0 (0x0278)
 #define STRIG0 (0x0284)
+
+// Text Window
+#define TXTMSC (0x0294) /* Pointer to text window memory */
+#define BOTSCR (0x02BF)
 
 // Colors (Shadow)
 #define PCOLR0 (0x02C0)

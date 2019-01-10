@@ -8,14 +8,10 @@
 #include "sprites.h"
 #include <atari.h>
 
-// Globals
-UInt8 *graphicsWindow;
-UInt8 *textWindow;
-
 // Drawing
 
 SInt8 drawImage(const DataBlock *image, UInt8 rowOffset, UInt8 rowCount) {
-	UInt8 *screen = graphicsWindow;
+	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
 	UInt16 screenLen = rowCount * SCREEN_ROW_BYTES;
 	UInt16 dataLen = image->length;
 

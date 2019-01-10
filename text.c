@@ -33,7 +33,7 @@ static void drawHpBar(UInt8 hp, UInt8 maxHp) {
 	if (remainder) {
 		++fill;
 	}
-	drawBarChart(textWindow, width, fill);
+	drawBarChart(TEXT_WINDOW, width, fill);
 }
 
 static void printCharaStats(GameCharaPtr chara) {
@@ -96,7 +96,7 @@ void printPartyStats(void) {
 	printLine(s);
 }
 
-void drawTextBox(const UInt8 *s) {
+void drawTextBoxOLD(const UInt8 *s) {
 	// On entry:
 	// COLCRS: starting & newline X-position.
 	// ROWCRS: starting Y-position.
@@ -131,7 +131,7 @@ void drawTextBox(const UInt8 *s) {
 				while (i > previousBreakable + 1) {
 					--i;
 					--x;
-					textWindow[x + SCREEN_ROW_BYTES * y] = 0; // space char
+					TEXT_WINDOW[x + SCREEN_ROW_BYTES * y] = 0; // space char
 				}			
 			}
 
@@ -162,7 +162,7 @@ void drawTextBox(const UInt8 *s) {
 
 		if (c == 0) { return; } // End of string
 
-		textWindow[x + SCREEN_ROW_BYTES * y] = toAtascii(c);
+		TEXT_WINDOW[x + SCREEN_ROW_BYTES * y] = toAtascii(c);
 		++x;
 		++i;
 		c = s[i];

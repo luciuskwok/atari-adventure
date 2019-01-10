@@ -44,7 +44,7 @@ static void drawMapTextBox(void) {
 static void exitMapMenu(void) {
 	POKE(TXTBKG, overworldColorTable[10]);
 	setPlayerCursorVisible(1);
-	zeroOut16(textWindow, 7*SCREEN_ROW_BYTES);
+	zeroOut16(TEXT_WINDOW, 7*SCREEN_ROW_BYTES);
 	drawMapTextBox();
 	setCursorEventHandler(mapCursorHandler);
 }
@@ -74,7 +74,7 @@ static SInt8 handleMenuClick(UInt8 index) {
 static void initMapMenu(void) {
 	const UInt8 bottomRow = 5;
 
-	zeroOut8(textWindow + (bottomRow * SCREEN_ROW_BYTES), 40);
+	zeroOut8(TEXT_WINDOW + (bottomRow * SCREEN_ROW_BYTES), 40);
 	printStringAtXY("* Heal  * Info  * Save  * Done", 5, 5);
 	POKE(TXTBKG, 0x34);
 	
@@ -173,7 +173,7 @@ const UInt8 *colorTableForMap(UInt8 mapType) {
 }
 
 void clearMapScreen(void) {
-	zeroOut8(graphicsWindow, 9*SCREEN_WIDTH);
+	zeroOut8(SCREEN_WINDOW, 9*SCREEN_WIDTH);
 	zeroOut8(P3_XPOS, 13);
 }
 
@@ -199,7 +199,7 @@ void layoutCurrentMap(UInt8 mapSightDistance) {
 }
 
 void drawCurrentMap(UInt8 x, UInt8 y) {
-	UInt8 *screen = graphicsWindow;
+	UInt8 *screen = SCREEN_WINDOW;
 	const UInt8 *runLenPtr = currentRunLenMap;
 	UInt8 screenRowSkip = SCREEN_WIDTH - mapFrame.size.width;
 	UInt8 screenIndex = mapFrame.origin.x + SCREEN_WIDTH * mapFrame.origin.y;
@@ -408,7 +408,7 @@ void initMap(void) {
 	hideSprites();
 	setScreenMode(ScreenModeMap);
 	clearMapScreen();
-	zeroOut16(textWindow, 7*SCREEN_ROW_BYTES);
+	zeroOut16(TEXT_WINDOW, 7*SCREEN_ROW_BYTES);
 
 	// Set up missiles for use by sound sequencer for debuggging
 	clearSprite(0);
