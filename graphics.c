@@ -35,10 +35,6 @@
 #include <atari.h>
 #include <string.h>
 
-extern void __fastcall__ initVBI(void);
-extern void __fastcall__ mapViewDLI(void);
-extern void __fastcall__ battleViewDLI(void);
-extern void __fastcall__ infoViewDLI(void);
 
 // Globals
 UInt8 *graphicsWindow;
@@ -171,9 +167,5 @@ SInt8 drawImage(const DataBlock *image, UInt8 rowOffset, UInt8 rowCount) {
 
 	screen += rowOffset * SCREEN_ROW_BYTES;
 	return puff(screen, screenLen, image->bytes, dataLen);
-}
-
-void clearGraphicsWindow(UInt8 rows) {
-	memset(graphicsWindow, 0, SCREEN_ROW_BYTES * rows);
 }
 

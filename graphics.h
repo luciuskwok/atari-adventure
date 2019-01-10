@@ -37,7 +37,7 @@ extern void __fastcall__ loadColorTable(const UInt8 *colors);
 // Drawing
 void drawBarChart(UInt8 *screen, UInt8 x, UInt8 y, UInt8 width, UInt8 filled);
 SInt8 drawImage(const DataBlock *image, UInt8 rowOffset, UInt8 rowCount);
-void clearGraphicsWindow(UInt8 rows);
+extern void __fastcall__ clearGraphicsWindow(UInt8 rows);
 
 // Timing
 extern void __fastcall__ delayTicks(UInt8 ticks);

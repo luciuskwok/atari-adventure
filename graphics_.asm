@@ -485,12 +485,10 @@ loop:
 .export _loadColorTable
 .proc _loadColorTable
 	; uses ptr1 
-
 	sta ptr1 
 	stx ptr1+1
 	cpx #0
 	beq zero_out
-
 copy_colors:
 	ldy #0 
 loop_copy_colors:
@@ -500,7 +498,6 @@ loop_copy_colors:
 	cpy #12 
 	bne loop_copy_colors
 	rts
-
 zero_out:
 	ldy #0 
 loop_zero_out:
@@ -511,6 +508,34 @@ loop_zero_out:
 	bne loop_zero_out
 	rts
 .endproc
+
+
+; extern void __fastcall__ clearGraphicsWindow(UInt8 rows);
+.export _clearGraphicsWindow
+.proc _clearGraphicsWindow
+	tax 
+	lda _graphicsWindow
+	sta ptr1 
+	lda _graphicsWindow+1
+	sta ptr1+1
+	loop_row:
+		lda #0
+		ldy #40
+		loop_col:
+			dey 
+			sta (ptr1),Y
+			bne loop_col 
+		clc 
+		lda ptr1 
+		adc #40 
+		sta ptr1 
+		lda ptr1+1 
+		adc #0 
+		sta ptr1+1
+		dex 
+		bne loop_row
+	rts 
+.endproc 
 
 
 ; extern void __fastcall__ delayTicks(UInt8 ticks);
@@ -558,7 +583,6 @@ customTiles:
 	.byte $80, $80, $80, $80, $80, $80, $80, $00 ; HouseDoor
 
 	customTilesLength = 26*8
-
 .code
 
 
