@@ -100,14 +100,6 @@ void printPartyStats(void) {
 	printLine(s);
 }
 
-void clearTextWindow(UInt8 lines) {
-	UInt16 i;
-
-	for (i=0; i<lines*TEXTBOX_WIDTH; ++i) {
-		textWindow[i] = 0;
-	}
-}
-
 void clearTextRect(RectU8 *rect) {
 	UInt8 rowSkip = TEXTBOX_WIDTH - rect->size.width;
 	UInt16 i = rect->origin.x + TEXTBOX_WIDTH * rect->origin.y;

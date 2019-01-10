@@ -8,7 +8,6 @@
 
 #define SET_TXT_ORIGIN(x, y)  *(UInt8*)0x52=(x);*(UInt8*)0x55=(x);*(UInt8*)0x54=(y);
 
-void clearTextWindow(UInt8 lines);
 void clearTextRect(RectU8 *rect);
 
 void drawHpBar(UInt8 x, UInt8 y, UInt8 hp, UInt8 maxHp);

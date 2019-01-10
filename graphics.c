@@ -39,7 +39,6 @@
 UInt8 *graphicsWindow;
 UInt8 *textWindow;
 
-#define SCREEN_ROW_BYTES (40)
 
 
 // Transition Effects

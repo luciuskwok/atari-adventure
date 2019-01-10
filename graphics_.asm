@@ -14,6 +14,7 @@
 .import _infoViewDLI
 
 .import _multiplyAXtoPtr1
+.import _popXA
 .import _popStack
 
 
@@ -627,32 +628,62 @@
 .endproc 
 
 
-; extern void __fastcall__ clearGraphicsWindow(UInt8 rows);
-.export _clearGraphicsWindow
-.proc _clearGraphicsWindow
-	tax 
-	lda _graphicsWindow
-	sta ptr1 
-	lda _graphicsWindow+1
+; extern void __fastcall__ zeroOut16(UInt8 *ptr, UInt16 length);
+.export _zeroOut16
+.proc _zeroOut16
+	sta ptr2			; get parmeter 'length'
+	stx ptr2+1
+
+	jsr _popXA			; get parameter 'ptr'
+	stx ptr1
 	sta ptr1+1
-	loop_row:
+
+	clc 				; set ptr2 to point at end of area to zero out
+	lda ptr2
+	adc ptr1
+	sta ptr2
+	lda ptr2+1
+	adc ptr1+1
+	sta ptr2+1
+
+	ldy #0
+	loop:
 		lda #0
-		ldy #40
-		loop_col:
-			dey 
-			sta (ptr1),Y
-			bne loop_col 
-		clc 
+		sta (ptr1),Y
+
+		inc ptr1 
+		bne while
+		inc ptr1+1
+	while:
 		lda ptr1 
-		adc #40 
-		sta ptr1 
-		lda ptr1+1 
-		adc #0 
-		sta ptr1+1
-		dex 
-		bne loop_row
+		cmp ptr2
+		bne loop
+		lda ptr1+1
+		cmp ptr2+1
+		bne loop
+
 	rts 
 .endproc 
+
+
+; extern void __fastcall__ zeroOut8(UInt8 *ptr, UInt8 length);
+.export _zeroOut8
+.proc _zeroOut8
+	sta tmp1 			; get parmeter 'length'
+
+	jsr _popXA			; get parameter 'ptr'
+	stx ptr1
+	sta ptr1+1
+
+	lda #0
+	ldy tmp1
+	loop:
+		dey
+		sta (ptr1),Y
+		bne loop
+
+	rts 
+.endproc
 
 
 ; extern void __fastcall__ delayTicks(UInt8 ticks);

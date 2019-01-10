@@ -244,7 +244,7 @@ void initInfo(void) {
 	// Set up graphics window
 	setScreenMode(ScreenModeOff);
 	setPlayerCursorVisible(0);
-	clearGraphicsWindow(24+18); // also clears text window
+	zeroOut16(graphicsWindow, (24+18)*SCREEN_ROW_BYTES); // Clear graphics and text windows
 	setCursorEventHandler(infoCursorHandler);
 
 	// Position missile sprites as borders

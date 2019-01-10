@@ -98,7 +98,7 @@ static void showEncounterText(void) {
 	stringConcat(s, enemy.name);
 	stringConcat(s, " blocks your path!");
 
-	clearTextWindow(3);
+	zeroOut8(textWindow, 3*SCREEN_ROW_BYTES);
 	drawTextBox(s, 1, 0, 38, 2, -2);
 	shouldRedrawEncounterTextOnMove = 0;
 }
@@ -146,7 +146,7 @@ static void enemyWasHit(UInt8 damage) {
 	drawEnemyHpBar();
 
 	if (enemy.hp == 0) {
-		clearTextWindow(3);
+		zeroOut8(textWindow, 3*SCREEN_ROW_BYTES);
 		printStringAtXY("* You are victorious.", 1, 0);
 		waitForAnyInput();
 		isLeavingBattle = 1;
@@ -190,7 +190,7 @@ static void doAttack(UInt8 player) {
 
 	hideCursor();
 	stringConcat(s, chara->name);
-	clearTextWindow(3);
+	zeroOut8(textWindow, 3*SCREEN_ROW_BYTES);
 
 	if (chara->hp != 0) {
 		stringConcat(s, " attacks.");
@@ -213,7 +213,7 @@ static void doAttack(UInt8 player) {
 			stringConcat(s, " counter-attacks ");
 			stringConcat(s, chara->name);
 			stringConcat(s, ".");
-			clearTextWindow(3);
+			zeroOut8(textWindow, 3*SCREEN_ROW_BYTES);
 			drawTextBox(s, 1, 0, 38, 2, -2);
 	
 			// Calculate to player character or miss.
@@ -235,8 +235,7 @@ static void enterFightMenu(void) {
 	if (count == 1) {
 		doAttack(0);
 	} else {
-
-		clearTextWindow(3);
+		zeroOut8(textWindow, 3*SCREEN_ROW_BYTES);
 		printStringAtXY("* Who shall fight?", 1, 0);
 
 		menuType = BattleFightMenu;
@@ -256,7 +255,7 @@ static void enterTalk(void) {
 	stringConcat(s, enemy.name);
 	stringConcat(s, " doesn't care what you think!");
 
-	clearTextWindow(3);
+	zeroOut8(textWindow, 3*SCREEN_ROW_BYTES);
 	drawTextBox(s, 1, 0, 38, 2, -2);
 	shouldRedrawEncounterTextOnMove = 1;
 }
@@ -269,7 +268,7 @@ static void useItem(UInt8 item) {
 
 	hideCursor();
 
-	clearTextWindow(3);
+	zeroOut8(textWindow, 3*SCREEN_ROW_BYTES);
 	if (item == 0) {
 		// Play sound
 		noteOn(NoteC+Oct5, 8, 15, 1, 0x80, 3);
@@ -301,7 +300,7 @@ static void enterItemMenu(void) {
 	const UInt8 y = 1;
 	const UInt8 spacing = 8;
 
-	clearTextWindow(3);
+	zeroOut8(textWindow, 3*SCREEN_ROW_BYTES);
 	printStringAtXY("* Nuts", x, y);
 	printStringAtXY("* Staff", x + spacing, y);
 
@@ -379,8 +378,8 @@ void initBattle(void) {
 
 	// Set up graphics window
 	setScreenMode(ScreenModeOff);
-	clearTextWindow(7);
-	clearGraphicsWindow(59);
+	zeroOut16(textWindow, 7*SCREEN_ROW_BYTES);
+	zeroOut16(graphicsWindow, 59*SCREEN_ROW_BYTES);
 	setPlayerCursorVisible(0);
 
 	// Turn on screen

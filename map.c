@@ -48,7 +48,7 @@ static void drawMapTextBox(void) {
 static void exitMapMenu(void) {
 	POKE(TXTBKG, overworldColorTable[10]);
 	setPlayerCursorVisible(1);
-	clearTextWindow(7);
+	zeroOut16(textWindow, 7*SCREEN_ROW_BYTES);
 	drawMapTextBox();
 	setCursorEventHandler(mapCursorHandler);
 }
@@ -176,8 +176,8 @@ const UInt8 *colorTableForMap(UInt8 mapType) {
 }
 
 void clearMapScreen(void) {
-	memset(graphicsWindow, 0, 9*SCREEN_WIDTH);
-	memset(P3_XPOS, 0, 13);
+	zeroOut8(graphicsWindow, 9*SCREEN_WIDTH);
+	zeroOut8(P3_XPOS, 13);
 }
 
 void layoutCurrentMap(UInt8 mapSightDistance) {
@@ -198,7 +198,7 @@ void layoutCurrentMap(UInt8 mapSightDistance) {
 	mapFrame.origin.y = 4 - halfHeight;
 
 	// Clear out the sprite overlays
-	memset(P3_XPOS, 0, 13);
+	zeroOut8(P3_XPOS, 13);
 }
 
 void drawCurrentMap(UInt8 x, UInt8 y) {
@@ -417,7 +417,7 @@ void initMap(void) {
 	hideSprites();
 	setScreenMode(ScreenModeMap);
 	clearMapScreen();
-	clearTextWindow(7);
+	zeroOut16(textWindow, 7*SCREEN_ROW_BYTES);
 
 	// Set up missiles for use by sound sequencer for debuggging
 	clearSprite(0);

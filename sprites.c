@@ -133,7 +133,7 @@ void setSpriteWidth(UInt8 player, UInt8 width) {
 
 void clearSprite(UInt8 player) {
 	UInt8 *p = (UInt8 *) (spriteArea + 384 + 128 * player);
-	memset(p, 0, 128);
+	zeroOut8(p, 128);
 }
 
 void hideSprites(void) {

@@ -16,6 +16,8 @@ extern UInt8 *textWindow; // Pointer to screen memory for text window
 #define P3_XPOS ((UInt8 *)0x0603)
 #define BG_COLOR ((UInt8 *)0x0620)
 
+#define SCREEN_ROW_BYTES (40)
+
 
 enum ScreenMode {
 	ScreenModeOff = 0,
@@ -37,7 +39,8 @@ extern void __fastcall__ loadColorTable(const UInt8 *colors);
 // Drawing
 SInt8 drawImage(const DataBlock *image, UInt8 rowOffset, UInt8 rowCount);
 extern void __fastcall__ drawBarChart(UInt8 *screen, UInt8 x, UInt8 y, UInt8 width, UInt8 filled);
-extern void __fastcall__ clearGraphicsWindow(UInt8 rows);
+extern void __fastcall__ zeroOut16(UInt8 *ptr, UInt16 length);
+extern void __fastcall__ zeroOut8(UInt8 *ptr, UInt8 length);
 
 // Timing
 extern void __fastcall__ delayTicks(UInt8 ticks);
