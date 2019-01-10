@@ -77,6 +77,9 @@
 	; RMARGN: X-position of right margin
 	; ROWINC: line spacing
 
+	; for testing, rts
+	rts
+
 	string = ptr2
 	sta string 
 	stx string+1

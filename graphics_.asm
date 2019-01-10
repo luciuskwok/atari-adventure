@@ -130,6 +130,11 @@
 
 
 .proc _initMapViewDisplay
+	textHeight = 7
+
+	lda #textHeight 	; update text window height
+	sta BOTSCR
+
 	jsr _initDisplayListVarsInternal
 
 	; Use SAVMSC screen memory for tiles
@@ -194,6 +199,11 @@
 
 
 .proc _initDialogViewDisplay
+	textHeight = 7
+
+	lda #textHeight 	; update text window height
+	sta BOTSCR
+
 	jsr _initDisplayListVarsInternal
 
 	; Use SAVMSC screen memory for raster
@@ -210,7 +220,7 @@
 	sta ptr2
 	lda TXTMSC+1
 	sta ptr2+1
-	ldx #7
+	ldx #textHeight
 	lda #DL_TEXT|DL_DLI
 	jsr _writeDisplayListLinesInternal
 
@@ -221,6 +231,10 @@
 
 .proc _initBattleViewDisplay
 	rasterHeight = 48
+	textHeight = 7
+
+	lda #textHeight 	; update text window height
+	sta BOTSCR
 
 	jsr _initDisplayListVarsInternal
 
@@ -238,10 +252,10 @@
 	; Continue SAVMSC for enemy HP bar chart
 	clc
 	lda ptr2
-	adc #<(rasterHeight*40) ; 48 * 40 = 1920 = $780
+	adc #<(rasterHeight*ROW_BYTES) ; 48 * 40 = 1920 = $780
 	sta ptr2 
 	lda ptr2+1
-	adc #>(rasterHeight*40)
+	adc #>(rasterHeight*ROW_BYTES)
 	sta ptr2+1
 	jsr _writeDisplayListBarChartInternal
 
@@ -255,17 +269,17 @@
 	sta ptr2
 	lda TXTMSC+1
 	sta ptr2+1
-	ldx #7
+	ldx #textHeight
 	lda #DL_TEXT
 	jsr _writeDisplayListLinesInternal
 
 	; Continue using textWindow for bar chart
 	lda ptr2
 	clc 
-	adc #$18  ; 7 * 40 = 280 = $118
+	adc #<(textHeight*ROW_BYTES)  ; 7 * 40 = 280 = $118
 	sta ptr2
 	lda ptr2+1
-	adc #$01
+	adc #>(textHeight*ROW_BYTES)
 	sta ptr2+1
 	jsr _writeDisplayListBarChartInternal
 
@@ -298,6 +312,10 @@
 
 .proc _initInfoViewDisplay
 	rasterHeight = 24
+	textHeight = 18
+
+	lda #textHeight 	; update text window height
+	sta BOTSCR
 
 	jsr _initDisplayListVarsInternal
 
