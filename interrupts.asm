@@ -142,13 +142,12 @@ return:
 	ldx DLI_ROW			; increment DLI_ROW
 	inx
 	stx DLI_ROW
+
+	cpx #9				; before line 9
+	bcc reposition_sprite
+
 	stx WSYNC			; wait for horizontal sync
-
-	lda P3_XPOS,X		; HPOSP2 = P3_XPOS[DLI_ROW]
-	sta HPOSP3
-
-	cpx #9				; 
-	beq chara_name
+	beq chara_name 		; line 9
 	
 	cpx #10				; 
 	beq chara_level
@@ -163,39 +162,45 @@ return:
 	beq last_line
 
 	jmp return_dli
-	
-chara_name:
-	lda #0
-	sta COLPF4			; border
-	sta COLPF2			; text box background color
-	lda TXTLUM		
-	sta COLPF1			; text color
-	jmp return_dli
 
-chara_level:
-	lda PCOLR2		
-	sta COLPF1			; text color
-	jmp return_dli
+	reposition_sprite:
+		lda P3_XPOS,X		; HPOSP3 = P3_XPOS[DLI_ROW]
+		stx WSYNC			; wait for horizontal sync
+		sta HPOSP3
+		jmp return_dli
 
-chara_hp:
-	lda TXTLUM		
-	sta COLPF1			; text color
-	jmp return_dli
+	chara_name:
+		lda #0
+		sta COLPF4			; border
+		sta COLPF2			; text box background color
+		lda TXTLUM		
+		sta COLPF1			; text color
+		jmp return_dli
 
-party_stats:
-	lda TXTBKG			; border
-	sta COLPF2			; text box background color
-	jmp return_dli
+	chara_level:
+		lda PCOLR2		
+		sta COLPF1			; text color
+		jmp return_dli
 
-last_line:
-	lda COLOR2 			; restore colors for map in case VBI is missed
-	sta COLPF2
+	chara_hp:
+		lda TXTLUM		
+		sta COLPF1			; text color
+		jmp return_dli
 
-return_dli:	
-	pla					; restore accumulator and X register from stack
-	tax
-	pla
-	rti
+	party_stats:
+		lda TXTBKG			; border
+		sta COLPF2			; text box background color
+		jmp return_dli
+
+	last_line:
+		lda COLOR2 			; restore colors for map in case VBI is missed
+		sta COLPF2
+
+	return_dli:	
+		pla					; restore accumulator and X register from stack
+		tax
+		pla
+		rti
 .endproc
 
 .proc _battleViewDLI
