@@ -257,7 +257,6 @@ void initInfo(void) {
 
 	// Turn on screen
 	setScreenMode(ScreenModeInfo);
-	//fadeInColorTable(FadeTextBox, infoColorTable);
 	loadColorTable(infoColorTable);
 
 	// Print chara info

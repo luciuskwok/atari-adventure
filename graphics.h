@@ -29,11 +29,8 @@ enum ScreenMode {
 extern void __fastcall__ setScreenMode(UInt8 mode);
 
 // Color Table
-enum FadeOptions {
-	FadeGradient = 1, FadeTextBox = 2
-};
-void fadeOutColorTable(UInt8 fadeOptions);
-void fadeInColorTable(UInt8 fadeOptions, const UInt8 *colorTable);
+void fadeOutColorTable(void);
+void fadeInColorTable(const UInt8 *colorTable);
 extern void __fastcall__ loadColorTable(const UInt8 *colors);
 
 // Drawing

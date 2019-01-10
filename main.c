@@ -46,7 +46,7 @@ UInt16 duration;
 static void fadeOutScreen(void) {
 	// Fade out
 	stopSong();
-	fadeOutColorTable(FadeTextBox);
+	fadeOutColorTable();
 	clearSprite(4);
 	hideSprites();
 }

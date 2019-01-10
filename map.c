@@ -309,7 +309,7 @@ void transitionToMap(UInt8 mapType, UInt8 shouldFadeOut, UInt8 shouldFadeIn) {
 	const UInt8 *colorTable = colorTableForMap(mapType);
 
 	if (shouldFadeOut) {
-		fadeOutColorTable(0);
+		fadeOutColorTable();
 	} else {
 		loadColorTable(NULL);
 	}
@@ -317,7 +317,7 @@ void transitionToMap(UInt8 mapType, UInt8 shouldFadeOut, UInt8 shouldFadeIn) {
 	loadMap(mapType, mapSightDistance, mapCurrentLocation.x, mapCurrentLocation.y);
 	
 	if (shouldFadeIn) {	
-		fadeInColorTable(0, colorTable);
+		fadeInColorTable(colorTable);
 	} else {
 		loadColorTable(colorTable);
 	}

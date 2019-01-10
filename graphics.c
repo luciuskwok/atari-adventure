@@ -53,7 +53,7 @@ static UInt8 applyFade(UInt8 color, UInt8 amount) {
 	return color;
 }
 
-void fadeOutColorTable(UInt8 fadeOptions) {
+void fadeOutColorTable(void) {
 	UInt8 *colors = (UInt8*)(PCOLR0);
 	UInt8 count;
 	UInt8 i;
@@ -67,11 +67,6 @@ void fadeOutColorTable(UInt8 fadeOptions) {
 		for (i=0; i<12; ++i) {
 			colors[i] = applyFade(colors[i], 1);			
 		}
-		if (fadeOptions & FadeGradient) {
-			for (i=0; i<72; ++i) {
-				BG_COLOR[i] = applyFade(BG_COLOR[i], 1);				
-			}
-		}
 
 		// Delay 
 		while (*VB_TIMER) {
@@ -79,7 +74,7 @@ void fadeOutColorTable(UInt8 fadeOptions) {
 	}
 }
 
-void fadeInColorTable(UInt8 fadeOptions, const UInt8 *colorTable) {
+void fadeInColorTable(const UInt8 *colorTable) {
 	UInt8 *colors = (UInt8*)(PCOLR0);
 	SInt8 amount;
 	UInt8 i;
@@ -90,12 +85,6 @@ void fadeInColorTable(UInt8 fadeOptions, const UInt8 *colorTable) {
 		for (i=0; i<12; ++i) {
 			colors[i] = applyFade(colorTable[i], amount);			
 		}
-		if (fadeOptions & FadeGradient) {
-			for (i=0; i<72; ++i) {
-				//BG_COLOR[i] = applyFade(BG_COLOR[i]);				
-			}
-		}
-
 		// Delay 
 		while (*VB_TIMER) {
 		}
