@@ -728,13 +728,20 @@
 .endproc 
 
 
-; extern void zeroOut8(UInt8 *ptr, UInt8 length);
+; void zeroOut8(UInt8 *ptr, UInt8 length);
 .export _zeroOut8
 .proc _zeroOut8
 	pha		 			; get parmeter 'length'
 	jsr popptr1			; get parameter 'ptr'
 	pla 
 	tay 
+	jsr _zeroOutYAtPtr1
+	rts 
+.endproc
+
+
+.export _zeroOutYAtPtr1
+.proc _zeroOutYAtPtr1
 	lda #0
 	loop:
 		dey

@@ -3,7 +3,7 @@
 .import 	popa, popptr1, popsreg, pushax, udiv16
 .import 	mulax10
 .import 	_textWindow
-.import 	_zeroOut8
+.import 	_zeroOutYAtPtr1
 .importzp 	sp, sreg
 .importzp 	tmp1, tmp2, tmp3, tmp4, ptr1, ptr2, ptr3, ptr4
 
@@ -54,12 +54,8 @@
 	lda #height
 	sta index
 	loop: 
-		lda ptr1 
-		ldx ptr1+1
-		jsr pushax 
-
-		lda #width
-		jsr _zeroOut8
+		ldy #width 
+		jsr _zeroOutYAtPtr1
 
 		clc 				; ptr1 += row_bytes
 		lda ptr1
