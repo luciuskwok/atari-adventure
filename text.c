@@ -32,11 +32,11 @@ static void printCharaStats(GameCharaPtr chara) {
 	POKEW(SAVADR, PEEKW(TXTMSC) + PEEK(ROWCRS) * SCREEN_ROW_BYTES);
 	// Multiple COLCRS by 4 to switch from text to raster coordinates
 	POKE(COLCRS, PEEK(COLCRS) << 2);
-	sizeBarChart(hp, maxHp);
+	//sizeBarChart(hp, maxHp);
 	drawBarChart();
 }
 
-void printCharaAtIndex(UInt8 index) {
+void printCharaAtIndexOLD(UInt8 index) {
 	UInt8 x = 1 + index * 10;
 	GameCharaPtr chara = charaAtIndex(index);
 

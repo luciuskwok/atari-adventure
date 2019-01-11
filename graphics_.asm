@@ -584,22 +584,24 @@
 .endproc
 
 
-; void sizeBarChart(UInt8 hp, UInt8 maxHp);
 .export _sizeBarChart
 .proc _sizeBarChart  	; uses sreg, ptr1, ptr4
 	; Given hp and maxHp, calculate the width and fill values for a bar chart.
 	; * On entry: 
-	; SAVADR: screen row pointer
-	; COLCRS: x-position of bar chart.
+	; A: hp
+	; X: maxHp
 	; * Sets values in:
 	; DELTAC: width of bar chart
 	; COLINC: width of filled portion of chart
 
-	sta ptr4 				; save maxHp in ptr4
-	ldx #0
-	stx ptr4+1 
+	pha 		; push hp
+	maxHp = ptr4
+	stx maxHp  	; 
+	lda #0
+	sta maxHp+1 
 
 	set_width:
+		txa 
 		lsr a 
 		cmp #36 
 		bcc @skip_limit
@@ -608,10 +610,10 @@
 		sta DELTAC 
 
 	set_fill:
-		tax
-		jsr popa 			; hp 
+		tax 				; put width in X
+		pla 	 			; pull hp off setack 
 		jsr _multiplyAXtoPtr1 ; n = hp * width
-		jsr udiv16 			; (result:ptr1, remainder:sreg) = ptr1 / ptr4
+		jsr udiv16 			;  n / maxHp => (ptr1, sreg)
 
 		ldx ptr1  			; fill = n / maxHp
 		lda sreg  			; if sreg != 0: inc fill, to round it up

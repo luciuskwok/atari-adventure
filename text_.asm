@@ -3,10 +3,8 @@
 .import 	addysp, popa, popptr1, popsreg, pushax, subysp
 .import 	mulax10, udiv16
 .import 	_zeroOutYAtPtr1, _multiplyAXtoPtr1
-.import 	_charaAtIndex
+.import 	_charaAtIndex, _sizeBarChart, _drawBarChart
 
-.importzp 	sp, sreg
-.importzp 	tmp1, tmp2, tmp3, tmp4, ptr1, ptr2, ptr3, ptr4
 
 .import 	_partyMoney, _partyPotions, _partyFangs
 
@@ -21,7 +19,9 @@
 
 ; void printCharaAtIndex(UInt8 index);
 .export _printCharaAtIndex
-.proc _printCharaAtIndex 	; uses sreg, ptr1, ptr2, ptr3, ptr4
+.proc _printCharaAtIndex 	; uses sreg, ptr1, ptr2, ptr3, ptr4, tmp4
+	.importzp 	sp, sreg, ptr1, ptr2, ptr3, ptr4, tmp4
+
 	.rodata 
 		lvString:
 		.byte "Lv "
@@ -32,10 +32,16 @@
 	value = ptr1 
 	string = ptr2 
 	charaPtr = ptr3
+	maxHp = tmp4 
 
-	pha  
+	; Chara struct offsets
+	charaLevel = 16 
+	charaXp = 17
+	charaHp = 18 
 
-	jsr _charaAtIndex  		; get chara ptr
+	pha  					; A = index
+
+	jsr _charaAtIndex  		; get chara ptr $8677
 	sta charaPtr 
 	stx charaPtr+1
 
@@ -50,35 +56,123 @@
 
 	reserve_string:
 		ldy #10
-		jsr subysp
-		lda sp 
-		sta string
-		lda sp+1
-		sta string+1
+		jsr subysp 			; ABEC
 
 	print_name:
-		ldy #1
-		lda (charaPtr),Y 
-		tax 
-		dey 
-		lda (charaPtr),Y
+		lda charaPtr
+		ldx charaPtr+1 
 		jsr _printLine 
 
 	print_lv:
-		
-		jsr _stringCopy
+		lda sp  			; string = sp
+		sta string			; _printLine uses ptr2:string, so reload here
+		lda sp+1
+		sta string+1
 
+		lda #<lvString 		; string = "Lv " $81C4
+		sta value 
+		lda #>lvString
+		sta value+1
+		jsr _appendStringToPtr2
 
+		ldy #charaLevel 	; string += charaLevel
+		lda (charaPtr),Y
+		ldx #0
+		pha
 
+		calc_max_hp:
+			jsr _maxHpWithLevel
+			sta maxHp 
 
+		pla 
+		sta ptr1
+		lda #0 
+		sta ptr1+1
+		jsr _uint16StringInternal
 
+		lda sp 
+		ldx sp+1
+		jsr _printLine 
+
+	print_hp:
+		lda sp  			; string = sp
+		sta string			; _printLine uses ptr2:string, so reload here
+		lda sp+1
+		sta string+1
+
+		ldy #charaHp	 	; string += charaHp
+		lda (charaPtr),Y
+		sta ptr1 
+		ldx #0
+		stx ptr1+1
+		jsr _uint16StringInternal
+
+		clc 
+		adc string 
+		sta string 
+		bcc @skip_msb
+		inc string+1 
+		@skip_msb:
+
+		lda #'/' 			; string += '/'
+		jsr _appendCharToPtr2
+
+		lda maxHp
+		sta ptr1 
+		ldx #0
+		stx ptr1+1
+		jsr _uint16StringInternal
+
+		lda sp 
+		ldx sp+1
+		jsr _printLine 
+
+	draw_hp_bar:
+		lda COLCRS  		; Temporarily set COLCRS to 0 so 
+		pha 				; that SAVADR points to row start.
+		lda #0
+		sta COLCRS
+		jsr _cursorAddressToSAVADR
+		pla 
+		asl a 
+		asl a   			; Multiply COLCRS by 4 to switch to
+		sta COLCRS  		; raster pixels.
+
+		ldy #charaHp	 	; get HP again
+		lda (charaPtr),Y
+		ldx maxHp 
+		jsr _sizeBarChart  	; A=hp, X=maxHp
+		jsr _drawBarChart
+
+	free_string:
+		ldy #10
+		jsr addysp
 	rts 
 .endproc
+
+
+; Move this to game_chara.asm when it's written
+.proc _maxHpWithLevel
+	; On entry: AX = chara level.
+	; Returns: AX = max HP.
+	; mulax10 uses ptr1
+
+	jsr mulax10 		; maxHp = level * 10 + 10
+	clc 
+	adc #10
+	bcc @skip_cap 		; if level > 255: limit level to 255
+	lda #255 
+	@skip_cap:
+	rts 
+.endproc 
 
 
 ; void printPartyStats(void);
 .export _printPartyStats
 .proc _printPartyStats
+	.importzp 	sp, ptr1, ptr2
+	; unit16StringInternal uses ptr1, ptr2, ptr4, sreg, tmp1
+
 	ldy #32				; reserve 32 bytes on stack for string buffer
 	jsr subysp 
 
@@ -89,7 +183,6 @@
 	lda sp+1
 	sta string+1
 
-	; unit16StringInternal uses ptr1, ptr2, ptr4, sreg, tmp1
 
 	party_money:
 		lda #'$'
@@ -188,6 +281,7 @@
 	; LMARGN: X-position after wrapping line
 	; RMARGN: X-position of right margin
 	; ROWINC: line spacing
+	.importzp 	ptr1, ptr2, tmp1, tmp2, tmp3
 
 	string = ptr2
 	sta string 
@@ -301,6 +395,7 @@
 
 
 .proc _ptr2AddTmp2 
+	.importzp 	ptr2, tmp2
 	clc 					; ptr2 += tmp2
 	lda ptr2 
 	adc tmp2 
@@ -318,6 +413,7 @@
 	; COLCRS = x-position of cursor
 	; ptr2 = string
 	; tmp2 = length
+	.importzp 	ptr1, ptr2, tmp2
 
 	clc  				; ptr1 = savadr + colcrs
 	lda SAVADR
@@ -350,6 +446,7 @@
 .proc _wordLengthAtPtr2
 	; ptr2: string
 	; returns length up to but not including space or newline char
+	.importzp 	ptr2
 
 	ldy #0
 	loop:
@@ -369,8 +466,10 @@
 
 
 .proc _appendCharToPtr2
-	; appends char in A to string at ptr2 and increments ptr2.
+	; appends char in A to string at ptr2 and moves ptr2 to end.
 	; does not append null terminator
+	.importzp 	ptr2
+
 	ldy #0
 	sta (ptr2),Y
 	inc_ptr2:
@@ -382,9 +481,36 @@
 .endproc 
 
 
+.proc _appendStringToPtr2
+	; appends string in ptr1 to string at ptr2 and increments ptr2.
+	.importzp 	ptr1, ptr2
+
+	ldy #0
+	loop: 
+		lda (ptr1),Y 
+		sta (ptr2),Y
+		beq inc_ptr2 
+		iny 
+		bne loop 
+		dey   			; overflow error
+	inc_ptr2:
+		clc 
+		tya 
+		adc ptr2 
+		sta ptr2 
+		bcc return 
+		inc ptr2+1
+	return:
+		rts 
+.endproc 
+
+
 ; void eraseCharaBoxAtIndex(UInt8 index);
 .export _eraseCharaBoxAtIndex
-.proc _eraseCharaBoxAtIndex
+.proc _eraseCharaBoxAtIndex 	; uses sreg, ptr1, 
+	.importzp 	tmp1
+	; mulax10, _cursorAddressToSAVADR uses sreg, ptr1
+
 	width = 9
 	height = 4
 
@@ -394,7 +520,7 @@
 	adc #1 
 	sta COLCRS
 
-	jsr _cursorAddressToPtr1
+	jsr _cursorAddressToSAVADR
 
 	index = tmp1
 	lda #height
@@ -403,12 +529,12 @@
 		ldy #width 
 		jsr _zeroOutYAtPtr1
 
-		clc 				; ptr1 += row_bytes
-		lda ptr1
+		clc 				; SAVADR += row_bytes
+		lda SAVADR
 		adc #ROW_BYTES 
-		sta ptr1
+		sta SAVADR
 		bcc next_loop
-		inc ptr1+1
+		inc SAVADR+1
 	next_loop:
 		dec index
 		bne loop
@@ -419,8 +545,9 @@
 ; void stringConcat(UInt8 *dst, const UInt8 *src);
 .export _stringConcat 		
 .proc _stringConcat
-	; uses ptr1, ptr2
 	; ptr1 is _stringLength parameter.
+	.importzp 	ptr1, ptr2
+
 	SRC = ptr2
 	sta SRC
 	stx SRC+1
@@ -445,7 +572,8 @@
 ; void stringCopy(UInt8 *dst, const UInt8 *src);
 .export _stringCopy 	
 .proc _stringCopy
-	; uses ptr1, ptr2
+	.importzp 	ptr1, ptr2
+
 	SRC = ptr2
 	stx SRC+1
 	sta SRC
@@ -460,6 +588,8 @@
 .proc _stringCopyInternal
 	; Copy null-terminated string from ptr2 to ptr1.
 	; On input, ptr1 is destination, ptr2 is source.
+	.importzp 	ptr1, ptr2
+
 	ldy #0
 	loop:
 		lda (ptr2),Y
@@ -475,7 +605,8 @@
 ; UInt8 stringLength(UInt8 *s);
 .export _stringLength 	
 .proc _stringLength
-	; uses ptr1
+	.importzp 	ptr1
+
 	STR = ptr1
 	sta STR
 	stx STR+1
@@ -485,6 +616,8 @@
 
 .proc _stringLengthInternal
 	; On input, ptr1 points to string
+	.importzp 	ptr1
+
 	STR = ptr1
 	ldy #0
 	loop:
@@ -515,10 +648,10 @@
 .endproc
 
 
-
-.proc _cursorAddressToPtr1 
-	; Returns screen memory address at text cursor position in ptr1
-	; Calls _multiplyAXtoPtr1 (uses sreg)
+.proc _cursorAddressToSAVADR 
+	; Stores cursor address in SAVADR
+	; Calls _multiplyAXtoPtr1 (uses sreg, ptr1)
+	.importzp 	ptr1
 
 	lda ROWCRS			; ptr1 = y * row_bytes
 	ldx #ROW_BYTES
@@ -527,18 +660,18 @@
 	clc 				; ptr1 += TXTMSC
 	lda ptr1
 	adc TXTMSC 
-	sta ptr1
+	sta SAVADR
 	lda ptr1+1
 	adc TXTMSC+1
-	sta ptr1+1
+	sta SAVADR+1
 
 	clc 				; ptr1 += colcrs
-	lda ptr1
+	lda SAVADR
 	adc COLCRS 
-	sta ptr1
-	lda ptr1+1
-	adc #0
-	sta ptr1+1
+	sta SAVADR
+	bcc @skip_msb 
+	inc SAVADR+1
+	@skip_msb:
 
 	rts 
 .endproc
@@ -547,21 +680,29 @@
 ; void printLine(UInt8 *s);
 .export _printLine
 .proc _printLine
-	; uses ptr1, ptr2, AY
+	.importzp 	ptr1
+	; uses ptr1
 	cpx #0
 	beq next_line		; if s == NULL: jump to next line
 
-	sta ptr2 			; ptr2 = s
-	stx ptr2+1
+	pha 				; push s onto stack
+	txa 
+	pha 
 
-	jsr _cursorAddressToPtr1
+	jsr _cursorAddressToSAVADR
+
+	string = ptr1
+	pla
+	sta string+1
+	pla 
+	sta string 
 
 	ldy #0
 	loop:
-		lda(ptr2),Y
-		beq next_line		; if s[Y] == 0: jump to next line
+		lda(string),Y
+		beq next_line		; if string[Y] == 0: jump to next line
 		jsr _toAtascii
-		sta(ptr1),Y			; screen[Y] = s[Y]
+		sta(SAVADR),Y		; screen[Y] = string[Y]
 		iny
 		bne loop
 	next_line:
@@ -577,6 +718,8 @@
 ; void printStringAtXY(const UInt8 *s, UInt8 x, UInt8 y);
 .export _printStringAtXY
 .proc _printStringAtXY
+	.importzp 	ptr1
+
 	sta ROWCRS   		; parameter 'y'
 
 	jsr popa  			; parameter 'x'
@@ -594,7 +737,9 @@
 
 ; UInt8 uint8toString(UInt8 *string, UInt8 value);
 .export _uint8toString
-.proc _uint8toString 	; uses sreg, ptr1, ptr2, ptr4, tmp1
+.proc _uint8toString
+	.importzp 	sreg, ptr1, ptr2, ptr4, tmp1
+
 	sta ptr1 			; value
 	lda #0
 	sta ptr1+1
@@ -612,7 +757,8 @@
 
 ; UInt8 uint16toString(UInt8 *string, UInt16 value);
 .export _uint16toString
-.proc _uint16toString	; uses sreg, ptr1, ptr2, ptr4, tmp1
+.proc _uint16toString
+	.importzp 	sreg, ptr1, ptr2, ptr4, tmp1
 	; returns length of string
 	sta ptr1 			; value
 	stx ptr1+1
@@ -629,12 +775,14 @@
 
 
 .export _uint16StringInternal
-.proc _uint16StringInternal	; uses sreg, ptr1, ptr2, ptr4, tmp1
+.proc _uint16StringInternal
 	; on entry: 
 	; ptr1 = value
 	; ptr2 = output string
 	; returns: length of string
 	; udiv16 uses only sreg, ptr1, ptr4, AXY
+	.importzp 	sreg, ptr1, ptr2, ptr4, tmp1
+
 	value = ptr1
 	string = ptr2
 	index = tmp1
@@ -681,6 +829,8 @@
 ; void debugPrint(const UInt8 *s, UInt16 value, UInt8 x, UInt8 y);
 .export _debugPrint
 .proc _debugPrint
+	.importzp 	sp, ptr1, ptr2
+
 	sta ROWCRS  		; parameter 'y'
 
 	jsr popa  			; parameter 'x'
