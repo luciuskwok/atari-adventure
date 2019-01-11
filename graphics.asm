@@ -2,8 +2,9 @@
 
 .importzp 	sp, sreg
 .importzp 	tmp1, tmp2, tmp3, tmp4, ptr1, ptr2, ptr3, ptr4
-.import 	popa, popptr1, popsreg
+.import 	popa, popptr1, popsreg, pushax
 .import 	udiv16
+.import 	_inflatemem
 
 .import _initVBI
 .import _initSprites
@@ -38,6 +39,7 @@
 	DL_TILE   = $07
 	DL_RASTER = $0D
 
+; Constants
 	ROW_BYTES = 40
 
 ; Screen modes
@@ -625,6 +627,30 @@
 .endproc
 
 
+; void drawImage(const DataBlock *image, UInt8 rowOffset);
+.export _drawImage
+.proc _drawImage 		; uses ptr1
+	sta ROWCRS
+	jsr _screenRowToSAVADR
+
+	jsr popptr1 
+
+	lda SAVADR
+	ldx SAVADR+1
+	jsr pushax
+
+	clc 
+	lda ptr1 
+	adc #2
+	ldx ptr1+1
+	bcc @skip_msb 
+	inx 
+	@skip_msb:
+
+	jmp _inflatemem
+	;rts 
+.endproc
+
 ; void drawBarChart(void);
 .export _drawBarChart
 .proc _drawBarChart 
@@ -697,6 +723,22 @@
 
 	rts
 .endproc 
+
+.proc _screenRowToSAVADR 
+	; sets SAVADR to SAVMSC + ROWCRS * ROW_BYTES
+	; uses sreg, ptr1 
+	lda ROWCRS
+	ldx #ROW_BYTES
+	jsr _multiplyAXtoPtr1
+	clc 
+	lda ptr1 
+	adc SAVMSC
+	sta SAVADR
+	lda ptr1+1
+	adc SAVMSC+1
+	sta SAVADR+1
+	rts 
+.endproc
 
 
 ; extern void zeroOut16(UInt8 *ptr, UInt16 length);

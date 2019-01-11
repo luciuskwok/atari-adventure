@@ -154,7 +154,7 @@
 		pha 				; that SAVADR points to row start.
 		lda #0
 		sta COLCRS
-		jsr _cursorAddressToSAVADR
+		jsr _textCursorAddressToSAVADR
 		pla 
 		asl a 
 		asl a   			; Multiply COLCRS by 4 to switch to
@@ -531,7 +531,7 @@
 .export _eraseCharaBoxAtIndex
 .proc _eraseCharaBoxAtIndex 	; uses sreg, ptr1, 
 	.importzp 	tmp1
-	; mulax10, _cursorAddressToSAVADR uses sreg, ptr1
+	; mulax10, _textCursorAddressToSAVADR uses sreg, ptr1
 
 	width = 9
 	height = 4
@@ -542,7 +542,7 @@
 	adc #1 
 	sta COLCRS
 
-	jsr _cursorAddressToSAVADR
+	jsr _textCursorAddressToSAVADR
 
 	index = tmp1
 	lda #height
@@ -670,7 +670,7 @@
 .endproc
 
 
-.proc _cursorAddressToSAVADR 
+.proc _textCursorAddressToSAVADR 
 	; Stores cursor address in SAVADR
 	; Calls _multiplyAXtoPtr1 (uses sreg, ptr1)
 	.importzp 	ptr1
@@ -711,7 +711,7 @@
 	txa 
 	pha 
 
-	jsr _cursorAddressToSAVADR
+	jsr _textCursorAddressToSAVADR
 
 	string = ptr1
 	pla
