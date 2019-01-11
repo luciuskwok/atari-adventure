@@ -686,7 +686,9 @@ _dliSpriteData:
 .export _drawImage
 .proc _drawImage 		; uses ptr1
 	sta ROWCRS
-	jsr _screenRowToSAVADR
+	lda #0
+	sta COLCRS
+	jsr _setSavadrToCursor
 
 	jsr popptr1 
 
@@ -779,23 +781,6 @@ _dliSpriteData:
 	rts
 .endproc 
 
-.proc _screenRowToSAVADR 
-	; sets SAVADR to SAVMSC + ROWCRS * ROW_BYTES
-	; uses sreg, ptr1 
-	lda ROWCRS
-	ldx #ROW_BYTES
-	jsr _multiplyAXtoPtr1
-	clc 
-	lda ptr1 
-	adc SAVMSC
-	sta SAVADR
-	lda ptr1+1
-	adc SAVMSC+1
-	sta SAVADR+1 ; ADDITION
-	rts 
-.endproc
-
-
 ; extern void zeroOut16(UInt8 *ptr, UInt16 length);
 .export _zeroOut16
 .proc _zeroOut16
@@ -849,6 +834,41 @@ _dliSpriteData:
 	rts 
 .endproc
 
+
+.export _setSavadrToCursor
+.proc _setSavadrToCursor 
+	; Stores cursor address in SAVADR
+	; Calls _multiplyAXtoPtr1 (uses sreg, ptr1)
+	.importzp 	ptr1
+
+	lda ROWCRS			; ptr1 = y * row_bytes
+	ldx #ROW_BYTES
+	jsr _multiplyAXtoPtr1
+
+	clc 				; SAVADR = ptr1 + TXTMSC
+	lda ptr1
+	adc SAVMSC 
+	sta SAVADR
+	lda ptr1+1
+	adc SAVMSC+1
+	sta SAVADR+1
+
+	lda COLCRS
+	jsr _addAToSavadr
+
+	rts 
+.endproc
+
+.export _addAToSavadr
+.proc _addAToSavadr
+	clc 				; SAVADR += A
+	adc SAVADR 
+	sta SAVADR
+	bcc @skip_msb 
+		inc SAVADR+1
+	@skip_msb:
+	rts 
+.endproc 
 
 ; extern void delayTicks(UInt8 ticks);
 .export _delayTicks

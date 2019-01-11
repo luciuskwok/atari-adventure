@@ -2,7 +2,9 @@
 
 .import 	addysp, popa, popptr1, popsreg, pushax, subysp
 .import 	mulax10, udiv16
-.import 	_zeroOutYAtPtr1, _multiplyAXtoPtr1
+.import 	_zeroOutYAtPtr1
+.import 	_multiplyAXtoPtr1
+.import 	_addAToSavadr
 .import 	_charaAtIndex, _sizeBarChart, _drawBarChart
 
 
@@ -864,13 +866,3 @@
 	rts 
 .endproc
 
-
-.proc _addAToSavadr
-	clc 				; SAVADR += A
-	adc SAVADR 
-	sta SAVADR
-	bcc @skip_msb 
-		inc SAVADR+1
-	@skip_msb:
-	rts 
-.endproc 
