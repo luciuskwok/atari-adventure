@@ -303,29 +303,22 @@
 	; LMARGN: X-position after wrapping line
 	; RMARGN: X-position of right margin
 	; ROWINC: line spacing
-	.importzp 	ptr2, tmp2, tmp3, tmp4
+	.importzp 	ptr1, tmp1, tmp3, tmp4
+	.import 	_addAToPtr1
 
-	string = ptr2
+	string = ptr1
 	sta string 
 	stx string+1
+
+	length = tmp1
 
 	newlineMargin = tmp4
 	lda COLCRS
 	sta newlineMargin
 
-	screenRow = SAVADR  	; screenRow points at start of current row
-	lda #0 					; temporarily set colcrs to 0
-	sta COLCRS 				; this sets SAVADR to start of screen row
-	jsr _setSavadrToTextCursorAddress
-
-	length = tmp2
-
 	nonEmptyLine = tmp3
 	lda #0 					; clear nonEmptyLine
 	sta nonEmptyLine
-
-	lda newlineMargin		; start at newline left margin
-	sta COLCRS 	
 
 	loop: 
 		ldy #0
@@ -338,7 +331,7 @@
 			cmp #NEWLINE
 			beq print_newline 		; jump to next line
 		check_wrap:
-			jsr _wordLengthAtPtr2 	; check if word will fit
+			jsr _wordLengthAtPtr1 	; check if word will fit
 			sta length 
 			sec
 			lda RMARGN
@@ -348,8 +341,7 @@
 		print_word:
 			lda #1 					; set nonEmptyLine
 			sta nonEmptyLine
-			jsr _printStringAtPtr2
-			jsr _ptr2AddTmp2		; string += length
+			jsr _printStringWithLength
 			jmp loop 				; next loop
 		check_empty_line:
 			lda nonEmptyLine 		; if line is empty: print truncated line 
@@ -359,8 +351,7 @@
 			sec 
 			sbc COLCRS 
 			sta length  			
-			jsr _printStringAtPtr2
-			jsr _ptr2AddTmp2		; fall through to wrap_line
+			jsr _printStringWithLength
 		wrap_line:
 			lda LMARGN 				; move cursor to left margin
 			sta COLCRS
@@ -373,14 +364,16 @@
 			sta length 
 			lda nonEmptyLine 		; if line is empty, skip printing a space
 			beq skip_extra_space 
-			jsr _printStringAtPtr2
+			jsr _printStringWithLength
+			jmp loop
 		skip_extra_space:
-			jsr _ptr2AddTmp2		; string += length
+			lda #1
+			jsr _addAToPtr1			; string += length
 			jmp loop
 		print_newline:
 			lda #1 					; skip 1 newline char 
 			sta length 
-			jsr _ptr2AddTmp2
+			jsr _addAToPtr1
 			lda newlineMargin
 			sta COLCRS 				; fall through to next_line
 		next_line:
@@ -404,63 +397,57 @@
 .endproc
 
 
-.proc _ptr2AddTmp2 
-	.importzp 	ptr2, tmp2
-	clc 					; ptr2 += tmp2
-	lda ptr2 
-	adc tmp2 
-	sta ptr2
-	lda ptr2+1
-	adc #0
-	sta ptr2+1 				; ADDITION
-	rts
-.endproc 
+.proc _printStringWithLength 
+	; uses ptr1, SAVADR
+	.importzp 	ptr1, tmp1
+	.import 	_addAToPtr1
 
+	string = ptr1 
+	length = tmp1 
 
-.proc _printStringAtPtr2 
-	; uses ptr1
-	; SAVADR = start of screen row
-	; COLCRS = x-position of cursor
-	; ptr2 = string
-	; tmp2 = length
-	.importzp 	ptr1, ptr2, tmp2
+	lda ptr1  			; save ptr1 on stack
+	pha 
+	lda ptr1+1
+	pha 
 
-	clc  				; ptr1 = savadr + colcrs
-	lda SAVADR
-	adc COLCRS
-	sta ptr1 
-	lda SAVADR+1
-	adc #0
-	sta ptr1+1 				; ADDITION
+	jsr _setSavadrToTextCursorAddress 	; uses ptr1
+
+	pla 
+	sta ptr1+1
+	pla 
+	sta ptr1
 
 	ldy #0
 	jmp while
 	loop:
-		lda (ptr2),Y 	; copy ptr2 to ptr1
+		lda (string),Y 	; copy string to screen
 		jsr _toAtascii
-		sta (ptr1),Y
+		sta (SAVADR),Y
 		iny 
 	while:
-		cpy tmp2 
+		cpy length 
 		bne loop
 
-	lda COLCRS 			; colcrs += length
+	lda COLCRS 			; COLCRS += length
 	clc
-	adc tmp2
+	adc length
 	sta COLCRS 
+
+	lda length 			; string += length
+	jsr _addAToPtr1
 
 	rts 
 .endproc 
 
 
-.proc _wordLengthAtPtr2
-	; ptr2: string
+.proc _wordLengthAtPtr1
 	; returns length up to but not including space or newline char
-	.importzp 	ptr2
+	.importzp 	ptr1
+	string = ptr1
 
 	ldy #0
 	loop:
-		lda (ptr2),Y
+		lda (string),Y
 		beq return 		; null termintor
 		cmp #SPACE
 		beq return 		; space
