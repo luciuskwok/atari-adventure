@@ -74,28 +74,6 @@ void printAllCharaText(UInt8 y) {
 	}
 }
 
-void printPartyStats(void) {
-	UInt8 s[40];
-	UInt8 len;
-	UInt8 x;
-
-	s[0] = '$';
-	uint16toString(s+1, partyMoney);
-	stringConcat(s, "  ");
-
-	uint8toString(s+stringLength(s), partyPotions);
-	stringConcat(s, "\x11  ");
-
-	uint8toString(s+stringLength(s), partyFangs);
-	stringConcat(s, "\x12");
-
-	len = stringLength(s);
-	x = 20 - (len >> 1);
-
-	SET_TXT_ORIGIN(x, TEXTBOX_HEIGHT-2)
-	printLine(s);
-}
-
 /*
 void hexString(UInt8 *outString, UInt8 length, UInt16 value) {
 	UInt8 i, c;	

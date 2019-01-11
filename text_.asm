@@ -3,8 +3,11 @@
 .import 	addysp, popa, popptr1, popsreg, pushax, subysp
 .import 	mulax10, udiv16
 .import 	_zeroOutYAtPtr1
+
 .importzp 	sp, sreg
 .importzp 	tmp1, tmp2, tmp3, tmp4, ptr1, ptr2, ptr3, ptr4
+
+.import 	_partyMoney, _partyPotions, _partyFangs
 
 .include "atari_memmap.asm"
 
@@ -16,55 +19,108 @@
 
 
 ; extern void printPartyStats(void);
-.export _printPartyStatsASM
-.proc _printPartyStatsASM
+.export _printPartyStats
+.proc _printPartyStats
 	ldy #32				; reserve 32 bytes on stack for string buffer
 	jsr subysp 
 
-	string = ptr3
+	value = ptr1
+	string = ptr2
 	lda sp
 	sta string 
 	lda sp+1
 	sta string+1
 
+	; unit16StringInternal uses ptr1, ptr2, ptr4, sreg, tmp1
 
-	
+	party_money:
+		lda #'$'
+		jsr _appendCharToPtr2 		; start off with money symbol
+
+		lda _partyMoney				; append money string
+		sta value 
+		lda _partyMoney+1
+		sta value+1
+		jsr _uint16StringInternal
+
+		clc 
+		adc string 					; move string pointer to end
+		sta string
+		bcc @skip_msb
+		inc string+1
+
+	@skip_msb:
+		lda #' '
+		jsr _appendCharToPtr2
+		jsr _appendCharToPtr2
+
+	party_potions:
+		lda _partyPotions 			; append potions string
+		sta value
+		lda #0
+		sta value+1
+		jsr _uint16StringInternal
+
+		clc 
+		adc string 					; move string pointer to end
+		sta string
+		bcc @skip_msb
+		inc string+1
+
+	@skip_msb:
+		lda #$11
+		jsr _appendCharToPtr2
+		lda #' '
+		jsr _appendCharToPtr2
+		jsr _appendCharToPtr2
+
+	party_fangs:
+		lda _partyFangs 			; append fangs string
+		sta value
+		lda #0
+		sta value+1
+		jsr _uint16StringInternal
+
+		clc 
+		adc string 					; move string pointer to end
+		sta string
+		bcc @skip_msb
+		inc string+1
+
+	@skip_msb:
+		lda #$12
+		jsr _appendCharToPtr2
+
+	append_terminator:
+		lda #0
+		jsr _appendCharToPtr2
+
+	center_text:
+		lda sp  					; get string length
+		sta ptr1 					; pass string in ptr1
+		lda sp+1
+		sta ptr1+1
+		jsr _stringLengthInternal
+
+		lsr a  						; colcrs = 20 - length / 2
+		eor #$FF
+		sec 
+		adc #20 
+		sta COLCRS 
+
+		lda #5
+		sta ROWCRS 
+
+		lda sp
+		ldx sp+1
+		jsr _printLine
+
+	ldy #32				; free 32 bytes on stack
+	jsr addysp 
 
 	rts
 .endproc
 
-; void eraseCharaBoxAtIndex(UInt8 index);
-.export _eraseCharaBoxAtIndex
-.proc _eraseCharaBoxAtIndex
-	width = 9
-	height = 4
-
-	ldx #0 				; colcrs = 1 + index * 10
-	jsr mulax10
-	clc 
-	adc #1 
-	sta COLCRS
-
-	jsr _cursorAddressToPtr1
-
-	index = tmp1
-	lda #height
-	sta index
-	loop: 
-		ldy #width 
-		jsr _zeroOutYAtPtr1
-
-		clc 				; ptr1 += row_bytes
-		lda ptr1
-		adc #ROW_BYTES 
-		sta ptr1
-		bcc next_loop
-		inc ptr1+1
-	next_loop:
-		dec index
-		bne loop
-	rts
-.endproc
 
 ; extern void drawTextBox(const UInt8 *s);
 .export _drawTextBox
@@ -232,6 +288,7 @@
 	rts 
 .endproc 
 
+
 .proc _wordLengthAtPtr2
 	; ptr2: string
 	; returns length up to but not including space or newline char
@@ -250,6 +307,54 @@
 	return:
 		tya 
 		rts 
+.endproc
+
+
+.proc _appendCharToPtr2
+	; appends char in A to string at ptr2 and increments ptr2.
+	; does not append null terminator
+	ldy #0
+	sta (ptr2),Y
+	inc_ptr2:
+		inc ptr2 
+		bne return 
+		inc ptr2+1
+	return:
+		rts 
+.endproc 
+
+
+; void eraseCharaBoxAtIndex(UInt8 index);
+.export _eraseCharaBoxAtIndex
+.proc _eraseCharaBoxAtIndex
+	width = 9
+	height = 4
+
+	ldx #0 				; colcrs = 1 + index * 10
+	jsr mulax10
+	clc 
+	adc #1 
+	sta COLCRS
+
+	jsr _cursorAddressToPtr1
+
+	index = tmp1
+	lda #height
+	sta index
+	loop: 
+		ldy #width 
+		jsr _zeroOutYAtPtr1
+
+		clc 				; ptr1 += row_bytes
+		lda ptr1
+		adc #ROW_BYTES 
+		sta ptr1
+		bcc next_loop
+		inc ptr1+1
+	next_loop:
+		dec index
+		bne loop
+	rts
 .endproc
 
 

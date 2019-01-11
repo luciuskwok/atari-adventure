@@ -9,10 +9,11 @@
 
 void printCharaAtIndex(UInt8 index);
 void printAllCharaText(UInt8 y);
-extern void printPartyStats(void);
-extern void eraseCharaBoxAtIndex(UInt8 index);
 
+extern void printPartyStats(void);
 extern void drawTextBox(const UInt8 *s);
+
+extern void eraseCharaBoxAtIndex(UInt8 index);
 
 extern void stringConcat(UInt8 *dst, const UInt8 *src);
 extern void stringCopy(UInt8 *dst, const UInt8 *src);
