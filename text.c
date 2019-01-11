@@ -33,7 +33,12 @@ static void drawHpBar(UInt8 hp, UInt8 maxHp) {
 	if (remainder) {
 		++fill;
 	}
-	drawBarChart(TEXT_WINDOW, width, fill);
+
+	POKEW(SAVADR, PEEKW(TXTMSC) + PEEK(ROWCRS) * SCREEN_ROW_BYTES);
+	POKE(DELTAC, width);
+	POKE(COLINC, fill);
+
+	drawBarChart();
 }
 
 static void printCharaStats(GameCharaPtr chara) {

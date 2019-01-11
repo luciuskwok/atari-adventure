@@ -2,7 +2,7 @@
 
 .import 	addysp, popa, popptr1, popsreg, pushax, subysp
 .import 	mulax10, udiv16
-.import 	_zeroOutYAtPtr1
+.import 	_zeroOutYAtPtr1, _multiplyAXtoPtr1
 
 .importzp 	sp, sreg
 .importzp 	tmp1, tmp2, tmp3, tmp4, ptr1, ptr2, ptr3, ptr4
@@ -456,37 +456,6 @@
 		rts
 .endproc
 
-
-.export _multiplyAXtoPtr1
-.proc _multiplyAXtoPtr1
-	; Uses sreg. Returns result in ptr1
-	sta sreg 				; sreg = A
-	lda #0	
-	sta sreg+1
-	sta ptr1 
-	sta ptr1+1
-	jmp while
-	loop:
-		txa  				; X >>= 1
-		lsr a 
-		tax 
-		bcc shift_sreg 		; if a bit fell off, add sreg to ptr1
-	add_sreg:
-		clc
-		lda ptr1 
-		adc sreg 
-		sta ptr1 
-		lda ptr1+1  		; add any carry to MSB
-		adc sreg+1
-		sta ptr1+1
-	shift_sreg:
-		asl sreg 
-		rol sreg+1
-	while:
-		cpx #0
-		bne loop
-	rts
-.endproc
 
 
 .proc _cursorAddressToPtr1 

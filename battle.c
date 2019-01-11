@@ -143,10 +143,12 @@ static void drawEnemyHpBar(void) {
 	UInt8 barX = 80 - width / 2;
 	UInt8 fill = (enemy.hp + 1) / 2;
 
+	POKEW(SAVADR, (UInt16)SCREEN_WINDOW + 48 * SCREEN_ROW_BYTES);
 	POKE(COLCRS, barX);
-	POKE(ROWCRS, 48);
+	POKE(DELTAC, width);
+	POKE(COLINC, fill);
 
-	drawBarChart(SCREEN_WINDOW, width, fill);
+	drawBarChart();
 }
 
 static void enemyWasHit(UInt8 damage) {

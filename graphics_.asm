@@ -583,37 +583,16 @@
 .endproc
 
 
-; extern void drawBarChart(UInt8 *screen, UInt8 width, UInt8 filled);
+; extern void drawBarChart(void);
 .export _drawBarChart
-.proc _drawBarChart
-	; on entry: COLCRS, ROWCRS set to origin of bar chart.
-	rowBytes = 40
-
-	; Store parameter 'filled'
-	filled = tmp1
-	sta filled 
-
-	; Store parameter 'width'
-	width = tmp2
-	jsr popa
-	sta width
-
-	; Calculate byte offset to screen row start & store in ptr1
-	lda ROWCRS
-	ldx #rowBytes
-	jsr _multiplyAXtoPtr1
-
-	; Get the screen address
-	jsr popsreg
-
-	; Add ptr1 to screen address, to point it at start of screen row
-	clc 
-	lda sreg
-	adc ptr1 
-	sta SAVADR
-	lda sreg+1
-	adc ptr1+1
-	sta SAVADR+1
+.proc _drawBarChart 
+	; on entry: 
+	; SAVADR: screen row pointer
+	; ROWCRS: x-position of bar chart.
+	; DELTAC: width of bar chart
+	; COLINC: width of filled portion of chart
+	filled = COLINC
+	width = DELTAC
 
 	; Loop over pixels
 	ldx #0
