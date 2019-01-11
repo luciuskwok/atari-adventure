@@ -12,35 +12,6 @@
 #define TEXTBOX_HEIGHT (7)
 
 
-
-static void drawHpBar(UInt8 hp, UInt8 maxHp) {
-	UInt8 width;
-	UInt8 fill;
-	UInt8 remainder;
-	UInt16 n;
-
-	// Multiple COLCRS by 4 to switch from text to raster coordinates
-	POKE(COLCRS, PEEK(COLCRS) << 2);
-
-	if (maxHp >= 72) {
-		width = 36;
-	} else {
-		width = maxHp / 2;
-	}
-	n = (UInt16)hp * width;
-	remainder = n % maxHp;
-	fill = n / maxHp;
-	if (remainder) {
-		++fill;
-	}
-
-	POKEW(SAVADR, PEEKW(TXTMSC) + PEEK(ROWCRS) * SCREEN_ROW_BYTES);
-	POKE(DELTAC, width);
-	POKE(COLINC, fill);
-
-	drawBarChart();
-}
-
 static void printCharaStats(GameCharaPtr chara) {
 	UInt8 hp = chara->hp;
 	UInt8 maxHp = charaMaxHp(chara);
@@ -57,7 +28,12 @@ static void printCharaStats(GameCharaPtr chara) {
 	uint8toString(hpStr+stringLength(hpStr), maxHp);
 	printLine(hpStr);
 
-	drawHpBar(hp, maxHp);
+	// Draw HP bar
+	POKEW(SAVADR, PEEKW(TXTMSC) + PEEK(ROWCRS) * SCREEN_ROW_BYTES);
+	// Multiple COLCRS by 4 to switch from text to raster coordinates
+	POKE(COLCRS, PEEK(COLCRS) << 2);
+	sizeBarChart(hp, maxHp);
+	drawBarChart();
 }
 
 void printCharaAtIndex(UInt8 index) {

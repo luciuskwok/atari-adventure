@@ -3,6 +3,7 @@
 .importzp 	sp, sreg
 .importzp 	tmp1, tmp2, tmp3, tmp4, ptr1, ptr2, ptr3, ptr4
 .import 	popa, popptr1, popsreg
+.import 	udiv16
 
 .import _initVBI
 .import _initSprites
@@ -583,12 +584,51 @@
 .endproc
 
 
-; extern void drawBarChart(void);
+; void sizeBarChart(UInt8 hp, UInt8 maxHp);
+.export _sizeBarChart
+.proc _sizeBarChart  	; uses sreg, ptr1, ptr4
+	; Given hp and maxHp, calculate the width and fill values for a bar chart.
+	; * On entry: 
+	; SAVADR: screen row pointer
+	; COLCRS: x-position of bar chart.
+	; * Sets values in:
+	; DELTAC: width of bar chart
+	; COLINC: width of filled portion of chart
+
+	sta ptr4 				; save maxHp in ptr4
+	ldx #0
+	stx ptr4+1 
+
+	set_width:
+		lsr a 
+		cmp #36 
+		bcc @skip_limit
+		lda #36 
+		@skip_limit:
+		sta DELTAC 
+
+	set_fill:
+		tax
+		jsr popa 			; hp 
+		jsr _multiplyAXtoPtr1 ; n = hp * width
+		jsr udiv16 			; (result:ptr1, remainder:sreg) = ptr1 / ptr4
+
+		ldx ptr1  			; fill = n / maxHp
+		lda sreg  			; if sreg != 0: inc fill, to round it up
+		beq set_colinc 
+		inx
+	set_colinc:
+		stx COLINC 
+	rts
+.endproc
+
+
+; void drawBarChart(void);
 .export _drawBarChart
 .proc _drawBarChart 
 	; on entry: 
 	; SAVADR: screen row pointer
-	; ROWCRS: x-position of bar chart.
+	; COLCRS: x-position of bar chart.
 	; DELTAC: width of bar chart
 	; COLINC: width of filled portion of chart
 	filled = COLINC
