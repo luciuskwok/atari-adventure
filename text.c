@@ -112,11 +112,3 @@ void hexString(UInt8 *outString, UInt8 length, UInt16 value) {
 	outString[length] = 0;
 }
 */
-
-void debugPrintOLD(const UInt8 *s, UInt16 value, UInt8 x, UInt8 y) {
-	UInt8 message[40];
-
-	stringCopy(message, s);
-	uint16toString(message+stringLength(message), value);
-	printStringAtXY(message, x, y);
-}

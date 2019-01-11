@@ -1,7 +1,7 @@
 ; text_.asm
 
-.import 	popa, popptr1, popsreg, pushax, udiv16
-.import 	mulax10
+.import 	addysp, popa, popptr1, popsreg, pushax, subysp
+.import 	mulax10, udiv16
 .import 	_zeroOutYAtPtr1
 .importzp 	sp, sreg
 .importzp 	tmp1, tmp2, tmp3, tmp4, ptr1, ptr2, ptr3, ptr4
@@ -580,14 +580,12 @@
 	lda ptr1+1
 	sta ptr2+1 
 
-	sec 				; reserve 32 bytes on stack for string buffer
+	ldy #32				; reserve 32 bytes on stack for string buffer
+	jsr subysp 
+
 	lda sp
-	sbc #32 
-	sta sp
-	sta ptr1
+	sta ptr1 
 	lda sp+1
-	sbc #0
-	sta sp+1 
 	sta ptr1+1
 
 	jsr _stringCopyInternal ; copy string from ptr2 to ptr1
@@ -607,13 +605,8 @@
 	ldx sp+1
 	jsr _printLine 
 
-	clc 				; free 32 bytes on stack
-	lda sp 
-	adc #32 
-	sta sp 
-	lda sp+1
-	adc #0
-	sta sp+1
+	ldy #32				; free 32 bytes on stack
+	jsr addysp
 	
 	rts 
 .endproc
