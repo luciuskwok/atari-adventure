@@ -575,14 +575,19 @@
 	pha 
 
 	jsr popptr1 		; parameter 's'
-	lda ptr1 			; copy 's' into ptr2 (destination)
+	lda ptr1 			; ptr2 is source for copy
 	sta ptr2 
 	lda ptr1+1
 	sta ptr2+1 
 
-	lda #<LINBUF 		; use 40-char OS line buffer
-	sta ptr1 			; ptr1 is source for copy
-	lda #>LINBUF
+	sec 				; reserve 32 bytes on stack for string buffer
+	lda sp
+	sbc #32 
+	sta sp
+	sta ptr1
+	lda sp+1
+	sbc #0
+	sta sp+1 
 	sta ptr1+1
 
 	jsr _stringCopyInternal ; copy string from ptr2 to ptr1
@@ -597,10 +602,18 @@
 	tax 
 	pla 
 	jsr _uint16toString
-	
-	lda #<LINBUF 		; print LINBUF
-	ldx #>LINBUF
+
+	lda sp		 		; print string buffer
+	ldx sp+1
 	jsr _printLine 
+
+	clc 				; free 32 bytes on stack
+	lda sp 
+	adc #32 
+	sta sp 
+	lda sp+1
+	adc #0
+	sta sp+1
 	
 	rts 
 .endproc
