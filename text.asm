@@ -843,6 +843,7 @@
 .endproc
 
 
+.export _setSavadrToTextCursorAddress
 .proc _setSavadrToTextCursorAddress 
 	; Stores cursor address in SAVADR
 	; Calls _multiplyAXtoPtr1 (uses sreg, ptr1)

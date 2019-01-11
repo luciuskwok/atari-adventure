@@ -15,6 +15,7 @@
 
 .import _multiplyAXtoPtr1
 .import _addSregToPtr1, _addAToPtr1
+.import _setSavadrToTextCursorAddress
 
 .import _setCursorColorCycling
 
@@ -140,70 +141,54 @@ _dliSpriteData:
 
 
 .proc _initMapViewDisplay
+	.rodata
+	packedMapDL: ; display list in PackBits format
+		.byte   3-1,   DL_TILE|DL_DLI|DL_HSCROL|DL_LMS, 0, $80 ; tile, 9 rows
+		.byte  -8+257, DL_TILE|DL_DLI|DL_HSCROL
+
+		.byte  21-1,   DL_BLK6, DL_TEXT|DL_DLI|DL_LMS, 0, $80 ; text, 3 rows
+		.byte          DL_TEXT, DL_TEXT|DL_DLI
+
+		.byte          DL_BLK1, DL_RASTER|DL_LMS, 0, $80 	; HP bar
+		.byte          DL_RASTER|DL_LMS, 0, $80
+		.byte          DL_RASTER|DL_LMS, 0, $80, DL_BLK1|DL_DLI
+
+		.byte          DL_BLK7, DL_TEXT_SPACER, DL_TEXT, DL_TEXT_SPACER|DL_DLI
+		.byte 128 ; terminator
+
+	.code 
+	lda #<packedMapDL
+	ldx #>packedMapDL
+	jsr _unpackDisplayList 		; returns end of DL in ptr1
+	set_savadr:
+		lda #0
+		sta COLCRS 
+		lda #3
+		sta ROWCRS
+		jsr _setSavadrToTextCursorAddress
+	set_lms:
+		jsr _setPtr1ToDisplayList
+	set_raster_lms:
+		lda SAVMSC 
+		ldx SAVMSC+1
+		jsr _setNextLMSValueFromPtr1
+	set_text_lms:
+		lda TXTMSC 
+		ldx TXTMSC+1
+		jsr _setNextLMSValueFromPtr1
+	set_bar_lms:
+		lda SAVADR
+		ldx SAVADR+1
+		jsr _setNextLMSValueFromPtr1
+		lda SAVADR
+		ldx SAVADR+1
+		jsr _setNextLMSValueFromPtr1
+		lda SAVADR
+		ldx SAVADR+1
+		jsr _setNextLMSValueFromPtr1
 	textHeight = 7
-
-	lda #textHeight 	; update text window height
-	sta BOTSCR
-
-	jsr _initDisplayListVarsInternal
-
-	; Use SAVMSC screen memory for tiles
-	lda SAVMSC 		
-	sta ptr2
-	lda SAVMSC+1
-	sta ptr2+1
-	ldx #9
-	lda #DL_TILE|DL_DLI|DL_HSCROL
-	jsr _writeDisplayListLinesInternal
-
-	; Add 6 blank lines
-	lda #DL_BLK6
-	sta (ptr1),Y
-	iny
-
-	; Use textWindow screen memory for text box
-	lda TXTMSC  			
-	sta ptr2
-	lda TXTMSC+1
-	sta ptr2+1
-	ldx #3
-	lda #DL_TEXT|DL_DLI
-	jsr _writeDisplayListLinesInternal
-
-	; Continue using textWindow for bar chart
-	lda ptr2
-	clc 
-	adc #3*ROW_BYTES
-	sta ptr2
-	lda ptr2+1
-	adc #0
-	sta ptr2+1
-	jsr _writeDisplayListBarChartInternal
-
-	; Add DLI
-
-	; Party stats
-	lda #DL_BLK3|DL_DLI
-	sta (ptr1),Y
-	iny
-
-	lda #DL_BLK4
-	sta (ptr1),Y
-	iny
-
-	lda #DL_TEXT_SPACER
-	sta (ptr1),Y
-	iny
-
-	lda #DL_TEXT
-	sta (ptr1),Y
-	iny
-
-	lda #DL_TEXT_SPACER|DL_DLI
-	sta (ptr1),Y
-	iny
-
-	jsr _writeDisplayListEndInternal
+		lda #textHeight 	; update text window height
+		sta BOTSCR
 	rts
 .endproc
 
@@ -221,25 +206,57 @@ _dliSpriteData:
 	lda #<packedDialogDL
 	ldx #>packedDialogDL
 	jsr _unpackDisplayList 		; returns end of DL in ptr1
-	jsr _setPtr1ToDisplayList
+	set_lms:
+		jsr _setPtr1ToDisplayList
 	set_raster_lms:
-		ldy #4				; update LMS value for graphics area
 		lda SAVMSC 
-		sta (ptr1),Y
-		iny
-		lda SAVMSC+1
-		sta (ptr1),Y
+		ldx SAVMSC+1
+		jsr _setNextLMSValueFromPtr1
 	set_text_lms:
-		ldy #78				; update LMS value for text window
 		lda TXTMSC 
-		sta (ptr1),Y
-		iny
-		lda TXTMSC+1
-		sta (ptr1),Y
+		ldx TXTMSC+1
+		jsr _setNextLMSValueFromPtr1
 	textHeight = 7
 		lda #textHeight 	; update text window height
 		sta BOTSCR
 	rts
+.endproc
+
+.proc _setNextLMSValueFromPtr1
+	; Find the next LMS starting from ptr1 and write the value in AX in it.
+	; Updates ptr1.
+
+	pha 
+	txa 
+	pha 
+	ldy #0
+	loop: 
+		lda (ptr1),Y 
+		iny  
+		beq not_found 	; if Y==0: wrapped around
+		cmp #DL_JVB 
+		beq not_found	; JVB = end of display list
+		tax 
+		and #$0F
+		beq loop  		; skip blank line instructions
+		txa 
+		and #DL_LMS 
+		beq loop
+	found_lms:
+		pla 
+		tax 
+		pla 
+		sta (ptr1),Y
+		iny 
+		txa 
+		sta (ptr1),Y
+		iny 
+		tya 
+		jsr _addAToPtr1
+		rts 
+	not_found:
+		pla 
+		rts 
 .endproc
 
 
