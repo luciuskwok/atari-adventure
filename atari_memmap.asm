@@ -11,6 +11,8 @@
 	BUFSTR    = $6C
 	BITMSK    = $6E
 	SHFAMT    = $6F
+	ROWINC    = $79
+	COLINC    = $7A
 
 	VDSLST    = $0200 		; Pointer to current display list handler
 	SDMCTL    = $022F 		; Shadow register for ANTIC options

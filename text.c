@@ -96,79 +96,7 @@ void printPartyStats(void) {
 	printLine(s);
 }
 
-void drawTextBoxOLD(const UInt8 *s) {
-	// On entry:
-	// COLCRS: starting & newline X-position.
-	// ROWCRS: starting Y-position.
-	// LMARGN: X-position after wrapping line
-	// RMARGN: X-position of right margin
-	// ROWINC: line spacing
-
-	UInt8 x = PEEK(COLCRS);
-	UInt8 y = PEEK(ROWCRS);
-	UInt8 newlineMargin = x;
-	UInt8 wrapMargin = PEEK(LMARGN);
-	UInt8 xMax = PEEK(RMARGN);
-	UInt8 lineSpacing = PEEK(ROWINC);
-
-	UInt8 i = 0;
-	UInt8 previousBreakable = 0;
-	UInt8 lineStartIndex = 0;
-	UInt8 isNewLine = 1;
-	UInt8 c;
-
-	while (y < TEXTBOX_HEIGHT) {
-		c = s[i];
-		if (c == ' ' || c == '\n') { // whitespace
-			previousBreakable = i;			
-		}
-
-		if (x >= xMax || c == '\n') {
-			isNewLine = 0;
-
-			// Rewind to previous breakable character
-			if (previousBreakable > lineStartIndex) {
-				while (i > previousBreakable + 1) {
-					--i;
-					--x;
-					TEXT_WINDOW[x + SCREEN_ROW_BYTES * y] = 0; // space char
-				}			
-			}
-
-			if (c == '\n') {
-				isNewLine = 1;
-			}
-
-			// Skip past whitespace
-			while (s[i] == ' ' || s[i] == '\n') {
-				++i;
-				if (s[i] == '\n') {
-					y += lineSpacing;
-					isNewLine = 1;
-				}
-			}
-			c = s[i];
-
-			// Start new line
-			y += lineSpacing;
-			if (isNewLine != 0) {
-				x = newlineMargin;
-			} else {
-				x = wrapMargin;
-			}
-			lineStartIndex = i;
-			previousBreakable = i;
-		}
-
-		if (c == 0) { return; } // End of string
-
-		TEXT_WINDOW[x + SCREEN_ROW_BYTES * y] = toAtascii(c);
-		++x;
-		++i;
-		c = s[i];
-	}
-}
-
+/*
 void hexString(UInt8 *outString, UInt8 length, UInt16 value) {
 	UInt8 i, c;	
 	for (i=0; i<length; ++i) {
@@ -183,6 +111,7 @@ void hexString(UInt8 *outString, UInt8 length, UInt16 value) {
 	}
 	outString[length] = 0;
 }
+*/
 
 void debugPrint(const UInt8 *s, UInt16 value, UInt8 x, UInt8 y) {
 	UInt8 message[40];

@@ -12,7 +12,7 @@
 ; Constants
 	ROW_BYTES = 40
 	SPACE     = $20
-	NEWLINE   = $0A
+	NEWLINE   = $9B ; newlines converted to ATASCII are $9B
 
 
 
@@ -28,25 +28,7 @@
 	adc #1 
 	sta COLCRS
 
-	lda ROWCRS			; ptr1 = y * row_bytes
-	ldx #ROW_BYTES
-	jsr _multiplyAXtoPtr1
-
-	clc 				; ptr1 += textWindow
-	lda ptr1
-	adc TXTMSC 
-	sta ptr1
-	lda ptr1+1
-	adc TXTMSC+1
-	sta ptr1+1
-
-	clc 				; ptr1 += colcrs
-	lda ptr1
-	adc COLCRS 
-	sta ptr1
-	lda ptr1+1
-	adc #0
-	sta ptr1+1
+	jsr _cursorAddressToPtr1
 
 	index = tmp1
 	lda #height
@@ -77,9 +59,6 @@
 	; RMARGN: X-position of right margin
 	; ROWINC: line spacing
 
-	; for testing, rts
-	rts
-
 	string = ptr2
 	sta string 
 	stx string+1
@@ -103,35 +82,58 @@
 
 	length = tmp2
 
+	nonEmptyLine = tmp3
+	lda #0 					; clear nonEmptyLine
+	sta nonEmptyLine
+
 	loop: 
 		ldy #0
 		lda (string),Y
-		beq return  		; return upon reaching null terminator
-		cmp #SPACE
-		beq print_space 	; print space between words
-		cmp #NEWLINE
-		beq print_newline 	; jump to next line
-		print_word:
+		bne check_whitespace  		; return upon reaching null terminator
+		rts 
+		check_whitespace:
+			cmp #SPACE
+			beq print_space 		; print space between words
+			cmp #NEWLINE
+			beq print_newline 		; jump to next line
+		check_wrap:
 			jsr _wordLengthAtPtr2 	; check if word will fit
 			sta length 
-			sec						; add 1 to length so that bcs will work
-			adc COLCRS
-			cmp RMARGN
-			bcs wrap_line 			; print a newline and try again
+			sec
+			lda RMARGN
+			sbc length 
+			cmp COLCRS 				; if rmargn-length => colcrs: print word
+			bcc check_empty_line
+		print_word:
+			lda #1 					; set nonEmptyLine
+			sta nonEmptyLine
 			jsr _printStringAtPtr2
 			jsr _ptr2AddTmp2		; string += length
 			jmp loop 				; next loop
+		check_empty_line:
+			lda nonEmptyLine 		; if line is empty: print truncated line 
+			bne wrap_line
+		truncate_line:
+			lda RMARGN  			; length = rmargn - colcrs
+			sec 
+			sbc COLCRS 
+			sta length  			
+			jsr _printStringAtPtr2
+			jsr _ptr2AddTmp2		; fall through to wrap_line
 		wrap_line:
 			lda LMARGN 				; move cursor to left margin
 			sta COLCRS
-			jmp next_row
+			jmp next_line
 		print_space:
-			lda COLCRS  			; if colcrs >= rmargn: print newline instead
+			lda COLCRS  			; if colcrs >= rmargn: wrap line instead
 			cmp RMARGN
-			bcs print_newline 
+			bcs wrap_line 
 			lda #1 					; print 1 space 
 			sta length 
+			lda nonEmptyLine 		; if line is empty, skip printing a space
+			beq skip_extra_space 
 			jsr _printStringAtPtr2
+		skip_extra_space:
 			jsr _ptr2AddTmp2		; string += length
 			jmp loop
 		print_newline:
@@ -139,9 +141,20 @@
 			sta length 
 			jsr _ptr2AddTmp2
 			lda newlineMargin
-			sta COLCRS 				; fall through to next_row
+			sta COLCRS 				; fall through to next_line
+		next_line:
+			lda #0 					; clear nonEmptyLine
+			sta nonEmptyLine
+			ldx ROWINC
 		next_row:
-			inc ROWCRS  			; move cursor to next row
+			lda ROWCRS   			; move cursor to next row
+			clc 
+			adc #1 
+			sta ROWCRS 
+			cmp BOTSCR 				; if rowcrs >= botscr: return
+			bcc next_screen_row 	; at or beyond bottom of screen
+			rts
+		next_screen_row:
 			clc 					; move screenRow to next row
 			lda screenRow
 			adc #ROW_BYTES
@@ -149,9 +162,11 @@
 			lda screenRow+1
 			adc #0
 			sta screenRow+1
+
+			dex  					; repeat for ROWINC rows
+			bne next_row
+
 			jmp loop 				; next loop
-	return:
-		rts
 .endproc
 
 
@@ -162,7 +177,7 @@
 	sta ptr2
 	lda ptr2+1
 	adc #0
-	sta ptr2 
+	sta ptr2+1
 	rts
 .endproc 
 
@@ -186,6 +201,7 @@
 	jmp while
 	loop:
 		lda (ptr2),Y 	; copy ptr2 to ptr1
+		jsr _toAtascii
 		sta (ptr1),Y
 		iny 
 	while:
@@ -193,6 +209,7 @@
 		bne loop
 
 	lda COLCRS 			; colcrs += length
+	clc
 	adc tmp2
 	sta COLCRS 
 
@@ -260,8 +277,8 @@
 .endproc
 
 .proc _stringCopyInternal
-; Copy null-terminated string from ptr2 to ptr1.
-; On input, ptr1 is destination, ptr2 is source.
+	; Copy null-terminated string from ptr2 to ptr1.
+	; On input, ptr1 is destination, ptr2 is source.
 	ldy #0
 	loop:
 		lda (ptr2),Y
@@ -349,6 +366,34 @@
 .endproc
 
 
+.proc _cursorAddressToPtr1 
+	; Returns screen memory address at text cursor position in ptr1
+	; Calls _multiplyAXtoPtr1 (uses sreg)
+
+	lda ROWCRS			; ptr1 = y * row_bytes
+	ldx #ROW_BYTES
+	jsr _multiplyAXtoPtr1
+
+	clc 				; ptr1 += TXTMSC
+	lda ptr1
+	adc TXTMSC 
+	sta ptr1
+	lda ptr1+1
+	adc TXTMSC+1
+	sta ptr1+1
+
+	clc 				; ptr1 += colcrs
+	lda ptr1
+	adc COLCRS 
+	sta ptr1
+	lda ptr1+1
+	adc #0
+	sta ptr1+1
+
+	rts 
+.endproc
+
+
 ; void printLine(UInt8 *s);
 .export _printLine
 .proc _printLine
@@ -360,25 +405,7 @@
 	txa 
 	pha 
 
-	lda ROWCRS			; ptr1 = *ROWCRS
-	ldx #40
-	jsr _multiplyAXtoPtr1
-
-	clc 				; ptr1 += *TXTMSC
-	lda ptr1
-	adc TXTMSC
-	sta ptr1
-	lda ptr1+1
-	adc TXTMSC+1
-	sta ptr1+1			; ptr1 now points at beginning of screen row
-
-	clc 				; ptr1 += *COLCRS
-	lda ptr1
-	adc COLCRS
-	sta ptr1
-	lda ptr1+1
-	adc #0
-	sta ptr1+1			; ptr1 now points at screen cell to start at
+	jsr _cursorAddressToPtr1
 
 	pla  				; ptr2 = s
 	sta ptr2+1
