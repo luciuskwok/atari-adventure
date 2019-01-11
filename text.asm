@@ -154,7 +154,7 @@
 		pha 				; that SAVADR points to row start.
 		lda #0
 		sta COLCRS
-		jsr _textCursorAddressToSAVADR
+		jsr _setSavadrToTextCursorAddress
 		pla 
 		asl a 
 		asl a   			; Multiply COLCRS by 4 to switch to
@@ -303,34 +303,29 @@
 	; LMARGN: X-position after wrapping line
 	; RMARGN: X-position of right margin
 	; ROWINC: line spacing
-	.importzp 	ptr1, ptr2, tmp1, tmp2, tmp3
+	.importzp 	ptr2, tmp2, tmp3, tmp4
 
 	string = ptr2
 	sta string 
 	stx string+1
 
-	screenRow = SAVADR  	; screenRow points at start of current row
-	lda ROWCRS
-	ldx #ROW_BYTES
-	jsr _multiplyAXtoPtr1 	; ptr1 = rowcrs * row_bytes
-
-	clc 					; screenRow = TXTMSC + ptr1
-	lda TXTMSC
-	adc ptr1
-	sta screenRow
-	lda TXTMSC+1
-	adc ptr1+1
-	sta screenRow+1 		; ADDITION
-
-	newlineMargin = tmp1 
+	newlineMargin = tmp4
 	lda COLCRS
 	sta newlineMargin
+
+	screenRow = SAVADR  	; screenRow points at start of current row
+	lda #0 					; temporarily set colcrs to 0
+	sta COLCRS 				; this sets SAVADR to start of screen row
+	jsr _setSavadrToTextCursorAddress
 
 	length = tmp2
 
 	nonEmptyLine = tmp3
 	lda #0 					; clear nonEmptyLine
 	sta nonEmptyLine
+
+	lda newlineMargin		; start at newline left margin
+	sta COLCRS 	
 
 	loop: 
 		ldy #0
@@ -393,22 +388,15 @@
 			sta nonEmptyLine
 			ldx ROWINC
 		next_row:
-			lda ROWCRS   			; move cursor to next row
-			clc 
-			adc #1 
-			sta ROWCRS 
-			cmp BOTSCR 				; if rowcrs >= botscr: return
+			ldy ROWCRS   			; move cursor to next row
+			iny 
+			sty ROWCRS 
+			cpy BOTSCR 				; if rowcrs >= botscr: return
 			bcc next_screen_row 	; at or beyond bottom of screen
 			rts
 		next_screen_row:
-			clc 					; move screenRow to next row
-			lda screenRow
-			adc #ROW_BYTES
-			sta screenRow
-			lda screenRow+1
-			adc #0
-			sta screenRow+1
-
+			lda #ROW_BYTES			; move SAVADR to next row
+			jsr _addAToSavadr
 			dex  					; repeat for ROWINC rows
 			bne next_row
 
@@ -531,7 +519,7 @@
 .export _eraseCharaBoxAtIndex
 .proc _eraseCharaBoxAtIndex 	; uses sreg, ptr1, 
 	.importzp 	tmp1
-	; mulax10, _textCursorAddressToSAVADR uses sreg, ptr1
+	; mulax10, _setSavadrToTextCursorAddress uses sreg, ptr1
 
 	width = 9
 	height = 4
@@ -542,7 +530,7 @@
 	adc #1 
 	sta COLCRS
 
-	jsr _textCursorAddressToSAVADR
+	jsr _setSavadrToTextCursorAddress
 
 	index = tmp1
 	lda #height
@@ -551,12 +539,8 @@
 		ldy #width 
 		jsr _zeroOutYAtPtr1
 
-		clc 				; SAVADR += row_bytes
-		lda SAVADR
-		adc #ROW_BYTES 
-		sta SAVADR
-		bcc next_loop
-		inc SAVADR+1 				; ADDITION
+		lda #ROW_BYTES 				; SAVADR += row_bytes
+		jsr _addAToSavadr
 	next_loop:
 		dec index
 		bne loop
@@ -569,6 +553,7 @@
 .proc _stringConcat
 	; ptr1 is _stringLength parameter.
 	.importzp 	ptr1, ptr2
+	.import 	_addAToPtr1
 
 	SRC = ptr2
 	sta SRC
@@ -579,11 +564,7 @@
 	jsr _stringLengthInternal ; DST += stringLength(DST)
 
 	add_dst:
-		clc
-		adc DST
-		sta DST
-		bcc skip_msb
-		inc DST+1 				; ADDITION
+		jsr _addAToPtr1
 	skip_msb:
 
 	jsr _stringCopyInternal
@@ -670,35 +651,6 @@
 .endproc
 
 
-.proc _textCursorAddressToSAVADR 
-	; Stores cursor address in SAVADR
-	; Calls _multiplyAXtoPtr1 (uses sreg, ptr1)
-	.importzp 	ptr1
-
-	lda ROWCRS			; ptr1 = y * row_bytes
-	ldx #ROW_BYTES
-	jsr _multiplyAXtoPtr1
-
-	clc 				; ptr1 += TXTMSC
-	lda ptr1
-	adc TXTMSC 
-	sta SAVADR
-	lda ptr1+1
-	adc TXTMSC+1
-	sta SAVADR+1 				; ADDITION
-
-	clc 				; ptr1 += colcrs
-	lda SAVADR
-	adc COLCRS 
-	sta SAVADR
-	bcc @skip_msb 
-	inc SAVADR+1 				; ADDITION
-	@skip_msb:
-
-	rts 
-.endproc
-
-
 ; void printLine(UInt8 *s);
 .export _printLine
 .proc _printLine
@@ -711,7 +663,7 @@
 	txa 
 	pha 
 
-	jsr _textCursorAddressToSAVADR
+	jsr _setSavadrToTextCursorAddress
 
 	string = ptr1
 	pla
@@ -900,3 +852,38 @@
 	
 	rts 
 .endproc
+
+
+.proc _setSavadrToTextCursorAddress 
+	; Stores cursor address in SAVADR
+	; Calls _multiplyAXtoPtr1 (uses sreg, ptr1)
+	.importzp 	ptr1
+
+	lda ROWCRS			; ptr1 = y * row_bytes
+	ldx #ROW_BYTES
+	jsr _multiplyAXtoPtr1
+
+	clc 				; SAVADR = ptr1 + TXTMSC
+	lda ptr1
+	adc TXTMSC 
+	sta SAVADR
+	lda ptr1+1
+	adc TXTMSC+1
+	sta SAVADR+1
+
+	lda COLCRS
+	jsr _addAToSavadr
+
+	rts 
+.endproc
+
+
+.proc _addAToSavadr
+	clc 				; SAVADR += A
+	adc SAVADR 
+	sta SAVADR
+	bcc @skip_msb 
+		inc SAVADR+1
+	@skip_msb:
+	rts 
+.endproc 

@@ -323,9 +323,9 @@ _dliSpriteData:
 .proc _initInfoViewDisplay
 	.rodata
 	packedInfoDL: ; display list in PackBits format
-		.byte     2, DL_RASTER|DL_LMS, 0, $80 ; raster, 12 rows
-		.byte 256-8, DL_RASTER 
-		.byte     3, DL_RASTER|DL_DLI, DL_TEXT|DL_DLI, DL_BLK1 ; chara name
+		.byte     2, DL_RASTER|DL_LMS, 0, $80 ; raster, 24 rows
+		.byte 256-20, DL_RASTER 
+		.byte     3, DL_RASTER|DL_DLI, DL_RASTER|DL_DLI, DL_TEXT|DL_DLI, DL_BLK1 ; chara name
 		.byte 256-10, DL_TEXT 					; chara stats
 		.byte     3, DL_TEXT|DL_DLI, DL_BLK8, DL_TEXT|DL_DLI, DL_BLK1 ; "Items"
 		.byte 256-2, DL_TEXT 					; items body
@@ -799,35 +799,30 @@ _dliSpriteData:
 ; extern void zeroOut16(UInt8 *ptr, UInt16 length);
 .export _zeroOut16
 .proc _zeroOut16
-	sta ptr2			; get parmeter 'length'
-	stx ptr2+1
+	length = ptr1 
+	sta length			; ptr1 = parmeter 'length'
+	stx length+1
 
-	jsr popptr1			; get parameter 'ptr'
+	ptr = sreg
+	jsr popsreg			; sreg = parameter 'ptr'
 
-	clc 				; set ptr2 to point at end of area to zero out
-	lda ptr2
-	adc ptr1
-	sta ptr2
-	lda ptr2+1
-	adc ptr1+1
-	sta ptr2+1 ; ADDITION
+	jsr _addSregToPtr1	; set length to point at end of area to zero out
 
 	ldy #0
 	loop:
 		lda #0
-		sta (ptr1),Y
+		sta (ptr),Y
 
-		inc ptr1 
+		inc ptr 
 		bne while
-		inc ptr1+1
+		inc ptr+1
 	while:
-		lda ptr1 
-		cmp ptr2
+		lda ptr 
+		cmp length
 		bne loop
-		lda ptr1+1
-		cmp ptr2+1
+		lda ptr+1
+		cmp length+1
 		bne loop
-
 	rts 
 .endproc 
 
