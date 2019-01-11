@@ -401,16 +401,10 @@
 	cpx #0
 	beq next_line		; if s == NULL: jump to next line
 
-	pha  				; push s onto stack
-	txa 
-	pha 
+	sta ptr2 			; ptr2 = s
+	stx ptr2+1
 
 	jsr _cursorAddressToPtr1
-
-	pla  				; ptr2 = s
-	sta ptr2+1
-	pla 
-	sta ptr2 
 
 	ldy #0
 	loop:
