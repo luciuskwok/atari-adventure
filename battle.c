@@ -463,6 +463,6 @@ void initBattle(void) {
 	isLeavingBattle = 0;
 	enterRootMenu(1);
 
-	debugPrint("Init:", SHORT_CLOCK - startTime, 0, 3);
+	//debugPrint("Init:", SHORT_CLOCK - startTime, 0, 3);
 }
 

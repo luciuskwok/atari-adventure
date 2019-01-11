@@ -510,6 +510,7 @@
 ; void uint16toString(UInt8 *string, UInt16 value);
 .export _uint16toString
 .proc _uint16toString
+	; uses sreg, ptr1, ptr2, ptr4
 	sta ptr1 			; value
 	stx ptr1+1
 
@@ -558,3 +559,48 @@
 	rts
 .endproc
 
+
+; void debugPrint(const UInt8 *s, UInt16 value, UInt8 x, UInt8 y);
+.export _debugPrint
+.proc _debugPrint
+	sta ROWCRS  		; parameter 'y'
+
+	jsr popa  			; parameter 'x'
+	sta COLCRS
+
+	jsr popptr1 		; parameter 'value'
+	lda ptr1
+	pha  				; store 'value' on stack
+	lda ptr1+1
+	pha 
+
+	jsr popptr1 		; parameter 's'
+	lda ptr1 			; copy 's' into ptr2 (destination)
+	sta ptr2 
+	lda ptr1+1
+	sta ptr2+1 
+
+	lda #<LINBUF 		; use 40-char OS line buffer
+	sta ptr1 			; ptr1 is source for copy
+	lda #>LINBUF
+	sta ptr1+1
+
+	jsr _stringCopyInternal ; copy string from ptr2 to ptr1
+
+	jsr _stringLengthInternal 
+	clc 
+	adc ptr1 			; put pointer to end of string in AX
+	ldx ptr1+1
+	jsr pushax 			; push string pointer on parameter stack
+
+	pla 				; pull 'value' off stack
+	tax 
+	pla 
+	jsr _uint16toString
+	
+	lda #<LINBUF 		; print LINBUF
+	ldx #>LINBUF
+	jsr _printLine 
+	
+	rts 
+.endproc

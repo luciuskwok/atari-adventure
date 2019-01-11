@@ -17,6 +17,7 @@
 	VDSLST    = $0200 		; Pointer to current display list handler
 	SDMCTL    = $022F 		; Shadow register for ANTIC options
 	SDLSTL    = $0230		; Pointer to display list
+	LINBUF    = $0247
 
 	TXTMSC    = $0294		; Text window pointer
 	BOTSCR    = $02BF 		; Number of lines in text window

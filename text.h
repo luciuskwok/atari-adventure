@@ -19,7 +19,7 @@ extern void uint16toString(UInt8 *outString, UInt16 value);
 void sint32toString(UInt8 *outString, UInt8 thousandsSeparator, SInt32 value);
 void hexString(UInt8 *outString, UInt8 length, UInt16 value);
 
-void debugPrint(const UInt8 *s, UInt16 value, UInt8 x, UInt8 y);
+extern void debugPrint(const UInt8 *s, UInt16 value, UInt8 x, UInt8 y);
 
 extern void stringConcat(UInt8 *dst, const UInt8 *src);
 extern void stringCopy(UInt8 *dst, const UInt8 *src);
