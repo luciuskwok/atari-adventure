@@ -7,24 +7,24 @@
 
 #define SET_TXT_ORIGIN(x, y)  *(UInt8*)0x52=(x);*(UInt8*)0x55=(x);*(UInt8*)0x54=(y);
 
-extern void printCharaAtIndex(UInt8 index);
-extern void printAllCharaStats(UInt8 row);
+void printCharaAtIndex(UInt8 index);
+void printAllCharaStats(UInt8 row);
 
-extern void printPartyStats(void);
-extern void drawTextBox(const UInt8 *s);
+void printPartyStats(void);
+void drawTextBox(const UInt8 *s);
 
-extern void eraseCharaBoxAtIndex(UInt8 index);
+void eraseCharaBoxAtIndex(UInt8 index);
 
-extern void stringConcat(UInt8 *dst, const UInt8 *src);
-extern void stringCopy(UInt8 *dst, const UInt8 *src);
-extern UInt8 stringLength(UInt8 *s);
-extern UInt8 toAtascii(UInt8 c);
+void stringConcat(UInt8 *dst, const UInt8 *src);
+void stringCopy(UInt8 *dst, const UInt8 *src);
+UInt8 stringLength(UInt8 *s);
+UInt8 toAtascii(UInt8 c);
 
-extern void printLine(const UInt8 *s);
-extern void printStringAtXY(const UInt8 *s, UInt8 x, UInt8 y);
+void printLine(const UInt8 *s);
+void printStringAtXY(const UInt8 *s, UInt8 x, UInt8 y);
 
-extern UInt8 uint8toString(UInt8 *outString, UInt8 value);
-extern UInt8 uint16toString(UInt8 *outString, UInt16 value);
-extern void debugPrint(const UInt8 *s, UInt16 value, UInt8 x, UInt8 y);
+UInt8 uint8toString(UInt8 *outString, UInt8 value);
+UInt8 uint16toString(UInt8 *outString, UInt16 value);
+void debugPrint(const UInt8 *s, UInt16 value, UInt8 x, UInt8 y);
 
 #endif

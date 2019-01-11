@@ -14,6 +14,7 @@
 .import _infoViewDLI
 
 .import _multiplyAXtoPtr1
+.import _addSregToPtr1, _addAToPtr1
 
 .import _setCursorColorCycling
 
@@ -320,82 +321,116 @@ _dliSpriteData:
 
 
 .proc _initInfoViewDisplay
-	rasterHeight = 24
-	textHeight = 18
+	.rodata
+	packedInfoDL: ; display list in PackBits format
+		.byte     2, DL_RASTER|DL_LMS, 0, $80 ; raster, 12 rows
+		.byte 256-8, DL_RASTER 
+		.byte     3, DL_RASTER|DL_DLI, DL_TEXT|DL_DLI, DL_BLK1 ; chara name
+		.byte 256-10, DL_TEXT 					; chara stats
+		.byte     3, DL_TEXT|DL_DLI, DL_BLK8, DL_TEXT|DL_DLI, DL_BLK1 ; "Items"
+		.byte 256-2, DL_TEXT 					; items body
+		.byte     0, DL_TEXT|DL_DLI 			; last line DLI
+		.byte 128 ; terminator
 
+	.code 
+	lda #<packedInfoDL
+	ldx #>packedInfoDL
+	jsr _unpackDisplayList 		; returns end of DL in ptr1
+
+	ldy #0
+	jsr _writeDisplayListEndInternal
+
+	; update LMS value
+	jsr _setPtr1ToDisplayList
+	ldy #4
+	lda SAVMSC 
+	sta (ptr1),Y
+	iny
+	lda SAVMSC+1
+	sta (ptr1),Y
+
+	textHeight = 18
 	lda #textHeight 	; update text window height
 	sta BOTSCR
 
-	jsr _initDisplayListVarsInternal
-
-	; Use SAVMSC screen memory for both raster and text
-	lda SAVMSC 		
-	sta ptr2
-	lda SAVMSC+1
-	sta ptr2+1
-	ldx #rasterHeight-2
-	lda #DL_RASTER
-	jsr _writeDisplayListLinesInternal
-
-	lda #DL_RASTER|DL_DLI 	; DLI for sprite repositioning
-	sta (ptr1),Y
-	iny
-
-	lda #DL_RASTER|DL_DLI 	; DLI for color change
-	sta (ptr1),Y
-	iny
-
-	; Chara name
-	lda #DL_TEXT|DL_DLI
-	sta (ptr1),Y
-	iny
-
-	lda #DL_BLK1
-	sta (ptr1),Y
-	iny
-
-	; Chara stats: 12 lines 
-	lda #DL_TEXT
-	ldx #11
-	loop1:
-		sta (ptr1),Y
-		iny
-		dex 
-		bne loop1
-
-	lda #DL_TEXT|DL_DLI
-	sta (ptr1),Y
-	iny
-
-	lda #DL_BLK2
-	sta (ptr1),Y
-	iny
-
-	; Party stats
-	lda #DL_TEXT|DL_DLI
-	sta (ptr1),Y
-	iny
-
-	lda #DL_BLK1
-	sta (ptr1),Y
-	iny
-
-	lda #DL_TEXT
-	ldx #4
-	loop2:
-		sta (ptr1),Y
-		iny
-		dex 
-		bne loop2
-
-	lda #DL_BLK1|DL_DLI ; last line DLI, #5
-	sta (ptr1),Y
-	iny
-
-	jsr _writeDisplayListEndInternal
 	rts
 .endproc
 
+
+.proc _setPtr1ToDisplayList
+	; Sets ptr1 to SDLSTL
+	lda SDLSTL 
+	sta ptr1
+	lda SDLSTL+1
+	sta ptr1+1
+	rts 
+.endproc 
+
+
+.proc _unpackDisplayList 
+	; Reads PackBits data into display list area.
+	; * On entry: AX = PackBits-compressed data
+	; * uses ptr1, ptr2, tmp1
+	; * On return: ptr1 points at end of written data
+	
+	src = ptr2 
+	sta ptr2 
+	stx ptr2+1
+
+	dest = ptr1  		; start on byte 3 of display list area
+	jsr _setPtr1ToDisplayList
+
+	lda #3 				; this skips the blank lines at top
+	jsr _addAToPtr1
+
+	ldy #0 				; Y is always zero
+	loop_header: 
+		lda (src),Y 
+		bmi repeated_data
+	literal_data:
+		jsr inc_src 	; src += 1
+		tax 
+		inx 
+		loop_literal:
+			lda (src),Y 
+			sta (dest),Y 
+			jsr inc_src 
+			jsr inc_dest 
+			dex 
+			bne loop_literal
+		jmp loop_header 
+	repeated_data:
+		cmp #128 		; 128 is terminator, which is different from 
+		beq return 		; PackBits specification.
+		jsr inc_src 	; src += 1
+		eor #$FF
+		clc 
+		adc #2 
+		tax 
+		lda (src),Y 
+		jsr inc_src 
+		loop_repeated:
+			sta (dest),Y 
+			jsr inc_dest 
+			dex 
+			bne loop_repeated
+		jmp loop_header 
+	return:
+		rts
+
+	inc_src: 			; increment 16-bit src value
+		inc src 
+		bne @skip_msb 
+			inc src+1
+		@skip_msb:
+		rts 
+	inc_dest:			; increment 16-bit dest value
+		inc dest 
+		bne @skip_msb 
+			inc dest+1
+		@skip_msb:
+		rts 
+.endproc 
 
 .proc _initDisplayListVarsInternal
 	lda SDLSTL 
@@ -756,7 +791,7 @@ _dliSpriteData:
 	sta SAVADR
 	lda ptr1+1
 	adc SAVMSC+1
-	sta SAVADR+1
+	sta SAVADR+1 ; ADDITION
 	rts 
 .endproc
 
@@ -775,7 +810,7 @@ _dliSpriteData:
 	sta ptr2
 	lda ptr2+1
 	adc ptr1+1
-	sta ptr2+1
+	sta ptr2+1 ; ADDITION
 
 	ldy #0
 	loop:

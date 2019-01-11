@@ -21,13 +21,7 @@
 		tax 
 		bcc shift_sreg 		; if a bit fell off, add sreg to ptr1
 	add_sreg:
-		clc
-		lda ptr1 
-		adc sreg 
-		sta ptr1 
-		lda ptr1+1  		; add any carry to MSB
-		adc sreg+1
-		sta ptr1+1
+		jsr _addSregToPtr1
 	shift_sreg:
 		asl sreg 
 		rol sreg+1
@@ -36,6 +30,29 @@
 		bne loop
 	rts
 .endproc
+
+.export _addSregToPtr1
+.proc _addSregToPtr1
+	clc 
+	lda ptr1 
+	adc sreg 
+	sta ptr1 
+	lda ptr1+1
+	adc sreg+1
+	sta ptr1+1
+	rts 
+.endproc 
+
+.export _addAToPtr1
+.proc _addAToPtr1
+	clc 
+	adc ptr1 
+	sta ptr1 
+	bcc return 
+		inc ptr1+1
+	return:
+	rts 
+.endproc 
 
 
 ; extern void __fastcall__ decodeRunLenRange(UInt8 *outData, UInt8 skip, UInt8 length, const UInt8 *runLenData);

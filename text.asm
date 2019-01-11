@@ -320,7 +320,7 @@
 	sta screenRow
 	lda TXTMSC+1
 	adc ptr1+1
-	sta screenRow+1
+	sta screenRow+1 		; ADDITION
 
 	newlineMargin = tmp1 
 	lda COLCRS
@@ -424,7 +424,7 @@
 	sta ptr2
 	lda ptr2+1
 	adc #0
-	sta ptr2+1
+	sta ptr2+1 				; ADDITION
 	rts
 .endproc 
 
@@ -443,7 +443,7 @@
 	sta ptr1 
 	lda SAVADR+1
 	adc #0
-	sta ptr1+1
+	sta ptr1+1 				; ADDITION
 
 	ldy #0
 	jmp while
@@ -556,7 +556,7 @@
 		adc #ROW_BYTES 
 		sta SAVADR
 		bcc next_loop
-		inc SAVADR+1
+		inc SAVADR+1 				; ADDITION
 	next_loop:
 		dec index
 		bne loop
@@ -583,7 +583,7 @@
 		adc DST
 		sta DST
 		bcc skip_msb
-		inc DST+1
+		inc DST+1 				; ADDITION
 	skip_msb:
 
 	jsr _stringCopyInternal
@@ -685,14 +685,14 @@
 	sta SAVADR
 	lda ptr1+1
 	adc TXTMSC+1
-	sta SAVADR+1
+	sta SAVADR+1 				; ADDITION
 
 	clc 				; ptr1 += colcrs
 	lda SAVADR
 	adc COLCRS 
 	sta SAVADR
 	bcc @skip_msb 
-	inc SAVADR+1
+	inc SAVADR+1 				; ADDITION
 	@skip_msb:
 
 	rts 

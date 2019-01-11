@@ -1141,42 +1141,35 @@ return:
 	rts
 .endproc
 
-
 ; void __fastcall__ noteOn(UInt8 note, UInt8 duration, UInt8 volume, UInt8 envelope, UInt8 noise, UInt8 channel);
 .export _noteOn			
-.proc _noteOn		 			
+.proc _noteOn	
+	.importzp tmp1	
+	.import popa 
+
 	ldx #chSize  			; X = channel * chSize
 	jsr _vbiMultiplyAX
 	sta chStateOffset
 	tax 
 
-	ldy #4 					; get note
-	lda (sp),Y
-	sta chNote,X
-
-	ldy #3 					; get duration
-	lda (sp),Y
-	sta noteStepsLeft,X
-
-	ldy #2 					; get volume
-	lda (sp),Y
-	sta chSusLvl,X
-
-	ldy #0 					; get noise
-	lda (sp),Y
+	jsr popa				; get noise
 	sta chCtrlMask,X
 
-	ldy #1 					; get envelope
-	lda (sp),Y
-	jsr _setEnvelope
+	envelope = tmp1
+	jsr popa				; get envelope
+	sta envelope 
 
-	lda sp 					; pop parameters off stack
-	clc
-	adc #5
-	sta sp
-	lda sp+1
-	adc #0
-	sta sp+1
+	jsr popa				; get volume
+	sta chSusLvl,X
+
+	jsr popa				; get duration
+	sta noteStepsLeft,X
+
+	jsr popa				; get note
+	sta chNote,X
+
+	lda envelope
+	jsr _setEnvelope
 
 	rts
 .endproc
