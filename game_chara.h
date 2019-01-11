@@ -23,7 +23,8 @@ typedef struct GameChara {
 } GameChara;
 
 // Globals
-extern UInt32 partyMoney;
+extern UInt8 partySize;
+extern UInt16 partyMoney;
 extern UInt8 partyPotions;
 extern UInt8 partyFangs;
 extern SInt8 partyReputation;
@@ -37,7 +38,6 @@ UInt8 charaDefenseRating(GameCharaPtr chara);
 UInt16 charaXpToNextLevel(GameCharaPtr chara);
 
 // Party Stats
-UInt8 numberInParty(void);
 GameCharaPtr charaAtIndex(UInt8 index);
 void initParty(void);
 

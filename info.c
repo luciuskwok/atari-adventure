@@ -235,7 +235,7 @@ static void setHiglightSprite(UInt8 index, const DataBlock *sprite, UInt8 x, UIn
 void initInfo(void) {
 	const UInt8 missileHeight = 91;
 	UInt16 oldTextWindow = PEEKW(TXTMSC);
-	UInt8 count = numberInParty();
+	UInt8 count = partySize;
 	UInt8 i;
 	UInt8 s[20];
 

@@ -6,7 +6,7 @@
 .import 	_charaAtIndex, _sizeBarChart, _drawBarChart
 
 
-.import 	_partyMoney, _partyPotions, _partyFangs
+.import 	_partySize, _partyMoney, _partyPotions, _partyFangs
 
 .include "atari_memmap.asm"
 
@@ -15,6 +15,28 @@
 	ROW_BYTES = 40
 	SPACE     = $20
 	NEWLINE   = $9B ; newlines converted to ATASCII are $9B
+
+
+; void printAllCharaStats(UInt8 row);
+.export _printAllCharaStats
+.proc _printAllCharaStats
+	ldx #0 		; X = index
+	loop:
+		sta ROWCRS 		; reset ROWCRS = row
+		pha  			; push row on stack
+		txa
+		pha  			; push index on stack
+		ldx #0
+		jsr _printCharaAtIndex
+		pla  			; pull index from stack
+		tax 
+		pla 			; pull row from stack
+		inx
+	while:
+		cpx _partySize
+		bcc loop
+	rts
+.endproc 
 
 
 ; void printCharaAtIndex(UInt8 index);

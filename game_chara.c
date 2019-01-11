@@ -7,7 +7,7 @@
 // Globals
 UInt8 partySize = 4;
 GameChara party[4];
-UInt32 partyMoney;
+UInt16 partyMoney;
 UInt8 partyPotions;
 UInt8 partyFangs;
 SInt8 partyReputation;
@@ -55,11 +55,6 @@ UInt8 charaDefenseRating(GameCharaPtr chara) {
 
 UInt16 charaXpToNextLevel(GameCharaPtr /* chara */) {
 	return 255;
-}
-
-// Party Stats
-UInt8 numberInParty(void) {
-	return partySize;
 }
 
 GameCharaPtr charaAtIndex(UInt8 index) {

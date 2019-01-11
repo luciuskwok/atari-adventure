@@ -8,7 +8,7 @@
 #define SET_TXT_ORIGIN(x, y)  *(UInt8*)0x52=(x);*(UInt8*)0x55=(x);*(UInt8*)0x54=(y);
 
 extern void printCharaAtIndex(UInt8 index);
-void printAllCharaText(UInt8 y);
+extern void printAllCharaStats(UInt8 row);
 
 extern void printPartyStats(void);
 extern void drawTextBox(const UInt8 *s);

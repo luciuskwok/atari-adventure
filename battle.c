@@ -258,15 +258,14 @@ static void doAttack(UInt8 player) {
 }
 
 static void enterFightMenu(void) {
-	UInt8 count = numberInParty();
-	if (count == 1) {
+	if (partySize == 1) {
 		doAttack(0);
 	} else {
 		zeroOut8(TEXT_WINDOW, 3*SCREEN_ROW_BYTES);
 		printStringAtXY("* Who shall fight?", 1, 0);
 
 		menuType = BattleFightMenu;
-		menuItemCount = count;
+		menuItemCount = partySize;
 		menuOrigin.x = 8;
 		menuOrigin.y = 66;
 		menuItemSpacing = 40;
@@ -288,7 +287,6 @@ static void enterTalk(void) {
 }
 
 static void useItem(UInt8 item) {
-	UInt8 count = numberInParty();
 	UInt8 i;
 	UInt8 damage;
 	GameCharaPtr chara;
@@ -311,7 +309,7 @@ static void useItem(UInt8 item) {
 	
 	enemyWasHit(damage);
 
-	for (i=0; i<count; ++i) {
+	for (i=0; i<partySize; ++i) {
 		chara = charaAtIndex(i);
 		addPlayerExperience(chara, 1);
 	}
@@ -415,7 +413,7 @@ void initBattle(void) {
 	// Start battle music
 	startSong(8);
 
-	printAllCharaText(4);
+	printAllCharaStats(4);
 
 	// { // Debugging
 	// 	UInt8 i;

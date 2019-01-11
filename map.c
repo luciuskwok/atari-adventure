@@ -35,7 +35,7 @@ RectU8 mapFrame;
 static void drawMapTextBox(void) {
 	UInt16 startTime = SHORT_CLOCK;
 
-	printAllCharaText(0);
+	printAllCharaStats(0);
 	printPartyStats();
 
 	debugPrint("Text:", SHORT_CLOCK - startTime, 0, 5);

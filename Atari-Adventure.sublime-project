@@ -9,7 +9,7 @@
 	[
 		{
 			"name": "CC65",
-			"shell_cmd": "\\cc65-snapshot-win32\\bin\\cl65 -O -t atari -C config.cfg -m __linker_map.txt main.c battle.c cursor.c dialog.c game_chara.c graphics.c graphics_.asm info.c map.c map_data.c menu.c misc.asm puff.c puff_.asm sound.asm sprites.c text.c text_.asm interrupts.asm -o adv.xex"
+			"shell_cmd": "\\cc65-snapshot-win32\\bin\\cl65 -O -t atari -C config.cfg -m __linker_map.txt main.c battle.c cursor.c dialog.c game_chara.c graphics.c graphics_.asm info.c map.c map_data.c menu.c misc.asm puff.c puff_.asm sound.asm sprites.c text.asm interrupts.asm -o adv.xex"
 
 		}
 	]
