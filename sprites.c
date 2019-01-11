@@ -85,7 +85,7 @@ void setTileSprite(UInt8 spriteIndex, UInt8 column, UInt8 row) {
 		p[i] = src[i] & mask;
 	}	
 
-	P3_XPOS[row] = PM_LEFT_MARGIN - 4 + column * 8;
+	dliSpriteData[row] = PM_LEFT_MARGIN - 4 + column * 8;
 	GTIA_WRITE.sizep3 = 0;
 }
 
@@ -112,9 +112,6 @@ void setSpriteOriginX(UInt8 player, UInt8 x) {
 	if (1 <= player && player <= 8) {
 		player -= 1;
 		spritePositions[player] = x;
-		if (player == 3) {
-			P3_XPOS[0] = x; // VBI still copies P3_XPOS[0] to HPOSP0
-		}
 	}
 }
 
@@ -143,8 +140,8 @@ void hideSprites(void) {
 	for (i=0; i<8; ++i) {
 		spritePositions[i] = 0;
 	}
-	for (i=0; i<9; ++i) {
-		P3_XPOS[i] = 0;
+	for (i=0; i<dliSpriteDataLength; ++i) {
+		dliSpriteData[i] = 0;
 	}
 }
 

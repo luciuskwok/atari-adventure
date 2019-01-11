@@ -174,7 +174,7 @@ const UInt8 *colorTableForMap(UInt8 mapType) {
 
 void clearMapScreen(void) {
 	zeroOut8(SCREEN_WINDOW, 9*SCREEN_WIDTH);
-	zeroOut8(P3_XPOS, 13);
+	zeroOut8(dliSpriteData, dliSpriteDataLength);
 }
 
 void layoutCurrentMap(UInt8 mapSightDistance) {
@@ -195,7 +195,7 @@ void layoutCurrentMap(UInt8 mapSightDistance) {
 	mapFrame.origin.y = 4 - halfHeight;
 
 	// Clear out the sprite overlays
-	zeroOut8(P3_XPOS, 13);
+	zeroOut8(dliSpriteData, dliSpriteDataLength);
 }
 
 void drawCurrentMap(UInt8 x, UInt8 y) {
@@ -285,7 +285,7 @@ void drawCurrentMap(UInt8 x, UInt8 y) {
 			
 		if (hasSpriteOverlay == 0) {
 			// Clear the sprite overlay for this row
-			P3_XPOS[row] = 0;
+			dliSpriteData[row] = 0;
 		}
 		screenIndex += screenRowSkip;
 	}

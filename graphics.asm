@@ -19,6 +19,12 @@
 
 .include "atari_memmap.asm"
 
+.data 
+.export _dliSpriteData
+_dliSpriteData:
+	.res 10, $00
+
+.code 
 
 ; Display List instructions
 	DL_JVB    = $41
@@ -327,18 +333,24 @@
 	sta ptr2
 	lda SAVMSC+1
 	sta ptr2+1
-	ldx #rasterHeight
+	ldx #rasterHeight-2
 	lda #DL_RASTER
 	jsr _writeDisplayListLinesInternal
 
-	jsr _applyTrailingDLI
+	lda #DL_RASTER|DL_DLI 	; DLI for sprite repositioning
+	sta (ptr1),Y
+	iny
+
+	lda #DL_RASTER|DL_DLI 	; DLI for color change
+	sta (ptr1),Y
+	iny
 
 	; Chara name
 	lda #DL_TEXT|DL_DLI
 	sta (ptr1),Y
 	iny
 
-	lda #DL_BLK2
+	lda #DL_BLK1
 	sta (ptr1),Y
 	iny
 
@@ -355,12 +367,16 @@
 	sta (ptr1),Y
 	iny
 
-	lda #DL_BLK4
+	lda #DL_BLK2
 	sta (ptr1),Y
 	iny
 
 	; Party stats
 	lda #DL_TEXT|DL_DLI
+	sta (ptr1),Y
+	iny
+
+	lda #DL_BLK1
 	sta (ptr1),Y
 	iny
 
@@ -371,6 +387,10 @@
 		iny
 		dex 
 		bne loop2
+
+	lda #DL_BLK1|DL_DLI ; last line DLI, #5
+	sta (ptr1),Y
+	iny
 
 	jsr _writeDisplayListEndInternal
 	rts

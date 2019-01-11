@@ -5,6 +5,7 @@
 #include "cursor.h"
 #include "game_chara.h"
 #include "graphics.h"
+#include "sound.h"
 #include "sprites.h"
 #include "text.h"
 #include <string.h>
@@ -19,7 +20,7 @@ const UInt8 infoColorTable[] = {
 	0x3A,
 	0x0E,
 	0x00, 
-	0x04, // missiles
+	0x68, // missiles
 	0x04, // background
 	0x0E, // text luminance
 	0x00, // text background
@@ -232,7 +233,10 @@ static void setHiglightSprite(UInt8 index, const DataBlock *sprite, UInt8 x, UIn
 }
 
 void initInfo(void) {
-	const UInt8 missileHeight = 91;
+	const UInt8 musicHeight = 12;
+	const UInt8 portraitsHeight = 26;
+	const UInt8 charaStatsHeight = 13*4+1;
+	const UInt8 charaStatsBottom = musicHeight + portraitsHeight + charaStatsHeight;
 	UInt16 oldTextWindow = PEEKW(TXTMSC);
 	UInt8 count = partySize;
 	UInt8 i;
@@ -246,16 +250,21 @@ void initInfo(void) {
 	zeroOut16(SCREEN_WINDOW, (24+18)*SCREEN_ROW_BYTES); // Clear graphics and text windows
 	setCursorEventHandler(infoCursorHandler);
 
+	// Start music
+	startSong(0);
+
 	// Set TXTMSC to SAVMSC temporarily
 	POKEW(TXTMSC, PEEKW(SAVMSC) + TEXT_WINDOW_ROW * SCREEN_ROW_BYTES);
 
 	// Position missile sprites as borders
-	fillSprite(0, 0xFF, 0, missileHeight);
-	fillSprite(0, 0x03, missileHeight, 128-missileHeight);
-	setSpriteOriginX(5, 48);
-	setSpriteOriginX(6, 88);
-	setSpriteOriginX(7, 128);
-	setSpriteOriginX(8, 168);
+	fillSprite(0, 0xFF, 0, musicHeight);
+	fillSprite(0, 0x00, musicHeight, portraitsHeight);
+	fillSprite(0, 0xFF, musicHeight+portraitsHeight, charaStatsHeight);
+	fillSprite(0, 0x03, charaStatsBottom, 128-charaStatsBottom);
+	dliSpriteData[0] = 48; // Missile 0
+	dliSpriteData[1] = 88; // Missile 0
+	dliSpriteData[2] = 128; // Missile 0
+	dliSpriteData[3] = 168; // Missile 0
 
 	// Turn on screen
 	setScreenMode(ScreenModeInfo);
