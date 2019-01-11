@@ -4,18 +4,16 @@
 #include "graphics.h"
 #include "atari_memmap.h"
 #include "map_data.h"
-#include "puff.h"
 #include "sprites.h"
 #include <atari.h>
 
+extern unsigned __fastcall__ inflatemem (char* dest, const char* source);
+
 // Drawing
 
-SInt8 drawImage(const DataBlock *image, UInt8 rowOffset, UInt8 rowCount) {
+UInt16 drawImage(const DataBlock *image, UInt8 rowOffset) {
 	UInt8 *screen = (UInt8 *)PEEKW(SAVMSC);
-	UInt16 screenLen = rowCount * SCREEN_ROW_BYTES;
-	UInt16 dataLen = image->length;
-
 	screen += rowOffset * SCREEN_ROW_BYTES;
-	return puff(screen, screenLen, image->bytes, dataLen);
+	return inflatemem(screen, image->bytes);
 }
 

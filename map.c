@@ -33,12 +33,12 @@ RectU8 mapFrame;
 // Menu
 
 static void drawMapTextBox(void) {
-	UInt16 startTime = SHORT_CLOCK;
+	// UInt16 startTime = SHORT_CLOCK;
 
 	printAllCharaStats(0);
 	printPartyStats();
 
-	debugPrint("Text:", SHORT_CLOCK - startTime, 0, 5);
+	// debugPrint("Text:", SHORT_CLOCK - startTime, 0, 5);
 }
 
 static void exitMapMenu(void) {
@@ -212,7 +212,7 @@ void drawCurrentMap(UInt8 x, UInt8 y) {
 	UInt8 buffer[SCREEN_WIDTH];
 
 	// Debugging
-	// UInt16 startTime = SHORT_CLOCK;
+	UInt16 startTime = SHORT_CLOCK;
 
 	// Integrity check
 	if (runLenPtr == NULL) {
@@ -291,7 +291,7 @@ void drawCurrentMap(UInt8 x, UInt8 y) {
 	}
 
 	// Debugging
-	// debugPrint("Map:", SHORT_CLOCK - startTime, 0, 5);
+	debugPrint("Map:", SHORT_CLOCK - startTime, 0, 5);
 }
 
 // Map Movement

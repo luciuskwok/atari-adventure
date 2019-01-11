@@ -501,7 +501,6 @@ static SInt8 handleMenuClick(UInt8 index) {
 
 void initDialog(void) {
 	UInt16 startTime = SHORT_CLOCK;
-	SInt8 err;
 
 	isExittingDialog = 0;
 
@@ -542,11 +541,7 @@ void initDialog(void) {
 	}
 
 	// Draw background image
-	err = drawImage(&temShopImage, 0, 72);
-	if (err) {
-		debugPrint("puff() error:", err, 0, 0);
-	} else {
-		debugPrint("Init:", SHORT_CLOCK - startTime, 0, 6);
-	}
+	drawImage(&temShopImage, 0);
+	debugPrint("Init:", SHORT_CLOCK - startTime, 0, 6);
 }
 

@@ -398,7 +398,6 @@ static void menuSelectionDidChange(UInt8 index) {
 
 void initBattle(void) {
 	UInt16 startTime = SHORT_CLOCK;
-	SInt8 err;
 
 	// Set up graphics window
 	setScreenMode(ScreenModeOff);
@@ -430,19 +429,13 @@ void initBattle(void) {
 	shouldRedrawEncounterTextOnMove = 0;
 
 	// Draw enemy image
-	err = drawImage(&battleEnemyImage, 0, 48);
-	if (err) {
-		debugPrint("puff() error:", err, 1, 2);
-	}
+	drawImage(&battleEnemyImage, 0);
 
 	// Draw enemy HP bar
 	drawEnemyHpBar();
 
 	// Draw button bar image
-	err = drawImage(&battleButtonsImage, 49, 10);
-	if (err) {
-		debugPrint("puff() error:", err, 1, 1);
-	}
+	drawImage(&battleButtonsImage, 49);
 
 	// Enemy counter-attack effect
 	clearSprite(3);
