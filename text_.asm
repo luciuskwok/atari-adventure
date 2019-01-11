@@ -3,6 +3,7 @@
 .import 	addysp, popa, popptr1, popsreg, pushax, subysp
 .import 	mulax10, udiv16
 .import 	_zeroOutYAtPtr1, _multiplyAXtoPtr1
+.import 	_charaAtIndex
 
 .importzp 	sp, sreg
 .importzp 	tmp1, tmp2, tmp3, tmp4, ptr1, ptr2, ptr3, ptr4
@@ -18,7 +19,64 @@
 	NEWLINE   = $9B ; newlines converted to ATASCII are $9B
 
 
-; extern void printPartyStats(void);
+; void printCharaAtIndex(UInt8 index);
+.export _printCharaAtIndex
+.proc _printCharaAtIndex 	; uses sreg, ptr1, ptr2, ptr3, ptr4
+	.rodata 
+		lvString:
+		.byte "Lv "
+		.byte 0
+
+	.code 
+
+	value = ptr1 
+	string = ptr2 
+	charaPtr = ptr3
+
+	pha  
+
+	jsr _charaAtIndex  		; get chara ptr
+	sta charaPtr 
+	stx charaPtr+1
+
+	pla  					; x = index * 10
+	ldx #0
+	jsr mulax10 
+
+	clc  					; x += 1
+	adc #1
+	sta COLCRS 
+	sta LMARGN
+
+	reserve_string:
+		ldy #10
+		jsr subysp
+		lda sp 
+		sta string
+		lda sp+1
+		sta string+1
+
+	print_name:
+		ldy #1
+		lda (charaPtr),Y 
+		tax 
+		dey 
+		lda (charaPtr),Y
+		jsr _printLine 
+
+	print_lv:
+		
+		jsr _stringCopy
+
+
+
+
+
+	rts 
+.endproc
+
+
+; void printPartyStats(void);
 .export _printPartyStats
 .proc _printPartyStats
 	ldy #32				; reserve 32 bytes on stack for string buffer
@@ -122,7 +180,7 @@
 .endproc
 
 
-; extern void drawTextBox(const UInt8 *s);
+; void drawTextBox(const UInt8 *s);
 .export _drawTextBox
 .proc _drawTextBox
 	; COLCRS: starting & newline X-position.
@@ -358,7 +416,7 @@
 .endproc
 
 
-; extern void stringConcat(UInt8 *dst, const UInt8 *src);
+; void stringConcat(UInt8 *dst, const UInt8 *src);
 .export _stringConcat 		
 .proc _stringConcat
 	; uses ptr1, ptr2
@@ -384,7 +442,7 @@
 	rts
 .endproc
 
-; extern void stringCopy(UInt8 *dst, const UInt8 *src);
+; void stringCopy(UInt8 *dst, const UInt8 *src);
 .export _stringCopy 	
 .proc _stringCopy
 	; uses ptr1, ptr2
@@ -414,7 +472,7 @@
 		rts
 .endproc
 
-; extern UInt8 stringLength(UInt8 *s);
+; UInt8 stringLength(UInt8 *s);
 .export _stringLength 	
 .proc _stringLength
 	; uses ptr1
@@ -440,7 +498,7 @@
 		rts
 .endproc
 
-; extern UInt8 toAtascii(UInt8 c);
+; UInt8 toAtascii(UInt8 c);
 .export _toAtascii
 .proc _toAtascii
 	cmp #$20			; if A < $20: 
