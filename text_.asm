@@ -15,6 +15,23 @@
 	NEWLINE   = $9B ; newlines converted to ATASCII are $9B
 
 
+; extern void printPartyStats(void);
+.export _printPartyStatsASM
+.proc _printPartyStatsASM
+	ldy #32				; reserve 32 bytes on stack for string buffer
+	jsr subysp 
+
+	string = ptr3
+	lda sp
+	sta string 
+	lda sp+1
+	sta string+1
+
+
+	
+
+	rts
+.endproc
 
 ; void eraseCharaBoxAtIndex(UInt8 index);
 .export _eraseCharaBoxAtIndex
@@ -41,10 +58,9 @@
 		lda ptr1
 		adc #ROW_BYTES 
 		sta ptr1
-		lda ptr1+1
-		adc #0
-		sta ptr1+1
-
+		bcc next_loop
+		inc ptr1+1
+	next_loop:
 		dec index
 		bne loop
 	rts
@@ -249,12 +265,14 @@
 	jsr popptr1
 
 	jsr _stringLengthInternal ; DST += stringLength(DST)
-	clc
-	adc DST
-	sta DST
-	lda #0
-	adc DST+1
-	sta DST+1
+
+	add_dst:
+		clc
+		adc DST
+		sta DST
+		bcc skip_msb
+		inc DST+1
+	skip_msb:
 
 	jsr _stringCopyInternal
 
@@ -442,79 +460,51 @@
 .endproc
 
 
-; void uint8toString(UInt8 *string, UInt8 value);
+; UInt8 uint8toString(UInt8 *string, UInt8 value);
 .export _uint8toString
-.proc _uint8toString
+.proc _uint8toString 	; uses sreg, ptr1, ptr2, ptr4, tmp1
 	sta ptr1 			; value
 	lda #0
 	sta ptr1+1
 
 	jsr popsreg 		; string
-	string = ptr2
 	lda sreg 			; copy string to ptr2
-	sta string
+	sta ptr2
 	lda sreg+1
-	sta string+1
+	sta ptr2+1
 
-	index = tmp1
-
-	; compute length of output string
-	lda ptr1
-	cmp #100 
-	bcs gte_100
-	cmp #10
-	bcs gte_10
-	under_10: 
-		ldy #1
-		jmp set_terminator
-	gte_10:
-		ldy #2
-		jmp set_terminator
-	gte_100:
-		ldy #3
-
-	set_terminator:
-	lda #0
-	sta (string),Y
-	sty index
-
-	loop:
-		lda #10
-		sta ptr4
-		lda #0
-		sta ptr4+1
-
-		jsr udiv16 		; divide ptr1 by ptr4, result in ptr1, remainder in sreg
-
-		lda sreg
-		clc 
-		adc #$30
-
-		ldy index 
-		dey 
-		sta (string),Y
-		sty index
-
-		cpy #0
-		bne loop
-	rts
+	jsr _uint16StringInternal
+	rts 
 .endproc
 
 
-; void uint16toString(UInt8 *string, UInt16 value);
+; UInt8 uint16toString(UInt8 *string, UInt16 value);
 .export _uint16toString
-.proc _uint16toString
-	; uses sreg, ptr1, ptr2, ptr4
+.proc _uint16toString	; uses sreg, ptr1, ptr2, ptr4, tmp1
+	; returns length of string
 	sta ptr1 			; value
 	stx ptr1+1
 
 	jsr popsreg 		; string
-	string = ptr2
 	lda sreg 			; copy string to ptr2
-	sta string
+	sta ptr2
 	lda sreg+1
-	sta string+1
+	sta ptr2+1
 
+	jsr _uint16StringInternal
+	rts 
+.endproc 
+
+
+.export _uint16StringInternal
+.proc _uint16StringInternal	; uses sreg, ptr1, ptr2, ptr4, tmp1
+	; on entry: 
+	; ptr1 = value
+	; ptr2 = output string
+	; returns: length of string
+	; udiv16 uses only sreg, ptr1, ptr4, AXY
+	value = ptr1
+	string = ptr2
 	index = tmp1
 	lda #0
 	sta index
@@ -534,9 +524,9 @@
 		pha 			; push digit onto stack
 		inc index 
 
-		lda ptr1 		; if ptr1 != 0: next loop
+		lda value 		; if value != 0: next loop
 		bne loop_push
-		lda ptr1+1
+		lda value+1
 		bne loop_push 
 
 	ldy #0 
@@ -550,6 +540,8 @@
 	lda #0 				; terminate string with NULL
 	sta (string),Y
 
+	tya 				; return length
+	ldx #0
 	rts
 .endproc
 
