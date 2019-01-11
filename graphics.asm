@@ -209,32 +209,36 @@ _dliSpriteData:
 
 
 .proc _initDialogViewDisplay
+	.rodata
+	packedDialogDL: ; display list in PackBits format
+		.byte   3-1,   DL_RASTER|DL_LMS, 0, $80 ; raster, 72 rows
+		.byte -71+257, DL_RASTER 
+		.byte   3-1,   DL_TEXT|DL_LMS, 0, $80 ; text, 7 rows
+		.byte  -6+257, DL_TEXT 
+		.byte 128 ; terminator
+
+	.code 
+	lda #<packedDialogDL
+	ldx #>packedDialogDL
+	jsr _unpackDisplayList 		; returns end of DL in ptr1
+	jsr _setPtr1ToDisplayList
+	set_raster_lms:
+		ldy #4				; update LMS value for graphics area
+		lda SAVMSC 
+		sta (ptr1),Y
+		iny
+		lda SAVMSC+1
+		sta (ptr1),Y
+	set_text_lms:
+		ldy #78				; update LMS value for text window
+		lda TXTMSC 
+		sta (ptr1),Y
+		iny
+		lda TXTMSC+1
+		sta (ptr1),Y
 	textHeight = 7
-
-	lda #textHeight 	; update text window height
-	sta BOTSCR
-
-	jsr _initDisplayListVarsInternal
-
-	; Use SAVMSC screen memory for raster
-	lda SAVMSC 		
-	sta ptr2
-	lda SAVMSC+1
-	sta ptr2+1
-	ldx #72
-	lda #DL_RASTER
-	jsr _writeDisplayListLinesInternal
-
-	; Use textWindow screen memory for text box
-	lda TXTMSC  			
-	sta ptr2
-	lda TXTMSC+1
-	sta ptr2+1
-	ldx #textHeight
-	lda #DL_TEXT|DL_DLI
-	jsr _writeDisplayListLinesInternal
-
-	jsr _writeDisplayListEndInternal
+		lda #textHeight 	; update text window height
+		sta BOTSCR
 	rts
 .endproc
 
@@ -323,36 +327,30 @@ _dliSpriteData:
 .proc _initInfoViewDisplay
 	.rodata
 	packedInfoDL: ; display list in PackBits format
-		.byte     2, DL_RASTER|DL_LMS, 0, $80 ; raster, 24 rows
-		.byte 256-20, DL_RASTER 
-		.byte     3, DL_RASTER|DL_DLI, DL_RASTER|DL_DLI, DL_TEXT|DL_DLI, DL_BLK1 ; chara name
-		.byte 256-10, DL_TEXT 					; chara stats
-		.byte     3, DL_TEXT|DL_DLI, DL_BLK8, DL_TEXT|DL_DLI, DL_BLK1 ; "Items"
-		.byte 256-2, DL_TEXT 					; items body
-		.byte     0, DL_TEXT|DL_DLI 			; last line DLI
+		.byte   3-1,   DL_RASTER|DL_LMS, 0, $80 ; raster, 24 rows
+		.byte -21+257, DL_RASTER 
+		.byte   4-1,   DL_RASTER|DL_DLI, DL_RASTER|DL_DLI, DL_TEXT|DL_DLI, DL_BLK1 ; chara name
+		.byte -11+257, DL_TEXT 					; chara stats
+		.byte   4-1,   DL_TEXT|DL_DLI, DL_BLK8, DL_TEXT|DL_DLI, DL_BLK1 ; "Items"
+		.byte  -3+257, DL_TEXT 					; items body
+		.byte   1-1,   DL_TEXT|DL_DLI 			; last line DLI
 		.byte 128 ; terminator
 
 	.code 
 	lda #<packedInfoDL
 	ldx #>packedInfoDL
 	jsr _unpackDisplayList 		; returns end of DL in ptr1
-
-	ldy #0
-	jsr _writeDisplayListEndInternal
-
-	; update LMS value
-	jsr _setPtr1ToDisplayList
-	ldy #4
-	lda SAVMSC 
-	sta (ptr1),Y
-	iny
-	lda SAVMSC+1
-	sta (ptr1),Y
-
+	set_raster_lms:
+		jsr _setPtr1ToDisplayList
+		ldy #4
+		lda SAVMSC 
+		sta (ptr1),Y
+		iny
+		lda SAVMSC+1
+		sta (ptr1),Y
 	textHeight = 18
-	lda #textHeight 	; update text window height
-	sta BOTSCR
-
+		lda #textHeight 	; update text window height
+		sta BOTSCR
 	rts
 .endproc
 
@@ -416,6 +414,7 @@ _dliSpriteData:
 			bne loop_repeated
 		jmp loop_header 
 	return:
+		jsr _writeDisplayListEndInternal
 		rts
 
 	inc_src: 			; increment 16-bit src value
