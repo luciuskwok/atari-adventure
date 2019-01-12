@@ -63,94 +63,12 @@ _dliSpriteData:
 ; extern void setScreenMode(UInt8 mode);
 .export _setScreenMode
 .proc _setScreenMode
-	anticOptions = $2E 	; normal playfield, enable players & missiles, enable DMA
-	enableDLI    = $C0  ; enable VBI + DLI
-	mode = tmp1 		; use tmp1 for mode
-
-	sta mode  			; save mode in tmp1
-	
-	lda #0 				; Turn off screen
-	sta SDMCTL
-	;sta DMLCTL
-	lda #$40 			; disable DLI, leave VBI enabled
-	sta NMIEN
-
-	lda #1
-	jsr _delayTicks
-
-	lda mode 			; if mode == ScreenModeInfo: init Info screen
-	cmp #ScreenModeInfo
-	bne non_info_screen
-
-	init_info:
-		jsr _initInfoViewDisplay
-
-		lda #<_infoViewDLI
-		sta VDSLST
-		lda #>_infoViewDLI
-		sta VDSLST+1
-
-		jmp enable_screen
-
-	non_info_screen: 		; else: set SAVMSC to textWindow
-		lda mode
-		cmp #ScreenModeMap
-		beq init_map
-		cmp #ScreenModeDialog
-		beq init_dialog
-		cmp #ScreenModeBattle
-		beq init_battle
-		rts 				; default: screen off
-
-	init_map:
-		jsr _initMapViewDisplay
-
-		lda #<_mapViewDLI
-		sta VDSLST
-		lda #>_mapViewDLI
-		sta VDSLST+1
-
-		jmp enable_screen
-
-	init_dialog:
-		jsr _initDialogViewDisplay
-
-		lda #0
-		sta VDSLST
-		sta VDSLST+1
-
-		jmp enable_screen
-
-	init_battle:
-		jsr _initBattleViewDisplay
-
-		lda #<_battleViewDLI
-		sta VDSLST
-		lda #>_battleViewDLI
-		sta VDSLST+1
-
-		jmp enable_screen
-
-	enable_screen:
-		lda VDSLST+1
-		beq enable_dma 
-	enable_dli:
-		lda #enableDLI
-		sta NMIEN
-	enable_dma:
-		lda #anticOptions
-		sta SDMCTL
-	rts
-.endproc 
-
-
-.proc _initMapViewDisplay
 	.rodata
 	packedMapDL: ; display list in PackBits format
 		.byte   3-1,   DL_TILE|DL_DLI|DL_HSCROL|DL_LMS, LMS_GR, 0 ; tile, 9 rows
 		.byte  -8+257, DL_TILE|DL_DLI|DL_HSCROL
 
-		.byte  19-1,   DL_BLK6, DL_TEXT|DL_DLI|DL_LMS, LMS_TXT, 0 ; text, 3 rows
+		.byte  20-1,   DL_BLK6, DL_TEXT|DL_DLI|DL_LMS, LMS_TXT, 0 ; text, 3 rows
 		.byte          DL_TEXT, DL_TEXT|DL_DLI
 
 		.byte          DL_BLK1, DL_RASTER			 	; HP bar
@@ -158,41 +76,30 @@ _dliSpriteData:
 		.byte          DL_RASTER|DL_LMS, LMS_TXT, 3, DL_BLK1|DL_DLI
 
 		.byte          DL_BLK7, DL_TEXT_SPACER, DL_TEXT, DL_TEXT_SPACER|DL_DLI
+		.byte          DL_JVB
 		.byte 128 ; terminator
 
-	.code 
-	lda #<packedMapDL
-	ldx #>packedMapDL
-	jsr _unpackDisplayList
-	textHeight = 7
-		lda #textHeight 	; update text window height
-		sta BOTSCR
-	rts
-.endproc
+	packedInfoDL: ; display list in PackBits format
+		.byte   3-1,   DL_RASTER|DL_LMS, LMS_GR, 0 ; raster, 24 rows
+		.byte -21+257, DL_RASTER 
+		.byte   4-1,   DL_RASTER|DL_DLI, DL_RASTER|DL_DLI
+		.byte          DL_TEXT|DL_DLI, DL_BLK1	; chara name
+		.byte -11+257, DL_TEXT 					; chara stats
+		.byte   4-1,   DL_TEXT|DL_DLI, DL_BLK8 
+		.byte          DL_TEXT|DL_DLI, DL_BLK1 ; "Items"
+		.byte  -3+257, DL_TEXT 					; items body
+		.byte   2-1,   DL_TEXT|DL_DLI 			; last line DLI
+		.byte          DL_JVB
+		.byte 128 ; terminator
 
-
-.proc _initDialogViewDisplay
-	.rodata
 	packedDialogDL: ; display list in PackBits format
 		.byte   3-1,   DL_RASTER|DL_LMS, LMS_GR, 0 ; raster, 72 rows
 		.byte -71+257, DL_RASTER 
 		.byte   3-1,   DL_TEXT|DL_LMS, LMS_TXT, 0 ; text, 7 rows
 		.byte  -6+257, DL_TEXT 
+		.byte   1-1,   DL_JVB
 		.byte 128 ; terminator
 
-	.code 
-	lda #<packedDialogDL
-	ldx #>packedDialogDL
-	jsr _unpackDisplayList 		; returns end of DL in ptr1
-	textHeight = 7
-		lda #textHeight 	; update text window height
-		sta BOTSCR
-	rts
-.endproc
-
-
-.proc _initBattleViewDisplay
-	.rodata
 	packedBattleDL: ; display list in PackBits format
 		.byte   3-1,   DL_RASTER|DL_LMS, LMS_GR, 0 	; raster, 48 rows
 		.byte -46+257, DL_RASTER 
@@ -217,43 +124,101 @@ _dliSpriteData:
 
 		.byte          DL_RASTER|DL_LMS, LMS_GR, 49	; raster, 10 rows
 		.byte  -9+257, DL_RASTER 
+		.byte   1-1,   DL_JVB
 
 		.byte 128 ; terminator
 
 	.code 
-	lda #<packedBattleDL
-	ldx #>packedBattleDL
-	jsr _unpackDisplayList 		; returns end of DL in ptr1
-	textHeight = 7
-		lda #textHeight 	; update text window height
+	anticOptions = $2E 	; normal playfield, enable players & missiles, enable DMA
+	enableDLI    = $C0  ; enable VBI + DLI
+
+	pha		  			; push mode on stack
+	
+	lda #0 				; Turn off screen
+	sta SDMCTL
+	;sta DMLCTL
+	lda #$40 			; disable DLI, leave VBI enabled
+	sta NMIEN
+
+	lda #7	 			; text window height
+	sta BOTSCR
+
+	lda #1
+	jsr _delayTicks
+
+	switch_mode:
+		pla 			; pull mode off stack
+		cmp #ScreenModeMap
+		beq init_map
+		cmp #ScreenModeInfo
+		beq init_info
+		cmp #ScreenModeDialog
+		beq init_dialog
+		cmp #ScreenModeBattle
+		beq init_battle
+		rts 				; default: screen off
+
+	init_map:
+		lda #<packedMapDL
+		ldx #>packedMapDL
+		jsr _unpackDisplayList
+
+		lda #<_mapViewDLI
+		sta VDSLST
+		lda #>_mapViewDLI
+		sta VDSLST+1
+
+		jmp enable_screen
+
+	init_info:
+		lda #<packedInfoDL
+		ldx #>packedInfoDL
+		jsr _unpackDisplayList
+
+		lda #18	 			; text window height
 		sta BOTSCR
+
+		lda #<_infoViewDLI
+		sta VDSLST
+		lda #>_infoViewDLI
+		sta VDSLST+1
+
+		jmp enable_screen
+
+	init_dialog:
+		lda #<packedDialogDL
+		ldx #>packedDialogDL
+		jsr _unpackDisplayList
+
+		lda #0
+		sta VDSLST
+		sta VDSLST+1
+
+		jmp enable_screen
+
+	init_battle:
+		lda #<packedBattleDL
+		ldx #>packedBattleDL
+		jsr _unpackDisplayList
+
+		lda #<_battleViewDLI
+		sta VDSLST
+		lda #>_battleViewDLI
+		sta VDSLST+1
+
+		jmp enable_screen
+
+	enable_screen:
+		lda VDSLST+1
+		beq enable_dma 
+	enable_dli:
+		lda #enableDLI
+		sta NMIEN
+	enable_dma:
+		lda #anticOptions
+		sta SDMCTL
 	rts
-.endproc
-
-
-.proc _initInfoViewDisplay
-	.rodata
-	packedInfoDL: ; display list in PackBits format
-		.byte   3-1,   DL_RASTER|DL_LMS, LMS_GR, 0 ; raster, 24 rows
-		.byte -21+257, DL_RASTER 
-		.byte   4-1,   DL_RASTER|DL_DLI, DL_RASTER|DL_DLI
-		.byte          DL_TEXT|DL_DLI, DL_BLK1	; chara name
-		.byte -11+257, DL_TEXT 					; chara stats
-		.byte   4-1,   DL_TEXT|DL_DLI, DL_BLK8 
-		.byte          DL_TEXT|DL_DLI, DL_BLK1 ; "Items"
-		.byte  -3+257, DL_TEXT 					; items body
-		.byte   1-1,   DL_TEXT|DL_DLI 			; last line DLI
-		.byte 128 ; terminator
-
-	.code 
-	lda #<packedInfoDL
-	ldx #>packedInfoDL
-	jsr _unpackDisplayList 		; returns end of DL in ptr1
-	textHeight = 18
-		lda #textHeight 	; update text window height
-		sta BOTSCR
-	rts
-.endproc
+.endproc 
 
 
 .proc _unpackDisplayList 
@@ -276,7 +241,6 @@ _dliSpriteData:
 	sta ptr1+1
 
 	jsr _unpackbits
-	jsr _writeDisplayListEndInternal
 	jsr _updateLMSValues
 	rts
 .endproc 
@@ -359,7 +323,7 @@ _dliSpriteData:
 		iny  
 		beq return 	; if Y==0: wrapped around
 		cmp #DL_JVB 
-		beq return	; JVB = end of display list
+		beq set_jvb_address	; JVB = end of display list
 		tax 
 		and #$0F
 		beq loop  		; skip blank line instructions
@@ -388,103 +352,14 @@ _dliSpriteData:
 		sta (dl),Y 
 		iny 
 		jmp loop 
+	set_jvb_address:
+		lda SDLSTL 
+		sta (dl),Y 
+		iny 
+		lda SDLSTL+1
+		sta (dl),Y
 	return:
 		rts 
-.endproc
-
-.proc _initDisplayListVarsInternal
-	lda SDLSTL 
-	sta ptr1
-	lda SDLSTL+1
-	sta ptr1+1
-	ldy #3
-	rts
-.endproc
-
-
-.proc _writeDisplayListLinesInternal
-	; on entry: A=mode, X=count, Y=index, ptr1=DL_ptr, ptr2=screen_ptr
-	pha 				; push mode value on stack for later
-
-	ora #DL_LMS			; add LMS to first line
-	sta (ptr1),Y
-	iny
-
-	lda ptr2  			; use ptr2 as pointer to screen memory
-	sta (ptr1),Y
-	iny 
-
-	lda ptr2+1
-	sta (ptr1),Y
-	iny 
-	dex 
-
-	pla 				; pull mode value from stack
-	jmp while
-	loop:
-		sta (ptr1),Y
-		iny 
-		dex
-	while:
-		cpx #0
-		bne loop
-	rts
-.endproc
-
-
-.proc _writeDisplayListBarChartInternal
-	; on entry: Y=index, ptr1=DL_ptr, ptr2=screen_ptr
-	lda #DL_BLK1
-	sta (ptr1),Y
-	iny 
-
-	ldx #3
-	loop:
-		lda #DL_RASTER|DL_LMS
-		sta (ptr1),Y
-		iny 
-
-		lda ptr2
-		sta (ptr1),Y
-		iny 
-
-		lda ptr2+1
-		sta (ptr1),Y
-		iny 
-		
-		dex
-		bne loop
-
-	lda #DL_BLK1
-	sta (ptr1),Y
-	iny 
-
-	rts
-.endproc
-
-
-.proc _applyTrailingDLI
-	dey 
-	lda (ptr1),Y
-	ora #DL_DLI
-	sta (ptr1),Y
-	iny
-	rts 
-.endproc 
-
-
-.proc _writeDisplayListEndInternal
-	; on entry: ptr1=DL_ptr
-	ldy #0
-	lda #DL_JVB
-	sta (ptr1),Y
-	iny 
-	lda SDLSTL
-	sta (ptr1),Y
-	iny 
-	lda SDLSTL+1
-	sta (ptr1),Y
-	rts
 .endproc
 
 
