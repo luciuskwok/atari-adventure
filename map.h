@@ -21,17 +21,10 @@ enum MapTypes {
 	TownMapType = 2,
 };
 
-// extern const UInt8 *currentRunLenMap;
-// extern const UInt8 *currentTileMap;
-// extern SizeU8 currentMapSize;
-// extern UInt8 currentMapType;
-
 // Map Drawing
-void loadMap(UInt8 mapType, UInt8 sightDistance, UInt8 x, UInt8 y);
 const UInt8 *colorTableForMap(UInt8 mapType);
 void clearMapScreen(void);
 void layoutCurrentMap(UInt8 sightDistance);
-void drawCurrentMap(UInt8 x, UInt8 y);
 
 // Map Movement
 void transitionToMap(UInt8 mapType, UInt8 shouldFadeOut, UInt8 shouldFadeIn);

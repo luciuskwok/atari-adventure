@@ -11,7 +11,7 @@
 #define VB_TIMER ((UInt8 *)0x0601)
 
 #define SCREEN_ROW_BYTES (40)
-#define SCREEN_WINDOW ((UInt8 *)PEEKW(SAVMSC))
+#define GRAPHICS_WINDOW ((UInt8 *)PEEKW(SAVMSC))
 #define TEXT_WINDOW ((UInt8 *)PEEKW(TXTMSC))
 
 extern UInt8 dliSpriteData[];

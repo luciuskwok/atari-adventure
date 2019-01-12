@@ -129,7 +129,131 @@ static UInt8 canMoveTo(UInt8 x, UInt8 y) {
 
 // Map Drawing
 
-void loadMap(UInt8 mapType, UInt8 mapSightDistance, UInt8 x, UInt8 y) {
+static void fillMapRow(UInt8 c) {
+	// Parameters in zeropage:
+	// SAVADR: pointer to screen row memory, offset to starting column of map window
+	// RMARGN: width of map window
+	UInt8 right = PEEK(RMARGN);
+	UInt8 *screen = (UInt8 *)PEEKW(SAVADR);
+	UInt8 x;
+
+	for (x=0; x<right; ++x) {
+		screen[x] = c;
+	}
+}
+
+static void drawMapRow(void) {
+	// Parameters in zeropage:
+	// SAVADR: pointer to screen row memory, offset to starting column
+	// COLCRS: number of map tiles to skip when decoding map
+	// LMARGN: number of tiles beyond left edge map data to show
+	// RMARGN: width of map window
+}
+
+static void drawCurrentMap(void) {
+	UInt16 startTime = SHORT_CLOCK; // DEBUGGING
+
+	const UInt8 *runLenPtr = currentRunLenMap;
+	UInt8 mapFrameHalfWidth = mapFrame.size.width / 2;
+	UInt8 mapFrameHalfHeight = mapFrame.size.height / 2;
+	UInt8 row, col;
+	UInt8 mapRow, mapCol, topMargin, leftMargin;
+	UInt8 colMax;
+	UInt8 decodeLength;
+	UInt8 c;
+	UInt8 buffer[SCREEN_WIDTH];
+	UInt8 *screenRow;
+
+	// Integrity check
+	if (runLenPtr == NULL) {
+		return;
+	}
+
+	// Calculate number of rows to leave blank and how many to skip in the map.
+	if (mapCurrentLocation.y <= mapFrameHalfHeight) {
+		// In this case, the top edge of the window is above the top edge of the map
+		// data, so there will be a top margin filled with the "out of bounds" tile.
+		topMargin = mapFrameHalfHeight - mapCurrentLocation.y;
+		mapRow = 0;
+	} else {
+		topMargin = 0;
+		mapRow = mapCurrentLocation.y - mapFrameHalfHeight;
+
+		// Adjust runLenPtr to skip lines within run-len data.
+		for (c=0; c<mapRow; ++c) {
+			runLenPtr += runLenPtr[0];
+		}
+	}
+
+	// Calculate number of columns to leave blank and how many to skip in the map.
+	if (mapCurrentLocation.x < mapFrameHalfWidth) {
+		// In this case, the left edge of the window shows tiles beyond the left edge
+		// of the map data. So the left margin is increased to indicate that how many
+		// "out of bounds" tiles to show.  
+		leftMargin = mapFrameHalfWidth - mapCurrentLocation.x;
+		mapCol = 0;
+	} else {
+		// In this case, the left edge of the window starts at an offset from the left
+		// edge of the map data. So the mapCol is set to this offset. 
+		leftMargin = 0;
+		mapCol = mapCurrentLocation.x - mapFrameHalfWidth;
+	}
+	decodeLength = mapFrame.size.width - leftMargin;
+	if (decodeLength > currentMapSize.width - mapCol) {
+		decodeLength = currentMapSize.width - mapCol;
+	}
+	colMax = currentMapSize.width + leftMargin - mapCol;
+
+	// Set zeropage parameters
+	POKEW(SAVADR, PEEKW(SAVMSC) + mapFrame.origin.y * SCREEN_WIDTH + mapFrame.origin.x);
+	POKE(LMARGN, leftMargin); // number of tiles beyond left edge of map data currently shown
+	POKE(RMARGN, mapFrame.size.width); // width of map frame
+	POKE(ROWCRS, mapRow); // current map row
+	POKE(COLCRS, mapCol); // offset from left edge of map data to left edge of window
+
+	// Main Loop
+	for (row=0; row<mapFrame.size.height; ++row) {
+		// Clear the sprite overlay for this row
+		dliSpriteData[row] = 0;
+
+		if (row < topMargin || mapRow >= currentMapSize.height) {
+			// Beyond borders: fill with the default empty tile.
+			fillMapRow(currentTileMap[0]);
+		} else {
+			decodeRunLenRange(buffer, mapCol, decodeLength, runLenPtr);
+			runLenPtr += runLenPtr[0]; // Next row.
+			
+			screenRow = (UInt8 *)PEEKW(SAVADR);
+
+			for (col=0; col<mapFrame.size.width; ++col) {
+				if (col < leftMargin || col >= colMax) {
+					c = 0; // Tiles outside map bounds are set to default blank tile.
+				} else {
+					c = buffer[col - leftMargin];
+				}
+
+				// Convert decoded value to character value
+				c = currentTileMap[c];
+				screenRow[col] = c;
+
+				// Add sprite overlay for special characters
+				c = (c & 0x3F);
+				if (c >= tCastle) {
+					setTileSprite(c - tCastle, col, row);
+				}
+
+			} // end for(col)
+			++mapRow;
+		} // end if
+
+		POKEW(SAVADR, PEEKW(SAVADR) + SCREEN_WIDTH);
+	}
+
+	// Debugging
+	debugPrint("Map:", SHORT_CLOCK - startTime, 0, 5);
+}
+
+static void loadMap(UInt8 mapType, UInt8 mapSightDistance) {
 	const UInt8 *colorTable;
 
 	clearMapScreen();
@@ -157,7 +281,7 @@ void loadMap(UInt8 mapType, UInt8 mapSightDistance, UInt8 x, UInt8 y) {
 	currentMapType = mapType;
 
 	layoutCurrentMap(mapSightDistance);
-	drawCurrentMap(x, y);
+	drawCurrentMap();
 }
 
 const UInt8 *colorTableForMap(UInt8 mapType) {
@@ -173,7 +297,7 @@ const UInt8 *colorTableForMap(UInt8 mapType) {
 }
 
 void clearMapScreen(void) {
-	zeroOut8(SCREEN_WINDOW, 9*SCREEN_WIDTH);
+	zeroOut8(GRAPHICS_WINDOW, 9*SCREEN_WIDTH);
 	zeroOut8(dliSpriteData, dliSpriteDataLength);
 }
 
@@ -198,101 +322,7 @@ void layoutCurrentMap(UInt8 mapSightDistance) {
 	zeroOut8(dliSpriteData, dliSpriteDataLength);
 }
 
-void drawCurrentMap(UInt8 x, UInt8 y) {
-	UInt8 *screen = SCREEN_WINDOW;
-	const UInt8 *runLenPtr = currentRunLenMap;
-	UInt8 screenRowSkip = SCREEN_WIDTH - mapFrame.size.width;
-	UInt8 screenIndex = mapFrame.origin.x + SCREEN_WIDTH * mapFrame.origin.y;
-	UInt8 mapFrameHalfWidth = mapFrame.size.width / 2;
-	UInt8 mapFrameHalfHeight = mapFrame.size.height / 2;
-	UInt8 row, col;
-	UInt8 colMax;
-	UInt8 leftBlank, leftSkip, decodeLength, topBlank, topSkip;
-	UInt8 c, low, hasSpriteOverlay;
-	UInt8 buffer[SCREEN_WIDTH];
 
-	// Debugging
-	UInt16 startTime = SHORT_CLOCK;
-
-	// Integrity check
-	if (runLenPtr == NULL) {
-		return;
-	}
-
-	// Calculate number of rows to leave blank and how many to skip in the map.
-	if (y <= mapFrameHalfHeight) {
-		topBlank = mapFrameHalfHeight - y;
-		topSkip = 0;
-	} else {
-		topBlank = 0;
-		topSkip = y - mapFrameHalfHeight;
-
-		// Adjust runLenPtr to skip lines within run-len data.
-		for (c=0; c<topSkip; ++c) {
-			runLenPtr += runLenPtr[0];
-		}
-	}
-
-	// Calculate number of columns to leave blank and how many to skip in the map.
-	if (x < mapFrameHalfWidth) {
-		leftBlank = mapFrameHalfWidth - x;
-		leftSkip = 0;
-	} else {
-		leftBlank = 0;
-		leftSkip = x - mapFrameHalfWidth;
-	}
-	decodeLength = mapFrame.size.width - leftBlank;
-	if (decodeLength > currentMapSize.width - leftSkip) {
-		decodeLength = currentMapSize.width - leftSkip;
-	}
-	colMax = currentMapSize.width + leftBlank - leftSkip;
-
-	// Main Loop
-	for (row=0; row<mapFrame.size.height; ++row) {
-		hasSpriteOverlay = 0;
-
-		if (row < topBlank || row + topSkip >= currentMapSize.height + topBlank) {
-			// Beyond borders: fill with the default empty tile.
-			for (col=0; col<mapFrame.size.width; ++col) {
-				screen[screenIndex] = currentTileMap[0];
-				++screenIndex;
-			}
-		} else {
-			decodeRunLenRange(buffer, leftSkip, decodeLength, runLenPtr);
-			runLenPtr += runLenPtr[0]; // Next row.
-			for (col=0; col<mapFrame.size.width; ++col) {
-				if (col < leftBlank || col >= colMax) {
-					c = 0; // Tiles outside map bounds are set to default blank tile.
-				} else {
-					c = buffer[col - leftBlank];
-				}
-
-				// Convert decoded value to character value
-				c = currentTileMap[c];
-
-				// Add sprite overlay for special characters
-				low = (c & 0x3F);
-				if (low >= tCastle) {
-					low -= tCastle;
-					setTileSprite(low, col, row);
-					hasSpriteOverlay = 1;
-				}
-
-				screen[screenIndex] = c;
-				++screenIndex;
-			} // end for(col)
-		} // end if
-			
-		if (hasSpriteOverlay == 0) {
-			// Clear the sprite overlay for this row
-			dliSpriteData[row] = 0;
-		}
-		screenIndex += screenRowSkip;
-	}
-
-	// Debugging
-	debugPrint("Map:", SHORT_CLOCK - startTime, 0, 5);
-}
 
 // Map Movement
 
@@ -305,7 +335,7 @@ void transitionToMap(UInt8 mapType, UInt8 shouldFadeOut, UInt8 shouldFadeIn) {
 		loadColorTable(NULL);
 	}
 
-	loadMap(mapType, mapSightDistance, mapCurrentLocation.x, mapCurrentLocation.y);
+	loadMap(mapType, mapSightDistance);
 	
 	if (shouldFadeIn) {	
 		fadeInColorTable(colorTable);
@@ -390,7 +420,7 @@ SInt8 mapCursorHandler(UInt8 event) {
 			if (canMoveTo(newLoc.x, newLoc.y)) {
 				noteOn(NoteF+Oct3, 1, 4, 15, 0x00, 3);
 				mapCurrentLocation = newLoc;
-				drawCurrentMap(newLoc.x, newLoc.y);
+				drawCurrentMap();
 			}
 		} else {
 			// Handle moving off the map for towns

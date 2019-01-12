@@ -180,7 +180,7 @@ static void drawCharaInfoAtIndex(UInt8 index) {
 }
 
 static void drawAvatarAtIndex(UInt8 index) {
-	UInt8 *screen = SCREEN_WINDOW + index * 10 + 1; // align with chara info text
+	UInt8 *screen = GRAPHICS_WINDOW + index * 10 + 1; // align with chara info text
 	UInt8 *buffer = avatarImages[index]->bytes;
 	const UInt8 bufferRowBytes = 8; // 8 bytes * 4 ppb = 32 pixels
 	const UInt8 imageHeight = 24;	
@@ -197,7 +197,7 @@ static void drawAvatarAtIndex(UInt8 index) {
 
 /*
 static void drawDeflatedAvatarAtIndex(UInt8 index) {
-	UInt8 *screen = SCREEN_WINDOW;
+	UInt8 *screen = GRAPHICS_WINDOW;
 	UInt8 *buffer = TEXT_WINDOW + 40 * 18; // use empty space after screen memory
 	const UInt8 bufferRowBytes = 8; // 8 bytes * 4 ppb = 32 pixels
 	const UInt8 imageHeight = 24;
@@ -247,7 +247,7 @@ void initInfo(void) {
 	// Set up graphics window
 	setScreenMode(ScreenModeOff);
 	setPlayerCursorVisible(0);
-	zeroOut16(SCREEN_WINDOW, (24+18)*SCREEN_ROW_BYTES); // Clear graphics and text windows
+	zeroOut16(GRAPHICS_WINDOW, (24+18)*SCREEN_ROW_BYTES); // Clear graphics and text windows
 	setCursorEventHandler(infoCursorHandler);
 
 	// Start music

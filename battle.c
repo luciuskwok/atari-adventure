@@ -73,7 +73,7 @@ const DataBlock enemyAttackSprite = {
 static void applySelectionColor(UInt8 isMasking, UInt8 offset, UInt8 length) {
 	const UInt8 y = 49;
 	UInt8 height = 10;
-	UInt8 *screen = SCREEN_WINDOW + y * 40;
+	UInt8 *screen = GRAPHICS_WINDOW + y * 40;
 	UInt8 x;
 	UInt8 end = offset + length;
 
@@ -143,7 +143,7 @@ static void drawEnemyHpBar(void) {
 	UInt8 barX = 80 - width / 2;
 	UInt8 fill = (enemy.hp + 1) / 2;
 
-	POKEW(SAVADR, (UInt16)SCREEN_WINDOW + 48 * SCREEN_ROW_BYTES);
+	POKEW(SAVADR, (UInt16)GRAPHICS_WINDOW + 48 * SCREEN_ROW_BYTES);
 	POKE(COLCRS, barX);
 	POKE(DELTAC, width);
 	POKE(COLINC, fill);
@@ -402,7 +402,7 @@ void initBattle(void) {
 	// Set up graphics window
 	setScreenMode(ScreenModeOff);
 	zeroOut16(TEXT_WINDOW, 7*SCREEN_ROW_BYTES);
-	zeroOut16(SCREEN_WINDOW, 59*SCREEN_ROW_BYTES);
+	zeroOut16(GRAPHICS_WINDOW, 59*SCREEN_ROW_BYTES);
 	setPlayerCursorVisible(0);
 
 	// Turn on screen

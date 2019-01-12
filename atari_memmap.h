@@ -11,6 +11,8 @@
 #define ROWCRS (0x0054)
 #define COLCRS (0x0055)
 #define SAVMSC (0x0058) /* Pointer to screen memory */
+#define NEWROW (0x0060)
+#define NEWCOL (0x0061)
 #define SAVADR (0x0068) /* Temporary pointer for screen row */
 #define RAMTOP (0x006A)
 #define DELTAR (0x0076)
