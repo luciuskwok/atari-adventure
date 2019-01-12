@@ -129,53 +129,8 @@ static UInt8 canMoveTo(UInt8 x, UInt8 y) {
 
 // Map Drawing
 
-static void fillMapRow(UInt8 c) {
-	// Parameters in zeropage:
-	// SAVADR: pointer to screen row memory, offset to starting column of map window
-	// NEWCOL: width of map window, where drawing ends
-	UInt8 width = PEEK(NEWCOL);
-	UInt8 *screen = (UInt8 *)PEEKW(SAVADR);
-	UInt8 x;
-
-	for (x=0; x<width; ++x) {
-		screen[x] = c;
-	}
-}
-
-static void drawMapRow(UInt8 *buffer) {
-	// Parameters in zeropage:
-	// SAVADR: pointer to screen row memory, offset to starting column
-	// COLCRS: cursor column in screen coordinates 
-	// ROWCRS: cursor row in screen coordinates 
-	// LMARGN: number of tiles beyond left edge map data to show
-	// RMARGN: width of map window
-
-	UInt8 *rowPtr = (UInt8 *)PEEKW(SAVADR);
-	UInt8 leftMargin = PEEK(LMARGN);
-	UInt8 rightMargin = PEEK(RMARGN);
-	UInt8 screenCol;
-	UInt8 c;
-
-	for (screenCol=0; screenCol<mapFrame.size.width; ++screenCol) {
-		if (screenCol < leftMargin || screenCol >= rightMargin) {
-			c = 0; // Tiles outside map bounds are set to default blank tile.
-		} else {
-			c = buffer[screenCol - leftMargin];
-		}
-
-		// Convert decoded value to character value
-		c = currentTileMap[c];
-		rowPtr[screenCol] = c;
-
-		// Add sprite overlay for special characters
-		c = (c & 0x3F);
-		if (c >= tCastle) {
-			POKE(COLCRS, screenCol);
-			setTileSprite(c - tCastle);
-		}
-
-	} // end for(screenCol)
-}
+void fillMapRow(UInt8 c);
+void drawMapRow(UInt8 *buffer);
 
 static void drawCurrentMap(void) {
 	UInt16 startTime = SHORT_CLOCK; // DEBUGGING
