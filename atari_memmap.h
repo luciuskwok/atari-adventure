@@ -75,6 +75,9 @@
 #define HPOSM2 (0xD006)
 #define HPOSM3 (0xD007)
 #define SIZEP0 (0xD008)
+#define SIZEP1 (0xD009)
+#define SIZEP2 (0xD00A)
+#define SIZEP3 (0xD00B)
 
 // Sound (POKEY)
 #define AUDF1  (0xD200)

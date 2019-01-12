@@ -145,14 +145,14 @@ static void fillMapRow(UInt8 c) {
 static void drawMapRow(UInt8 *buffer) {
 	// Parameters in zeropage:
 	// SAVADR: pointer to screen row memory, offset to starting column
-	// COLCRS: number of map tiles to skip when decoding map
+	// COLCRS: cursor column in screen coordinates 
+	// ROWCRS: cursor row in screen coordinates 
 	// LMARGN: number of tiles beyond left edge map data to show
 	// RMARGN: width of map window
 
 	UInt8 *rowPtr = (UInt8 *)PEEKW(SAVADR);
 	UInt8 leftMargin = PEEK(LMARGN);
 	UInt8 rightMargin = PEEK(RMARGN);
-	UInt8 screenRow = PEEK(OLDROW);
 	UInt8 screenCol;
 	UInt8 c;
 
@@ -170,7 +170,8 @@ static void drawMapRow(UInt8 *buffer) {
 		// Add sprite overlay for special characters
 		c = (c & 0x3F);
 		if (c >= tCastle) {
-			setTileSprite(c - tCastle, screenCol, screenRow);
+			POKE(COLCRS, screenCol);
+			setTileSprite(c - tCastle);
 		}
 
 	} // end for(screenCol)
@@ -242,9 +243,10 @@ static void drawCurrentMap(void) {
 	// NEWROW: height of the map window frame
 	POKE(LMARGN, leftMargin); 
 	POKE(RMARGN, rightMargin); 
-	POKE(ROWCRS, mapRow); 
-	POKE(COLCRS, mapCol); 
-	// OLDROW: screenRow
+	POKE(OLDROW, mapRow); 
+	POKE(OLDCOL, mapCol); 
+	// ROWCRS: screenRow
+	// COLCRS: screenCol
 
 	// Main Loop
 	for (screenRow=0; screenRow<mapFrame.size.height; ++screenRow) {
@@ -259,7 +261,7 @@ static void drawCurrentMap(void) {
 			decodeRunLenRange(buffer, mapCol, decodeLength, runLenPtr);
 			runLenPtr += runLenPtr[0]; // Next row.
 
-			POKE(OLDROW, screenRow); // Pass screenRow to drawMapRow
+			POKE(ROWCRS, screenRow); // Pass screenRow to drawMapRow
 			drawMapRow(buffer);
 
 			++mapRow;
@@ -464,6 +466,9 @@ void initMap(void) {
 	fillSprite(0, 0xFF, 0, 10);
 	// setSpriteOriginX(5, 56);
 	// setSpriteOriginX(6, 72);
+
+	// Set player 3 sprite size
+	POKE(SIZEP3, 0);
 
 	transitionToMap(currentMapType, 0, 1);
 	drawMapTextBox();

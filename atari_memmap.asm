@@ -2,12 +2,20 @@
 	
 	; Zero page OS
 	RTCLOK_LSB = $14 		; LSB of internal clock
+
+	TMPCHR    = $50 		; Temporary register used by display handler
+	HOLD1     = $51 		; Also temporary register
 	LMARGN    = $52
 	RMARGN 	  = $53
 	ROWCRS    = $54 		; cursor row
-	COLCRS    = $55 		; cursor column
-	SAVMSC 	  = $58 		; Pointer to screen memory
-	SAVADR    = $68 		; Temporary pointer for screen row
+	COLCRS    = $55 		; cursor column, 16-bit
+	DINDEX    = $57			; Current screen/display mode
+	OLDROW    = $5A			; Previous graphics cursor row
+	OLDCOL    = $5B			; Previous graphics cursor column, 16-bit
+	SAVMSC 	  = $58 		; Pointer to screen memory, 16-bit
+	NEWROW    = $60			
+	NEWCOL    = $61			; 16-bit
+	SAVADR    = $68 		; Temporary pointer for screen row, 16-bit
 	RAMTOP 	  = $6A
 	BUFSTR    = $6C
 	BITMSK    = $6E
@@ -16,6 +24,7 @@
 	DELTAC    = $77
 	ROWINC    = $79
 	COLINC    = $7A
+
 
 	; OS page 2
 	VDSLST    = $0200 		; Pointer to current display list handler
@@ -45,6 +54,10 @@
 	HPOSM1    = $D005		; Missile 0 horizontal position
 	HPOSM2    = $D006		; Missile 0 horizontal position
 	HPOSM3    = $D007		; Missile 0 horizontal position
+	SIZEP0    = $D008
+	SIZEP1    = $D009
+	SIZEP2    = $D00A
+	SIZEP3    = $D00B
 	COLPF0    = $D016		; pixel 1
 	COLPF1    = $D017		; text luminance / pixel 2
 	COLPF2    = $D018		; text background / pixel 3

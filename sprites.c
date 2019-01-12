@@ -7,7 +7,7 @@
 #include <string.h>
 
 
-static UInt8 *spriteArea;
+UInt8 *spriteArea;
 
 
 // Sprite Data
@@ -15,12 +15,12 @@ static UInt8 *spriteArea;
 const DataBlock cursorSprite1 = { 10, { 0x1F, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x1F } };
 const DataBlock cursorSprite2 = { 10, { 0xF8, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0xF8 } };
 
-const DataBlock tileSpriteCastle = { 8, {0x66, 0x99, 0x81, 0x42, 0x42, 0x81, 0x99, 0x66} };
-const DataBlock tileSpriteTown = { 8, {0xEE, 0x82, 0x82, 0x00, 0x82, 0x82, 0xEE, 0x00} };
+const DataBlock tileSpriteCastle  = { 8, {0x66, 0x99, 0x81, 0x42, 0x42, 0x81, 0x99, 0x66} };
+const DataBlock tileSpriteTown    = { 8, {0xEE, 0x82, 0x82, 0x00, 0x82, 0x82, 0xEE, 0x00} };
 const DataBlock tileSpriteVillage = { 8, {0x00, 0x2C, 0x60, 0x06, 0x50, 0x44, 0x10, 0x00} };
-const DataBlock tileSpriteMonument = { 8, {0x00, 0x00, 0x00, 0x18, 0x18, 0x00, 0x00, 0x00} };
-const DataBlock tileSpriteCave = { 8, {0x00, 0x00, 0x18, 0x24, 0x24, 0x24, 0x00, 0x00} };
-const DataBlock tileSpriteHouseDoor = { 8, {0x3E, 0x3E, 0x22, 0x22, 0x22, 0x22, 0x22, 0x00} };
+const DataBlock tileSpriteMonument= { 8, {0x00, 0x00, 0x00, 0x18, 0x18, 0x00, 0x00, 0x00} };
+const DataBlock tileSpriteCave    = { 8, {0x00, 0x00, 0x18, 0x24, 0x24, 0x24, 0x00, 0x00} };
+const DataBlock tileSpriteHouseDoor= { 8, {0x3E, 0x3E, 0x22, 0x22, 0x22, 0x22, 0x22, 0x00} };
 
 const DataBlock *tileOverlaySprites[] = { 
 	&tileSpriteCastle,
@@ -66,28 +66,6 @@ void setCursorColorCycling(UInt8 cycle) {
 }
 
 // Drawing
-
-void setTileSprite(UInt8 spriteIndex, UInt8 column, UInt8 row) {
-	// Add an overlay sprite for certain tiles. Mask sprites at edge of window, because of the half-width tiles at the left and right edges.
-	UInt8 y = row * 8 + PM_TOP_MARGIN;
-	UInt8 *p = (UInt8 *) ((384 + 128 * 4) + y + spriteArea);
-	const UInt8 *src = tileOverlaySprites[spriteIndex]->bytes;
-	UInt8 mask = 0xFF;
-	UInt8 i;
-
-	if (column == 0) {
-		mask = 0x0F;
-	} else if (column == 20) {
-		mask = 0xF0;
-	}
-
-	for (i=0; i<8; ++i) {
-		p[i] = src[i] & mask;
-	}	
-
-	dliSpriteData[row] = PM_LEFT_MARGIN - 4 + column * 8;
-	GTIA_WRITE.sizep3 = 0;
-}
 
 void drawSprite(const DataBlock *sprite, UInt8 player, UInt8 y) {
 	// player: 0=missile, 1-4=p0-p3.
