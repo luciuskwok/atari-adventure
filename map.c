@@ -244,6 +244,7 @@ static void drawCurrentMap(void) {
 	POKE(RMARGN, rightMargin); 
 	POKE(ROWCRS, mapRow); 
 	POKE(COLCRS, mapCol); 
+	// OLDROW: screenRow
 
 	// Main Loop
 	for (screenRow=0; screenRow<mapFrame.size.height; ++screenRow) {
