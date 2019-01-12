@@ -282,6 +282,7 @@
 .endproc
 
 
+; void decodeRunLenRange(UInt8 *outData, const UInt8 *runLenData);
 .export _decodeRunLenRange 
 .proc _decodeRunLenRange
 	; * Decodes custom run-length encoded format data, skipping OLDCOL bytes
