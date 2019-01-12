@@ -124,13 +124,13 @@
 	cpx #10				; 
 	beq chara_level
 	
-	cpx #12				; 
+	cpx #11				; 
 	beq chara_hp
 	
-	cpx #13				; 
+	cpx #12				; 
 	beq party_stats
 	
-	cpx #14				; 
+	cpx #13				; 
 	beq last_line
 
 	jmp return_dli

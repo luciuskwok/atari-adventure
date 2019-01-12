@@ -15,7 +15,7 @@
 
 .import _multiplyAXtoPtr1
 .import _addSregToPtr1, _addAToPtr1
-.import _setSavadrToTextCursorAddress
+.import _setSavadrToTextCursor
 
 .import _setCursorColorCycling
 
@@ -146,10 +146,10 @@ _dliSpriteData:
 		.byte   3-1,   DL_TILE|DL_DLI|DL_HSCROL|DL_LMS, 0, $80 ; tile, 9 rows
 		.byte  -8+257, DL_TILE|DL_DLI|DL_HSCROL
 
-		.byte  21-1,   DL_BLK6, DL_TEXT|DL_DLI|DL_LMS, 0, $80 ; text, 3 rows
+		.byte  19-1,   DL_BLK6, DL_TEXT|DL_DLI|DL_LMS, 0, $80 ; text, 3 rows
 		.byte          DL_TEXT, DL_TEXT|DL_DLI
 
-		.byte          DL_BLK1, DL_RASTER|DL_LMS, 0, $80 	; HP bar
+		.byte          DL_BLK1, DL_RASTER			 	; HP bar
 		.byte          DL_RASTER|DL_LMS, 0, $80
 		.byte          DL_RASTER|DL_LMS, 0, $80, DL_BLK1|DL_DLI
 
@@ -165,7 +165,7 @@ _dliSpriteData:
 		sta COLCRS 
 		lda #3
 		sta ROWCRS
-		jsr _setSavadrToTextCursorAddress
+		jsr _setSavadrToTextCursor
 	set_lms:
 		jsr _setPtr1ToDisplayList
 	set_raster_lms:
@@ -177,9 +177,6 @@ _dliSpriteData:
 		ldx TXTMSC+1
 		jsr _setNextLMSValueFromPtr1
 	set_bar_lms:
-		lda SAVADR
-		ldx SAVADR+1
-		jsr _setNextLMSValueFromPtr1
 		lda SAVADR
 		ldx SAVADR+1
 		jsr _setNextLMSValueFromPtr1
@@ -222,121 +219,108 @@ _dliSpriteData:
 	rts
 .endproc
 
-.proc _setNextLMSValueFromPtr1
-	; Find the next LMS starting from ptr1 and write the value in AX in it.
-	; Updates ptr1.
-
-	pha 
-	txa 
-	pha 
-	ldy #0
-	loop: 
-		lda (ptr1),Y 
-		iny  
-		beq not_found 	; if Y==0: wrapped around
-		cmp #DL_JVB 
-		beq not_found	; JVB = end of display list
-		tax 
-		and #$0F
-		beq loop  		; skip blank line instructions
-		txa 
-		and #DL_LMS 
-		beq loop
-	found_lms:
-		pla 
-		tax 
-		pla 
-		sta (ptr1),Y
-		iny 
-		txa 
-		sta (ptr1),Y
-		iny 
-		tya 
-		jsr _addAToPtr1
-		rts 
-	not_found:
-		pla 
-		rts 
-.endproc
-
 
 .proc _initBattleViewDisplay
-	rasterHeight = 48
+	.rodata
+	packedBattleDL: ; display list in PackBits format
+		.byte   3-1,   DL_RASTER|DL_LMS, 0, $80 	; raster, 48 rows
+		.byte -46+257, DL_RASTER 
+		.byte  15-1,   DL_RASTER|DL_DLI
+
+		.byte          DL_BLK1
+		.byte          DL_RASTER|DL_LMS, 0, $80 	; enemy HP bar
+		.byte          DL_RASTER|DL_LMS, 0, $80
+		.byte          DL_RASTER|DL_LMS, 0, $80
+		.byte          DL_BLK5
+
+		.byte          DL_TEXT|DL_LMS, 0, $80 		; text, 7 rows
+		.byte  -6+257, DL_TEXT 
+
+		.byte  15+1,   DL_BLK1
+		.byte          DL_RASTER|DL_LMS, 0, $80 	; player HP bars
+		.byte          DL_RASTER|DL_LMS, 0, $80
+		.byte          DL_RASTER|DL_LMS, 0, $80
+		.byte          DL_BLK1|DL_DLI
+
+		.byte          DL_BLK8
+
+		.byte          DL_RASTER|DL_LMS, 0, $80 	; raster, 10 rows
+		.byte  -9+257, DL_RASTER 
+
+		.byte 128 ; terminator
+
+	.code 
+	lda #<packedBattleDL
+	ldx #>packedBattleDL
+	jsr _unpackDisplayList 		; returns end of DL in ptr1
+	
+	enemyHpBar = ptr2  		
+		lda #0 					; save pointer value because
+		sta COLCRS 				; _setSavadrToGraphicsCursor uses ptr1
+		lda #48
+		sta ROWCRS
+		jsr _setSavadrToGraphicsCursor
+		lda SAVADR
+		sta enemyHpBar 
+		lda SAVADR+1
+		sta enemyHpBar+1
+
+	playerHpBar = ptr3
+		lda #0 		  			; save pointer value because
+		sta COLCRS 				; _setSavadrToGraphicsCursor uses ptr1
+		lda #7
+		sta ROWCRS
+		jsr _setSavadrToTextCursor
+		lda SAVADR
+		sta playerHpBar 
+		lda SAVADR+1
+		sta playerHpBar+1
+
+	buttonScreenPtr = SAVADR 
+		lda #0 					; use SAVADR for button screen memory pointer
+		sta COLCRS 
+		lda #49
+		sta ROWCRS
+		jsr _setSavadrToGraphicsCursor
+
+	set_lms:
+		jsr _setPtr1ToDisplayList
+	set_raster_lms:
+		lda SAVMSC 
+		ldx SAVMSC+1
+		jsr _setNextLMSValueFromPtr1
+	set_enemy_hp_lms:
+		lda enemyHpBar
+		ldx enemyHpBar+1
+		jsr _setNextLMSValueFromPtr1
+		lda enemyHpBar
+		ldx enemyHpBar+1
+		jsr _setNextLMSValueFromPtr1
+		lda enemyHpBar
+		ldx enemyHpBar+1
+		jsr _setNextLMSValueFromPtr1
+	set_text_lms:
+		lda TXTMSC 
+		ldx TXTMSC+1
+		jsr _setNextLMSValueFromPtr1
+	set_player_hp_lms:
+		lda playerHpBar
+		ldx playerHpBar+1
+		jsr _setNextLMSValueFromPtr1
+		lda playerHpBar
+		ldx playerHpBar+1
+		jsr _setNextLMSValueFromPtr1
+		lda playerHpBar
+		ldx playerHpBar+1
+		jsr _setNextLMSValueFromPtr1
+	set_button_lms:
+		lda SAVADR 
+		ldx SAVADR+1
+		jsr _setNextLMSValueFromPtr1
+
 	textHeight = 7
-
-	lda #textHeight 	; update text window height
-	sta BOTSCR
-
-	jsr _initDisplayListVarsInternal
-
-	; Use SAVMSC screen memory for raster
-	lda SAVMSC 		
-	sta ptr2
-	lda SAVMSC+1
-	sta ptr2+1
-	ldx #rasterHeight
-	lda #DL_RASTER
-	jsr _writeDisplayListLinesInternal
-
-	jsr _applyTrailingDLI
-
-	; Continue SAVMSC for enemy HP bar chart
-	clc
-	lda ptr2
-	adc #<(rasterHeight*ROW_BYTES) ; 48 * 40 = 1920 = $780
-	sta ptr2 
-	lda ptr2+1
-	adc #>(rasterHeight*ROW_BYTES)
-	sta ptr2+1
-	jsr _writeDisplayListBarChartInternal
-
-	; Add 4-line spacer
-	lda #DL_BLK4
-	sta (ptr1),Y
-	iny
-
-	; Use textWindow screen memory for text box
-	lda TXTMSC  			
-	sta ptr2
-	lda TXTMSC+1
-	sta ptr2+1
-	ldx #textHeight
-	lda #DL_TEXT
-	jsr _writeDisplayListLinesInternal
-
-	; Continue using textWindow for bar chart
-	lda ptr2
-	clc 
-	adc #<(textHeight*ROW_BYTES)  ; 7 * 40 = 280 = $118
-	sta ptr2
-	lda ptr2+1
-	adc #>(textHeight*ROW_BYTES)
-	sta ptr2+1
-	jsr _writeDisplayListBarChartInternal
-
-	; Add 4-line spacer with DLI
-	lda #DL_BLK4|DL_DLI
-	sta (ptr1),Y
-	iny
-
-	; Add 4-line spacer
-	lda #DL_BLK4
-	sta (ptr1),Y
-	iny
-
-	; Return to raster graphics for button area
-	clc
-	lda SAVMSC 
-	adc #<((1+rasterHeight)*40)
-	sta ptr2
-	lda SAVMSC+1
-	adc #>((1+rasterHeight)*40)
-	sta ptr2+1
-	ldx #10
-	lda #DL_RASTER
-	jsr _writeDisplayListLinesInternal
-
-	jsr _writeDisplayListEndInternal
+		lda #textHeight 	; update text window height
+		sta BOTSCR
 	rts
 .endproc
 
@@ -346,9 +330,11 @@ _dliSpriteData:
 	packedInfoDL: ; display list in PackBits format
 		.byte   3-1,   DL_RASTER|DL_LMS, 0, $80 ; raster, 24 rows
 		.byte -21+257, DL_RASTER 
-		.byte   4-1,   DL_RASTER|DL_DLI, DL_RASTER|DL_DLI, DL_TEXT|DL_DLI, DL_BLK1 ; chara name
+		.byte   4-1,   DL_RASTER|DL_DLI, DL_RASTER|DL_DLI
+		.byte          DL_TEXT|DL_DLI, DL_BLK1	; chara name
 		.byte -11+257, DL_TEXT 					; chara stats
-		.byte   4-1,   DL_TEXT|DL_DLI, DL_BLK8, DL_TEXT|DL_DLI, DL_BLK1 ; "Items"
+		.byte   4-1,   DL_TEXT|DL_DLI, DL_BLK8 
+		.byte          DL_TEXT|DL_DLI, DL_BLK1 ; "Items"
 		.byte  -3+257, DL_TEXT 					; items body
 		.byte   1-1,   DL_TEXT|DL_DLI 			; last line DLI
 		.byte 128 ; terminator
@@ -359,12 +345,9 @@ _dliSpriteData:
 	jsr _unpackDisplayList 		; returns end of DL in ptr1
 	set_raster_lms:
 		jsr _setPtr1ToDisplayList
-		ldy #4
 		lda SAVMSC 
-		sta (ptr1),Y
-		iny
-		lda SAVMSC+1
-		sta (ptr1),Y
+		ldx SAVMSC+1
+		jsr _setNextLMSValueFromPtr1
 	textHeight = 18
 		lda #textHeight 	; update text window height
 		sta BOTSCR
@@ -447,6 +430,43 @@ _dliSpriteData:
 		@skip_msb:
 		rts 
 .endproc 
+
+.proc _setNextLMSValueFromPtr1
+	; Find the next LMS starting from ptr1 and write the value in AX in it.
+	; Updates ptr1.
+	pha 
+	txa 
+	pha 
+	ldy #0
+	loop: 
+		lda (ptr1),Y 
+		iny  
+		beq not_found 	; if Y==0: wrapped around
+		cmp #DL_JVB 
+		beq not_found	; JVB = end of display list
+		tax 
+		and #$0F
+		beq loop  		; skip blank line instructions
+		txa 
+		and #DL_LMS 
+		beq loop
+	found_lms:
+		pla 
+		tax 
+		pla 
+		sta (ptr1),Y
+		iny 
+		txa 
+		sta (ptr1),Y
+		iny 
+		tya 
+		jsr _addAToPtr1
+		rts 
+	not_found:
+		pla 
+		pla
+		rts 
+.endproc
 
 .proc _initDisplayListVarsInternal
 	lda SDLSTL 
@@ -704,7 +724,7 @@ _dliSpriteData:
 	sta ROWCRS
 	lda #0
 	sta COLCRS
-	jsr _setSavadrToCursor
+	jsr _setSavadrToGraphicsCursor
 
 	jsr popptr1 
 
@@ -851,8 +871,8 @@ _dliSpriteData:
 .endproc
 
 
-.export _setSavadrToCursor
-.proc _setSavadrToCursor 
+.export _setSavadrToGraphicsCursor
+.proc _setSavadrToGraphicsCursor 
 	; Stores cursor address in SAVADR
 	; Calls _multiplyAXtoPtr1 (uses sreg, ptr1)
 	.importzp 	ptr1
