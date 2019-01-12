@@ -13,12 +13,13 @@
 ; void fillMapRow(UInt8 c);
 .export _fillMapRow
 .proc _fillMapRow 
-	; Fills tiles starting at SAVADR to NEWCOL width with A
+	; Fills tiles starting at SAVADR with A
+	windowWidth = _mapFrame+2
 	ldy #0 
 	loop: 
 		sta (SAVADR),Y
 		iny 
-		cpy NEWCOL
+		cpy windowWidth
 		bne loop
 	rts
 .endproc
@@ -92,13 +93,13 @@
 .export _decodeRunLenRange 
 .proc _decodeRunLenRange
 	; * Decodes custom run-length encoded format data, skipping OLDCOL bytes
-	;   of output and writing out up to DELTAR bytes length.
+	;   of output and writing out up to DELTAC bytes length.
 	; * The format is: 4 bits of the tile value, then 4 bits of the repeat count.
 	;   If those last 4 bits == $0F, add the value of the next 8 bits. 
 	;   The output is tile value written out repeat+1 times. 
 	; * Parameters:
 	;   OLDCOL: number of bytes to skip before starting output.
-	;   DELTAR: length of output requested
+	;   DELTAC: length of output requested
 	.import 	popptr1, popa
 	.importzp 	ptr1, ptr2, ptr3
 	.importzp 	tmp1
@@ -119,9 +120,9 @@
 
 	tile = TMPCHR 		; store tile value in OS location
 
-	dstEnd = ptr2
+	dstEnd = NEWCOL 	; NEWCOL = OLDCOL + DELTAC
 	clc
-	lda DELTAR
+	lda DELTAC
 	adc dst 
 	sta dstEnd
 	lda #0

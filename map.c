@@ -108,7 +108,7 @@ static UInt8 mapTileAt(UInt8 x, UInt8 y) {
 
 	// Get tile
 	POKE(OLDCOL, x); // skip count
-	POKE(DELTAR, 1); // decode length
+	POKE(DELTAC, 1); // decode length
 	decodeRunLenRange(&tile, runLenPtr);
 
 	// Convert to character value
@@ -199,7 +199,6 @@ static void drawCurrentMap(void) {
 
 	// Set zeropage parameters
 	POKEW(SAVADR, PEEKW(SAVMSC) + mapFrame.origin.y * SCREEN_WIDTH + mapFrame.origin.x);
-	POKE(NEWCOL, mapFrame.size.width); 
 	// NEWROW: height of the map window frame
 	POKE(LMARGN, leftMargin); 
 	POKE(RMARGN, rightMargin); 
@@ -207,7 +206,7 @@ static void drawCurrentMap(void) {
 	POKE(OLDCOL, mapCol); 
 	// ROWCRS: screenRow
 	// COLCRS: screenCol
-	POKE(DELTAR, decodeLength);
+	POKE(DELTAC, decodeLength);
 
 	// Main Loop
 	for (screenRow=0; screenRow<mapFrame.size.height; ++screenRow) {
