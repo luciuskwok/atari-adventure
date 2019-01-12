@@ -132,22 +132,48 @@ static UInt8 canMoveTo(UInt8 x, UInt8 y) {
 static void fillMapRow(UInt8 c) {
 	// Parameters in zeropage:
 	// SAVADR: pointer to screen row memory, offset to starting column of map window
-	// RMARGN: width of map window
-	UInt8 right = PEEK(RMARGN);
+	// NEWCOL: width of map window, where drawing ends
+	UInt8 width = PEEK(NEWCOL);
 	UInt8 *screen = (UInt8 *)PEEKW(SAVADR);
 	UInt8 x;
 
-	for (x=0; x<right; ++x) {
+	for (x=0; x<width; ++x) {
 		screen[x] = c;
 	}
 }
 
-static void drawMapRow(void) {
+static void drawMapRow(UInt8 *buffer) {
 	// Parameters in zeropage:
 	// SAVADR: pointer to screen row memory, offset to starting column
 	// COLCRS: number of map tiles to skip when decoding map
 	// LMARGN: number of tiles beyond left edge map data to show
 	// RMARGN: width of map window
+
+	UInt8 *rowPtr = (UInt8 *)PEEKW(SAVADR);
+	UInt8 leftMargin = PEEK(LMARGN);
+	UInt8 rightMargin = PEEK(RMARGN);
+	UInt8 screenRow = PEEK(OLDROW);
+	UInt8 screenCol;
+	UInt8 c;
+
+	for (screenCol=0; screenCol<mapFrame.size.width; ++screenCol) {
+		if (screenCol < leftMargin || screenCol >= rightMargin) {
+			c = 0; // Tiles outside map bounds are set to default blank tile.
+		} else {
+			c = buffer[screenCol - leftMargin];
+		}
+
+		// Convert decoded value to character value
+		c = currentTileMap[c];
+		rowPtr[screenCol] = c;
+
+		// Add sprite overlay for special characters
+		c = (c & 0x3F);
+		if (c >= tCastle) {
+			setTileSprite(c - tCastle, screenCol, screenRow);
+		}
+
+	} // end for(screenCol)
 }
 
 static void drawCurrentMap(void) {
@@ -156,13 +182,12 @@ static void drawCurrentMap(void) {
 	const UInt8 *runLenPtr = currentRunLenMap;
 	UInt8 mapFrameHalfWidth = mapFrame.size.width / 2;
 	UInt8 mapFrameHalfHeight = mapFrame.size.height / 2;
-	UInt8 row, col;
-	UInt8 mapRow, mapCol, topMargin, leftMargin;
-	UInt8 colMax;
+	UInt8 screenRow;
+	UInt8 mapRow, mapCol;
+	UInt8 topMargin, leftMargin, rightMargin;
 	UInt8 decodeLength;
 	UInt8 c;
 	UInt8 buffer[SCREEN_WIDTH];
-	UInt8 *screenRow;
 
 	// Integrity check
 	if (runLenPtr == NULL) {
@@ -179,7 +204,7 @@ static void drawCurrentMap(void) {
 		topMargin = 0;
 		mapRow = mapCurrentLocation.y - mapFrameHalfHeight;
 
-		// Adjust runLenPtr to skip lines within run-len data.
+		// Jump to first visible row in map data.
 		for (c=0; c<mapRow; ++c) {
 			runLenPtr += runLenPtr[0];
 		}
@@ -198,51 +223,44 @@ static void drawCurrentMap(void) {
 		leftMargin = 0;
 		mapCol = mapCurrentLocation.x - mapFrameHalfWidth;
 	}
+
+	// Calculate the number of map tiles to decode on each line. This is the width 
+	// of the window minus any left margin, which is the "out of bounds" area.
 	decodeLength = mapFrame.size.width - leftMargin;
+	// For narrow maps, make sure the end doesn't extend beyond the right edge
+	// of the map data. 
 	if (decodeLength > currentMapSize.width - mapCol) {
 		decodeLength = currentMapSize.width - mapCol;
 	}
-	colMax = currentMapSize.width + leftMargin - mapCol;
+	// The right margin is where the map tile drawing ends, when screenCol is 
+	// equal or greater than the right margin, draw the "out of bounds" tile.
+	rightMargin = currentMapSize.width + leftMargin - mapCol;
 
 	// Set zeropage parameters
 	POKEW(SAVADR, PEEKW(SAVMSC) + mapFrame.origin.y * SCREEN_WIDTH + mapFrame.origin.x);
-	POKE(LMARGN, leftMargin); // number of tiles beyond left edge of map data currently shown
-	POKE(RMARGN, mapFrame.size.width); // width of map frame
-	POKE(ROWCRS, mapRow); // current map row
-	POKE(COLCRS, mapCol); // offset from left edge of map data to left edge of window
+	POKE(NEWCOL, mapFrame.size.width); 
+	// NEWROW: height of the map window frame
+	POKE(LMARGN, leftMargin); 
+	POKE(RMARGN, rightMargin); 
+	POKE(ROWCRS, mapRow); 
+	POKE(COLCRS, mapCol); 
 
 	// Main Loop
-	for (row=0; row<mapFrame.size.height; ++row) {
+	for (screenRow=0; screenRow<mapFrame.size.height; ++screenRow) {
 		// Clear the sprite overlay for this row
-		dliSpriteData[row] = 0;
+		dliSpriteData[screenRow] = 0;
 
-		if (row < topMargin || mapRow >= currentMapSize.height) {
+
+		if (screenRow < topMargin || mapRow >= currentMapSize.height) {
 			// Beyond borders: fill with the default empty tile.
 			fillMapRow(currentTileMap[0]);
 		} else {
 			decodeRunLenRange(buffer, mapCol, decodeLength, runLenPtr);
 			runLenPtr += runLenPtr[0]; // Next row.
-			
-			screenRow = (UInt8 *)PEEKW(SAVADR);
 
-			for (col=0; col<mapFrame.size.width; ++col) {
-				if (col < leftMargin || col >= colMax) {
-					c = 0; // Tiles outside map bounds are set to default blank tile.
-				} else {
-					c = buffer[col - leftMargin];
-				}
+			POKE(OLDROW, screenRow); // Pass screenRow to drawMapRow
+			drawMapRow(buffer);
 
-				// Convert decoded value to character value
-				c = currentTileMap[c];
-				screenRow[col] = c;
-
-				// Add sprite overlay for special characters
-				c = (c & 0x3F);
-				if (c >= tCastle) {
-					setTileSprite(c - tCastle, col, row);
-				}
-
-			} // end for(col)
 			++mapRow;
 		} // end if
 
