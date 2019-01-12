@@ -7,11 +7,11 @@
 
 // Globals
 extern UInt8 currentMapType;
-extern UInt8 mapShipType;
-extern UInt8 mapLampStrength;
-extern UInt8 mapSightDistance;
-extern PointU8 mapOverworldLocation;
-extern PointU8 mapCurrentLocation;
+extern UInt8 playerShipType;
+extern UInt8 playerLampStrength;
+extern UInt8 playerSightDistance;
+extern PointU8 playerOverworldLocation;
+extern PointU8 playerLocation;
 
 // Constants
 

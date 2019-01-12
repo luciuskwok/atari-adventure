@@ -14,21 +14,22 @@
 
 // Globals
 UInt8 currentMapType;
-UInt8 mapShipType;
-UInt8 mapLampStrength;
-UInt8 mapSightDistance;
-PointU8 mapOverworldLocation;
-PointU8 mapCurrentLocation;
+UInt8 playerShipType;
+UInt8 playerLampStrength;
+UInt8 playerSightDistance;
+PointU8 playerOverworldLocation;
+PointU8 playerLocation;
 
 
 // Private Globals
 const UInt8 *currentRunLenMap;
 const UInt8 *currentTileMap;
-SizeU8 currentMapSize;
+SizeU8 mapSize;
 RectU8 mapFrame;
 
 
 // Assembly routines
+void drawCurrentMap(void);
 void fillMapRow(UInt8 c);
 void drawMapRow(UInt8 *buffer);
 void decodeRunLenRange(UInt8 *outData, const UInt8 *runLenData);
@@ -121,9 +122,9 @@ static UInt8 canMoveTo(UInt8 x, UInt8 y) {
 	switch (currentMapType) {
 		case OverworldMapType:
 			if (tile == tShallows) { // Shallows
-				return mapShipType >= 1;
+				return playerShipType >= 1;
 			} else if (tile == tWater) {
-				return mapShipType >= 2;
+				return playerShipType >= 2;
 			}
 			return 1;
 		case DungeonMapType:
@@ -137,7 +138,7 @@ static UInt8 canMoveTo(UInt8 x, UInt8 y) {
 
 // Map Drawing
 
-static void drawCurrentMap(void) {
+static void drawCurrentMapOLD(void) {
 	UInt16 startTime = SHORT_CLOCK; // DEBUGGING
 
 	const UInt8 *runLenPtr = currentRunLenMap;
@@ -156,14 +157,14 @@ static void drawCurrentMap(void) {
 	}
 
 	// Calculate number of rows to leave blank and how many to skip in the map.
-	if (mapCurrentLocation.y <= mapFrameHalfHeight) {
+	if (playerLocation.y <= mapFrameHalfHeight) {
 		// In this case, the top edge of the window is above the top edge of the map
 		// data, so there will be a top margin filled with the "out of bounds" tile.
-		topMargin = mapFrameHalfHeight - mapCurrentLocation.y;
+		topMargin = mapFrameHalfHeight - playerLocation.y;
 		mapRow = 0;
 	} else {
 		topMargin = 0;
-		mapRow = mapCurrentLocation.y - mapFrameHalfHeight;
+		mapRow = playerLocation.y - mapFrameHalfHeight;
 
 		// Jump to first visible row in map data.
 		for (c=0; c<mapRow; ++c) {
@@ -172,17 +173,17 @@ static void drawCurrentMap(void) {
 	}
 
 	// Calculate number of columns to leave blank and how many to skip in the map.
-	if (mapCurrentLocation.x < mapFrameHalfWidth) {
+	if (playerLocation.x < mapFrameHalfWidth) {
 		// In this case, the left edge of the window shows tiles beyond the left edge
 		// of the map data. So the left margin is increased to indicate that how many
 		// "out of bounds" tiles to show.  
-		leftMargin = mapFrameHalfWidth - mapCurrentLocation.x;
+		leftMargin = mapFrameHalfWidth - playerLocation.x;
 		mapCol = 0;
 	} else {
 		// In this case, the left edge of the window starts at an offset from the left
 		// edge of the map data. So the mapCol is set to this offset. 
 		leftMargin = 0;
-		mapCol = mapCurrentLocation.x - mapFrameHalfWidth;
+		mapCol = playerLocation.x - mapFrameHalfWidth;
 	}
 
 	// Calculate the number of map tiles to decode on each line. This is the width 
@@ -190,12 +191,12 @@ static void drawCurrentMap(void) {
 	decodeLength = mapFrame.size.width - leftMargin;
 	// For narrow maps, make sure the end doesn't extend beyond the right edge
 	// of the map data. 
-	if (decodeLength > currentMapSize.width - mapCol) {
-		decodeLength = currentMapSize.width - mapCol;
+	if (decodeLength > mapSize.width - mapCol) {
+		decodeLength = mapSize.width - mapCol;
 	}
 	// The right margin is where the map tile drawing ends, when screenCol is 
 	// equal or greater than the right margin, draw the "out of bounds" tile.
-	rightMargin = currentMapSize.width + leftMargin - mapCol;
+	rightMargin = mapSize.width + leftMargin - mapCol;
 
 	// Set zeropage parameters
 	POKEW(SAVADR, PEEKW(SAVMSC) + mapFrame.origin.y * SCREEN_WIDTH + mapFrame.origin.x);
@@ -214,7 +215,7 @@ static void drawCurrentMap(void) {
 		dliSpriteData[screenRow] = 0;
 
 
-		if (screenRow < topMargin || mapRow >= currentMapSize.height) {
+		if (screenRow < topMargin || mapRow >= mapSize.height) {
 			// Beyond borders: fill with the default empty tile.
 			fillMapRow(currentTileMap[0]);
 		} else {
@@ -234,7 +235,7 @@ static void drawCurrentMap(void) {
 	debugPrint("Map:", SHORT_CLOCK - startTime, 0, 5);
 }
 
-static void loadMap(UInt8 mapType, UInt8 mapSightDistance) {
+static void loadMap(UInt8 mapType, UInt8 playerSightDistance) {
 	const UInt8 *colorTable;
 
 	clearMapScreen();
@@ -242,26 +243,26 @@ static void loadMap(UInt8 mapType, UInt8 mapSightDistance) {
 	switch (mapType) {
 	case OverworldMapType: 
 		currentRunLenMap = overworldRleMap;
-		currentMapSize = overworldMapSize;
+		mapSize = overworldMapSize;
 		currentTileMap = overworldTileMap;
 		colorTable = overworldColorTable;
 		break;
 	case DungeonMapType: 
 		currentRunLenMap = dungeonRleMap;
-		currentMapSize = dungeonMapSize;
+		mapSize = dungeonMapSize;
 		currentTileMap = dungeonTileMap;
 		colorTable = dungeonColorTable;
 		break;
 	case TownMapType: 
 		currentRunLenMap = townRleMap;
-		currentMapSize = townMapSize;
+		mapSize = townMapSize;
 		currentTileMap = townTileMap;
 		colorTable = townColorTable;
 		break;
 	}
 	currentMapType = mapType;
 
-	layoutCurrentMap(mapSightDistance);
+	layoutCurrentMap(playerSightDistance);
 	drawCurrentMap();
 }
 
@@ -282,14 +283,14 @@ void clearMapScreen(void) {
 	zeroOut8(dliSpriteData, dliSpriteDataLength);
 }
 
-void layoutCurrentMap(UInt8 mapSightDistance) {
+void layoutCurrentMap(UInt8 playerSightDistance) {
 	UInt8 x, halfWidth, halfHeight;
 
-	if (mapSightDistance > 3) {
+	if (playerSightDistance > 3) {
 		mapFrame.size.width = 21;
 		mapFrame.size.height = 9;
 	} else {
-		x = mapSightDistance * 2 + 1;
+		x = playerSightDistance * 2 + 1;
 		mapFrame.size.width = x;
 		mapFrame.size.height = x;
 	}
@@ -316,7 +317,7 @@ void transitionToMap(UInt8 mapType, UInt8 shouldFadeOut, UInt8 shouldFadeIn) {
 		loadColorTable(NULL);
 	}
 
-	loadMap(mapType, mapSightDistance);
+	loadMap(mapType, playerSightDistance);
 	
 	if (shouldFadeIn) {	
 		fadeInColorTable(colorTable);
@@ -331,23 +332,23 @@ void transitionToMap(UInt8 mapType, UInt8 shouldFadeOut, UInt8 shouldFadeIn) {
 
 void exitToOverworld(void) {
 	stopSong();
-	mapCurrentLocation = mapOverworldLocation;
-	mapSightDistance = 0xFF;
+	playerLocation = playerOverworldLocation;
+	playerSightDistance = 0xFF;
 	transitionToMap(OverworldMapType, 1, 1);
 }
 
 void enterDungeon(void) {
-	mapSightDistance = mapLampStrength;
-	mapOverworldLocation = mapCurrentLocation;
-	mapCurrentLocation = dungeonEntryPoint;
+	playerSightDistance = playerLampStrength;
+	playerOverworldLocation = playerLocation;
+	playerLocation = dungeonEntryPoint;
 	transitionToMap(DungeonMapType, 1, 1);
 }
 
 void enterTown(void) {
 	startSong(4);
-	mapSightDistance = 0xFF;
-	mapOverworldLocation = mapCurrentLocation;
-	mapCurrentLocation = townEntryPoint;
+	playerSightDistance = 0xFF;
+	playerOverworldLocation = playerLocation;
+	playerLocation = townEntryPoint;
 	transitionToMap(TownMapType, 1, 1);
 }
 
@@ -356,7 +357,7 @@ SInt8 mapCursorHandler(UInt8 event) {
 	PointU8 oldLoc, newLoc;
 	UInt8 tile;
 
-	oldLoc = mapCurrentLocation;
+	oldLoc = playerLocation;
 	newLoc = oldLoc;
 
 	switch (event) {
@@ -397,10 +398,10 @@ SInt8 mapCursorHandler(UInt8 event) {
 
 	if (newLoc != oldLoc) {
 		// Check map bounds. Because newLoc is unsigned, it wraps around from 0 to 255.
-		if (newLoc.x < currentMapSize.width && newLoc.y < currentMapSize.height) {
+		if (newLoc.x < mapSize.width && newLoc.y < mapSize.height) {
 			if (canMoveTo(newLoc.x, newLoc.y)) {
 				noteOn(NoteF+Oct3, 1, 4, 15, 0x00, 3);
-				mapCurrentLocation = newLoc;
+				playerLocation = newLoc;
 				drawCurrentMap();
 			}
 		} else {

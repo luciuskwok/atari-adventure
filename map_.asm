@@ -2,24 +2,226 @@
 
 .include "atari_memmap.asm"
 
-.import _mapFrame
+.import _currentRunLenMap
 .import _currentTileMap
+.import _playerLocation
+.import _mapSize
+.import _mapFrame
+.import _dliSpriteData
 
-.import _setTileSprite
 
 .code 
+
+
+;  void drawCurrentMap(void);
+.export _drawCurrentMap
+.proc _drawCurrentMap
+	; Draws the map in _currentRunLenMap with player at position in 
+	; _mapCurrentLocation, using the layout in _mapFrame.
+	; Also uses _mapSize.
+	; Calls _drawMapRow, which uses sreg, ptr1, ptr2.
+	; Calls _decodeRunLenRange, which uses and modifies sreg, ptr1.
+	.importzp sp
+	.importzp ptr1, ptr3
+	.importzp tmp1, tmp2 
+	.import addysp, subysp, pushax
+	.import _multiplyAXtoPtr1, _addAToPtr1
+
+	screenWidth = 24
+
+	lda _currentRunLenMap+1 		; check MSB for NULL pointer
+	bne passed_integrity_check
+		rts 
+	passed_integrity_check:
+
+	buffer = sp 
+		ldy #screenWidth 			; reserve 24 bytes for buffer
+		jsr subysp
+
+	outOfBoundsChar = OLDCHR 
+		lda _currentTileMap 		; Temporarily use ptr3 for _currentTileMap 
+		sta ptr3 					; and get the char to be used for out of
+		lda _currentTileMap+1		; bounds tiles. 
+		sta ptr3+1
+		ldy #0
+		lda (ptr3),Y
+		sta outOfBoundsChar
+
+	runLenPtr = ptr3 
+		lda _currentRunLenMap
+		sta runLenPtr 
+		lda _currentRunLenMap+1
+		sta runLenPtr+1
+
+	frameHeight = _mapFrame+3
+	mapRow = OLDROW
+	topMargin = tmp1
+		lda frameHeight 			; The mapFrame defines the size and location of
+		lsr  						; the window into the tiles being shown.
+		sec 						; topMargin = mapFrame.height/2 - playerLocation.y
+		sbc _playerLocation+1
+		bcc top_in_bounds  			; if result is positive: top is out of bounds
+		top_out_of_bounds:		
+			; In this case, the top edge of the frame is at or above the top edge of the map data, so there may be a top margin filled with the "out of bounds" rows.
+			sta topMargin
+			lda #0
+			sta mapRow 
+			jmp topMargin_done
+		top_in_bounds:
+			; In this case, the top edge of the frame is below the top edge of the map data. 
+			eor #$FF 				; Convert negative to positive by flipping 
+			tax 					; bits and adding 1.
+			inx 
+			stx mapRow 
+			lda #0
+			sta topMargin 
+			loop_skip_rows:
+				jsr inc_runLenPtr
+				dex
+				bne loop_skip_rows 
+		topMargin_done:
+
+	frameWidth = _mapFrame+2
+	mapCol = OLDCOL
+	leftMargin = LMARGN 
+		lda frameWidth 				; leftMargin = mapFrame.width/2 - playerLocation.x
+		lsr 
+		sec 
+		sbc _playerLocation 
+		bcc left_in_bounds 
+		left_out_of_bounds:
+			; In this case, the left edge of the window shows tiles beyond the left edge of the map data. So the left margin is increased to indicate that how many "out of bounds" tiles to show.  
+			sta leftMargin 			; leftMargin as above
+			lda #0
+			sta mapCol  			; mapCol = 0
+			jmp leftMargin_done
+		left_in_bounds:
+			eor #$FF 				; Convert negative to positive by flipping 
+			clc 					; bits and adding 1.
+			adc #1 
+			sta mapCol  			; mapCol = playerLocation.x - mapFrame.width/2
+			lda #0
+			sta leftMargin 			; leftMargin = 0
+		leftMargin_done:
+
+	rightMargin = RMARGN 
+		; The right margin is where the map tile drawing ends, when screenCol is equal or greater than the right margin, draw the "out of bounds" tile.
+		lda _mapSize 				; mapSize.width
+		clc 
+		adc leftMargin 
+		sec 
+		sbc mapCol 
+		sta rightMargin 
+
+	decodeLength = DELTAC
+		;  Calculate the number of map tiles to decode on each line. This is the width of the window minus any left margin, which is the "out of bounds" area.
+		lda frameWidth
+		sec 
+		sbc leftMargin 
+		sta decodeLength 
+		; For narrow maps, make sure the end doesn't extend beyond the right edge of the map data. 
+		lda _mapSize 				; mapSize.width
+		sec 
+		sbc mapCol 
+		cmp decodeLength  			; if mapSize.width - mapCol < decodeLength
+		bcs decodeLength_done
+			sta decodeLength 		; then: decodeLength = mapSize.width - mapCol
+		decodeLength_done:
+
+	screenAddr = SAVADR 
+		lda _mapFrame+1 			; mapFrame.origin.y
+		ldx #screenWidth 
+		jsr _multiplyAXtoPtr1
+		lda _mapFrame 				; mapFrame.origin.x 
+		jsr _addAToPtr1
+		clc 
+		lda SAVMSC
+		adc ptr1 
+		sta SAVADR 
+		lda SAVMSC+1
+		adc ptr1+1
+		sta SAVADR+1
+
+	screenRow = ROWCRS 
+		ldx #0
+		stx screenRow				; reset screenRow to 0
+
+	loop_row:
+		lda #0
+		sta _dliSpriteData,X 		; Clear the sprite overlay for this row
+
+		lda screenRow  				; if screenRow < topMargin
+		cmp topMargin 				; then: row is out of bounds
+		bcc row_out_of_bounds
+
+		lda mapRow 					; if mapRow >= mapHeight
+		cmp _mapSize+1	 			; then: row is out of bounds
+		bcs row_out_of_bounds
+
+		row_in_bounds:
+			lda buffer 
+			ldx buffer+1
+			jsr pushax 
+			lda runLenPtr 
+			ldx runLenPtr+1
+			jsr _decodeRunLenRange 	; decodeRunLenRange(buffer, runLenPtr)
+
+			jsr inc_runLenPtr 		; next row
+
+			lda buffer 
+			ldx buffer+1
+			jsr _drawMapRow
+
+			inc mapRow
+			jmp next_row
+
+		row_out_of_bounds:
+			lda outOfBoundsChar 
+			jsr _fillMapRow 
+
+	next_row:
+		lda screenAddr 
+		clc 
+		adc #screenWidth 
+		sta screenAddr
+		bcc @skip_msb 
+			inc screenAddr+1
+		@skip_msb: 
+
+		ldx screenRow 
+		inx 
+		stx screenRow
+		cpx frameHeight	 			; if screenRow < mapFrame.height
+		bcc loop_row				; then: loop again
+
+	return:
+		ldy #screenWidth			; free buffer
+		jsr addysp 
+		rts 
+
+	inc_runLenPtr:
+		ldy #0
+		lda (runLenPtr),Y 	; Jump to first visible row in map data
+		clc 
+		adc runLenPtr 
+		sta runLenPtr
+		bcc @skip_msb
+			inc runLenPtr+1
+		@skip_msb:
+		rts
+.endproc 
 
 
 ; void fillMapRow(UInt8 c);
 .export _fillMapRow
 .proc _fillMapRow 
 	; Fills tiles starting at SAVADR with A
-	windowWidth = _mapFrame+2
+	frameWidth = _mapFrame+2
 	ldy #0 
 	loop: 
 		sta (SAVADR),Y
 		iny 
-		cpy windowWidth
+		cpy frameWidth
 		bne loop
 	rts
 .endproc
@@ -36,6 +238,7 @@
 	; LMARGN: number of tiles beyond left edge map data to show
 	; RMARGN: width of map window 
 	.importzp sreg, ptr2 ; _setTileSprite uses ptr1
+	.import _setTileSprite
 
 	buffer = ptr2 			; Change this to use sp?
 		sta buffer 
@@ -100,19 +303,18 @@
 	; * Parameters:
 	;   OLDCOL: number of bytes to skip before starting output.
 	;   DELTAC: length of output requested
-	.import 	popptr1, popa
-	.importzp 	ptr1, ptr2, ptr3
-	.importzp 	tmp1
+	.import 	popsreg, popa
+	.importzp 	sreg, ptr1
 
 .code
-	src = ptr3 			; src is updated to point to next input byte
+	src = ptr1 			; src is updated to point to next input byte
 	sta src
 	stx src+1
 
 	jsr inc_src_byte 	; discard length byte
 
-	dst = ptr1  		; dst is updated to point to next output byte
-	jsr popptr1
+	dst = sreg  		; dst is updated to point to next output byte
+	jsr popsreg
 
 	skipRemaining = COLCRS 
 	lda OLDCOL

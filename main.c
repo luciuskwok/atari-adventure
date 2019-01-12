@@ -188,11 +188,11 @@ int main (void) {
 	isQuitting = 0;
 
 	currentMapType = OverworldMapType;
-	mapShipType = 0;
-	mapLampStrength = 2;
-	mapSightDistance = 0xFF;
-	mapOverworldLocation = overworldEntryPoint;
-	mapCurrentLocation = mapOverworldLocation;
+	playerShipType = 0;
+	playerLampStrength = 2;
+	playerSightDistance = 0xFF;
+	playerOverworldLocation = overworldEntryPoint;
+	playerLocation = playerOverworldLocation;
 
 	initMap();
 	

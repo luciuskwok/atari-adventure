@@ -10,9 +10,10 @@
 	ROWCRS    = $54 		; cursor row
 	COLCRS    = $55 		; cursor column, 16-bit
 	DINDEX    = $57			; Current screen/display mode
+	SAVMSC 	  = $58 		; Pointer to screen memory, 16-bit
 	OLDROW    = $5A			; Previous graphics cursor row
 	OLDCOL    = $5B			; Previous graphics cursor column, 16-bit
-	SAVMSC 	  = $58 		; Pointer to screen memory, 16-bit
+	OLDCHR 	  = $5D 		; Retains value of char under cursor 
 	NEWROW    = $60			
 	NEWCOL    = $61			; 16-bit
 	ADRESS    = $64 		; Temporary pointer, 16-bit
