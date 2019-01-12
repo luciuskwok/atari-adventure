@@ -138,103 +138,6 @@ static UInt8 canMoveTo(UInt8 x, UInt8 y) {
 
 // Map Drawing
 
-static void drawCurrentMapOLD(void) {
-	UInt16 startTime = SHORT_CLOCK; // DEBUGGING
-
-	const UInt8 *runLenPtr = currentRunLenMap;
-	UInt8 mapFrameHalfWidth = mapFrame.size.width / 2;
-	UInt8 mapFrameHalfHeight = mapFrame.size.height / 2;
-	UInt8 screenRow;
-	UInt8 mapRow, mapCol;
-	UInt8 topMargin, leftMargin, rightMargin;
-	UInt8 decodeLength;
-	UInt8 c;
-	UInt8 buffer[SCREEN_WIDTH]; // ptr2
-
-	// Integrity check
-	if (runLenPtr == NULL) {
-		return;
-	}
-
-	// Calculate number of rows to leave blank and how many to skip in the map.
-	if (playerLocation.y <= mapFrameHalfHeight) {
-		// In this case, the top edge of the window is above the top edge of the map
-		// data, so there will be a top margin filled with the "out of bounds" tile.
-		topMargin = mapFrameHalfHeight - playerLocation.y;
-		mapRow = 0;
-	} else {
-		topMargin = 0;
-		mapRow = playerLocation.y - mapFrameHalfHeight;
-
-		// Jump to first visible row in map data.
-		for (c=0; c<mapRow; ++c) {
-			runLenPtr += runLenPtr[0];
-		}
-	}
-
-	// Calculate number of columns to leave blank and how many to skip in the map.
-	if (playerLocation.x < mapFrameHalfWidth) {
-		// In this case, the left edge of the window shows tiles beyond the left edge
-		// of the map data. So the left margin is increased to indicate that how many
-		// "out of bounds" tiles to show.  
-		leftMargin = mapFrameHalfWidth - playerLocation.x;
-		mapCol = 0;
-	} else {
-		// In this case, the left edge of the window starts at an offset from the left
-		// edge of the map data. So the mapCol is set to this offset. 
-		leftMargin = 0;
-		mapCol = playerLocation.x - mapFrameHalfWidth;
-	}
-
-	// Calculate the number of map tiles to decode on each line. This is the width 
-	// of the window minus any left margin, which is the "out of bounds" area.
-	decodeLength = mapFrame.size.width - leftMargin;
-	// For narrow maps, make sure the end doesn't extend beyond the right edge
-	// of the map data. 
-	if (decodeLength > mapSize.width - mapCol) {
-		decodeLength = mapSize.width - mapCol;
-	}
-	// The right margin is where the map tile drawing ends, when screenCol is 
-	// equal or greater than the right margin, draw the "out of bounds" tile.
-	rightMargin = mapSize.width + leftMargin - mapCol;
-
-	// Set zeropage parameters
-	POKEW(SAVADR, PEEKW(SAVMSC) + mapFrame.origin.y * SCREEN_WIDTH + mapFrame.origin.x);
-	// NEWROW: height of the map window frame
-	POKE(LMARGN, leftMargin); 
-	POKE(RMARGN, rightMargin); 
-	POKE(OLDROW, mapRow); 
-	POKE(OLDCOL, mapCol); 
-	// ROWCRS: screenRow
-	// COLCRS: screenCol
-	POKE(DELTAC, decodeLength);
-
-	// Main Loop
-	for (screenRow=0; screenRow<mapFrame.size.height; ++screenRow) {
-		// Clear the sprite overlay for this row
-		dliSpriteData[screenRow] = 0;
-
-
-		if (screenRow < topMargin || mapRow >= mapSize.height) {
-			// Beyond borders: fill with the default empty tile.
-			fillMapRow(currentTileMap[0]);
-		} else {
-			decodeRunLenRange(buffer, runLenPtr);
-			runLenPtr += runLenPtr[0]; // Next row.
-
-			POKE(ROWCRS, screenRow); // Pass screenRow to drawMapRow
-			drawMapRow(buffer);
-
-			++mapRow;
-		} // end if
-
-		POKEW(SAVADR, PEEKW(SAVADR) + SCREEN_WIDTH);
-	}
-
-	// Debugging
-	debugPrint("Map:", SHORT_CLOCK - startTime, 0, 5);
-}
-
 static void loadMap(UInt8 mapType, UInt8 playerSightDistance) {
 	const UInt8 *colorTable;
 
@@ -400,9 +303,13 @@ SInt8 mapCursorHandler(UInt8 event) {
 		// Check map bounds. Because newLoc is unsigned, it wraps around from 0 to 255.
 		if (newLoc.x < mapSize.width && newLoc.y < mapSize.height) {
 			if (canMoveTo(newLoc.x, newLoc.y)) {
+				UInt16 startTime = SHORT_CLOCK;
+
 				noteOn(NoteF+Oct3, 1, 4, 15, 0x00, 3);
 				playerLocation = newLoc;
 				drawCurrentMap();
+
+				debugPrint("Map:", SHORT_CLOCK-startTime, 0, 5);
 			}
 		} else {
 			// Handle moving off the map for towns

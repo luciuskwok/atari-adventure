@@ -205,8 +205,6 @@
 .endproc 
 
 
-; void fillMapRow(UInt8 c);
-.export _fillMapRow
 .proc _fillMapRow 
 	; Fills tiles starting at SAVADR with A
 	frameWidth = _mapFrame+2
@@ -219,8 +217,7 @@
 	rts
 .endproc
 
-; void drawMapRow(UInt8 *buffer);
-.export _drawMapRow
+
 .proc _drawMapRow
 	; Draws map tiles in buffer to screen. 
 	; Parameters:
@@ -285,7 +282,6 @@
 .endproc
 
 
-; void decodeRunLenRange(UInt8 *outData, const UInt8 *runLenData);
 .export _decodeRunLenRange 
 .proc _decodeRunLenRange
 	; * Decodes custom run-length encoded format data, skipping OLDCOL bytes
