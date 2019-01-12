@@ -47,6 +47,10 @@ _dliSpriteData:
 	DL_TILE   = $07
 	DL_RASTER = $0D
 
+	LMS_GR    = $00 		; placeholder for SAVMSC
+	LMS_TXT   = $01 		; placeholder for TXTMSC
+
+
 ; Constants
 	ROW_BYTES = 40
 
@@ -143,15 +147,15 @@ _dliSpriteData:
 .proc _initMapViewDisplay
 	.rodata
 	packedMapDL: ; display list in PackBits format
-		.byte   3-1,   DL_TILE|DL_DLI|DL_HSCROL|DL_LMS, 0, $80 ; tile, 9 rows
+		.byte   3-1,   DL_TILE|DL_DLI|DL_HSCROL|DL_LMS, LMS_GR, 0 ; tile, 9 rows
 		.byte  -8+257, DL_TILE|DL_DLI|DL_HSCROL
 
-		.byte  19-1,   DL_BLK6, DL_TEXT|DL_DLI|DL_LMS, 0, $80 ; text, 3 rows
+		.byte  19-1,   DL_BLK6, DL_TEXT|DL_DLI|DL_LMS, LMS_TXT, 0 ; text, 3 rows
 		.byte          DL_TEXT, DL_TEXT|DL_DLI
 
 		.byte          DL_BLK1, DL_RASTER			 	; HP bar
-		.byte          DL_RASTER|DL_LMS, 0, $80
-		.byte          DL_RASTER|DL_LMS, 0, $80, DL_BLK1|DL_DLI
+		.byte          DL_RASTER|DL_LMS, LMS_TXT, 3 	; add 3 rows to TXTMSC
+		.byte          DL_RASTER|DL_LMS, LMS_TXT, 3, DL_BLK1|DL_DLI
 
 		.byte          DL_BLK7, DL_TEXT_SPACER, DL_TEXT, DL_TEXT_SPACER|DL_DLI
 		.byte 128 ; terminator
@@ -159,30 +163,7 @@ _dliSpriteData:
 	.code 
 	lda #<packedMapDL
 	ldx #>packedMapDL
-	jsr _unpackDisplayList 		; returns end of DL in ptr1
-	set_savadr:
-		lda #0
-		sta COLCRS 
-		lda #3
-		sta ROWCRS
-		jsr _setSavadrToTextCursor
-	set_lms:
-		jsr _setPtr1ToDisplayList
-	set_raster_lms:
-		lda SAVMSC 
-		ldx SAVMSC+1
-		jsr _setNextLMSValueFromPtr1
-	set_text_lms:
-		lda TXTMSC 
-		ldx TXTMSC+1
-		jsr _setNextLMSValueFromPtr1
-	set_bar_lms:
-		lda SAVADR
-		ldx SAVADR+1
-		jsr _setNextLMSValueFromPtr1
-		lda SAVADR
-		ldx SAVADR+1
-		jsr _setNextLMSValueFromPtr1
+	jsr _unpackDisplayList
 	textHeight = 7
 		lda #textHeight 	; update text window height
 		sta BOTSCR
@@ -193,9 +174,9 @@ _dliSpriteData:
 .proc _initDialogViewDisplay
 	.rodata
 	packedDialogDL: ; display list in PackBits format
-		.byte   3-1,   DL_RASTER|DL_LMS, 0, $80 ; raster, 72 rows
+		.byte   3-1,   DL_RASTER|DL_LMS, LMS_GR, 0 ; raster, 72 rows
 		.byte -71+257, DL_RASTER 
-		.byte   3-1,   DL_TEXT|DL_LMS, 0, $80 ; text, 7 rows
+		.byte   3-1,   DL_TEXT|DL_LMS, LMS_TXT, 0 ; text, 7 rows
 		.byte  -6+257, DL_TEXT 
 		.byte 128 ; terminator
 
@@ -203,16 +184,6 @@ _dliSpriteData:
 	lda #<packedDialogDL
 	ldx #>packedDialogDL
 	jsr _unpackDisplayList 		; returns end of DL in ptr1
-	set_lms:
-		jsr _setPtr1ToDisplayList
-	set_raster_lms:
-		lda SAVMSC 
-		ldx SAVMSC+1
-		jsr _setNextLMSValueFromPtr1
-	set_text_lms:
-		lda TXTMSC 
-		ldx TXTMSC+1
-		jsr _setNextLMSValueFromPtr1
 	textHeight = 7
 		lda #textHeight 	; update text window height
 		sta BOTSCR
@@ -223,28 +194,28 @@ _dliSpriteData:
 .proc _initBattleViewDisplay
 	.rodata
 	packedBattleDL: ; display list in PackBits format
-		.byte   3-1,   DL_RASTER|DL_LMS, $BE, $EF 	; raster, 48 rows
+		.byte   3-1,   DL_RASTER|DL_LMS, LMS_GR, 0 	; raster, 48 rows
 		.byte -46+257, DL_RASTER 
 		.byte  13-1,   DL_RASTER|DL_DLI
 
 		.byte          DL_BLK1
 		.byte          DL_RASTER				 	; enemy HP bar
-		.byte          DL_RASTER|DL_LMS, $DE, $AD
-		.byte          DL_RASTER|DL_LMS, $BE, $EF
+		.byte          DL_RASTER|DL_LMS, LMS_GR, 48
+		.byte          DL_RASTER|DL_LMS, LMS_GR, 48
 		.byte          DL_BLK5
 
-		.byte          DL_TEXT|DL_LMS, $BE, $EF 	; text, 7 rows
+		.byte          DL_TEXT|DL_LMS, LMS_TXT, 0 	; text, 7 rows
 		.byte  -6+257, DL_TEXT 
 
 		.byte  13-1,   DL_BLK1
 		.byte          DL_RASTER				 	; player HP bars
-		.byte          DL_RASTER|DL_LMS, $DE, $AD
-		.byte          DL_RASTER|DL_LMS, $BE, $EF
+		.byte          DL_RASTER|DL_LMS, LMS_TXT, 7
+		.byte          DL_RASTER|DL_LMS, LMS_TXT, 7
 		.byte          DL_BLK1|DL_DLI
 
 		.byte          DL_BLK8
 
-		.byte          DL_RASTER|DL_LMS, $BE, $EF 	; raster, 10 rows
+		.byte          DL_RASTER|DL_LMS, LMS_GR, 49	; raster, 10 rows
 		.byte  -9+257, DL_RASTER 
 
 		.byte 128 ; terminator
@@ -253,61 +224,6 @@ _dliSpriteData:
 	lda #<packedBattleDL
 	ldx #>packedBattleDL
 	jsr _unpackDisplayList 		; returns end of DL in ptr1
-	
-	lda #0 			
-	sta COLCRS 		
-	enemyHpBar = ptr2  		
-		lda #48					; save pointer value because
-		sta ROWCRS				; _setSavadrToGraphicsCursor uses ptr1
-		jsr _setSavadrToGraphicsCursor
-		lda SAVADR
-		sta enemyHpBar 
-		lda SAVADR+1
-		sta enemyHpBar+1
-
-	playerHpBar = ptr3
-		lda #7				; save pointer value because
-		sta ROWCRS			; _setSavadrToGraphicsCursor uses ptr1
-		jsr _setSavadrToTextCursor
-		lda SAVADR
-		sta playerHpBar 
-		lda SAVADR+1
-		sta playerHpBar+1
-
-	buttonScreenPtr = SAVADR 
-		lda #49 			; use SAVADR for button screen memory pointer
-		sta ROWCRS
-		jsr _setSavadrToGraphicsCursor
-
-	set_lms:
-		jsr _setPtr1ToDisplayList
-	set_raster_lms:
-		lda SAVMSC 
-		ldx SAVMSC+1
-		jsr _setNextLMSValueFromPtr1
-	set_enemy_hp_lms:
-		lda enemyHpBar
-		ldx enemyHpBar+1
-		jsr _setNextLMSValueFromPtr1
-		lda enemyHpBar
-		ldx enemyHpBar+1
-		jsr _setNextLMSValueFromPtr1
-	set_text_lms:
-		lda TXTMSC 
-		ldx TXTMSC+1
-		jsr _setNextLMSValueFromPtr1
-	set_player_hp_lms:
-		lda playerHpBar
-		ldx playerHpBar+1
-		jsr _setNextLMSValueFromPtr1
-		lda playerHpBar
-		ldx playerHpBar+1
-		jsr _setNextLMSValueFromPtr1
-	set_button_lms:
-		lda SAVADR 
-		ldx SAVADR+1
-		jsr _setNextLMSValueFromPtr1
-
 	textHeight = 7
 		lda #textHeight 	; update text window height
 		sta BOTSCR
@@ -318,7 +234,7 @@ _dliSpriteData:
 .proc _initInfoViewDisplay
 	.rodata
 	packedInfoDL: ; display list in PackBits format
-		.byte   3-1,   DL_RASTER|DL_LMS, 0, $80 ; raster, 24 rows
+		.byte   3-1,   DL_RASTER|DL_LMS, LMS_GR, 0 ; raster, 24 rows
 		.byte -21+257, DL_RASTER 
 		.byte   4-1,   DL_RASTER|DL_DLI, DL_RASTER|DL_DLI
 		.byte          DL_TEXT|DL_DLI, DL_BLK1	; chara name
@@ -333,26 +249,11 @@ _dliSpriteData:
 	lda #<packedInfoDL
 	ldx #>packedInfoDL
 	jsr _unpackDisplayList 		; returns end of DL in ptr1
-	set_raster_lms:
-		jsr _setPtr1ToDisplayList
-		lda SAVMSC 
-		ldx SAVMSC+1
-		jsr _setNextLMSValueFromPtr1
 	textHeight = 18
 		lda #textHeight 	; update text window height
 		sta BOTSCR
 	rts
 .endproc
-
-
-.proc _setPtr1ToDisplayList
-	; Sets ptr1 to SDLSTL
-	lda SDLSTL 
-	sta ptr1
-	lda SDLSTL+1
-	sta ptr1+1
-	rts 
-.endproc 
 
 
 .proc _unpackDisplayList 
@@ -366,11 +267,29 @@ _dliSpriteData:
 	stx ptr2+1
 
 	dest = ptr1  		; start on byte 3 of display list area
-	jsr _setPtr1ToDisplayList
+	clc 
+	lda SDLSTL
+	adc #3  
+	sta ptr1
+	lda SDLSTL+1
+	adc #0
+	sta ptr1+1
 
-	lda #3 				; this skips the blank lines at top
-	jsr _addAToPtr1
+	jsr _unpackbits
+	jsr _writeDisplayListEndInternal
+	jsr _updateLMSValues
+	rts
+.endproc 
 
+
+.proc _unpackbits
+	; Unpacks data compressed with PackBits data from ptr2 into ptr1.
+	; * On entry: ptr2 = PackBits-compressed data
+	; * On return: ptr1 points at end of written data
+	; * uses ptr1, ptr2, tmp1
+
+	src = ptr2 
+	dest = ptr1  		; start on byte 3 of display list area
 	ldy #0 				; Y is always zero
 	loop_header: 
 		lda (src),Y 
@@ -404,7 +323,6 @@ _dliSpriteData:
 			bne loop_repeated
 		jmp loop_header 
 	return:
-		jsr _writeDisplayListEndInternal
 		rts
 
 	inc_src: 			; increment 16-bit src value
@@ -421,19 +339,27 @@ _dliSpriteData:
 		rts 
 .endproc 
 
-.proc _setNextLMSValueFromPtr1
-	; Find the next LMS starting from ptr1 and write the value in AX in it.
-	; Updates ptr1.
-	pha 
-	txa 
-	pha 
+
+.proc _updateLMSValues
+	; Replace the placeholder LMS values with pointers to actual screen data.
+	; The first byte after LMS instruction is whether to use SAVMSC or TXTMSC.
+	; The second byte is the number of rows to offset.
+
+	dl = tmp2
+	lda SDLSTL
+	sta dl
+	lda SDLSTL+1
+	sta dl+1
+
 	ldy #0
+	sty COLCRS 
+
 	loop: 
-		lda (ptr1),Y 
+		lda (dl),Y 
 		iny  
-		beq not_found 	; if Y==0: wrapped around
+		beq return 	; if Y==0: wrapped around
 		cmp #DL_JVB 
-		beq not_found	; JVB = end of display list
+		beq return	; JVB = end of display list
 		tax 
 		and #$0F
 		beq loop  		; skip blank line instructions
@@ -441,20 +367,28 @@ _dliSpriteData:
 		and #DL_LMS 
 		beq loop
 	found_lms:
-		pla 
-		tax 
-		pla 
-		sta (ptr1),Y
+		lda (dl),Y 
 		iny 
-		txa 
-		sta (ptr1),Y
-		iny 
-		tya 
-		jsr _addAToPtr1
-		rts 
-	not_found:
+		pha 
+		lda (dl),Y
+		sta ROWCRS 
 		pla 
-		pla
+		bne text_ptr
+	graphics_ptr:
+		jsr _setSavadrToGraphicsCursor
+		jmp set_lms_address
+	text_ptr:
+		jsr _setSavadrToTextCursor
+	set_lms_address:
+		dey 
+		lda SAVADR 
+		sta (dl),Y
+		iny 
+		lda SAVADR+1
+		sta (dl),Y 
+		iny 
+		jmp loop 
+	return:
 		rts 
 .endproc
 
