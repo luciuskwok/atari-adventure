@@ -143,6 +143,9 @@ _dliSpriteData:
 	lda #7	 			; text window height
 	sta BOTSCR
 
+	lda #0				; graphics mode
+	sta DINDEX 			; 0 for normal 40 bytes per row.
+
 	lda #1
 	jsr _delayTicks
 
@@ -167,6 +170,9 @@ _dliSpriteData:
 		sta VDSLST
 		lda #>_mapViewDLI
 		sta VDSLST+1
+
+		lda #1				; graphics mode
+		sta DINDEX 			; 1 for 24 bytes per row.
 
 		jmp enable_screen
 
@@ -669,12 +675,21 @@ _dliSpriteData:
 
 .export _setSavadrToGraphicsCursor
 .proc _setSavadrToGraphicsCursor 
-	; Stores cursor address in SAVADR
+	; Stores cursor address in SAVADR.
+	; Set DINDEX to zero for normal mode, nonzero for map view mode.
 	; Calls _multiplyAXtoPtr1 (uses sreg, ptr1)
 	.importzp 	ptr1
 
+	lda DINDEX 
+	bne tile_mode
+	normal_mode:
+		ldx #40 		; 40 bytes per row
+		jmp mode_done
+	tile_mode:
+		ldx #24
+	mode_done:
+
 	lda ROWCRS			; ptr1 = y * row_bytes
-	ldx #ROW_BYTES
 	jsr _multiplyAXtoPtr1
 
 	clc 				; SAVADR = ptr1 + TXTMSC

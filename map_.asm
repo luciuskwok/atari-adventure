@@ -25,7 +25,7 @@
 	.importzp ptr1, ptr3
 	.importzp tmp1, tmp2 
 	.import addysp, subysp, pushax
-	.import _multiplyAXtoPtr1, _addAToPtr1
+	.import _setSavadrToGraphicsCursor 	; uses sreg, ptr1
 
 	screenWidth = 24
 
@@ -129,18 +129,11 @@
 		decodeLength_done:
 
 	screenAddr = SAVADR 
-		lda _mapFrame+1 			; mapFrame.origin.y
-		ldx #screenWidth 
-		jsr _multiplyAXtoPtr1
-		lda _mapFrame 				; mapFrame.origin.x 
-		jsr _addAToPtr1
-		clc 
-		lda SAVMSC
-		adc ptr1 
-		sta SAVADR 
-		lda SAVMSC+1
-		adc ptr1+1
-		sta SAVADR+1
+		lda _mapFrame
+		sta COLCRS 
+		lda _mapFrame+1
+		sta ROWCRS 
+		jsr _setSavadrToGraphicsCursor
 
 	screenRow = ROWCRS 
 		ldx #0
