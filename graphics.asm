@@ -223,28 +223,28 @@ _dliSpriteData:
 .proc _initBattleViewDisplay
 	.rodata
 	packedBattleDL: ; display list in PackBits format
-		.byte   3-1,   DL_RASTER|DL_LMS, 0, $80 	; raster, 48 rows
+		.byte   3-1,   DL_RASTER|DL_LMS, $BE, $EF 	; raster, 48 rows
 		.byte -46+257, DL_RASTER 
-		.byte  15-1,   DL_RASTER|DL_DLI
+		.byte  13-1,   DL_RASTER|DL_DLI
 
 		.byte          DL_BLK1
-		.byte          DL_RASTER|DL_LMS, 0, $80 	; enemy HP bar
-		.byte          DL_RASTER|DL_LMS, 0, $80
-		.byte          DL_RASTER|DL_LMS, 0, $80
+		.byte          DL_RASTER				 	; enemy HP bar
+		.byte          DL_RASTER|DL_LMS, $DE, $AD
+		.byte          DL_RASTER|DL_LMS, $BE, $EF
 		.byte          DL_BLK5
 
-		.byte          DL_TEXT|DL_LMS, 0, $80 		; text, 7 rows
+		.byte          DL_TEXT|DL_LMS, $BE, $EF 	; text, 7 rows
 		.byte  -6+257, DL_TEXT 
 
-		.byte  15+1,   DL_BLK1
-		.byte          DL_RASTER|DL_LMS, 0, $80 	; player HP bars
-		.byte          DL_RASTER|DL_LMS, 0, $80
-		.byte          DL_RASTER|DL_LMS, 0, $80
+		.byte  13-1,   DL_BLK1
+		.byte          DL_RASTER				 	; player HP bars
+		.byte          DL_RASTER|DL_LMS, $DE, $AD
+		.byte          DL_RASTER|DL_LMS, $BE, $EF
 		.byte          DL_BLK1|DL_DLI
 
 		.byte          DL_BLK8
 
-		.byte          DL_RASTER|DL_LMS, 0, $80 	; raster, 10 rows
+		.byte          DL_RASTER|DL_LMS, $BE, $EF 	; raster, 10 rows
 		.byte  -9+257, DL_RASTER 
 
 		.byte 128 ; terminator
@@ -254,11 +254,11 @@ _dliSpriteData:
 	ldx #>packedBattleDL
 	jsr _unpackDisplayList 		; returns end of DL in ptr1
 	
+	lda #0 			
+	sta COLCRS 		
 	enemyHpBar = ptr2  		
-		lda #0 					; save pointer value because
-		sta COLCRS 				; _setSavadrToGraphicsCursor uses ptr1
-		lda #48
-		sta ROWCRS
+		lda #48					; save pointer value because
+		sta ROWCRS				; _setSavadrToGraphicsCursor uses ptr1
 		jsr _setSavadrToGraphicsCursor
 		lda SAVADR
 		sta enemyHpBar 
@@ -266,10 +266,8 @@ _dliSpriteData:
 		sta enemyHpBar+1
 
 	playerHpBar = ptr3
-		lda #0 		  			; save pointer value because
-		sta COLCRS 				; _setSavadrToGraphicsCursor uses ptr1
-		lda #7
-		sta ROWCRS
+		lda #7				; save pointer value because
+		sta ROWCRS			; _setSavadrToGraphicsCursor uses ptr1
 		jsr _setSavadrToTextCursor
 		lda SAVADR
 		sta playerHpBar 
@@ -277,9 +275,7 @@ _dliSpriteData:
 		sta playerHpBar+1
 
 	buttonScreenPtr = SAVADR 
-		lda #0 					; use SAVADR for button screen memory pointer
-		sta COLCRS 
-		lda #49
+		lda #49 			; use SAVADR for button screen memory pointer
 		sta ROWCRS
 		jsr _setSavadrToGraphicsCursor
 
@@ -296,17 +292,11 @@ _dliSpriteData:
 		lda enemyHpBar
 		ldx enemyHpBar+1
 		jsr _setNextLMSValueFromPtr1
-		lda enemyHpBar
-		ldx enemyHpBar+1
-		jsr _setNextLMSValueFromPtr1
 	set_text_lms:
 		lda TXTMSC 
 		ldx TXTMSC+1
 		jsr _setNextLMSValueFromPtr1
 	set_player_hp_lms:
-		lda playerHpBar
-		ldx playerHpBar+1
-		jsr _setNextLMSValueFromPtr1
 		lda playerHpBar
 		ldx playerHpBar+1
 		jsr _setNextLMSValueFromPtr1
@@ -550,19 +540,16 @@ _dliSpriteData:
 
 
 .proc _writeDisplayListEndInternal
-	; on entry: ptr1=DL_ptr, Y=index
+	; on entry: ptr1=DL_ptr
+	ldy #0
 	lda #DL_JVB
 	sta (ptr1),Y
 	iny 
-
 	lda SDLSTL
 	sta (ptr1),Y
 	iny 
-
 	lda SDLSTL+1
 	sta (ptr1),Y
-	iny 
-
 	rts
 .endproc
 
