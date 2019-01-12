@@ -29,7 +29,7 @@ tileSpriteData:
 	; because of the half-width tiles at the left and right edges.
 	; On entry: COLCRS & ROWCRS are set to the tile position.
 
-	.importzp ptr1
+	.importzp ptr1 	
 
 	jsr _mulAx8		; multiply A by 8 to get sprite data offset
 	tax 

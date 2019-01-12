@@ -5,7 +5,6 @@
 #include "graphics.h"
 #include "map_data.h"
 #include "menu.h"
-#include "misc_asm.h"
 #include "sound.h"
 #include "sprites.h"
 #include "text.h"
@@ -27,6 +26,13 @@ const UInt8 *currentRunLenMap;
 const UInt8 *currentTileMap;
 SizeU8 currentMapSize;
 RectU8 mapFrame;
+
+
+// Assembly routines
+void fillMapRow(UInt8 c);
+void drawMapRow(UInt8 *buffer);
+void decodeRunLenRange(UInt8 *outData, const UInt8 *runLenData);
+
 
 #define SCREEN_WIDTH (24)
 
@@ -101,7 +107,9 @@ static UInt8 mapTileAt(UInt8 x, UInt8 y) {
 	}
 
 	// Get tile
-	decodeRunLenRange(&tile, x, 1, runLenPtr);
+	POKE(OLDCOL, x); // skip count
+	POKE(DELTAR, 1); // decode length
+	decodeRunLenRange(&tile, runLenPtr);
 
 	// Convert to character value
 	return currentTileMap[tile];
@@ -129,9 +137,6 @@ static UInt8 canMoveTo(UInt8 x, UInt8 y) {
 
 // Map Drawing
 
-void fillMapRow(UInt8 c);
-void drawMapRow(UInt8 *buffer);
-
 static void drawCurrentMap(void) {
 	UInt16 startTime = SHORT_CLOCK; // DEBUGGING
 
@@ -143,7 +148,7 @@ static void drawCurrentMap(void) {
 	UInt8 topMargin, leftMargin, rightMargin;
 	UInt8 decodeLength;
 	UInt8 c;
-	UInt8 buffer[SCREEN_WIDTH];
+	UInt8 buffer[SCREEN_WIDTH]; // ptr2
 
 	// Integrity check
 	if (runLenPtr == NULL) {
@@ -202,6 +207,7 @@ static void drawCurrentMap(void) {
 	POKE(OLDCOL, mapCol); 
 	// ROWCRS: screenRow
 	// COLCRS: screenCol
+	POKE(DELTAR, decodeLength);
 
 	// Main Loop
 	for (screenRow=0; screenRow<mapFrame.size.height; ++screenRow) {
@@ -213,7 +219,7 @@ static void drawCurrentMap(void) {
 			// Beyond borders: fill with the default empty tile.
 			fillMapRow(currentTileMap[0]);
 		} else {
-			decodeRunLenRange(buffer, mapCol, decodeLength, runLenPtr);
+			decodeRunLenRange(buffer, runLenPtr);
 			runLenPtr += runLenPtr[0]; // Next row.
 
 			POKE(ROWCRS, screenRow); // Pass screenRow to drawMapRow

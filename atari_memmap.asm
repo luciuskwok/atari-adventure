@@ -15,6 +15,7 @@
 	SAVMSC 	  = $58 		; Pointer to screen memory, 16-bit
 	NEWROW    = $60			
 	NEWCOL    = $61			; 16-bit
+	ADRESS    = $64 		; Temporary pointer, 16-bit
 	SAVADR    = $68 		; Temporary pointer for screen row, 16-bit
 	RAMTOP 	  = $6A
 	BUFSTR    = $6C
