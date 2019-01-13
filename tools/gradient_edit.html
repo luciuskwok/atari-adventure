@@ -1,0 +1,315 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Gradient Edit</title>
+  <style>
+  	table#output {
+  		border-collapse: collapse;
+  		user-select: none;
+  	}
+  	td.pixel {
+  		border: none;
+  		width: 640px;
+  		height: 4px;
+  		color: #FFF;
+  	}
+  	table#palette {
+  		border-spacing: 3px;
+  		border-collapse: none;
+  		user-select: none;
+  	}
+  	td.colorCell {
+  		outline: 1px solid #000;
+  		width: 16px;
+  		height: 16px;
+  		color: #FFF;
+  	}
+  	div.p {
+  		margin-top: 20px;
+  	}
+  </style>
+</head>
+
+<script>
+
+var isMouseDown = false;
+var selectedColor = 0;
+var gradient;
+
+
+function initTable() {
+	// Initialize to defaults
+	initPalette();
+	setGradientLength(48);
+	selectColor(0);
+	
+	// Add document mousedown and mouseup handlers
+	document.onmousedown = function() {
+		isMouseDown = true;
+	}
+	
+	document.onmouseup = function() {
+		isMouseDown = false;
+	}
+}
+
+function initPalette() {
+	// Add table cells to the empty "palette" table element
+	var paletteTable = document.getElementById("palette");
+	for (var y=0; y<8; ++y) {
+		var paletteRow = paletteTable.insertRow(y);
+		for (var x=0; x<16; ++x) {
+			var cell = paletteRow.insertCell(x);
+			var index = x * 8 + y;
+			cell.classList.add("colorCell");
+			cell.style.backgroundColor = colorAtIndex(index);
+			cell.onmousedown = (function() {
+				var localColor = index;
+				return function() {
+					selectColor(localColor); 
+				}
+			})();
+		}
+	}
+}
+
+function setGradientLength(length) {
+	// Reset to an empty gradient array.
+	gradient = Array();
+
+	// Reset UI: remove old table cells
+	var table = document.getElementById("output");
+	table.innerHTML = "";
+
+	// Add pixels
+	for (var y=0; y<length; ++y) {
+		gradient.push(0);	// Add to gradient array.
+		var tableRow = table.insertRow(y);
+		var tableCell = tableRow.insertCell(0);
+		tableCell.classList.add("pixel");
+		tableCell.style.backgroundColor = colorAtIndex(0);
+		tableCell.onmousedown = (function() {
+			var localY = y
+			return function() {
+				changePixel(localY); 
+			}
+		})();
+		tableCell.onmouseenter = (function() {
+			var localY = y
+			return function() {
+				if (isMouseDown) {
+					changePixel(localY); 
+				}
+			}
+		})();
+	}
+}
+
+function selectColor(index) {
+	// Change the selected cell in the palette table.
+	var previousCell = paletteCellAtIndex(selectedColor);
+	var newCell = paletteCellAtIndex(index);
+	previousCell.style.outlineWidth = "1px";
+	newCell.style.outlineWidth = "3px";
+
+	// Update global var
+	selectedColor = index;
+}
+
+function paletteCellAtIndex(index) {
+	var paletteTable = document.getElementById("palette");
+	return paletteTable.rows[index % 8].cells[Math.floor(index / 8)];
+}
+
+function changePixel(y) {
+	gradient[y] = selectedColor;
+	updateOutput();
+}
+
+function updateOutput() {
+	var table = document.getElementById("output");
+	for (var y=0; y<gradient.length; ++y) {
+		var color = colorAtIndex(gradient[y]);
+		table.rows[y].cells[0].style.backgroundColor = color;
+	}
+}
+
+function updateFromTextInput() {
+	var textInput = document.getElementById("textInput");
+	var values = textInput.value.split(",");
+	var x, y;
+	
+	if (values.length > 0) {
+		for (y=0; y<Math.min(16, values.length); ++y) {
+			var value = values[y];
+			console.log("value: "+value);
+			for (x=7; x>=0; --x) {
+				pixelMap[x + 8 * y] = value % 2;
+				value = Math.floor(value / 2);
+			}
+		}
+	}
+	updateEditor();
+	updateTextOutput();
+	return false;
+}
+
+var atariNtscColorTable = [
+	"#000000",
+	"#101010",
+	"#393939",
+	"#636363",
+	"#7B7B7B",
+	"#A5A5A5",
+	"#C6C6C6",
+	"#EFEFEF",
+	"#100000",
+	"#312100",
+	"#5A4200",
+	"#846B00",
+	"#9C8400",
+	"#C6AD00",
+	"#E7D629",
+	"#FFF74A",
+	"#310000",
+	"#5A0800",
+	"#7B2900",
+	"#A55200",
+	"#BD6B00",
+	"#E79429",
+	"#FFB552",
+	"#FFDE73",
+	"#4A0000",
+	"#6B0000",
+	"#941000",
+	"#BD3929",
+	"#D65242",
+	"#FF7B6B",
+	"#FFA594",
+	"#FFC6B5",
+	"#4A0000",
+	"#730029",
+	"#94004A",
+	"#BD2973",
+	"#D64294",
+	"#FF6BB5",
+	"#FF94DE",
+	"#FFB5FF",
+	"#39004A",
+	"#630073",
+	"#8C0094",
+	"#AD21BD",
+	"#CE42D6",
+	"#EF63FF",
+	"#FF8CFF",
+	"#FFB5FF",
+	"#21007B",
+	"#4200A5",
+	"#6B00C6",
+	"#9429EF",
+	"#AD42FF",
+	"#D66BFF",
+	"#F794FF",
+	"#FFB5FF",
+	"#000094",
+	"#2100BD",
+	"#4210DE",
+	"#6B39FF",
+	"#8452FF",
+	"#AD7BFF",
+	"#CE9CFF",
+	"#F7C6FF",
+	"#00008C",
+	"#0000B5",
+	"#1829D6",
+	"#4252FF",
+	"#5A6BFF",
+	"#8494FF",
+	"#A5B5FF",
+	"#CEDEFF",
+	"#000063",
+	"#00218C",
+	"#0042AD",
+	"#186BD6",
+	"#3984F7",
+	"#5AADFF",
+	"#84CEFF",
+	"#ADF7FF",
+	"#001021",
+	"#00394A",
+	"#005A73",
+	"#008494",
+	"#219CB5",
+	"#4AC6DE",
+	"#6BE7FF",
+	"#94FFFF",
+	"#002100",
+	"#004A00",
+	"#006B21",
+	"#00944A",
+	"#18AD6B",
+	"#42D68C",
+	"#63F7B5",
+	"#8CFFDE",
+	"#002900",
+	"#004A00",
+	"#007300",
+	"#109C08",
+	"#29B521",
+	"#52DE4A",
+	"#73FF6B",
+	"#9CFF94",
+	"#002100",
+	"#004A00",
+	"#006B00",
+	"#299400",
+	"#42AD00",
+	"#6BD610",
+	"#94FF39",
+	"#B5FF5A",
+	"#001000",
+	"#083900",
+	"#296300",
+	"#528400",
+	"#6BA500",
+	"#94C600",
+	"#B5EF18",
+	"#DEFF42",
+	"#080000",
+	"#312100",
+	"#524A00",
+	"#7B6B00",
+	"#948C00",
+	"#BDB500",
+	"#E7D621",
+	"#FFFF4A"
+];
+
+function colorAtIndex(index) {
+	return atariNtscColorTable[index];
+}
+
+</script>
+
+<body onload="initTable()">
+
+<div>
+	<table id="output"></table>
+</div>
+
+<div class="p">
+	<table id="palette"></table>
+</div>
+
+<div class="p"><b>Input:</b>
+	<form>
+		<input type="text" size=72" id="textInput"></input>
+		<button type="button" onclick="updateFromTextInput();">Update</button>
+	</form>
+</div>
+
+</table>  	
+</body>
+</html>
