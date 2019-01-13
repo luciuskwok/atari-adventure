@@ -5,18 +5,27 @@
   <meta charset="utf-8">
   <title>Gradient Edit</title>
   <style>
+  	table#layout {
+  		border-spacing: 20px;
+  	}
+  	td.layoutCell {
+  	}
   	table#output {
-  		border-collapse: collapse;
+  		margin-left: auto;
+  		margin-right: auto;
+   		border-collapse: collapse;
   		user-select: none;
   	}
   	td.pixel {
   		border: none;
-  		width: 640px;
+  		width: 360px;
   		height: 4px;
   		color: #FFF;
   	}
   	table#palette {
-  		border-spacing: 3px;
+   		margin-left: auto;
+  		margin-right: auto;
+ 		border-spacing: 3px;
   		border-collapse: none;
   		user-select: none;
   	}
@@ -296,11 +305,18 @@ function colorAtIndex(index) {
 <body onload="initTable()">
 
 <div>
-	<table id="output"></table>
-</div>
-
-<div class="p">
-	<table id="palette"></table>
+	<table id="layout">
+		<tr>
+			<td class="layoutCell">
+				<table id="output"></table>
+			</td>
+		</tr>
+		<tr>
+			<td class="layoutCell">
+				<table id="palette"></table>
+			</td>
+		</tr>
+	</table>
 </div>
 
 <div class="p"><b>Input:</b>
