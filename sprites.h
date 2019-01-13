@@ -6,11 +6,11 @@
 #define PM_TOP_MARGIN (14)
 
 extern UInt8 *spriteArea;
+extern UInt8 colorCyclingEnable;
 
 void initSprites(UInt8 page);
 
 void setPlayerCursorVisible(UInt8 visible);
-void setColorCyclingEnable(UInt8 cycle);
 
 void setTileSprite(UInt8 spriteIndex);
 void drawSprite(const DataBlock *sprite, UInt8 player, UInt8 y);

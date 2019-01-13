@@ -230,7 +230,7 @@ void transitionToMap(UInt8 mapType, UInt8 shouldFadeOut, UInt8 shouldFadeIn) {
 
 	// Show player cursor
 	setPlayerCursorVisible(1);
-	setColorCyclingEnable(1);
+	colorCyclingEnable = 1;
 }
 
 void exitToOverworld(void) {

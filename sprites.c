@@ -9,8 +9,6 @@
 
 UInt8 *spriteArea;
 
-extern UInt8 colorCyclingEnable;
-
 // Sprite Data
 
 const DataBlock cursorSprite1 = { 10, { 0x1F, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x1F } };
@@ -40,10 +38,6 @@ void setPlayerCursorVisible(UInt8 visible) {
 		GTIA_WRITE.hposp0 = PM_LEFT_MARGIN + (9 * 8);
 		GTIA_WRITE.hposp1 = PM_LEFT_MARGIN + (10 * 8);
 	}
-}
-
-void setColorCyclingEnable(UInt8 cycle) {
-	colorCyclingEnable = cycle;
 }
 
 // Drawing

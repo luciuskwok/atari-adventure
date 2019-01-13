@@ -96,7 +96,7 @@ static SInt8 menuCursorHandler(UInt8 event) {
 
 void setMenuCursor(UInt8 cursor) {
 	clearSprite(1);
-	setColorCyclingEnable(1);
+	colorCyclingEnable = 1;
 	setSpriteWidth(1, 1);
 	if (cursor == SmallHeartCursor) {
 		menuCursorSprite = &smallHeartSprite;
