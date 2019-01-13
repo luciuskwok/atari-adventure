@@ -9,6 +9,7 @@
 
 UInt8 *spriteArea;
 
+extern UInt8 colorCyclingEnable;
 
 // Sprite Data
 
@@ -41,12 +42,8 @@ void setPlayerCursorVisible(UInt8 visible) {
 	}
 }
 
-void setCursorColorCycling(UInt8 cycle) {
-	if (cycle) {
-		POKE (CUR_TIMER, 15); // on
-	} else {
-		POKE (CUR_TIMER, 0xFF); // off
-	}
+void setColorCyclingEnable(UInt8 cycle) {
+	colorCyclingEnable = cycle;
 }
 
 // Drawing

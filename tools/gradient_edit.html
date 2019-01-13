@@ -138,11 +138,46 @@ function changePixel(y) {
 }
 
 function updateOutput() {
+	// Update table
 	var table = document.getElementById("output");
 	for (var y=0; y<gradient.length; ++y) {
 		var color = colorAtIndex(gradient[y]);
 		table.rows[y].cells[0].style.backgroundColor = color;
 	}
+
+	// Update text output
+	var outputString = "";
+	var previousColor = -1;
+	var runLength = 0;
+
+	for (var y=0; y<gradient.length; ++y) {
+		var color = gradient[y];
+
+		if (previousColor == -1) {
+			previousColor = color;	
+		} else if (previousColor != color) {
+			outputString += formatRunLength(runLength, previousColor);
+			previousColor = color;
+			runLength = 0;
+		}
+		runLength += 1;
+	}
+	outputString += formatRunLength(runLength, previousColor);
+
+	var textOutput = document.getElementById("textOutput");
+	textOutput.innerHTML = outputString;
+}
+
+function formatRunLength(length, value) {
+	return length.toString() + ", $" + hexString(value) + ", ";
+}
+
+function hexString(x) {
+	var s = x.toString(16).toUpperCase();
+	if (s.length % 2) {
+		s = "0" + s;
+	}
+	return s;
 }
 
 function updateFromTextInput() {
@@ -319,10 +354,14 @@ function colorAtIndex(index) {
 	</table>
 </div>
 
-<div class="p"><b>Input:</b>
+<div class="p">
+	<span id="textOutput"></span>
+</div>
+
+<div class="p">
 	<form>
-		<input type="text" size=72" id="textInput"></input>
-		<button type="button" onclick="updateFromTextInput();">Update</button>
+		<input type="text" size=64" id="textInput"></input><br>
+		<button type="button" onclick="updateFromTextInput();">Load</button>
 	</form>
 </div>
 

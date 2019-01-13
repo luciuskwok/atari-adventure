@@ -17,7 +17,7 @@
 .import _addSregToPtr1, _addAToPtr1
 .import _setSavadrToTextCursor
 
-.import _setCursorColorCycling
+.import _colorCyclingEnable
 
 .include "atari_memmap.asm"
 
@@ -102,10 +102,9 @@ _dliSpriteData:
 
 	packedBattleDL: ; display list in PackBits format
 		.byte   3-1,   DL_RASTER|DL_LMS, LMS_GR, 0 	; raster, 48 rows
-		.byte -46+257, DL_RASTER 
-		.byte  13-1,   DL_RASTER|DL_DLI
+		.byte -47+257, DL_RASTER|DL_DLI
 
-		.byte          DL_BLK1
+		.byte  12-1,   DL_BLK1
 		.byte          DL_RASTER				 	; enemy HP bar
 		.byte          DL_RASTER|DL_LMS, LMS_GR, 48
 		.byte          DL_RASTER|DL_LMS, LMS_GR, 48
@@ -376,8 +375,7 @@ _dliSpriteData:
 
 	; Disable player color cycling to avoid conflicts
 	lda #0
-	ldx #0
-	jsr _setCursorColorCycling
+	sta _colorCyclingEnable
 
 	ldx #2 						; tmp1 = amount to fade, loop from 2 to <16
 	loop_frame:

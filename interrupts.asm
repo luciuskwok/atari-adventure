@@ -16,20 +16,18 @@
 .include "atari_memmap.asm"
 
 ; Constants
-
-	CUR_SKIP  = 15		; number of frames to skip for color cycling
-	CUR_TIMER = $0600	; cursor color cycling frame skip countdown timer
 	VB_TIMER  = $0601	; general countdown timer that decrements every VBI
-	DLI_ROW   = $0602	; for keeping track of which row the DLI is on. Could also use VCOUNT.
 
-; End Constants
+	vcountTopMargin = 13
+
+.data  ; Globals 
+	_colorCyclingEnable:
+		.byte 0
+	.export _colorCyclingEnable
 
 .code
 
 .proc _initVBI		; 
-	lda #CUR_SKIP	; init CUR_TIMER to CUR_SKIP
-	sta CUR_TIMER	
-
 	jsr _initSound
 
 	ldy #<_immediateUserVBI
@@ -47,59 +45,45 @@
 	
 
 .proc _immediateUserVBI
-	lda #0				; reset DLI_ROW
-	sta DLI_ROW
 	jsr _soundVBI
 	jmp SYSVBV			; jump to the OS immediate VBI routine
 .endproc
 
 
 .proc _deferredUserVBI	
-	ldx VB_TIMER		; 4 ; sets Z flag if zero
-	beq update_sound_sprites	; 2 ; skip decrement if already at zero
-	dex					; 2 
-	stx VB_TIMER		; 4
+	jsr _updateSoundSprites
 
-	update_sound_sprites:
-		jsr _updateSoundSprites
+	ldx VB_TIMER		; 4 ; sets Z flag if zero
+	beq @skip_vb_timer	; 2 ; skip decrement if already at zero
+		dex				; 2 
+		stx VB_TIMER	; 4
+	@skip_vb_timer:
 
 	update_cursor:
-		ldx CUR_TIMER
-		bmi return 			; if cur_timer > 127, leave the timer alone
-		dex 				; else --cur_timer
-		stx CUR_TIMER
-		bne return 			; if cur_timer == 0, cycle the colors
+		lda _colorCyclingEnable
+		beq return 
+
+		lda RTCLOK_LSB		; update every 16 frames
+		tax 
+		and #$0F
+		bne return 
 
 	cycle_color:
-		lda #CUR_SKIP		; reset cur_timer to cur_skip
-		sta CUR_TIMER		; 
-		
-		; == Cycle luminance of the player ==	
-		; if color is even, add 2 
-		; if color is odd, subtract 2
-		; 0 2 4 6 8 A C E . F D B 9 7 5 3 1
+		lda PCOLR0 			; mask out luminance
+		and #$F0
+		sta PCOLR0 
 
-		lda PCOLR0			; 
-		tax					; copy color -> X
-		and #$0F			; isolate the lum in A
-		lsr a				; if lum is odd: set carry
+		txa 
+		bpl @skip_eor
+			eor #$FF
+		@skip_eor:
+		lsr a
+		lsr a
+		lsr a
+		ora PCOLR0 
 
-		bcc color_is_even  	
-		dex					; lum is odd: X -= 1
-		cmp #$01 			; if lum != 1, X -= 1 again
-		beq set_player_color
-		dex
-		jmp set_player_color
-
-	color_is_even:
-		inx					; lum is even: X += 1
-		cmp #$07			; if lum != 7, X += 1 again
-		beq set_player_color
-		inx 
-
-	set_player_color:
-		stx PCOLR0			; store new color value in players 0 and 1
-		stx PCOLR1
+		sta PCOLR0			; store new color value in players 0 and 1
+		sta PCOLR1
 
 	return:
 		jmp XITVBV
@@ -111,33 +95,37 @@
 	txa
 	pha
 	
-	ldx DLI_ROW			; increment DLI_ROW
-	inx
-	stx DLI_ROW
+	lda VCOUNT 			; tile DLI: 21, 29, 37 ...
 
-	cpx #9				; before line 9
+	lastTileLine = vcountTopMargin + 8 * 9
+
+	cmp #lastTileLine
 	bcc reposition_sprite
 
-	stx WSYNC			; wait for horizontal sync
-	beq chara_name 		; line 9
+	sta WSYNC			; wait for horizontal sync
+	cmp #lastTileLine+7
+	bcc chara_name 
 	
-	cpx #10				; 
-	beq chara_level
+	cmp #lastTileLine+11
+	bcc chara_level
 	
-	cpx #11				; 
-	beq chara_hp
+	cmp #lastTileLine+19
+	bcc chara_hp
 	
-	cpx #12				; 
-	beq party_stats
-	
-	cpx #13				; 
-	beq last_line
+	cmp #lastTileLine+23
+	bcc party_stats
 
-	jmp return_dli
+	jmp last_line
 
 	reposition_sprite:
-		lda _dliSpriteData,X; HPOSP3 = _dliSpriteData[DLI_ROW]
-		stx WSYNC			; wait for horizontal sync
+		sec 
+		sbc #vcountTopMargin ; X = (VCOUNT - topMargin) / 8
+		lsr a 
+		lsr a 
+		lsr a 
+		tax 
+		lda _dliSpriteData,X; HPOSP3 = _dliSpriteData[X]
+		sta WSYNC			; wait for horizontal sync
 		sta HPOSP3
 		jmp return_dli
 
@@ -182,13 +170,11 @@
 	txa
 	pha
 	
-	ldx DLI_ROW			; increment DLI_ROW
-	inx
-	stx DLI_ROW
-	stx WSYNC			; wait for horizontal sync
+	lda VCOUNT 			; use debugger to get actual VCOUNT values
 
-	cpx #2
-	beq button_bar
+	cmp #vcountTopMargin+48
+	beq text_window 
+	jmp button_bar
 
 	text_window:
 		lda #$00	
@@ -219,19 +205,20 @@
 	pha					; push AX onto stack
 	txa 
 	pha 
-	ldx DLI_ROW			; increment DLI_ROW
-	inx
-	stx DLI_ROW
 
-	cpx #6
-	beq last_line
+	lda VCOUNT 			; use debugger to get actual VCOUNT values
 
-	cpx #1
-	beq reposition_sprites
+	cmp #vcountTopMargin + 96
+	bcs last_line
 
-	txa
-	and #1
-	bne normal_rows
+	cmp #vcountTopMargin + 24
+	bcc reposition_sprites
+	beq title_rows
+
+	cmp #vcountTopMargin + 77
+	beq title_rows
+
+	jmp normal_rows
 
 	title_rows:
 		lda TXTLUM 		 	; swap background and text color	

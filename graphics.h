@@ -7,7 +7,6 @@
 
 
 // VBI and DLI registers
-#define CUR_TIMER ((UInt8 *)0x0600)
 #define VB_TIMER ((UInt8 *)0x0601)
 
 #define SCREEN_ROW_BYTES (40)
