@@ -101,29 +101,35 @@ _dliSpriteData:
 		.byte 128 ; terminator
 
 	packedBattleDL: ; display list in PackBits format
-		.byte   3-1,   DL_RASTER|DL_LMS, LMS_GR, 0 	; raster, 48 rows
-		.byte -47+257, DL_RASTER|DL_DLI
+		.byte   3-1,   DL_RASTER|DL_LMS, LMS_GR, 0 	; raster, 44 rows
+		.byte -43+257, DL_RASTER|DL_DLI
 
 		.byte  12-1,   DL_BLK1
 		.byte          DL_RASTER				 	; enemy HP bar
-		.byte          DL_RASTER|DL_LMS, LMS_GR, 48
-		.byte          DL_RASTER|DL_LMS, LMS_GR, 48
-		.byte          DL_BLK5
+		.byte          DL_RASTER|DL_LMS, LMS_GR, 44
+		.byte          DL_RASTER|DL_LMS, LMS_GR, 44
+		.byte          DL_BLK1 						; 9
 
-		.byte          DL_TEXT|DL_LMS, LMS_TXT, 0 	; text, 7 rows
-		.byte  -6+257, DL_TEXT 
+		.byte          DL_TEXT|DL_LMS, LMS_TXT, 0 	; dialog box, 5 lines
+		.byte  -3+257, DL_TEXT 
+		.byte  18-1,   DL_TEXT|DL_DLI 
+		.byte          DL_BLK4
+		.byte          DL_TEXT|DL_DLI 				; chara name
+		.byte          DL_TEXT						; chara level
+		.byte          DL_TEXT|DL_DLI 				; 5
 
-		.byte  13-1,   DL_BLK1
+		.byte          DL_BLK1
 		.byte          DL_RASTER				 	; player HP bars
-		.byte          DL_RASTER|DL_LMS, LMS_TXT, 7
-		.byte          DL_RASTER|DL_LMS, LMS_TXT, 7
-		.byte          DL_BLK1|DL_DLI
+		.byte          DL_RASTER|DL_LMS, LMS_TXT, 8
+		.byte          DL_RASTER|DL_LMS, LMS_TXT, 8
+		.byte          DL_BLK1|DL_DLI 				; 14
 
 		.byte          DL_BLK8
 
-		.byte          DL_RASTER|DL_LMS, LMS_GR, 49	; raster, 10 rows
+		.byte          DL_RASTER|DL_LMS, LMS_GR, 45	; raster, 10 rows
 		.byte  -9+257, DL_RASTER 
-		.byte   2-1,   DL_BLK8|DL_DLI, DL_JVB
+		.byte   3-1,   DL_BLK8, DL_BLK8|DL_DLI
+		.byte          DL_JVB
 
 		.byte 128 ; terminator
 
@@ -327,7 +333,7 @@ _dliSpriteData:
 	; The first byte after LMS instruction is whether to use SAVMSC or TXTMSC.
 	; The second byte is the number of rows to offset.
 
-	dl = tmp2
+	dl = ptr3
 	lda SDLSTL
 	sta dl
 	lda SDLSTL+1
@@ -357,10 +363,10 @@ _dliSpriteData:
 		pla 
 		bne text_ptr
 	graphics_ptr:
-		jsr _setSavadrToGraphicsCursor
+		jsr _setSavadrToGraphicsCursor ; uses sreg, ptr1
 		jmp set_lms_address
 	text_ptr:
-		jsr _setSavadrToTextCursor
+		jsr _setSavadrToTextCursor ; uses sreg, ptr1
 	set_lms_address:
 		dey 
 		lda SAVADR 
@@ -384,15 +390,18 @@ _dliSpriteData:
 ; extern void fadeOutColorTable(void);
 .export _fadeOutColorTable
 .proc _fadeOutColorTable
-	; uses tmp1
+	; uses tmp1, ptr1
+	.importzp dliColorTable
 
 	; Disable player color cycling to avoid conflicts
 	lda #0
 	sta _colorCyclingEnable
 
-	ldx #2 						; tmp1 = amount to fade, loop from 2 to <16
+	fadeAmount = tmp1  			; value passed to applyColorFade
+
+	ldx #2 						; index = amount to fade, loop from 2 to <16
 	loop_frame:
-		stx tmp1
+		stx fadeAmount
 		ldy #0
 		loop_color:
 			lda PCOLR0,Y
@@ -402,10 +411,21 @@ _dliSpriteData:
 			cpy #12
 			bne loop_color
 
+		lda dliColorTable+1
+		beq skip_dliColorTable
+		ldy #48
+		loop_dli_color:
+			lda (dliColorTable),Y
+			jsr _applyColorFade 
+			sta (dliColorTable),Y 
+			dey 
+			bne loop_dli_color
+		skip_dliColorTable:
+
 		lda #2
 		jsr _delayTicks 		; delay 2 frames
 
-		inx	 	 				; next tmp1 += 2
+		inx	 	 				; next index += 2
 		inx 
 		cpx #16
 		bcc loop_frame

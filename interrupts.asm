@@ -25,7 +25,8 @@
 	.export _colorCyclingEnable
 
 .segment "EXTZP": zeropage
-	_dliColorTable: .word 0
+	dliColorTable: .word 0
+	.exportzp dliColorTable
 
 .code
 
@@ -49,9 +50,17 @@
 ; void setDliColorTable(UInt8 *ptr);
 .export _setDliColorTable
 .proc _setDliColorTable 
-	sta _dliColorTable
-	stx _dliColorTable+1
+	sta dliColorTable
+	stx dliColorTable+1
 	rts
+.endproc
+
+; UInt8* getDliColorTable(void);
+.export _getDliColorTable 
+.proc _getDliColorTable 
+	lda dliColorTable
+	ldx dliColorTable+1 
+	rts 
 .endproc
 
 
@@ -183,34 +192,65 @@
 	
 	lda VCOUNT 			; use debugger to get actual VCOUNT values
 
-	cmp #vcountTopMargin+96
-	bcs last_line 
+	vcountOffset = $39 	; 57
+	cmp #vcountOffset
+		bcc colors 
+		beq enemy_hp 			; VCOUNT = $39
 
-	cmp #vcountTopMargin+48
-	beq text_window 
-	bcs button_bar
+	cmp #vcountOffset+4*7
+		bcc chara_name			; VCOUNT = $51 or 81
+
+	cmp #vcountOffset+4*8
+		bcc chara_level			; VCOUNT = $56
+
+	cmp #vcountOffset+4*10
+		bcc chara_hp			; VCOUNT = $5E
+
+	cmp #vcountOffset+4*12
+		bcc button_bar			; VCOUNT = $62
+
+	jmp last_line 
 
 	colors: 
-		ldy _dliColorTable+1  ; check for NULL pointer
+		ldy dliColorTable+1  ; check for NULL pointer
 		beq return_dli
 
 		sec 
 		sbc #vcountTopMargin
 		tay 
-		lda (_dliColorTable),Y
-		sta WSYNC
+		sta WSYNC			; wait for horizontal sync
+		lda (dliColorTable),Y
 		sta COLPF4
 		jmp return_dli
 
-	text_window:
+	enemy_hp:
+		lda TXTBKG
+			sta COLPF2			; dialog box background
+			sta WSYNC			; wait for horizontal sync
+		lda TXTLUM
+			sta COLPF1			; text luminance / bar chart foreground
 		lda #$00	
-		ldy TXTLUM
-		sta WSYNC
-		sta COLPF2			; text box background: black
-		sta COLPF4			; border background: black
-		sty COLPF1			; text luminance / bar chart foreground
+			sta COLPF4			; border background: black
 		lda COLOR7
-		sta COLPF0			; bar chart background color: blue
+			sta COLPF0			; bar chart background color: blue
+		jmp return_dli
+
+	chara_name:
+		lda #0
+		sta COLPF4			; border
+		sta COLPF2			; text box background color
+		lda TXTLUM		
+		sta COLPF1			; text color
+		jmp return_dli
+
+	chara_level:
+		lda PCOLR2		
+		sta COLPF1			; text color
+		jmp return_dli
+
+	chara_hp:
+		lda TXTLUM		
+		sta COLPF1			; bar color
 		jmp return_dli
 
 	button_bar:
@@ -223,6 +263,7 @@
 		jmp return_dli
 
 	last_line: 
+		sta WSYNC			; wait for horizontal sync
 		lda COLOR4 
 		sta COLPF4
 

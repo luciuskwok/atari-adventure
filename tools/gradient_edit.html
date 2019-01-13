@@ -161,7 +161,7 @@ function updateOutput() {
 	// Update text output
 	var outputString = "";
 	for (var x=0; x<packedBits.length; ++x) {
-		outputString += "$"+hexString(packedBits[x])+", ";
+		outputString += "0x"+hexString(packedBits[x])+", ";
 	}
 	var textOutput = document.getElementById("textOutput");
 	textOutput.innerHTML = outputString;

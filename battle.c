@@ -18,16 +18,33 @@ UInt8 previousSelectedIndex;
 UInt8 shouldRedrawEncounterTextOnMove;
 GameChara enemy;
 
+#define enemyHpBarRow (44)
 
 enum BattleMenuType {
 	BattleRootMenu, BattleFightMenu, BattleItemMenu
 };
 
+#define enemyAttackSpritePlayer (4)
+
+const UInt8 battleLoadingColorTable[] = {
+	0x00, 0x00, 0x00, 0x00, // unused, player sprites hidden
+	0x08, 0x04, 0x00, // playfield
+	0x06, // missile sprites
+	0x00, // background
+	0x00, 0x00, 0x00 // unused, DLI disabled
+};
 
 const UInt8 battleColorTable[] = {
-	0x58, 0x58, 0x32, 0x00, // sprite
-	0x0E, 0x1E, 0x28, 0x82, 0x00, // playfield
-	0x0E, 0x00, 0x82 // text box
+	0x58, // cursor sprite
+	0x00, // unused sprite 
+	0x0A, // chara level text
+	0x32, // enemy attack sprite
+	0x0E, 0x1E, 0x28, // playfield
+	0x0A, // missile sprites
+	0x00, // background
+	0x0E, // chara name text
+	0x80, // dialog box background
+	0x82  // hp bar background
 };
 
 const DataBlock battleButtonsImage = {
@@ -70,14 +87,18 @@ const DataBlock enemyAttackSprite = {
 };
 
 const UInt8 battleGradient[] = {
-	 0xF2, 0x80, 0xFB, 0x72, 0xFE, 0x64, 0x01, 0x56, 0x56, 0xFD, 0x00, 0x07,
-	 0x90, 0x00, 0xA2, 0x00, 0xB4, 0x00, 0x00, 0xC6, 0xFE, 0x00, 0x00, 0xD8, 
-	 0xFC, 0x00, 0x00, 0xEA
+	0xF2, 0x80, 0xFB, 0x72, 0xFE, 0x64, 0x01, 0x56, 0x48, 0xFD, 0x00, 0x07, 0x90, 
+	0x00, 0xA2, 0x00, 0xB4, 0x00, 0x00, 0xC6, 0xFD, 0x00, 0x00, 0xDA, 0xFC, 0x00,
+	0x80 // terminator
 };
 
 
+static void exitBattle(void) {
+	isLeavingBattle = 1;
+}
+
 static void applySelectionColor(UInt8 isMasking, UInt8 offset, UInt8 length) {
-	const UInt8 y = 49;
+	const UInt8 y = enemyHpBarRow + 1;
 	UInt8 height = 10;
 	UInt8 *screen = GRAPHICS_WINDOW + y * 40;
 	UInt8 x;
@@ -98,12 +119,16 @@ static void applySelectionColor(UInt8 isMasking, UInt8 offset, UInt8 length) {
 	}
 }
 
-static void drawStringInDefaultTextBox(const UInt8 *s) {
+static void clearDialogBox(void) {
+	zeroOut8(TEXT_WINDOW, 5*SCREEN_ROW_BYTES);
+}
+
+static void printInDialogBox(const UInt8 *s) {
 	// COLCRS: starting & newline X-position.
 	POKE(COLCRS, 1);
 
 	// ROWCRS: starting Y-position.
-	POKE(ROWCRS, 0);
+	POKE(ROWCRS, 1);
 
 	// LMARGN: X-position after wrapping line
 	POKE(LMARGN, 3);
@@ -124,8 +149,8 @@ static void showEncounterText(void) {
 	stringConcat(s, enemy.name);
 	stringConcat(s, " blocks your path!");
 
-	zeroOut8(TEXT_WINDOW, 3*SCREEN_ROW_BYTES);
-	drawStringInDefaultTextBox(s);
+	clearDialogBox();
+	printInDialogBox(s);
 	shouldRedrawEncounterTextOnMove = 0;
 }
 
@@ -149,7 +174,7 @@ static void drawEnemyHpBar(void) {
 	UInt8 barX = 80 - width / 2;
 	UInt8 fill = (enemy.hp + 1) / 2;
 
-	POKEW(SAVADR, (UInt16)GRAPHICS_WINDOW + 48 * SCREEN_ROW_BYTES);
+	POKEW(SAVADR, (UInt16)GRAPHICS_WINDOW + enemyHpBarRow * SCREEN_ROW_BYTES);
 	POKE(COLCRS, barX);
 	POKE(DELTAC, width);
 	POKE(COLINC, fill);
@@ -177,10 +202,10 @@ static void enemyWasHit(UInt8 damage) {
 	drawEnemyHpBar();
 
 	if (enemy.hp == 0) {
-		zeroOut8(TEXT_WINDOW, 3*SCREEN_ROW_BYTES);
-		printStringAtXY("* You are victorious.", 1, 0);
+		clearDialogBox();
+		printInDialogBox("* You are victorious.");
 		waitForAnyInput();
-		isLeavingBattle = 1;
+		exitBattle();
 	}
 }
 
@@ -197,9 +222,9 @@ static void charaAtIndexWasHit(UInt8 index, UInt8 damage) {
 
 	// Show animation for player getting hit.
 	for (i=0; i<4; ++i) {
-		setSpriteOriginX(3, 48 + index * 40);
+		setSpriteOriginX(enemyAttackSpritePlayer, 48 + index * 40);
 		delayTicks(4);
-		setSpriteOriginX(3, 0);
+		setSpriteOriginX(enemyAttackSpritePlayer, 0);
 		delayTicks(4);
 	}
 
@@ -211,7 +236,7 @@ static void charaAtIndexWasHit(UInt8 index, UInt8 damage) {
 	}
 
 	// Redraw the character's stats
-	POKE(ROWCRS, 4);
+	POKE(ROWCRS, 5);
 	eraseCharaBoxAtIndex(index);
 	printCharaAtIndex(index);
 }
@@ -223,11 +248,11 @@ static void doAttack(UInt8 player) {
 
 	hideCursor();
 	stringConcat(s, chara->name);
-	zeroOut8(TEXT_WINDOW, 3*SCREEN_ROW_BYTES);
+	clearDialogBox();
 
 	if (chara->hp != 0) {
 		stringConcat(s, " attacks.");
-		printStringAtXY(s, 1, 0);
+		printInDialogBox(s);
 
 		// Play sound
 		noteOn(NoteF+Oct5, 2, 15, 1, 0x80, 3);
@@ -246,8 +271,8 @@ static void doAttack(UInt8 player) {
 			stringConcat(s, " counter-attacks ");
 			stringConcat(s, chara->name);
 			stringConcat(s, ".");
-			zeroOut8(TEXT_WINDOW, 3*SCREEN_ROW_BYTES);
-			drawStringInDefaultTextBox(s);
+			clearDialogBox();
+			printInDialogBox(s);
 	
 			// Calculate to player character or miss.
 			charaAtIndexWasHit(player, damage);
@@ -259,7 +284,7 @@ static void doAttack(UInt8 player) {
 		}
 	} else {
 		stringConcat(s, " seems unresponsive.");
-		printStringAtXY(s, 1, 0);
+		printInDialogBox(s);
 	}
 }
 
@@ -267,8 +292,8 @@ static void enterFightMenu(void) {
 	if (partySize == 1) {
 		doAttack(0);
 	} else {
-		zeroOut8(TEXT_WINDOW, 3*SCREEN_ROW_BYTES);
-		printStringAtXY("* Who shall fight?", 1, 0);
+		clearDialogBox();
+		printInDialogBox("* Who shall fight?");
 
 		menuType = BattleFightMenu;
 		menuItemCount = partySize;
@@ -287,8 +312,8 @@ static void enterTalk(void) {
 	stringConcat(s, enemy.name);
 	stringConcat(s, " doesn't care what you think!");
 
-	zeroOut8(TEXT_WINDOW, 3*SCREEN_ROW_BYTES);
-	drawStringInDefaultTextBox(s);
+	clearDialogBox();
+	printInDialogBox(s);
 	shouldRedrawEncounterTextOnMove = 1;
 }
 
@@ -299,17 +324,17 @@ static void useItem(UInt8 item) {
 
 	hideCursor();
 
-	zeroOut8(TEXT_WINDOW, 3*SCREEN_ROW_BYTES);
+	clearDialogBox();
 	if (item == 0) {
 		// Play sound
 		noteOn(NoteC+Oct5, 8, 15, 1, 0x80, 3);
-		printStringAtXY("* The Sacred Nuts cause a reaction.", 1, 0);
+		printInDialogBox("* The Sacred Nuts cause a reaction.");
 		damage = 8;
 	} else {
 		// Play sound
 		noteOn(NoteF+Oct4, 16, 15, 1, 0x80, 3);
 
-		printStringAtXY("* The Staff makes the earth move.", 1, 0);
+		printInDialogBox("* The Staff makes the earth move.");
 		damage = 16;
 	}
 	
@@ -328,17 +353,17 @@ static void useItem(UInt8 item) {
 
 static void enterItemMenu(void) {
 	const UInt8 x = 12;
-	const UInt8 y = 1;
+	const UInt8 y = 2;
 	const UInt8 spacing = 8;
 
-	zeroOut8(TEXT_WINDOW, 3*SCREEN_ROW_BYTES);
+	clearDialogBox();
 	printStringAtXY("* Nuts", x, y);
 	printStringAtXY("* Staff", x + spacing, y);
 
 	menuType = BattleItemMenu;
 	menuItemCount = 2;
 	menuOrigin.x = 6 + 4 * x;
-	menuOrigin.y = 53 + 4 * y;
+	menuOrigin.y = 47 + 4 * y;
 	menuItemSpacing = 4 * spacing;
 	setMenuSelectedIndex(0);
 
@@ -346,7 +371,7 @@ static void enterItemMenu(void) {
 }
 
 static void attemptMercy(void) {
-	isLeavingBattle = 1;
+	exitBattle();
 }
 
 static SInt8 handleMenuClick(UInt8 index) {
@@ -405,22 +430,23 @@ static void menuSelectionDidChange(UInt8 index) {
 void initBattle(void) {
 	UInt16 startTime = SHORT_CLOCK;
 	// Use block of memory at end of graphics screen memory area for gradient.
-	UInt8 *unpackedGradient = GRAPHICS_WINDOW + 59 * SCREEN_ROW_BYTES;
+	UInt8 *unpackedGradient = GRAPHICS_WINDOW + 55 * SCREEN_ROW_BYTES;
 
 	// Set up graphics window
 	setScreenMode(ScreenModeOff);
-	zeroOut16(TEXT_WINDOW, 7*SCREEN_ROW_BYTES);
-	zeroOut16(GRAPHICS_WINDOW, 59*SCREEN_ROW_BYTES);
+	zeroOut16(TEXT_WINDOW, 8*SCREEN_ROW_BYTES);
+	zeroOut16(GRAPHICS_WINDOW, (enemyHpBarRow+11)*SCREEN_ROW_BYTES);
 	setPlayerCursorVisible(0);
 
-	// Turn on screen
-	loadColorTable(battleColorTable); // battleColorTable
+	// Set loading color table and disable DLI
+	loadColorTable(battleLoadingColorTable);
 	setScreenMode(ScreenModeBattle);
+	POKE(NMIEN, 0x40);
 
 	// Start battle music
 	startSong(8);
 
-	printAllCharaStats(4);
+	printAllCharaStats(5);
 
 	// { // Debugging
 	// 	UInt8 i;
@@ -439,8 +465,6 @@ void initBattle(void) {
 	// Set the background color gradient
 	unpackbits(unpackedGradient, battleGradient);
 	setDliColorTable(unpackedGradient);
-	// Copy first color to background color shadow register so that the color extends to overscan.
-	POKE(COLOR4, unpackedGradient[0]);  
 
 	// Draw enemy image
 	drawImage(&battleEnemyImage, 0);
@@ -449,12 +473,12 @@ void initBattle(void) {
 	drawEnemyHpBar();
 
 	// Draw button bar image
-	drawImage(&battleButtonsImage, 49);
+	drawImage(&battleButtonsImage, enemyHpBarRow+1);
 
 	// Enemy counter-attack effect
-	clearSprite(3);
-	setSpriteWidth(3, 4);
-	drawSprite(&enemyAttackSprite, 3, 82);
+	clearSprite(enemyAttackSpritePlayer);
+	setSpriteWidth(enemyAttackSpritePlayer, 4);
+	drawSprite(&enemyAttackSprite, enemyAttackSpritePlayer, 82);
 
 	// Set up menu
 	initMenu();
@@ -470,6 +494,13 @@ void initBattle(void) {
 	isLeavingBattle = 0;
 	enterRootMenu(1);
 
-	debugPrint("Init:", SHORT_CLOCK - startTime, 0, 3);
+	// Switch to final color table and enable DLI
+	loadColorTable(battleColorTable);
+	POKE(NMIEN, 0xC0);
+
+	// Copy first color to background color shadow register so that the color extends to overscan.
+	POKE(COLOR4, unpackedGradient[0]);  
+
+	debugPrint("Init:", SHORT_CLOCK - startTime, 15, 2);
 }
 

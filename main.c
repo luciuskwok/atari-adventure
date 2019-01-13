@@ -67,6 +67,7 @@ static void fadeOutScreen(void) {
 	fadeOutColorTable();
 	clearSprite(4);
 	hideSprites();
+	setDliColorTable(0);
 }
 
 static void handleMessage(SInt8 message) {

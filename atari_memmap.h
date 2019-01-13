@@ -85,6 +85,8 @@
 #define AUDCTL (0xD208)
 #define SKCTL  (0xD20F)
 
+// ANTIC
+#define NMIEN  (0xD40E) 
 
 // Macros
 #define POKE(addr,val)  (*(unsigned char*) (addr) = (val))
