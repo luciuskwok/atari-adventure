@@ -245,12 +245,20 @@ _dliSpriteData:
 	adc #0
 	sta ptr1+1
 
+	lda dest 
+	ldx dest+1
+	jsr pushax 
+	lda src 
+	ldx src+1
 	jsr _unpackbits
+
 	jsr _updateLMSValues
 	rts
 .endproc 
 
 
+; void unpackbits(UInt8 *dest, UInt8 *source);
+.export _unpackbits
 .proc _unpackbits
 	; Unpacks data compressed with PackBits data from ptr2 into ptr1.
 	; * On entry: ptr2 = PackBits-compressed data
@@ -258,7 +266,12 @@ _dliSpriteData:
 	; * uses ptr1, ptr2, tmp1
 
 	src = ptr2 
+	sta ptr2 
+	stx ptr2+1
+
 	dest = ptr1  		; start on byte 3 of display list area
+	jsr popptr1 
+
 	ldy #0 				; Y is always zero
 	loop_header: 
 		lda (src),Y 

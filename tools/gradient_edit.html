@@ -11,8 +11,9 @@
   	td.layoutCell {
   	}
   	table#output {
-  		margin-left: auto;
-  		margin-right: auto;
+  		width: 98%;
+  		margin-left: 1%;
+  		margin-right: 1%;
    		border-collapse: collapse;
   		user-select: none;
   	}
@@ -142,34 +143,136 @@ function updateOutput() {
 	var table = document.getElementById("output");
 	for (var y=0; y<gradient.length; ++y) {
 		var color = colorAtIndex(gradient[y]);
-		table.rows[y].cells[0].style.backgroundColor = color;
+		var tableRow = table.rows[y];
+		if (tableRow) {
+			tableRow.cells[0].style.backgroundColor = color;
+		}
 	}
+
+	// Convert gradient to Atari color values
+	var atariColors = Array();
+	for (var y=0; y<gradient.length; ++y) {
+		atariColors.push(gradient[y] * 2);
+	}
+
+	// Convert to PackBits format
+	var packedBits = packbits(atariColors);
 
 	// Update text output
 	var outputString = "";
-	var previousColor = -1;
-	var runLength = 0;
-
-	for (var y=0; y<gradient.length; ++y) {
-		var color = gradient[y];
-
-		if (previousColor == -1) {
-			previousColor = color;	
-		} else if (previousColor != color) {
-			outputString += formatRunLength(runLength, previousColor);
-			previousColor = color;
-			runLength = 0;
-		}
-		runLength += 1;
+	for (var x=0; x<packedBits.length; ++x) {
+		outputString += "$"+hexString(packedBits[x])+", ";
 	}
-	outputString += formatRunLength(runLength, previousColor);
-
 	var textOutput = document.getElementById("textOutput");
 	textOutput.innerHTML = outputString;
 }
 
-function formatRunLength(length, value) {
-	return length.toString() + ", $" + hexString(value) + ", ";
+function updateFromTextInput() {
+	var textInput = document.getElementById("textInput");
+	var stringArray = textInput.value.split(",");
+	var packedArray = Array();
+	for (var y=0; y<stringArray.length; ++y) {
+		var value = parseInt(stringArray[y].replace("$", "0x"), 16);
+		if (!isNaN(value)) {
+			packedArray[y] = value;
+		}	
+	}
+	var table = document.getElementById("output");
+	var atariColors = unpackbits(packedArray);
+	gradient = Array();
+	for (var y=0; y<atariColors.length; ++y) {
+		if (y < table.rows.length) {
+			gradient.push(Math.floor(atariColors[y] / 2));
+		}
+	}
+	//console.log("packedArray="+packedArray.toString());
+	updateOutput();
+	return false;
+}
+
+function packbits(src) {
+	var dst = Array();
+	var i = 0;
+	var literals = Array();
+
+	while (i < src.length) {
+		// Find the length of the run starting from src[i]
+		var runLen = runLength(src, i);
+
+		if (runLen >= 3 || literals.length == 128) {
+			// Add any literals to dst
+			if (literals.length != 0) {
+				dst.push(literals.length - 1);
+				dst = dst.concat(literals);
+				literals = Array();
+			}
+		}
+
+		if (runLen >= 3) {
+			// Encode repeat
+			dst.push(257-runLen);
+			dst.push(src[i]);
+			i += runLen;
+		} else {
+			// Add byte to literals
+			literals.push(src[i++]);
+		}
+	}
+
+	// Flush any remaining literals to dst
+	if (literals.length != 0) {
+		dst.push(literals.length - 1);
+		dst = dst.concat(literals);
+	}
+
+	return dst;
+}
+
+function runLength(data, offset) {
+	var length = 0;
+	var previous = -1;
+	while (offset+length < data.length) {
+		var c = data[offset+length];
+		if (previous != -1 && previous != c) {
+			break;
+		}
+		previous = c;
+		++length;
+	}
+	return length;
+}
+
+function encodeLiterals(data) {
+	var block = Array();
+	block.push(data.length - 1);
+	block.concat(data);
+
+	for (var i=0; i<literals.length; ++i) {
+		block.push(data)
+	}
+}
+
+function unpackbits(src) {
+	var dst = Array();
+	var i = 0;
+
+	while (i < src.length) {
+		var header = src[i++];
+		var count, value;
+		if (header > 128) {
+			count = 257 - header;
+			value = src[i++];
+			for (var j=0; j<count; ++j) {
+				dst.push(value);
+			}
+		} else if (header < 128) {
+			count = header + 1;
+			for (var j=0; j<count; ++j) {
+				dst.push(src[i++]);
+			}
+		} // header == 128 is a no-op.
+	}
+	return dst;
 }
 
 function hexString(x) {
@@ -178,26 +281,6 @@ function hexString(x) {
 		s = "0" + s;
 	}
 	return s;
-}
-
-function updateFromTextInput() {
-	var textInput = document.getElementById("textInput");
-	var values = textInput.value.split(",");
-	var x, y;
-	
-	if (values.length > 0) {
-		for (y=0; y<Math.min(16, values.length); ++y) {
-			var value = values[y];
-			console.log("value: "+value);
-			for (x=7; x>=0; --x) {
-				pixelMap[x + 8 * y] = value % 2;
-				value = Math.floor(value / 2);
-			}
-		}
-	}
-	updateEditor();
-	updateTextOutput();
-	return false;
 }
 
 var atariNtscColorTable = [
@@ -351,20 +434,21 @@ function colorAtIndex(index) {
 				<table id="palette"></table>
 			</td>
 		</tr>
+		<tr>
+			<td class="layoutCell">
+				<span id="textOutput"></span>
+			</td>
+		</tr>
+		<tr>
+			<td class="layoutCell">
+				<form>
+					<input type="text" size=64" id="textInput"></input><br>
+					<button type="button" onclick="updateFromTextInput();">Load</button>
+				</form>
+			</td>
+		</tr>
 	</table>
 </div>
 
-<div class="p">
-	<span id="textOutput"></span>
-</div>
-
-<div class="p">
-	<form>
-		<input type="text" size=64" id="textInput"></input><br>
-		<button type="button" onclick="updateFromTextInput();">Load</button>
-	</form>
-</div>
-
-</table>  	
 </body>
 </html>

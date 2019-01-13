@@ -21,9 +21,12 @@
 	vcountTopMargin = 13
 
 .data  ; Globals 
-	_colorCyclingEnable:
-		.byte 0
+	_colorCyclingEnable: .byte 0
 	.export _colorCyclingEnable
+
+.segment "EXTZP": zeropage
+	_dliColorTable: .word 0
+	.export _dliColorTable
 
 .code
 
@@ -166,37 +169,46 @@
 .endproc
 
 .proc _battleViewDLI
-	pha					; push accumulator and X register onto stack
-	txa
+	pha					; push accumulator and Y register onto stack
+	tya
 	pha
 	
 	lda VCOUNT 			; use debugger to get actual VCOUNT values
 
 	cmp #vcountTopMargin+48
 	beq text_window 
-	jmp button_bar
+	bcs button_bar
+
+	colors: 
+		sec 
+		sbc #vcountTopMargin
+		tay 
+		lda (_dliColorTable),Y
+		sta WSYNC
+		sta COLPF4
+		jmp return_dli
 
 	text_window:
 		lda #$00	
+		ldy TXTLUM
 		sta COLPF2			; text box background: black
 		sta COLPF4			; border background: black
-		lda TXTLUM		
-		sta COLPF1			; text luminance / bar chart foreground
+		sty COLPF1			; text luminance / bar chart foreground
 		lda COLOR7
 		sta COLPF0			; bar chart background color: blue
 		jmp return_dli
 
 	button_bar:
-		lda COLOR0			; reload shadow register values
+		lda COLOR0		
+		ldy COLOR1		
 		sta COLPF0
-		lda COLOR1			; reload shadow register values
-		sta COLPF1
+		sty COLPF1
 		lda COLOR2			
 		sta COLPF2
 
 	return_dli:	
-		pla					; restore accumulator and X register from stack
-		tax
+		pla					; restore accumulator and Y register from stack
+		tay
 		pla
 		rti
 .endproc
