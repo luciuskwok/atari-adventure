@@ -16,6 +16,7 @@
 extern UInt8 dliSpriteData[];
 #define dliSpriteDataLength (10)
 
+
 enum ScreenMode {
 	ScreenModeOff = 0,
 	ScreenModeMap,
@@ -24,6 +25,9 @@ enum ScreenMode {
 	ScreenModeInfo,
 };
 void setScreenMode(UInt8 mode);
+
+// PackBits
+void unpackbits(UInt8 *dest, const UInt8 *source);
 
 // Color Table
 void fadeOutColorTable(void);
@@ -41,5 +45,8 @@ void delayTicks(UInt8 ticks);
 
 // Init
 void initGraphics(void);
+
+// From misc.asm
+void setDliColorTable(UInt8 *ptr);
 
 #endif

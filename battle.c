@@ -69,6 +69,12 @@ const DataBlock enemyAttackSprite = {
 	{ 0x18, 0x3C, 0x7E, 0x7E, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7E, 0x7E, 0x3C, 0x18 }
 };
 
+const UInt8 battleGradient[] = {
+	 0xF2, 0x80, 0xFB, 0x72, 0xFE, 0x64, 0x01, 0x56, 0x56, 0xFD, 0x00, 0x07,
+	 0x90, 0x00, 0xA2, 0x00, 0xB4, 0x00, 0x00, 0xC6, 0xFE, 0x00, 0x00, 0xD8, 
+	 0xFC, 0x00, 0x00, 0xEA
+};
+
 
 static void applySelectionColor(UInt8 isMasking, UInt8 offset, UInt8 length) {
 	const UInt8 y = 49;
@@ -398,6 +404,8 @@ static void menuSelectionDidChange(UInt8 index) {
 
 void initBattle(void) {
 	UInt16 startTime = SHORT_CLOCK;
+	// Use block of memory at end of graphics screen memory area for gradient.
+	UInt8 *unpackedGradient = GRAPHICS_WINDOW + 59 * SCREEN_ROW_BYTES;
 
 	// Set up graphics window
 	setScreenMode(ScreenModeOff);
@@ -427,6 +435,12 @@ void initBattle(void) {
 	enemy.hp = charaMaxHp(&enemy);
 	showEncounterText();
 	shouldRedrawEncounterTextOnMove = 0;
+
+	// Set the background color gradient
+	unpackbits(unpackedGradient, battleGradient);
+	setDliColorTable(unpackedGradient);
+	// Copy first color to background color shadow register so that the color extends to overscan.
+	POKE(COLOR4, unpackedGradient[0]);  
 
 	// Draw enemy image
 	drawImage(&battleEnemyImage, 0);

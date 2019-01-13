@@ -1,10 +1,6 @@
 ; misc.asm
 
 
-.rodata 
-	_battleDliColorTable: .byte $F2, $80, $FB, $72, $FE, $64, $01, $56, $56, $FD, $00, $07, $90, $00, $A2, $00, $B4, $00, $00, $C6, $FE, $00, $00, $D8, $FC, $00, $00, $EA
-	.export _battleDliColorTable
-
 .code
 
 .export _multiplyAXtoPtr1

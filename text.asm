@@ -506,9 +506,8 @@
 
 ; void eraseCharaBoxAtIndex(UInt8 index);
 .export _eraseCharaBoxAtIndex
-.proc _eraseCharaBoxAtIndex 	; uses sreg, ptr1, 
-	.importzp 	tmp1
-	; mulax10, _setSavadrToTextCursor uses sreg, ptr1
+.proc _eraseCharaBoxAtIndex
+	; _setSavadrToTextCursor uses sreg, ptr1
 
 	width = 9
 	height = 4
@@ -521,18 +520,19 @@
 
 	jsr _setSavadrToTextCursor
 
-	index = tmp1
-	lda #height
-	sta index
-	loop: 
+	ldx #height
+	loop_row: 
+		lda #0
 		ldy #width 
-		jsr _zeroOutYAtPtr1
-
+		loop_col:
+			dey
+			sta (SAVADR),Y
+			bne loop_col
 		lda #ROW_BYTES 				; SAVADR += row_bytes
 		jsr _addAToSavadr
-	next_loop:
-		dec index
-		bne loop
+	next_row:
+		dex
+		bne loop_row
 	rts
 .endproc
 

@@ -26,7 +26,6 @@
 
 .segment "EXTZP": zeropage
 	_dliColorTable: .word 0
-	.export _dliColorTable
 
 .code
 
@@ -45,7 +44,16 @@
 
 	rts
 .endproc
-	
+
+
+; void setDliColorTable(UInt8 *ptr);
+.export _setDliColorTable
+.proc _setDliColorTable 
+	sta _dliColorTable
+	stx _dliColorTable+1
+	rts
+.endproc
+
 
 .proc _immediateUserVBI
 	jsr _soundVBI
@@ -175,11 +183,17 @@
 	
 	lda VCOUNT 			; use debugger to get actual VCOUNT values
 
+	cmp #vcountTopMargin+96
+	bcs last_line 
+
 	cmp #vcountTopMargin+48
 	beq text_window 
 	bcs button_bar
 
 	colors: 
+		ldy _dliColorTable+1  ; check for NULL pointer
+		beq return_dli
+
 		sec 
 		sbc #vcountTopMargin
 		tay 
@@ -191,6 +205,7 @@
 	text_window:
 		lda #$00	
 		ldy TXTLUM
+		sta WSYNC
 		sta COLPF2			; text box background: black
 		sta COLPF4			; border background: black
 		sty COLPF1			; text luminance / bar chart foreground
@@ -205,6 +220,11 @@
 		sty COLPF1
 		lda COLOR2			
 		sta COLPF2
+		jmp return_dli
+
+	last_line: 
+		lda COLOR4 
+		sta COLPF4
 
 	return_dli:	
 		pla					; restore accumulator and Y register from stack

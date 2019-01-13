@@ -123,7 +123,7 @@ _dliSpriteData:
 
 		.byte          DL_RASTER|DL_LMS, LMS_GR, 49	; raster, 10 rows
 		.byte  -9+257, DL_RASTER 
-		.byte   1-1,   DL_JVB
+		.byte   2-1,   DL_BLK8|DL_DLI, DL_JVB
 
 		.byte 128 ; terminator
 
@@ -257,7 +257,7 @@ _dliSpriteData:
 .endproc 
 
 
-; void unpackbits(UInt8 *dest, UInt8 *source);
+; void unpackbits(UInt8 *dest, const UInt8 *source);
 .export _unpackbits
 .proc _unpackbits
 	; Unpacks data compressed with PackBits data from ptr2 into ptr1.
