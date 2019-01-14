@@ -454,16 +454,6 @@ static void menuSelectionDidChange(UInt8 index) {
 	}
 }
 
-extern int drawImage(const DataBlock *image, UInt8 rowOffset, UInt8 rowCount);
-static int drawImageC(const DataBlock *image, UInt8 rowOffset, UInt8 rowCount) {
-	UInt16 graphicsLength = rowCount * SCREEN_ROW_BYTES;
-	UInt8 *screen = GRAPHICS_WINDOW + (rowOffset * SCREEN_ROW_BYTES);
-	int err;
-
-	err = uncompress(screen, &graphicsLength, image->bytes, image->length);
-	return err;
-}
-
 void initBattle(void) {
 	UInt16 startTime = SHORT_CLOCK;
 	// Use block of memory at end of graphics screen memory area for gradient.

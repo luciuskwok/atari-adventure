@@ -549,11 +549,7 @@ void initDialog(void) {
 	}
 
 	// Draw background image
-	{
-		UInt16 graphicsLength = graphicsHeight * SCREEN_ROW_BYTES;
-		int err = uncompress(GRAPHICS_WINDOW, &graphicsLength, temShopImage.bytes, temShopImage.length);
-	}
-	
+	drawImage(&temShopImage, 0, graphicsHeight);
 	debugPrint("Init:", SHORT_CLOCK - startTime, 0, 6);
 }
 
