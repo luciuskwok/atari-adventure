@@ -603,8 +603,8 @@ _dliSpriteData:
 		jsr pushax
 
 	push_destLen:
-		ldx #destLen+1 			; pushing pointer to destLen
-		lda #destLen 
+		ldx #>destLen 			; pushing pointer to destLen
+		lda #<destLen 
 		jsr pushax 
 		
 	push_source:
