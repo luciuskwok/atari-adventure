@@ -22,6 +22,7 @@
 	BUFSTR    = $6C
 	BITMSK    = $6E
 	SHFAMT    = $6F
+	ENDPT     = $74
 	DELTAR    = $76
 	DELTAC    = $77
 	ROWINC    = $79

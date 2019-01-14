@@ -560,9 +560,65 @@ _dliSpriteData:
 
 
 ; int drawImage(const DataBlock *image, UInt8 rowOffset, UInt8 rowCount);
-.export _drawImageX
-.proc _drawImageX
+.export _drawImage
+.proc _drawImage
+	.importzp ptr1
+	.import popa, popptr1, pushax
+	.import _multiplyAXtoPtr1
+	.import _addAToPtr1
+	.import _setSavadrToGraphicsCursor
+	.import _uncompress
 
+	get_rowCount:
+	destLen = ENDPT  			; using ENDPT for its 16-bit size
+		ldx #ROW_BYTES 			; A already has rowCount
+		jsr _multiplyAXtoPtr1
+		lda ptr1 
+		sta destLen 
+		lda ptr1+1 
+		sta destLen+1 
+
+	get_rowOffset:
+		jsr popa
+		sta ROWCRS
+		lda #0
+		sta COLCRS 
+		jsr _setSavadrToGraphicsCursor
+
+	get_image:
+	image = ptr1 
+		jsr popptr1
+
+	pha_sourceLen:
+		ldy #0
+		lda (image),Y 			; LSB
+		pha 
+		iny 
+		lda (image),Y  			; MSB
+		pha
+
+	push_dest: 
+		ldx SAVADR+1
+		lda SAVADR
+		jsr pushax
+
+	push_destLen:
+		ldx #destLen+1 			; pushing pointer to destLen
+		lda #destLen 
+		jsr pushax 
+		
+	push_source:
+		lda #2 
+		jsr _addAToPtr1
+		ldx ptr1+1
+		lda ptr1 
+		jsr pushax 
+
+	push_sourceLen:
+		pla 
+		tax 
+		pla 
+	jsr _uncompress ; int uncompress (char* dest, unsigned* destLen, const char* source, unsigned sourceLen);
 	rts
 .endproc 
 

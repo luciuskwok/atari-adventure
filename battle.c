@@ -30,7 +30,7 @@ enum BattleMenuType {
 
 const UInt8 battleLoadingColorTable[] = {
 	0x00, 0x00, 0x00, 0x00, // unused, player sprites hidden
-	0x0A, 0x04, 0x00, // playfield
+	0x06, 0x0E, 0x02, // playfield
 	0x06, // missile sprites
 	0x00, // background
 	0x00, 0x00, 0x00 // unused, DLI disabled
@@ -454,7 +454,8 @@ static void menuSelectionDidChange(UInt8 index) {
 	}
 }
 
-static int drawImage(const DataBlock *image, UInt8 rowOffset, UInt8 rowCount) {
+extern int drawImage(const DataBlock *image, UInt8 rowOffset, UInt8 rowCount);
+static int drawImageC(const DataBlock *image, UInt8 rowOffset, UInt8 rowCount) {
 	UInt16 graphicsLength = rowCount * SCREEN_ROW_BYTES;
 	UInt8 *screen = GRAPHICS_WINDOW + (rowOffset * SCREEN_ROW_BYTES);
 	int err;
