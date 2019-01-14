@@ -1,22 +1,6 @@
 ; graphics_.asm
 
-.importzp 	sp, sreg
-.importzp 	tmp1, tmp2, tmp3, tmp4, ptr1, ptr2, ptr3, ptr4
-.import 	popa, popptr1, popsreg, pushax
-.import 	udiv16
-
-.import _initVBI
-.import _initSprites
-
-.import _mapViewDLI
-.import _battleViewDLI
-.import _infoViewDLI
-
 .import _multiplyAXtoPtr1
-.import _addSregToPtr1, _addAToPtr1
-.import _setSavadrToTextCursor
-
-.import _colorCyclingEnable
 
 .include "atari_memmap.asm"
 
@@ -133,6 +117,11 @@ _dliSpriteData:
 		.byte 128 ; terminator
 
 	.code 
+
+	.import _mapViewDLI
+	.import _battleViewDLI
+	.import _infoViewDLI
+
 	anticOptions = $2E 	; normal playfield, enable players & missiles, enable DMA
 	enableDLI    = $C0  ; enable VBI + DLI
 
@@ -239,6 +228,8 @@ _dliSpriteData:
 	; * On entry: AX = PackBits-compressed data
 	; * uses ptr1, ptr2, tmp1
 	; * On return: ptr1 points at end of written data
+	.importzp ptr1, ptr2
+	.import pushax
 	
 	src = ptr2 
 	sta ptr2 
@@ -271,7 +262,8 @@ _dliSpriteData:
 	; Unpacks data compressed with PackBits data from ptr2 into ptr1.
 	; * On entry: ptr2 = PackBits-compressed data
 	; * On return: ptr1 points at end of written data
-	; * uses ptr1, ptr2, tmp1
+	.importzp ptr1, ptr2
+	.import popptr1
 
 	src = ptr2 
 	sta ptr2 
@@ -335,7 +327,10 @@ _dliSpriteData:
 	; The first byte after LMS instruction is whether to use SAVMSC or TXTMSC.
 	; The second byte is the number of rows to offset.
 
-	dl = ptr3
+	.importzp tmp1 
+	.import _setSavadrToTextCursor
+
+	dl = ADRESS
 	lda SDLSTL
 	sta dl
 	lda SDLSTL+1
@@ -393,7 +388,10 @@ _dliSpriteData:
 .export _fadeOutColorTable
 .proc _fadeOutColorTable
 	; uses tmp1, ptr1
+	.importzp ptr1 
+	.importzp tmp1 
 	.importzp dliColorTable
+	.import _colorCyclingEnable
 
 	; Disable player color cycling to avoid conflicts
 	lda #0
@@ -439,6 +437,9 @@ _dliSpriteData:
 .export _fadeInColorTable
 .proc _fadeInColorTable
 	; uses tmp1, ptr1
+	.importzp ptr1 
+	.importzp tmp1 
+
 	sta ptr1
 	stx ptr1+1
 
@@ -468,6 +469,8 @@ _dliSpriteData:
 
 .proc _applyColorFade
 	; on entry: A = color, tmp1 = amount to fade
+	.importzp tmp1 
+
 	pha 
 	and #$0F	; A = lum
 	cmp tmp1 	; if lum < amount: color = 0
@@ -485,7 +488,8 @@ _dliSpriteData:
 ; extern void loadColorTable(UInt8 *colors);
 .export _loadColorTable
 .proc _loadColorTable
-	; uses ptr1 
+	.importzp ptr1 
+
 	sta ptr1 
 	stx ptr1+1
 	cpx #0
@@ -521,6 +525,8 @@ _dliSpriteData:
 	; * Sets values in:
 	; DELTAC: width of bar chart
 	; COLINC: width of filled portion of chart
+	.importzp sreg, ptr1, ptr4
+	.import udiv16
 
 	pha 		; push hp
 	maxHp = ptr4
@@ -552,6 +558,13 @@ _dliSpriteData:
 	rts
 .endproc
 
+
+; int drawImage(const DataBlock *image, UInt8 rowOffset, UInt8 rowCount);
+.export _drawImageX
+.proc _drawImageX
+
+	rts
+.endproc 
 
 ; void drawBarChart(void);
 .export _drawBarChart
@@ -585,7 +598,6 @@ _dliSpriteData:
 
 .proc _setPixel
 	; on entry: SAVADR points to screen row, COLCRS is x-position, A=pixel value
-	; uses AY
 
 	and #3 				; Use BUFSTR to store the shifted pixel value
 	sta BUFSTR
@@ -629,6 +641,10 @@ _dliSpriteData:
 ; extern void zeroOut16(UInt8 *ptr, UInt16 length);
 .export _zeroOut16
 .proc _zeroOut16
+	.importzp sreg, ptr1 
+	.import popsreg
+	.import _addSregToPtr1
+
 	length = ptr1 
 	sta length			; ptr1 = parmeter 'length'
 	stx length+1
@@ -660,6 +676,8 @@ _dliSpriteData:
 ; void zeroOut8(UInt8 *ptr, UInt8 length);
 .export _zeroOut8
 .proc _zeroOut8
+	.import popptr1 
+
 	pha		 			; get parmeter 'length'
 	jsr popptr1			; get parameter 'ptr'
 	pla 
@@ -671,6 +689,8 @@ _dliSpriteData:
 
 .export _zeroOutYAtPtr1
 .proc _zeroOutYAtPtr1
+	.importzp ptr1
+
 	lda #0
 	loop:
 		dey
@@ -685,7 +705,7 @@ _dliSpriteData:
 	; Stores cursor address in SAVADR.
 	; Set DINDEX to zero for normal mode, nonzero for map view mode.
 	; Calls _multiplyAXtoPtr1 (uses sreg, ptr1)
-	.importzp 	ptr1
+	.importzp ptr1
 
 	lda DINDEX 
 	bne tile_mode
@@ -773,42 +793,45 @@ customTiles:
 
 
 .proc _initFont
-	; uses ptr1, ptr2, TBD
+	; uses ptr1, ptr2
+	.importzp ptr1, ptr2
 
 	; Set the map view to use characters starting at fontPage + 2. It seems that the text box area ignores the bottom 2 bits of CHBAS, allowing for regular characters starting at fontPage.
-	sta ptr1+1 			; MSB of ptr1 = fontPage
-	clc  				; CHBAS = fontPage + 2
-	adc #2
-	sta CHBAS 			
-	lda #0 				; LSB of ptr1 = 0
-	sta ptr1 
+	customFont = ptr1 
+		sta customFont+1 		; MSB of ptr1 = fontPage
+		clc  				; CHBAS = fontPage + 2
+		adc #2
+		sta CHBAS 			
+		lda #0 				; LSB of ptr1 = 0
+		sta customFont 
 
 	; Copy entire ROM font into custom font area.
+	romFont = ptr2 
 	lda #$00 			; ptr2: ROM font
-	sta ptr2
+	sta romFont
 	lda #$E0 
-	sta ptr2+1
+	sta romFont+1
 	ldy #0 
 	loop_rom: 			
-		lda (ptr2),Y		; copy ROM font into custom font area
-		sta (ptr1),Y
+		lda (romFont),Y		; copy ROM font into custom font area
+		sta (customFont),Y
 		iny
 		bne loop_rom
-		inc ptr1+1
-		inc ptr2+1
-		lda ptr2+1
+		inc customFont+1
+		inc romFont+1
+		lda romFont+1
 		cmp #$E4
 		bne loop_rom
 
 		; Copy our custom tiles into the control character area starting at fontPage + 2.
-		lda ptr1+1
+		lda customFont+1
 		sec 
 		sbc #2  			; at this point, ptr1 is at end of font area, so subtract 2 
-		sta ptr1+1
+		sta customFont+1
 		ldy #0
 	loop_custom:
 		lda customTiles,Y
-		sta (ptr1),Y
+		sta (customFont),Y
 		iny
 		cpy #customTilesLength
 		bne loop_custom
@@ -819,6 +842,11 @@ customTiles:
 ; extern void initGraphics(void);
 .export _initGraphics
 .proc _initGraphics
+	.importzp ptr1
+
+	.import _initVBI
+	.import _initSprites
+
 	; Turn off screen during init and leave it off for main to turn back on.
 	lda #0
 	sta SDMCTL

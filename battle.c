@@ -454,6 +454,15 @@ static void menuSelectionDidChange(UInt8 index) {
 	}
 }
 
+static int drawImage(const DataBlock *image, UInt8 rowOffset, UInt8 rowCount) {
+	UInt16 graphicsLength = rowCount * SCREEN_ROW_BYTES;
+	UInt8 *screen = GRAPHICS_WINDOW + (rowOffset * SCREEN_ROW_BYTES);
+	int err;
+
+	err = uncompress(screen, &graphicsLength, image->bytes, image->length);
+	return err;
+}
+
 void initBattle(void) {
 	UInt16 startTime = SHORT_CLOCK;
 	// Use block of memory at end of graphics screen memory area for gradient.
@@ -501,12 +510,10 @@ void initBattle(void) {
 	drawSprite(&enemyAttackSprite, enemyAttackSpritePlayer, 82);
 
 	// Draw background image
-	graphicsLength = graphicsHeight * SCREEN_ROW_BYTES;
-	err = uncompress(GRAPHICS_WINDOW, &graphicsLength, battleBackgroundImage.bytes, battleBackgroundImage.length);
+	err = drawImage(&battleBackgroundImage, 0, graphicsHeight);
 
 	// Draw button bar image
-	graphicsLength = 10 * SCREEN_ROW_BYTES;
-	err = uncompress(GRAPHICS_WINDOW + (graphicsHeight+1) * SCREEN_ROW_BYTES, &graphicsLength, battleButtonsImage.bytes, battleButtonsImage.length);
+	err |= drawImage(&battleButtonsImage, graphicsHeight+1, 10);
 
 	// Set up menu
 	initMenu();
