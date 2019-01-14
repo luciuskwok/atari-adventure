@@ -496,7 +496,7 @@ void initBattle(void) {
 	// Enemy counter-attack effect
 	clearSprite(enemyAttackSpritePlayer);
 	setSpriteWidth(enemyAttackSpritePlayer, 4);
-	drawSprite(&enemyAttackSprite, enemyAttackSpritePlayer, 82);
+	drawSprite(&enemyAttackSprite, enemyAttackSpritePlayer, 85);
 
 	// Draw background image
 	err = drawCompressedImage(&battleBackgroundImage, 0, graphicsHeight);
