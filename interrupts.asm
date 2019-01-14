@@ -198,16 +198,16 @@
 		beq enemy_hp 			; VCOUNT = $39
 
 	cmp #vcountOffset+4*7
-		bcc chara_name			; VCOUNT = $51 or 81
+		bcc chara_name			; VCOUNT = $52 or 82
 
-	cmp #vcountOffset+4*8
-		bcc chara_level			; VCOUNT = $56
+	cmp #vcountOffset+4*9
+		bcc chara_level			; VCOUNT = $59
 
-	cmp #vcountOffset+4*10
-		bcc chara_hp			; VCOUNT = $5E
+	cmp #vcountOffset+4*11
+		bcc chara_hp			; VCOUNT = $61
 
 	cmp #vcountOffset+4*12
-		bcc button_bar			; VCOUNT = $62
+		bcc button_bar			; VCOUNT = $65
 
 	jmp last_line 
 

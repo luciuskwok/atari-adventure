@@ -108,12 +108,12 @@ _dliSpriteData:
 		.byte          DL_RASTER				 	; enemy HP bar
 		.byte          DL_RASTER|DL_LMS, LMS_GR, 44
 		.byte          DL_RASTER|DL_LMS, LMS_GR, 44
-		.byte          DL_BLK1 						; 9
+		.byte          DL_BLK3 						; 9
 
 		.byte          DL_TEXT|DL_LMS, LMS_TXT, 0 	; dialog box, 5 lines
 		.byte  -3+257, DL_TEXT 
 		.byte  18-1,   DL_TEXT|DL_DLI 
-		.byte          DL_BLK4
+		.byte          DL_BLK6
 		.byte          DL_TEXT|DL_DLI 				; chara name
 		.byte          DL_TEXT						; chara level
 		.byte          DL_TEXT|DL_DLI 				; 5
@@ -124,7 +124,7 @@ _dliSpriteData:
 		.byte          DL_RASTER|DL_LMS, LMS_TXT, 8
 		.byte          DL_BLK1|DL_DLI 				; 14
 
-		.byte          DL_BLK8
+		.byte          DL_BLK4
 
 		.byte          DL_RASTER|DL_LMS, LMS_GR, 45	; raster, 10 rows
 		.byte  -9+257, DL_RASTER 
@@ -157,13 +157,13 @@ _dliSpriteData:
 	switch_mode:
 		pla 			; pull mode off stack
 		cmp #ScreenModeMap
-		beq init_map
+			beq init_map
 		cmp #ScreenModeInfo
-		beq init_info
+			beq init_info
 		cmp #ScreenModeDialog
-		beq init_dialog
+			beq init_dialog
 		cmp #ScreenModeBattle
-		beq init_battle
+			beq init_battle
 		rts 				; default: screen off
 
 	init_map:
@@ -211,6 +211,9 @@ _dliSpriteData:
 		lda #<packedBattleDL
 		ldx #>packedBattleDL
 		jsr _unpackDisplayList
+
+		lda #9	 			; text window height
+		sta BOTSCR
 
 		lda #<_battleViewDLI
 		sta VDSLST

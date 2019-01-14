@@ -43,7 +43,7 @@ const UInt8 battleColorTable[] = {
 	0x0A, // missile sprites
 	0x00, // background
 	0x0E, // chara name text
-	0x80, // dialog box background
+	0x30, // dialog box background
 	0x82  // hp bar background
 };
 
@@ -87,8 +87,8 @@ const DataBlock enemyAttackSprite = {
 };
 
 const UInt8 battleGradient[] = {
-	0xF2, 0x80, 0xFB, 0x72, 0xFE, 0x64, 0x01, 0x56, 0x48, 0xFD, 0x00, 0x07, 0x90, 
-	0x00, 0xA2, 0x00, 0xB4, 0x00, 0x00, 0xC6, 0xFD, 0x00, 0x00, 0xDA, 0xFC, 0x00,
+	0xF2, 0x80, 0xFB, 0x72, 0xFE, 0x64, 0x01, 0x56, 0x48, 0xFC, 0x90, 0x01, 
+	0xA2, 0xA2, 0xFE, 0xB4, 0xFD, 0xC6, 0xFC, 0xD8, 0xFE, 0xEA,
 	0x80 // terminator
 };
 
@@ -430,7 +430,7 @@ static void menuSelectionDidChange(UInt8 index) {
 void initBattle(void) {
 	UInt16 startTime = SHORT_CLOCK;
 	// Use block of memory at end of graphics screen memory area for gradient.
-	UInt8 *unpackedGradient = GRAPHICS_WINDOW + 55 * SCREEN_ROW_BYTES;
+	UInt8 *unpackedGradient = GRAPHICS_WINDOW + (enemyHpBarRow+11) * SCREEN_ROW_BYTES;
 
 	// Set up graphics window
 	setScreenMode(ScreenModeOff);
@@ -465,6 +465,11 @@ void initBattle(void) {
 	// Set the background color gradient
 	unpackbits(unpackedGradient, battleGradient);
 	setDliColorTable(unpackedGradient);
+
+	// Set up missiles
+	clearSprite(0);  
+	fillSprite(0, 0xFF, 0, 10); // Sound sprites for debugging
+	fillSprite(0, 0xFF, 10+48-18, 18); // Perspective lines
 
 	// Draw enemy image
 	drawImage(&battleEnemyImage, 0);
@@ -501,6 +506,6 @@ void initBattle(void) {
 	// Copy first color to background color shadow register so that the color extends to overscan.
 	POKE(COLOR4, unpackedGradient[0]);  
 
-	debugPrint("Init:", SHORT_CLOCK - startTime, 15, 2);
+	debugPrint("Init:", SHORT_CLOCK - startTime, 30, 3);
 }
 
