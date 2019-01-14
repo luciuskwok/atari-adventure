@@ -180,19 +180,17 @@ static void drawCharaInfoAtIndex(UInt8 index) {
 }
 
 static void drawAvatarAtIndex(UInt8 index) {
-	UInt8 *screen = GRAPHICS_WINDOW + index * 10 + 1; // align with chara info text
-	UInt8 *buffer = avatarImages[index]->bytes;
-	const UInt8 bufferRowBytes = 8; // 8 bytes * 4 ppb = 32 pixels
+	const UInt8 imageRowBytes = 8; // 8 bytes * 4 ppb = 32 pixels
 	const UInt8 imageHeight = 24;	
-	UInt8 i = 0;
-	UInt8 x, y;
+	const UInt8 x = index * 10 + 1;
+	const UInt8 y = 0;
 
-	for (y=0; y<imageHeight; ++y) {
-		for (x=0; x<bufferRowBytes; ++x) {
-			screen[x] = buffer[i++];
-		}
-		screen += 40; // next row
-	}
+	POKE(DELTAC, imageRowBytes);
+	POKE(DELTAR, imageHeight);
+	POKE(COLCRS, x);
+	POKE(ROWCRS, y);
+
+	drawImage(avatarImages[index]->bytes);
 }
 
 /*

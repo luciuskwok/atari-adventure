@@ -465,6 +465,15 @@ static void drawEnemyCharaImage(const UInt8 *image) {
 	UInt8 *screen = GRAPHICS_WINDOW + rowCrs * 40 + colCrs;
 	UInt8 x, y, src, dst, mask;
 
+	POKE(COLCRS, colCrs);
+	POKE(ROWCRS, rowCrs);
+	POKE(DELTAR, 32);
+	POKE(DELTAC, 8);
+
+	compositeImage(image);
+	return;
+
+
 	for (y=0; y<32; ++y) {
 		for (x=0; x<8; ++x) {
 			src = image[imageIndex++];
@@ -520,10 +529,10 @@ void initBattle(void) {
 	drawSprite(&enemyAttackSprite, enemyAttackSpritePlayer, 82);
 
 	// Draw background image
-	err = drawImage(&battleBackgroundImage, 0, graphicsHeight);
+	err = drawCompressedImage(&battleBackgroundImage, 0, graphicsHeight);
 
 	// Draw button bar image
-	err |= drawImage(&battleButtonsImage, graphicsHeight+1, 10);
+	err |= drawCompressedImage(&battleButtonsImage, graphicsHeight+1, 10);
 
 	// Set up menu
 	initMenu();

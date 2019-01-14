@@ -57,3 +57,16 @@
 	rts 
 .endproc 
 
+.export _addAToPtr2
+.proc _addAToPtr2
+	.importzp ptr2 
+
+	clc 
+	adc ptr2
+	sta ptr2 
+	bcc return 
+		inc ptr2+1
+	return:
+	rts 
+.endproc 
+

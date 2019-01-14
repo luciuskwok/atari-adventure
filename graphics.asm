@@ -559,9 +559,9 @@ _dliSpriteData:
 .endproc
 
 
-; int drawImage(const DataBlock *image, UInt8 rowOffset, UInt8 rowCount);
-.export _drawImage
-.proc _drawImage
+; int drawCompressedImage(const DataBlock *image, UInt8 rowOffset, UInt8 rowCount);
+.export _drawCompressedImage
+.proc _drawCompressedImage
 	.importzp ptr1
 	.import popa, popptr1, pushax
 	.import _multiplyAXtoPtr1
@@ -621,6 +621,125 @@ _dliSpriteData:
 	jsr _uncompress ; int uncompress (char* dest, unsigned* destLen, const char* source, unsigned sourceLen);
 	rts
 .endproc 
+
+; void drawImage(const UInt8 *data);
+.export _drawImage 
+.proc _drawImage 
+	; On entry:
+	; * COLCRS: x-position of origin, in byte columns
+	; * ROWCRS: y-position of origin
+	; * DELTAC: image width, in number of bytes
+	; * DELTAR: image height
+	.importzp ptr2 
+	.import _setSavadrToGraphicsCursor
+	.import _addAToPtr2
+
+	imageData = ptr2
+		sta imageData 
+		stx imageData+1 
+
+	check_parameters:
+		lda DELTAC  			; return if image width or height is zero
+		beq return 
+		lda DELTAR
+		beq return 
+
+	jsr _setSavadrToGraphicsCursor
+	ldx DELTAR 	; X = rowIndex
+	loop_row:
+		ldy #0  ; Y = colIndex
+		loop_col:
+			lda (imageData),Y 
+			sta (SAVADR),Y
+			next_col:
+				iny 
+				cpy DELTAC 
+				bcc loop_col 
+
+		next_imageRow:
+			lda DELTAC
+			jsr _addAToPtr2
+
+		next_screenRow:
+			lda #ROW_BYTES
+			jsr _addAToSavadr
+
+		next_row:
+			dex 
+			bne loop_row 
+	return:
+		rts
+.endproc
+
+; void compositeImage(const UInt8 *data);
+.export _compositeImage
+.proc _compositeImage
+	; On entry:
+	; * COLCRS: x-position of origin, in byte columns
+	; * ROWCRS: y-position of origin
+	; * DELTAC: image width, in number of bytes
+	; * DELTAR: image height
+	; Uses:
+	; * BITMSK for mask
+	; * TMPCHR for value
+	.importzp ptr2 
+	.import _setSavadrToGraphicsCursor
+	.import _addAToPtr2
+
+	imageData = ptr2
+		sta imageData 
+		stx imageData+1 
+
+	check_parameters:
+		lda DELTAC  			; return if image width or height is zero
+		beq return 
+		lda DELTAR
+		beq return 
+
+	jsr _setSavadrToGraphicsCursor
+	ldx DELTAR 	; X = rowIndex
+	loop_row:
+		ldy #0  ; Y = colIndex
+		loop_col:
+			lda (imageData),Y 
+			sta TMPCHR
+
+			apply_mask:
+				and #$AA
+				lsr a 
+				sta BITMSK 
+
+				lda TMPCHR 
+				and #$55 
+				asl a 
+				ora BITMSK
+
+				eor #$FF
+				and (SAVADR),Y 
+
+			apply_image:
+				ora TMPCHR
+				sta (SAVADR),Y
+
+			next_col:
+				iny 
+				cpy DELTAC 
+				bcc loop_col 
+
+		next_imageRow:
+			lda DELTAC
+			jsr _addAToPtr2
+
+		next_screenRow:
+			lda #ROW_BYTES
+			jsr _addAToSavadr
+
+		next_row:
+			dex 
+			bne loop_row 
+	return:
+		rts
+.endproc
 
 ; void drawBarChart(void);
 .export _drawBarChart

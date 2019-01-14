@@ -35,7 +35,9 @@ void fadeInColorTable(const UInt8 *colorTable);
 void loadColorTable(const UInt8 *colors);
 
 // Drawing
-int drawImage(const DataBlock *image, UInt8 rowOffset, UInt8 rowCount);
+int drawCompressedImage(const DataBlock *image, UInt8 rowOffset, UInt8 rowCount);
+void drawImage(const UInt8 *data);
+void compositeImage(const UInt8 *data);
 void drawBarChart(void);
 void zeroOut16(UInt8 *ptr, UInt16 length);
 void zeroOut8(UInt8 *ptr, UInt8 length);

@@ -22,6 +22,8 @@
 	BUFSTR    = $6C
 	BITMSK    = $6E
 	SHFAMT    = $6F
+	ROWAC     = $70 		; 16-bit
+	COLAC     = $72 		; 16-bit
 	ENDPT     = $74
 	DELTAR    = $76
 	DELTAC    = $77
