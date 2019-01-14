@@ -153,23 +153,12 @@ static void clearDialogBox(void) {
 }
 
 static void printInDialogBox(const UInt8 *s) {
-	// COLCRS: starting & newline X-position.
-	POKE(COLCRS, 1);
-
-	// ROWCRS: starting Y-position.
-	POKE(ROWCRS, 1);
-
-	// LMARGN: X-position after wrapping line
-	POKE(LMARGN, 3);
-
-	// RMARGN: X-position of right margin
-	POKE(RMARGN, 39);
-
-	// ROWINC: line spacing
-	POKE(ROWINC, 2);
-
-	// Print text within default text box
-	drawTextBox(s);
+	POKE(COLCRS, 1);	// COLCRS: starting & newline X-position.
+	POKE(ROWCRS, 1);	// ROWCRS: starting Y-position.
+	POKE(LMARGN, 3);	// LMARGN: X-position after wrapping line
+	POKE(RMARGN, 39);	// RMARGN: X-position of right margin
+	POKE(ROWINC, 2);	// ROWINC: line spacing
+	drawTextBox(s); 	// Print text within default text box
 }
 
 static void showEncounterText(void) {
@@ -328,8 +317,8 @@ static void enterFightMenu(void) {
 
 		menuType = BattleFightMenu;
 		menuItemCount = partySize;
-		menuOrigin.x = 8;
-		menuOrigin.y = 66;
+		menuOrigin.x = 9;
+		menuOrigin.y = 70;
 		menuItemSpacing = 40;
 		setMenuSelectedIndex(0);
 
@@ -394,7 +383,7 @@ static void enterItemMenu(void) {
 	menuType = BattleItemMenu;
 	menuItemCount = 2;
 	menuOrigin.x = 6 + 4 * x;
-	menuOrigin.y = 47 + 4 * y;
+	menuOrigin.y = 48 + 4 * y;
 	menuItemSpacing = 4 * spacing;
 	setMenuSelectedIndex(0);
 
@@ -459,31 +448,12 @@ static void menuSelectionDidChange(UInt8 index) {
 }
 
 static void drawEnemyCharaImage(const UInt8 *image) {
-	UInt8 imageIndex = 0;
-	UInt8 rowCrs = 44 - 32;
-	UInt8 colCrs = 20 - 4;
-	UInt8 *screen = GRAPHICS_WINDOW + rowCrs * 40 + colCrs;
-	UInt8 x, y, src, dst, mask;
-
-	POKE(COLCRS, colCrs);
-	POKE(ROWCRS, rowCrs);
+	POKE(COLCRS, 20 - 4);
+	POKE(ROWCRS, 44 - 32);
 	POKE(DELTAR, 32);
 	POKE(DELTAC, 8);
 
 	compositeImage(image);
-	return;
-
-
-	for (y=0; y<32; ++y) {
-		for (x=0; x<8; ++x) {
-			src = image[imageIndex++];
-			mask = ((src & 0xAA) >> 1) | ((src & 0x55) << 1);
-			dst = screen[x + 40 * y];
-			dst = dst & ~mask;
-			dst = dst | src;
-			screen[x + 40 * y] =dst;
-		}
-	}
 	return;
 }
 

@@ -240,7 +240,7 @@ void initInfo(void) {
 	UInt8 i;
 	UInt8 s[20];
 
-	UInt16 startTime = SHORT_CLOCK;
+	// UInt16 startTime = SHORT_CLOCK;
 
 	// Set up graphics window
 	setScreenMode(ScreenModeOff);
@@ -264,9 +264,9 @@ void initInfo(void) {
 	dliSpriteData[2] = 128; // Missile 0
 	dliSpriteData[3] = 168; // Missile 0
 
-	// Turn on screen
+	// Set up screen but without showing it
+	loadColorTable(NULL);
 	setScreenMode(ScreenModeInfo);
-	loadColorTable(infoColorTable);
 
 	// Print chara info
 	for (i=0; i<count; ++i) {
@@ -326,7 +326,10 @@ void initInfo(void) {
 	setHiglightSprite(3, &avatar2SpriteL, 124 + 11, 8);
 	setHiglightSprite(4, &avatar4SpriteR, 124 + 22, 9);
 
-	debugPrint("Init:", SHORT_CLOCK - startTime, 0, ITEM_ROW+4);
+	// debugPrint("Init:", SHORT_CLOCK - startTime, 0, ITEM_ROW+4);
+
+	// Show screen
+	fadeInColorTable(infoColorTable);
 
 	// Restore TXTMSC
 	POKEW(TXTMSC, oldTextWindow);
