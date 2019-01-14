@@ -4,7 +4,6 @@
 .importzp 	tmp1, tmp2, tmp3, tmp4, ptr1, ptr2, ptr3, ptr4
 .import 	popa, popptr1, popsreg, pushax
 .import 	udiv16
-.import 	_inflatemem
 
 .import _initVBI
 .import _initSprites
@@ -553,32 +552,6 @@ _dliSpriteData:
 	rts
 .endproc
 
-
-; void drawImage(const DataBlock *image, UInt8 rowOffset);
-.export _drawImage
-.proc _drawImage 		; uses ptr1
-	sta ROWCRS
-	lda #0
-	sta COLCRS
-	jsr _setSavadrToGraphicsCursor
-
-	jsr popptr1 
-
-	lda SAVADR
-	ldx SAVADR+1
-	jsr pushax
-
-	clc 
-	lda ptr1 
-	adc #2
-	ldx ptr1+1
-	bcc @skip_msb 
-	inx 
-	@skip_msb:
-
-	jmp _inflatemem
-	;rts 
-.endproc
 
 ; void drawBarChart(void);
 .export _drawBarChart

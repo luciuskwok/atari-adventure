@@ -1,13 +1,14 @@
 # png_to_zlib.py
 
 # Uses Python 3
+# Uses PyPNG module. Use `pip install pypng`.
 
 import png, sys, zlib
 
 # == Settings ==
-# colorTable = [3, 1, 0, 2] # Tem Shop colors
+colorTable = [3, 1, 0, 2] # Tem Shop colors
 # colorTable = [0, 3, 2, 1] # Battle button colors
-colorTable = [3, 0, 1, 2] # Avatar colors
+# colorTable = [3, 0, 1, 2] # Avatar colors
 
 
 # == Script ==
