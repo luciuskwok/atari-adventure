@@ -225,8 +225,8 @@
 
 	enemy_hp:
 		lda TXTBKG
-			sta COLPF2			; dialog box background
 			sta WSYNC			; wait for horizontal sync
+			sta COLPF2			; dialog box background
 		lda TXTLUM
 			sta COLPF1			; text luminance / bar chart foreground
 		lda #$00	

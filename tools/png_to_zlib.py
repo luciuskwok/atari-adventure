@@ -6,7 +6,8 @@
 import png, sys, zlib
 
 # == Settings ==
-colorTable = [3, 1, 0, 2] # Tem Shop colors
+# colorTable = [3, 1, 0, 2] # Tem Shop colors
+colorTable = [3, 0, 1, 2] # Battle background colors
 # colorTable = [0, 3, 2, 1] # Battle button colors
 # colorTable = [3, 0, 1, 2] # Avatar colors
 
