@@ -30,7 +30,7 @@ enum BattleMenuType {
 
 const UInt8 battleLoadingColorTable[] = {
 	0x00, 0x00, 0x00, 0x00, // unused, player sprites hidden
-	0x08, 0x04, 0x00, // playfield
+	0x0A, 0x04, 0x00, // playfield
 	0x06, // missile sprites
 	0x00, // background
 	0x00, 0x00, 0x00 // unused, DLI disabled
@@ -41,10 +41,10 @@ const UInt8 battleColorTable[] = {
 	0x00, // unused sprite 
 	0x0A, // chara level text
 	0x32, // enemy attack sprite
-	0x1C, 0x0E, 0x00, // playfield
-	0x0A, // missile sprites
+	0x14, 0x0E, 0x00, // playfield
+	0x28, // normal button color, missile sprites
 	0x00, // background
-	0x0E, // chara name text
+	0x0E, // chara name text, hp bar foreground
 	0x30, // dialog box background
 	0x82  // hp bar background
 };

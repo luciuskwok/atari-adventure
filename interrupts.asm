@@ -254,18 +254,23 @@
 		jmp return_dli
 
 	button_bar:
-		lda COLOR0		
-		ldy COLOR1		
-		sta COLPF0
-		sty COLPF1
-		lda COLOR2			
-		sta COLPF2
+		lda TXTLUM		
+			ora #$10 		; change hue to yellow
+			sta COLPF1 		; highlighted button color
+		lda COLOR3			
+			sta COLPF2 		; normal button color
 		jmp return_dli
 
 	last_line: 
 		sta WSYNC			; wait for horizontal sync
 		lda COLOR4 
-		sta COLPF4
+			sta COLPF4
+		lda COLOR0 
+			sta COLPF0
+		lda COLOR1 
+			sta COLPF1
+		lda COLOR2 
+			sta COLPF2
 
 	return_dli:	
 		pla					; restore accumulator and Y register from stack
