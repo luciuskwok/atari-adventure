@@ -94,6 +94,15 @@ static void handleMessage(SInt8 message) {
 }
 
 static void keyDown(UInt8 keycode) {
+	/* Musical keyboard:
+		Use keys on the bottom row from Z to M and the comma key for the white keys.
+		Use the home rome for black keys.
+		Q: switches to wavetable synth for bass notes (-2 octaves)
+		W: switches to normal square-wave tone.
+		Keys 1-4: switches octaves.
+		Keys 8, 9, 0: starts a song.
+		Space: stops the song.
+	*/
 	UInt8 shift = keycode & 0x40;
 	UInt8 control = keycode & 0x80;
 	UInt8 note = 0xFF;
