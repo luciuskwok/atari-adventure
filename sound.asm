@@ -1175,19 +1175,19 @@ return:
 .endproc
 
 ; void __fastcall__ noteOff(UInt8 channel);
-;.export _noteOff	
-;.proc _noteOff
-;	; This will allow notes to use their natural release rate
-;	ldx #chSize 		; A = channel * chSize
-;	jsr _vbiMultiplyAX
-;	tax
-;
-;	lda #0
-;	sta chSusTime,X
-;	sta chAtkTime,X
-;
-;	rts
-;.endproc
+.export _noteOff	
+.proc _noteOff
+	; This will allow notes to use their natural release rate
+	ldx #chSize 		; A = channel * chSize
+	jsr _vbiMultiplyAX
+	tax
+
+	lda #0
+	sta chSusTime,X
+	sta chAtkTime,X
+
+	rts
+.endproc
 
 ; void __fastcall__ startSong(UInt8 song);
 .export _startSong 

@@ -58,6 +58,8 @@
 
 // Globals
 UInt8 isQuitting;
+UInt8 soundChannel; 
+UInt8 soundOctave;
 
 // Dialog functions
 
@@ -91,86 +93,127 @@ static void handleMessage(SInt8 message) {
 	}
 }
 
-static void handleKeyboard(void) {
-	UInt8 keycode = PEEK(CH_); // was POKEY_READ.kbcode
-	const UInt8 vol = 8;
-	UInt8 note = 0xFF;
+static void keyDown(UInt8 keycode) {
 	UInt8 shift = keycode & 0x40;
 	UInt8 control = keycode & 0x80;
+	UInt8 note = 0xFF;
+	const UInt8 vol = 8;
 
 	switch (keycode & 0x3F) {
-		case KEY_Q:
+		case KEY_Z:
 			note = 1; 
 			break;
-		case KEY_2:	
+		case KEY_S:	
 			note = 2;
 			break;
-		case KEY_W:	
+		case KEY_X:	
 			note = 3;
 			break;
-		case KEY_3:	
+		case KEY_D:	
 			note = 4;
 			break;
-		case KEY_E:	
+		case KEY_C:	
 			note = 5;
 			break;
-		case KEY_R:	
+		case KEY_V:	
 			note = 6;
 			break;
-		case KEY_5:	
+		case KEY_G:	
 			note = 7;
 			break;
-		case KEY_T:	
+		case KEY_B:	
 			note = 8;
 			break;
-		case KEY_6:
+		case KEY_H:
 			note = 9;
 			break;
-		case KEY_Y:	
+		case KEY_N:	
 			note = 10;
 			break;
-		case KEY_7:	
+		case KEY_J:	
 			note = 11;
 			break;
-		case KEY_U:	
+		case KEY_M:	
 			note = 12;
 			break;
-		case KEY_I:	
+		case KEY_COMMA:	
 			note = 13;
 			break;
-		case KEY_Z:
+
+		case KEY_1:
+			soundOctave = 0;
+			break;
+		case KEY_2:
+			soundOctave = 12;
+			break;
+		case KEY_3:
+			soundOctave = 24;
+			break;
+		case KEY_4:
+			soundOctave = 36;
+			break;
+
+		case KEY_Q:
+			soundChannel = 0;
+			break;
+		case KEY_W:
+			soundChannel = 1;
+			break;
+
+		case KEY_8:
 			startSong(0);
-			note = 0xFE;
 			break;
-		case KEY_X:
+		case KEY_9:
 			startSong(4);
-			note = 0xFE;
 			break;
-		case KEY_C:
+		case KEY_0:
 			startSong(8);
-			note = 0xFE;
 			break;
 		case KEY_SPACE:
 			stopSong();
-			note = 0xFE;
 			break;
 		default:
 			break;
 	}
-	
 	if (note != 0xFF) {
-		if (note != 0xFE) {
-			if (shift) {
-				note += 12;
-			}
-			if (control) {
-				note += 24;
-			}
-			//noteOn(note, 4, 7, 3, 0xE0, 3);
-			noteOn(note, 1, 7, 15, 0x80, 3);
+		if (shift) {
+			note += 12;
 		}
-		POKE(CH_, 0xFF);
+		if (control) {
+			note += 24;
+		}
+		note += soundOctave;
+
+		if (soundChannel == 0) {
+			// Bass
+			noteOn(note, 32, 15, 3, 0xE0, soundChannel);
+		} else {
+			noteOn(note, 32, vol, 4, 0xE0, soundChannel);
+		}
 	}
+}
+
+static void keyUp(UInt8 /* keycode */) {
+	noteOff(soundChannel);
+}
+
+static void handleKeyboard(void) {
+	static UInt8 previousKeycode = 0xFF;
+	static UInt8 previousKeydown = 0;
+
+	UInt8 isDown = (POKEY_READ.skstat & 0x04) == 0;
+	UInt8 keycode = POKEY_READ.kbcode; // was POKEY_READ.kbcode
+
+	if (keycode != previousKeycode) {
+		keyUp(previousKeycode);
+		keyDown(keycode);
+	} else if (previousKeydown == 0 && isDown != 0) {
+		keyDown(keycode);
+	} else if (previousKeydown != 0 && isDown == 0) {
+		keyUp(keycode);
+	}
+	previousKeydown = isDown;
+	previousKeycode = keycode;
 }
 
 void runLoop(void) {
@@ -187,6 +230,8 @@ int main (void) {
 	// Start new game
 	initParty();
 	isQuitting = 0;
+	soundChannel = 1;
+	soundOctave = 12;
 
 	currentMapType = OverworldMapType;
 	playerShipType = 0;

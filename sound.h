@@ -3,7 +3,7 @@
 #include "types.h"
 
 void __fastcall__ noteOn(UInt8 note, UInt8 duration, UInt8 volume, UInt8 envelope, UInt8 noise, UInt8 channel);
-// void __fastcall__ noteOff(UInt8 channel);
+void __fastcall__ noteOff(UInt8 channel);
 void __fastcall__ startSong(UInt8 song);
 void __fastcall__ stopSong(void);
 
