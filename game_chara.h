@@ -2,19 +2,19 @@
 
 #include "types.h"
 
-typedef struct GameChara* GameCharaPtr;
 typedef struct GameChara {
 	UInt8 *name;
 	UInt8 level;
 	UInt8 hp;
 	UInt8 maxHp;
 	UInt16 xp;
+	UInt16 maxXp;
 	UInt8 baseAttack;
 	UInt8 baseDefense;
 	UInt8 weapon;
 	UInt8 armor; 
 	UInt8 shield;
-	UInt8 padding[4];
+	UInt8 padding[2];
 } GameChara; // 16 bytes
 
 // Globals
@@ -25,15 +25,19 @@ extern UInt16 partyMoney;
 extern UInt16 partyFangs;
 extern SInt16 partyReputation;
 
+// Constants
+#define maxCharaLevel (25)
 
 
-// Character Stats
+// Battle 
+UInt8 calculateDamage(UInt8 attack, UInt8 defense);
+UInt8 calculateXpGain(UInt8 playerLevel, UInt8 enemyLevel);
+UInt8 addExperienceToChara(UInt8 charaIndex, UInt8 xp);
+
 UInt8 charaAttackRating(UInt8 charaIndex);
 UInt8 charaDefenseRating(UInt8 charaIndex);
-UInt16 charaXpToNextLevel(UInt8 charaIndex);
 
-// Party Stats
+// Init
+void initChara(GameChara *chara, UInt8 *name, UInt8 level, UInt8 atk, UInt8 def);
 void initParty(void);
 
-// In misc.asm (temporarily)
-UInt8 maxHpWithCharaLevel(UInt8 level);

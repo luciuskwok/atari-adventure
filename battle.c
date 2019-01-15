@@ -48,8 +48,8 @@ const UInt8 battleColorTable[] = {
 	0x28, // normal button color, missile sprites
 	0x00, // background
 	0x0E, // chara name text, hp bar foreground
-	0x30, // dialog box background
-	0x82  // hp bar background
+	0x50, // dialog box background
+	0x34  // hp bar background
 };
 
 const UInt8 steveFace[] = {
@@ -190,8 +190,7 @@ static void enterRootMenu(UInt8 showText) {
 }
 
 static void drawEnemyHpBar(void) {
-	UInt8 maxHp = maxHpWithCharaLevel(enemy.level);
-	UInt8 width = maxHp / 2;
+	UInt8 width = enemy.maxHp / 2;
 	UInt8 barX = 80 - width / 2;
 	UInt8 fill = (enemy.hp + 1) / 2;
 
@@ -460,7 +459,7 @@ static void drawEnemyCharaImage(const UInt8 *image) {
 }
 
 void initBattle(void) {
-	UInt16 startTime = SHORT_CLOCK;
+	// UInt16 startTime = SHORT_CLOCK;
 	// Use block of memory at end of graphics screen memory area for gradient.
 	UInt8 *unpackedGradient = GRAPHICS_WINDOW + (graphicsHeight+11) * SCREEN_ROW_BYTES;
 	int err; 
@@ -475,10 +474,6 @@ void initBattle(void) {
 	loadColorTable(battleLoadingColorTable);
 	setScreenMode(ScreenModeBattle);
 	POKE(NMIEN, 0x40);
-
-	// Start battle music
-	startSong(8);
-
 	printAllCharaStats(5);
 
 	// { // Debugging
@@ -489,9 +484,7 @@ void initBattle(void) {
 	// }
 
 	// Set up enemy character
-	enemy.name = "Steve Jobs";
-	enemy.level = 12;
-	enemy.hp = maxHpWithCharaLevel(enemy.level);
+	initChara(&enemy, "Steve Jobs", /*level*/ 12, /*atk*/ 5, /*def*/ 10);
 	showEncounterText();
 	shouldRedrawEncounterTextOnMove = 0;
 
@@ -540,6 +533,9 @@ void initBattle(void) {
 	// Copy first color to background color shadow register so that the color extends to overscan.
 	POKE(COLOR4, unpackedGradient[0]);  
 
-	debugPrint("Init:", SHORT_CLOCK - startTime, 30, 3);
+	// Start battle music
+	startSong(8);
+
+	// debugPrint("Init:", SHORT_CLOCK - startTime, 30, 3);
 }
 

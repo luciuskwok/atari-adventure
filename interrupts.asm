@@ -145,16 +145,16 @@
 		lsr a 
 		tax 
 		lda _dliSpriteData,X; HPOSP3 = _dliSpriteData[X]
-		sta WSYNC			; wait for horizontal sync
-		sta HPOSP3
+			sta WSYNC		; wait for horizontal sync
+			sta HPOSP3
 		jmp return_dli
 
 	chara_name:
 		lda #0
-		sta COLPF4			; border
-		sta COLPF2			; text box background color
+			sta COLPF4		; border
+			sta COLPF2		; text box background color
 		lda TXTLUM		
-		sta COLPF1			; text color
+			sta COLPF1		; text color
 		jmp return_dli
 
 	chara_level:
@@ -164,19 +164,23 @@
 
 	chara_hp:
 		lda TXTLUM		
-		sta COLPF1			; text color
+			sta COLPF1		; text color
+		lda COLOR7		
+			sta COLPF0		; HP bar background color
 		jmp return_dli
 
 	party_stats:
 		lda TXTBKG			; border
-		sta COLPF2			; text box background color
+			sta COLPF2		; text box background color
 		jmp return_dli
 
 	last_line:
-		lda COLOR2 			; restore colors for map in case VBI is missed
-		sta COLPF2
+		lda COLOR0			; restore colors for map in case VBI is missed
+			sta COLPF0		
+		lda COLOR2 			
+			sta COLPF2
 		lda _dliSpriteData 	; set P3 sprite position so first row is correct
-		sta HPOSP3
+			sta HPOSP3
 
 	return_dli:	
 		pla					; restore accumulator and X register from stack

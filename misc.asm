@@ -69,23 +69,3 @@
 	return:
 	rts 
 .endproc 
-
-
-; Move this to game_chara.asm when it's written.
-; UInt8 maxHpWithCharaLevel(UInt8 level);
-.export _maxHpWithCharaLevel
-.proc _maxHpWithCharaLevel
-	; On entry: AX = chara level.
-    ; Returns: AX = max HP.
-    ; mulax10 uses ptr1
-
-    .import mulax10
-
-    jsr mulax10         	; maxHp = level * 10 + 10
-    clc 
-    adc #10
-    bcc @skip_cap        	 ; if level > 255: limit level to 255
-    	lda #255 
-    @skip_cap:
-    rts 
-.endproc

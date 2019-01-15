@@ -136,8 +136,8 @@ static SInt8 infoCursorHandler(UInt8 event) {
 }
 
 static void drawCharaInfoAtIndex(UInt8 index) {
-	GameCharaPtr chara = &partyChara[index];
-	UInt8 maxHp = maxHpWithCharaLevel(chara->level);
+	GameChara *chara = &partyChara[index];
+	UInt8 maxHp = chara->maxHp;
 	UInt8 hp = chara->hp;
 	UInt8 x = 1 + index * 10;
 	UInt8 s[11];
@@ -148,10 +148,14 @@ static void drawCharaInfoAtIndex(UInt8 index) {
 	stringCopy(s, "Lv ");
 	uint8toString(s+3, chara->level);
 	printLine(s);
-	
-	stringCopy(s, "next ");
-	uint16toString(s+5, charaXpToNextLevel(index));
-	printLine(s);
+
+	if (chara->level >= maxCharaLevel) {
+		printLine("max");
+	} else {
+		stringCopy(s, "next ");
+		uint16toString(s+5, chara->maxXp - chara->xp);
+		printLine(s);
+	}
 
 	printLine(NULL);
 

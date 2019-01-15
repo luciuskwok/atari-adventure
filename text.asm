@@ -60,7 +60,6 @@
 .export _printCharaAtIndex
 .proc _printCharaAtIndex 	; uses sp, sreg, ptr1, ptr2, ptr3, ptr4, tmp1
 	.importzp sp, ptr1, ptr2, ptr3, tmp1
-	.import _maxHpWithCharaLevel
 	.import _partyChara
 
 	.rodata 
