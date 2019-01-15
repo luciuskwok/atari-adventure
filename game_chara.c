@@ -17,13 +17,16 @@ SInt16 partyReputation;
 void initCharaAtIndex(UInt8 index, UInt8 *name, UInt8 level, UInt8 atk, UInt8 def) {
 	GameCharaPtr chara = &partyChara[index];
 
-	stringCopy(chara->name, name);
+	chara->name = name;
 	chara->level = level;
-	chara->xp = 0;
 	chara->hp = maxHpWithCharaLevel(level);
+	chara->maxHp = maxHpWithCharaLevel(level);
+	chara->xp = 0;
 	chara->baseAttack = atk;
 	chara->baseDefense = def;
-	chara->equipment = 0;
+	chara->weapon = 0;
+	chara->armor = 0;
+	chara->shield = 0;
 }
 
 UInt8 charaAttackRating(UInt8 charaIndex) {

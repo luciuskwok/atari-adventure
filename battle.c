@@ -20,6 +20,9 @@ UInt8 previousSelectedIndex;
 UInt8 shouldRedrawEncounterTextOnMove;
 GameChara enemy;
 
+// Constants
+UInt8 enemyName[] = "Steve Jobs"; 
+
 #define graphicsHeight (44)
 
 enum BattleMenuType {
@@ -258,6 +261,7 @@ static void charaAtIndexWasHit(UInt8 index, UInt8 damage) {
 	// Redraw the character's stats
 	POKE(ROWCRS, 5);
 	POKE(COLCRS, x);
+	POKE(LMARGN, x);
 	eraseCharaBoxAtIndex(index);
 	printCharaAtIndex(index);
 }
@@ -485,7 +489,7 @@ void initBattle(void) {
 	// }
 
 	// Set up enemy character
-	stringCopy(enemy.name, "Steve Jobs");
+	enemy.name = "Steve Jobs";
 	enemy.level = 12;
 	enemy.hp = maxHpWithCharaLevel(enemy.level);
 	showEncounterText();

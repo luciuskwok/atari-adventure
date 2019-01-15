@@ -4,17 +4,17 @@
 
 typedef struct GameChara* GameCharaPtr;
 typedef struct GameChara {
-	UInt8 name[9];
+	UInt8 *name;
 	UInt8 level;
 	UInt8 hp;
+	UInt8 maxHp;
 	UInt16 xp;
 	UInt8 baseAttack;
 	UInt8 baseDefense;
-	UInt8 equipment; // bit field:
-		// bits 0-1: weapon
-		// bits 2-3: armor
-		// bits 3-4: shield
-
+	UInt8 weapon;
+	UInt8 armor; 
+	UInt8 shield;
+	UInt8 padding[4];
 } GameChara; // 16 bytes
 
 // Globals

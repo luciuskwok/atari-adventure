@@ -58,8 +58,8 @@
 
 ; void printCharaAtIndex(UInt8 index);
 .export _printCharaAtIndex
-.proc _printCharaAtIndex 	; uses sp, sreg, ptr1, ptr2, ptr3, ptr4, tmp1, tmp3
-	.importzp sp, ptr1, ptr2, ptr3, tmp1, tmp3
+.proc _printCharaAtIndex 	; uses sp, sreg, ptr1, ptr2, ptr3, ptr4, tmp1
+	.importzp sp, ptr1, ptr2, ptr3, tmp1
 	.import _maxHpWithCharaLevel
 	.import _partyChara
 
@@ -69,9 +69,9 @@
 	.code
 
 	; Chara struct offsets
-	charaLevel = 9 
-	charaHp = 10 
-	charaXp = 11
+	charaLevel = 2 
+	charaHp = 3 
+	charaMaxHp = 4
 
 	charaPtr = ptr3
 		asl a  					; charaPtr = partyChara + index * 16
@@ -85,16 +85,12 @@
 		adc #0
 		sta charaPtr+1
 
-	maxHp = tmp3
-		ldy #charaLevel 
-		lda (charaPtr),Y 
-		ldx #0
-		jsr _maxHpWithCharaLevel
-		sta maxHp
-
 	print_name:
-		lda charaPtr
-		ldx charaPtr+1 
+		ldy #1 
+		lda (charaPtr),Y
+		tax 
+		dey 
+		lda (charaPtr),Y 
 		jsr _printLine  	; uses sreg, ptr1, AXY
 
 	reserve_string:
@@ -112,8 +108,6 @@
 		jsr print_value
 
 		jsr move_to_next_line
-	
-	;jmp free_string ; DEBUGGING
 
 	print_hp:
 		ldy #charaHp 
@@ -125,7 +119,8 @@
 		ldy #1  			; length
 		jsr print_string_axy 
 
-		lda maxHp 
+		ldy #charaMaxHp 
+		lda (charaPtr),Y
 		jsr print_value
 
 		jsr move_to_next_line
@@ -141,9 +136,11 @@
 		asl a   			; Multiply COLCRS by 4 to switch to
 		sta COLCRS  		; raster pixels.
 
-		ldy #charaHp	 	; get HP again
+		ldy #charaMaxHp 
 		lda (charaPtr),Y
-		ldx maxHp 
+		tax
+		ldy #charaHp	 	
+		lda (charaPtr),Y
 		jsr _sizeBarChart  	; A=hp, X=maxHp
 		jsr _drawBarChart
 
