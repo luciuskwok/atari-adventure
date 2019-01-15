@@ -187,7 +187,7 @@ static void enterRootMenu(UInt8 showText) {
 }
 
 static void drawEnemyHpBar(void) {
-	UInt8 maxHp = charaMaxHp(&enemy);
+	UInt8 maxHp = maxHpWithCharaLevel(enemy.level);
 	UInt8 width = maxHp / 2;
 	UInt8 barX = 80 - width / 2;
 	UInt8 fill = (enemy.hp + 1) / 2;
@@ -229,12 +229,12 @@ static void enemyWasHit(UInt8 damage) {
 	}
 }
 
-static void addPlayerExperience(GameCharaPtr /* chara */, UInt8 /* value */) {
+static void addPlayerExperience(UInt8 /* charaIndex */, UInt8 /* value */) {
 	// TODO
 }
 
 static void charaAtIndexWasHit(UInt8 index, UInt8 damage) {
-	GameCharaPtr chara = charaAtIndex(index);
+	UInt8 x = 1 + index * 10;
 	UInt8 i;
 
 	// Play sound
@@ -249,28 +249,28 @@ static void charaAtIndexWasHit(UInt8 index, UInt8 damage) {
 	}
 
 	// Decrement player HP
-	if (damage < chara->hp) {
-		chara->hp -= damage;
+	if (damage < partyChara[index].hp) {
+		partyChara[index].hp -= damage;
 	} else {
-		chara->hp = 0;
+		partyChara[index].hp = 0;
 	}
 
 	// Redraw the character's stats
 	POKE(ROWCRS, 5);
+	POKE(COLCRS, x);
 	eraseCharaBoxAtIndex(index);
 	printCharaAtIndex(index);
 }
 
 static void doAttack(UInt8 player) {
-	GameCharaPtr chara = charaAtIndex(player);
 	UInt8 damage = 3;
 	UInt8 s[40] = "* ";
 
 	hideCursor();
-	stringConcat(s, chara->name);
+	stringConcat(s, partyChara[player].name);
 	clearDialogBox();
 
-	if (chara->hp != 0) {
+	if (partyChara[player].hp != 0) {
 		stringConcat(s, " attacks.");
 		printInDialogBox(s);
 
@@ -281,7 +281,7 @@ static void doAttack(UInt8 player) {
 		enemyWasHit(damage);
 
 		// Add to player XP
-		addPlayerExperience(chara, 1);
+		addPlayerExperience(player, 1);
 
 		if (isLeavingBattle == 0) {
 			// Pause before counter-attack
@@ -289,7 +289,7 @@ static void doAttack(UInt8 player) {
 			stringCopy(s, "* ");
 			stringConcat(s, enemy.name);
 			stringConcat(s, " counter-attacks ");
-			stringConcat(s, chara->name);
+			stringConcat(s, partyChara[player].name);
 			stringConcat(s, ".");
 			clearDialogBox();
 			printInDialogBox(s);
@@ -340,7 +340,6 @@ static void enterTalk(void) {
 static void useItem(UInt8 item) {
 	UInt8 i;
 	UInt8 damage;
-	GameCharaPtr chara;
 
 	hideCursor();
 
@@ -361,8 +360,7 @@ static void useItem(UInt8 item) {
 	enemyWasHit(damage);
 
 	for (i=0; i<partySize; ++i) {
-		chara = charaAtIndex(i);
-		addPlayerExperience(chara, 1);
+		addPlayerExperience(i, 1);
 	}
 
 	if (isLeavingBattle == 0) {
@@ -487,9 +485,9 @@ void initBattle(void) {
 	// }
 
 	// Set up enemy character
-	stringCopy(enemy.name, "Evil Merchant");
+	stringCopy(enemy.name, "Steve Jobs");
 	enemy.level = 12;
-	enemy.hp = charaMaxHp(&enemy);
+	enemy.hp = maxHpWithCharaLevel(enemy.level);
 	showEncounterText();
 	shouldRedrawEncounterTextOnMove = 0;
 

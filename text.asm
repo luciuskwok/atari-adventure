@@ -1,14 +1,11 @@
 ; text_.asm
 
 .import 	addysp, popa, popptr1, popsreg, pushax, subysp
-.import 	mulax10, udiv16
 .import 	_zeroOutYAtPtr1
 .import 	_multiplyAXtoPtr1
 .import 	_addAToSavadr
-.import 	_charaAtIndex, _sizeBarChart, _drawBarChart
+.import 	_sizeBarChart, _drawBarChart
 
-
-.import 	_partySize, _partyMoney, _partyPotions, _partyFangs
 
 .include "atari_memmap.asm"
 
@@ -22,17 +19,35 @@
 ; void printAllCharaStats(UInt8 row);
 .export _printAllCharaStats
 .proc _printAllCharaStats
+	.import _partySize
+
+	sta OLDROW 	; store row in OLDROW 
+
+	lda #1  	; start at x-position = 1
+	sta LMARGN
+
 	ldx #0 		; X = index
 	loop:
+		lda OLDROW
 		sta ROWCRS 		; reset ROWCRS = row
-		pha  			; push row on stack
+
+		lda LMARGN
+		sta COLCRS 
+
 		txa
 		pha  			; push index on stack
+
 		ldx #0
 		jsr _printCharaAtIndex
+
 		pla  			; pull index from stack
 		tax 
-		pla 			; pull row from stack
+
+		lda LMARGN  	; move to next column
+		clc 
+		adc #10 
+		sta LMARGN
+
 		inx
 	while:
 		cpx _partySize
@@ -43,113 +58,77 @@
 
 ; void printCharaAtIndex(UInt8 index);
 .export _printCharaAtIndex
-.proc _printCharaAtIndex 	; uses sreg, ptr1, ptr2, ptr3, ptr4, tmp4
-	.importzp 	sp, sreg, ptr1, ptr2, ptr3, ptr4, tmp4
+.proc _printCharaAtIndex 	; uses sp, sreg, ptr1, ptr2, ptr3, ptr4, tmp1, tmp3
+	.importzp sp, ptr1, ptr2, ptr3, tmp1, tmp3
+	.import _maxHpWithCharaLevel
+	.import _partyChara
 
 	.rodata 
-		lvString:
-		.byte "Lv "
-		.byte 0
-
-	.code 
-
-	value = ptr1 
-	string = ptr2 
-	charaPtr = ptr3
-	maxHp = tmp4 
+		lvString: .byte "Lv "
+		hpString: .byte "/"
+	.code
 
 	; Chara struct offsets
-	charaLevel = 16 
-	charaXp = 17
-	charaHp = 18 
+	charaLevel = 9 
+	charaHp = 10 
+	charaXp = 11
 
-	pha  					; A = index
+	charaPtr = ptr3
+		asl a  					; charaPtr = partyChara + index * 16
+		asl a 
+		asl a 
+		asl a 
+		clc 
+		adc #<_partyChara 
+		sta charaPtr 
+		lda #>_partyChara 
+		adc #0
+		sta charaPtr+1
 
-	jsr _charaAtIndex  		; get chara ptr $8677
-	sta charaPtr 
-	stx charaPtr+1
-
-	pla  					; x = index * 10
-	ldx #0
-	jsr mulax10 
-
-	clc  					; x += 1
-	adc #1
-	sta COLCRS 
-	sta LMARGN
-
-	reserve_string:
-		ldy #10
-		jsr subysp 			; ABEC
+	maxHp = tmp3
+		ldy #charaLevel 
+		lda (charaPtr),Y 
+		ldx #0
+		jsr _maxHpWithCharaLevel
+		sta maxHp
 
 	print_name:
 		lda charaPtr
 		ldx charaPtr+1 
-		jsr _printLine 
+		jsr _printLine  	; uses sreg, ptr1, AXY
+
+	reserve_string:
+		ldy #6
+		jsr subysp 
 
 	print_lv:
-		lda sp  			; string = sp
-		sta string			; _printLine uses ptr2:string, so reload here
-		lda sp+1
-		sta string+1
+		lda #<lvString		; string
+		ldx #>lvString 
+		ldy #3  			; length
+		jsr print_string_axy 
 
-		lda #<lvString 		; string = "Lv " $81C4
-		sta value 
-		lda #>lvString
-		sta value+1
-		jsr _appendStringToPtr2
+		ldy #charaLevel 
+		lda (charaPtr),Y 
+		jsr print_value
 
-		ldy #charaLevel 	; string += charaLevel
-		lda (charaPtr),Y
-		ldx #0
-		pha
-
-		calc_max_hp:
-			jsr _maxHpWithLevel
-			sta maxHp 
-
-		pla 
-		sta ptr1
-		lda #0 
-		sta ptr1+1
-		jsr _uint16StringInternal
-
-		lda sp 
-		ldx sp+1
-		jsr _printLine 
+		jsr move_to_next_line
+	
+	;jmp free_string ; DEBUGGING
 
 	print_hp:
-		lda sp  			; string = sp
-		sta string			; _printLine uses ptr2:string, so reload here
-		lda sp+1
-		sta string+1
+		ldy #charaHp 
+		lda (charaPtr),Y 
+		jsr print_value
 
-		ldy #charaHp	 	; string += charaHp
-		lda (charaPtr),Y
-		sta ptr1 
-		ldx #0
-		stx ptr1+1
-		jsr _uint16StringInternal
+		lda #<hpString		; string
+		ldx #>hpString 
+		ldy #1  			; length
+		jsr print_string_axy 
 
-		clc 
-		adc string 
-		sta string 
-		bcc @skip_msb
-		inc string+1 
-		@skip_msb:
+		lda maxHp 
+		jsr print_value
 
-		lda #'/' 			; string += '/'
-		jsr _appendCharToPtr2
-
-		lda maxHp
-		sta ptr1 
-		ldx #0
-		stx ptr1+1
-		jsr _uint16StringInternal
-
-		lda sp 
-		ldx sp+1
-		jsr _printLine 
+		jsr move_to_next_line
 
 	draw_hp_bar:
 		lda COLCRS  		; Temporarily set COLCRS to 0 so 
@@ -169,32 +148,45 @@
 		jsr _drawBarChart
 
 	free_string:
-		ldy #10
+		ldy #6
 		jsr addysp
 	rts 
+
+	print_string_axy:
+		sta ptr1  			; AX: ptr1: string
+		stx ptr1+1
+		sty tmp1 			; Y: tmp1: length
+		jsr _printStringWithLength 
+		rts 
+
+	print_value:
+		sta ptr1 	; ptr1: value
+		lda #0
+		sta ptr1+1
+		lda sp 		; ptr2: output string
+		sta ptr2 
+		lda sp+1
+		sta ptr2+1 
+		jsr _uint16StringInternal ; uses sreg, ptr1, ptr2, ptr4, tmp1
+
+		tay 		; Y: length
+		lda sp  	; AX: string
+		ldx sp+1 
+		jsr print_string_axy
+		rts 
+
+	move_to_next_line:
+		lda LMARGN 
+		sta COLCRS 
+		inc ROWCRS
+		rts 	
 .endproc
-
-
-; Move this to game_chara.asm when it's written
-.proc _maxHpWithLevel
-	; On entry: AX = chara level.
-	; Returns: AX = max HP.
-	; mulax10 uses ptr1
-
-	jsr mulax10 		; maxHp = level * 10 + 10
-	clc 
-	adc #10
-	bcc @skip_cap 		; if level > 255: limit level to 255
-	lda #255 
-	@skip_cap:
-	rts 
-.endproc 
-
 
 ; void printPartyStats(void);
 .export _printPartyStats
 .proc _printPartyStats
 	.importzp 	sp, ptr1, ptr2
+	.import 	_partySize, _partyMoney, _partyPotions, _partyFangs
 	; unit16StringInternal uses ptr1, ptr2, ptr4, sreg, tmp1
 
 	ldy #32				; reserve 32 bytes on stack for string buffer
@@ -412,7 +404,7 @@
 	lda ptr1+1
 	pha 
 
-	jsr _setSavadrToTextCursor 	; uses ptr1
+	jsr _setSavadrToTextCursor 	; uses AXY, sreg, ptr1
 
 	pla 
 	sta ptr1+1
@@ -480,43 +472,13 @@
 .endproc 
 
 
-.proc _appendStringToPtr2
-	; appends string in ptr1 to string at ptr2 and increments ptr2.
-	.importzp 	ptr1, ptr2
-
-	ldy #0
-	loop: 
-		lda (ptr1),Y 
-		sta (ptr2),Y
-		beq inc_ptr2 
-		iny 
-		bne loop 
-		dey   			; overflow error
-	inc_ptr2:
-		clc 
-		tya 
-		adc ptr2 
-		sta ptr2 
-		bcc return 
-		inc ptr2+1
-	return:
-		rts 
-.endproc 
-
-
 ; void eraseCharaBoxAtIndex(UInt8 index);
 .export _eraseCharaBoxAtIndex
 .proc _eraseCharaBoxAtIndex
-	; _setSavadrToTextCursor uses sreg, ptr1
+	; _setSavadrToTextCursor uses AXY, sreg, ptr1
 
 	width = 9
 	height = 4
-
-	ldx #0 				; colcrs = 1 + index * 10
-	jsr mulax10
-	clc 
-	adc #1 
-	sta COLCRS
 
 	jsr _setSavadrToTextCursor
 
@@ -643,8 +605,8 @@
 ; void printLine(UInt8 *s);
 .export _printLine
 .proc _printLine
-	.importzp 	ptr1
-	; uses ptr1
+	.importzp 	ptr1 	; uses AXY, sreg, ptr1
+
 	cpx #0
 	beq next_line		; if s == NULL: jump to next line
 
@@ -652,7 +614,7 @@
 	txa 
 	pha 
 
-	jsr _setSavadrToTextCursor
+	jsr _setSavadrToTextCursor ; uses AXY, sreg, ptr1
 
 	string = ptr1
 	pla
@@ -744,7 +706,8 @@
 	; ptr2 = output string
 	; returns: length of string
 	; udiv16 uses only sreg, ptr1, ptr4, AXY
-	.importzp 	sreg, ptr1, ptr2, ptr4, tmp1
+	.importzp sreg, ptr1, ptr2, ptr4, tmp1
+	.import udiv16
 
 	value = ptr1
 	string = ptr2

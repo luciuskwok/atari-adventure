@@ -5,70 +5,53 @@
 
 
 // Globals
+GameChara partyChara[4];
 UInt8 partySize = 4;
-GameChara party[4];
-UInt16 partyMoney;
 UInt8 partyPotions;
-UInt8 partyFangs;
-SInt8 partyReputation;
+UInt16 partyMoney;
+UInt16 partyFangs;
+SInt16 partyReputation;
 
 // Chara Stats
 
-void initChara(GameCharaPtr outChara, UInt8 *name, UInt8 level, UInt8 atk, UInt8 def) {
-	stringCopy(outChara->name, name);
-	outChara->level = level;
-	outChara->xp = 0;
-	outChara->hp = charaMaxHp(outChara);
-	outChara->baseAttack = atk;
-	outChara->baseDefense = def;
-	outChara->weapon = NULL;
-	outChara->armor = NULL;
-	outChara->shield = NULL;
+void initCharaAtIndex(UInt8 index, UInt8 *name, UInt8 level, UInt8 atk, UInt8 def) {
+	GameCharaPtr chara = &partyChara[index];
+
+	stringCopy(chara->name, name);
+	chara->level = level;
+	chara->xp = 0;
+	chara->hp = maxHpWithCharaLevel(level);
+	chara->baseAttack = atk;
+	chara->baseDefense = def;
+	chara->equipment = 0;
 }
 
-UInt8 charaMaxHp(GameCharaPtr chara) {
-	if (chara->level > 24) {
-		return 255;
-	} else {
-		return 10 + 10 * chara->level;
-	}
-}
-
-UInt8 charaAttackRating(GameCharaPtr chara) {
+UInt8 charaAttackRating(UInt8 charaIndex) {
+	GameCharaPtr chara = &partyChara[charaIndex];
 	UInt8 attack = chara->baseAttack + chara->level;
-	if (chara->weapon != NULL) {
-		attack += chara->weapon->attack;
-	}
+
 	return attack;
 }
 
-UInt8 charaDefenseRating(GameCharaPtr chara) {
+UInt8 charaDefenseRating(UInt8 charaIndex) {
+	GameCharaPtr chara = &partyChara[charaIndex];
 	UInt8 defense = chara->baseDefense + chara->level;
-	if (chara->shield != NULL) {
-		defense += chara->shield->defense;
-	}
-	if (chara->armor != NULL) {
-		defense += chara->armor->defense;
-	}
+
 	return defense;
 }
 
-UInt16 charaXpToNextLevel(GameCharaPtr /* chara */) {
+UInt16 charaXpToNextLevel(UInt8 /* charaIndex */) {
 	return 255;
 }
 
-GameCharaPtr charaAtIndex(UInt8 index) {
-	return &party[index];
-}
-
 void initParty(void) {
-	initChara(&party[0], "Alisa", 8, 8, 9);
-	initChara(&party[1], "Nyorn", 1, 6, 12);
-	initChara(&party[2], "Marie", 4, 6, 5);
-	initChara(&party[3], "Guy", 1, 10, 8);
+	initCharaAtIndex(0, "Kim", 8, 8, 9);
+	initCharaAtIndex(1, "Sammy", 1, 6, 12);
+	initCharaAtIndex(2, "Jean", 4, 6, 5);
+	initCharaAtIndex(3, "Frisk", 1, 10, 8);
 
 	// Testing
-	party[1].hp = 18;
-	party[2].hp = 25;
+	partyChara[1].hp = 18;
+	partyChara[2].hp = 25;
 }
 
