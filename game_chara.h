@@ -34,7 +34,7 @@ extern UInt16 partyFangs;
 extern SInt16 partyReputation;
 
 // Constants
-#define maxCharaLevel (25)
+#define maxCharaLevel (31)
 
 
 // Battle 

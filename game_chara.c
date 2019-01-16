@@ -16,7 +16,7 @@ SInt16 partyReputation;
 // Chara Stats
 
 static UInt8 maxHpWithCharaLevel(UInt8 level) {
-	UInt16 hp = 10 + 10 * level;
+	UInt16 hp = (level + 1) * 8;
 	if (hp > 255) {
 		hp = 255;
 	}
@@ -77,8 +77,8 @@ UInt8 addExperienceToChara(UInt8 charaIndex, UInt8 xp) {
 void recalculateAttackDefense(UInt8 charaIndex) {
 	GameChara *chara = &partyChara[charaIndex];
 	UInt8 lvl = chara->level;
-	UInt8 atk = (lvl + 1) * 4 / 3;
-	UInt8 def = lvl * 3 / 2;
+	UInt8 atk = ((lvl + 1) * 4 + 2) / 3;
+	UInt8 def = (lvl * 3 + 1) / 2;
 
 	// Add weapon stat
 	if (chara->weapon == equip_knife) {
@@ -140,8 +140,8 @@ void initCharaAtIndex(UInt8 index, UInt8 *name, UInt8 level) {
 }
 
 void initParty(void) {
-	initCharaAtIndex(0, "Kim", 25);
-	initCharaAtIndex(1, "Sam", 3);
+	initCharaAtIndex(0, "Kim", maxCharaLevel);
+	initCharaAtIndex(1, "Sam", maxCharaLevel-1);
 	initCharaAtIndex(2, "Jony", 2);
 	initCharaAtIndex(3, "Frisk", 1);
 

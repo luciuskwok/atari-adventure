@@ -231,7 +231,7 @@ static void enemyWasHit(UInt8 damage) {
 	}
 }
 
-static void addPlayerExperience(UInt8 /* charaIndex */, UInt8 /* value */) {
+static void addPlayerExperience(UInt8 /* charaIndex */) {
 	// TODO
 }
 
@@ -266,14 +266,16 @@ static void charaAtIndexWasHit(UInt8 index, UInt8 damage) {
 }
 
 static void doAttack(UInt8 player) {
-	UInt8 damage = 3;
 	UInt8 s[40] = "* ";
+	GameChara *chara = &partyChara[player];
 
-	hideCursor();
-	stringConcat(s, partyChara[player].name);
+	stringConcat(s, chara->name);
 	clearDialogBox();
 
-	if (partyChara[player].hp != 0) {
+	if (chara->hp != 0) {
+		UInt8 damage = calculateDamage(chara->attack, enemy.defense);
+
+		hideCursor();
 		stringConcat(s, " attacks.");
 		printInDialogBox(s);
 
@@ -284,7 +286,7 @@ static void doAttack(UInt8 player) {
 		enemyWasHit(damage);
 
 		// Add to player XP
-		addPlayerExperience(player, 1);
+		addPlayerExperience(player);
 
 		if (isLeavingBattle == 0) {
 			// Pause before counter-attack
@@ -292,12 +294,13 @@ static void doAttack(UInt8 player) {
 			stringCopy(s, "* ");
 			stringConcat(s, enemy.name);
 			stringConcat(s, " counter-attacks ");
-			stringConcat(s, partyChara[player].name);
+			stringConcat(s, chara->name);
 			stringConcat(s, ".");
 			clearDialogBox();
 			printInDialogBox(s);
 	
-			// Calculate to player character or miss.
+			// Calculate damage to player character or miss.
+			damage = calculateDamage(enemy.attack, chara->defense);
 			charaAtIndexWasHit(player, damage);
 		}
 	
@@ -362,8 +365,9 @@ static void useItem(UInt8 item) {
 	
 	enemyWasHit(damage);
 
+	// Increase XP for all charas as if they had taken part in battle.
 	for (i=0; i<partySize; ++i) {
-		addPlayerExperience(i, 1);
+		addPlayerExperience(i);
 	}
 
 	if (isLeavingBattle == 0) {
@@ -485,6 +489,7 @@ void initBattle(void) {
 
 	// Set up enemy character
 	initEnemyChara(&enemy, "Steve Jobs", /*maxHp*/ 96, /*atk*/5, /*def*/10);
+	enemy.level = enemy.maxHp / 8;
 	showEncounterText();
 	shouldRedrawEncounterTextOnMove = 0;
 
