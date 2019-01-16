@@ -231,8 +231,12 @@ static void enemyWasHit(UInt8 damage) {
 	}
 }
 
-static void addPlayerExperience(UInt8 /* charaIndex */) {
-	// TODO
+static void addPlayerExperience(UInt8 charaIndex) {
+	GameChara *chara = &partyChara[charaIndex];
+	UInt8 xpg = calculateXpGain(chara->level, enemy.level);
+	UInt8 leveledUp = addExperienceToChara(charaIndex, xpg);
+
+	// TODO: add leveled up animation
 }
 
 static void charaAtIndexWasHit(UInt8 index, UInt8 damage) {
@@ -489,7 +493,7 @@ void initBattle(void) {
 
 	// Set up enemy character
 	initEnemyChara(&enemy, "Steve Jobs", /*maxHp*/ 96, /*atk*/5, /*def*/10);
-	enemy.level = enemy.maxHp / 8;
+	enemy.level = (enemy.maxHp + 7) / 8; // enemy level is only used for calculating xp gain, so round up to next level. 
 	showEncounterText();
 	shouldRedrawEncounterTextOnMove = 0;
 

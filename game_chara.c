@@ -24,7 +24,7 @@ static UInt8 maxHpWithCharaLevel(UInt8 level) {
 }
 
 static UInt16 maxXpWithCharaLevel(UInt8 level) {
-	UInt16 xp = 75 + 25 * level;
+	UInt16 xp = level * (8 * 16);
 	return xp;
 }
 
@@ -77,8 +77,8 @@ UInt8 addExperienceToChara(UInt8 charaIndex, UInt8 xp) {
 void recalculateAttackDefense(UInt8 charaIndex) {
 	GameChara *chara = &partyChara[charaIndex];
 	UInt8 lvl = chara->level;
-	UInt8 atk = ((lvl + 1) * 4 + 2) / 3;
-	UInt8 def = (lvl * 3 + 1) / 2;
+	UInt8 atk = ((lvl + 1) * 8 + 3) / 6;
+	UInt8 def = (lvl * 7 + 1) / 4 - 1;
 
 	// Add weapon stat
 	if (chara->weapon == equip_knife) {
