@@ -9,13 +9,21 @@ typedef struct GameChara {
 	UInt8 maxHp;
 	UInt16 xp;
 	UInt16 maxXp;
-	UInt8 baseAttack;
-	UInt8 baseDefense;
+	UInt8 attack;
+	UInt8 defense;
 	UInt8 weapon;
 	UInt8 armor; 
 	UInt8 shield;
 	UInt8 padding[2];
 } GameChara; // 16 bytes
+
+enum Equipment {
+	equip_none = 0,
+	equip_knife = 1,
+	equip_basic = 2,
+	equip_legendary = 3,
+	equip_ultimate = 4
+};
 
 // Globals
 extern GameChara partyChara[];
@@ -34,10 +42,10 @@ UInt8 calculateDamage(UInt8 attack, UInt8 defense);
 UInt8 calculateXpGain(UInt8 playerLevel, UInt8 enemyLevel);
 UInt8 addExperienceToChara(UInt8 charaIndex, UInt8 xp);
 
-UInt8 charaAttackRating(UInt8 charaIndex);
-UInt8 charaDefenseRating(UInt8 charaIndex);
+void recalculateAttackDefense(UInt8 charaIndex);
 
 // Init
-void initChara(GameChara *chara, UInt8 *name, UInt8 level, UInt8 atk, UInt8 def);
+void initEnemyChara(GameChara *chara, UInt8 *name, UInt8 maxHp, UInt8 atk, UInt8 def);
+void initChara(GameChara *chara, UInt8 *name, UInt8 level);
 void initParty(void);
 

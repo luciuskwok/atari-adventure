@@ -484,7 +484,7 @@ void initBattle(void) {
 	// }
 
 	// Set up enemy character
-	initChara(&enemy, "Steve Jobs", /*level*/ 12, /*atk*/ 5, /*def*/ 10);
+	initEnemyChara(&enemy, "Steve Jobs", /*maxHp*/ 96, /*atk*/5, /*def*/10);
 	showEncounterText();
 	shouldRedrawEncounterTextOnMove = 0;
 

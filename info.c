@@ -140,43 +140,44 @@ static void drawCharaInfoAtIndex(UInt8 index) {
 	UInt8 maxHp = chara->maxHp;
 	UInt8 hp = chara->hp;
 	UInt8 x = 1 + index * 10;
-	UInt8 s[11];
+	UInt8 s[9];
 
 	SET_TXT_ORIGIN(x, 0)
 	printLine(chara->name);
 
-	stringCopy(s, "Lv ");
-	uint8toString(s+3, chara->level);
+	printString("Lv ");
+	uint8toString(s, chara->level);
 	printLine(s);
 
 	if (chara->level >= maxCharaLevel) {
 		printLine("max");
 	} else {
-		stringCopy(s, "next ");
-		uint16toString(s+5, chara->maxXp - chara->xp);
+		printString("next ");
+		uint16toString(s, chara->maxXp - chara->xp);
 		printLine(s);
 	}
 
-	printLine(NULL);
+	moveToNextLine();
 
 	printLine("HP");
 
 	uint8toString(s, hp);
-	stringConcat(s, "/");
-	uint8toString(s+stringLength(s), maxHp);
+	printString(s);
+	printString("/");
+	uint8toString(s, maxHp);
 	printLine(s);
 	
-	printLine(NULL);
+	moveToNextLine();
 
-	stringCopy(s, "ATK ");
-	uint8toString(s+4, charaAttackRating(index));
+	printString("ATK ");
+	uint8toString(s, chara->attack);
 	printLine(s);
 
-	stringCopy(s, "DEF ");
-	uint8toString(s+4, charaDefenseRating(index));
+	printString("DEF ");
+	uint8toString(s, chara->defense);
 	printLine(s);
 
-	printLine(NULL);
+	moveToNextLine();
 
 	printLine("Sword+1");
 	printLine("Armor+2");

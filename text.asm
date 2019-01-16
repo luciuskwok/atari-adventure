@@ -16,6 +16,138 @@
 	NEWLINE   = $9B ; newlines converted to ATASCII are $9B
 
 
+; Basic Printing
+
+; void printString(const UInt8 *s);
+.export _printString
+.proc _printString 
+	.importzp 	ptr2 	; uses AXY, sreg, ptr1, ptr2
+
+	cmp #0 
+	bne @skip_msb
+		cpx #0
+		beq return 		; if s == NULL: return
+	@skip_msb:
+
+	string = ptr2 
+		sta string 
+		stx string+1
+
+	jsr _setSavadrToTextCursor ; uses AXY, sreg, ptr1
+
+	ldy #0
+	loop:
+		lda(string),Y
+		beq inc_colcrs		; if string[Y] == 0: break
+		jsr _toAtascii
+		sta(SAVADR),Y		; screen[Y] = string[Y]
+		iny
+		bne loop
+	inc_colcrs:
+		tya 
+		clc 
+		adc COLCRS
+		sta COLCRS
+	return:
+		rts
+.endproc 
+
+
+; void moveToNextLine(void);
+.export _moveToNextLine 
+.proc _moveToNextLine 
+	lda LMARGN 
+	sta COLCRS 
+	inc ROWCRS
+	rts 	
+.endproc 
+
+
+; void printLine(UInt8 *s);
+.export _printLine
+.proc _printLine
+	jsr _printString 
+	jsr _moveToNextLine
+	rts
+.endproc
+
+
+; void printStringAtXY(const UInt8 *s, UInt8 x, UInt8 y);
+.export _printStringAtXY
+.proc _printStringAtXY
+	.importzp 	ptr1
+
+	sta ROWCRS   		; parameter 'y'
+
+	jsr popa  			; parameter 'x'
+	sta COLCRS 
+	sta LMARGN
+	
+	jsr popptr1 		; parameter 's'
+	lda ptr1
+	ldx ptr1+1
+
+	jsr _printLine
+	rts
+.endproc
+
+
+; void debugPrint(const UInt8 *s, UInt16 value, UInt8 x, UInt8 y);
+.export _debugPrint
+.proc _debugPrint
+	.importzp 	sp, ptr1, ptr2
+
+	sta ROWCRS  		; parameter 'y'
+
+	jsr popa  			; parameter 'x'
+	sta COLCRS
+
+	jsr popptr1 		; parameter 'value'
+	lda ptr1
+	pha  				; store 'value' on stack
+	lda ptr1+1
+	pha 
+
+	jsr popptr1 		; parameter 's'
+	lda ptr1 			; ptr2 is source for copy
+	sta ptr2 
+	lda ptr1+1
+	sta ptr2+1 
+
+	ldy #32				; reserve 32 bytes on stack for string buffer
+	jsr subysp 
+
+	lda sp
+	sta ptr1 
+	lda sp+1
+	sta ptr1+1
+
+	jsr _stringCopyInternal ; copy string from ptr2 to ptr1
+
+	jsr _stringLengthInternal 
+	clc 
+	adc ptr1 			; put pointer to end of string in AX
+	ldx ptr1+1
+	jsr pushax 			; push string pointer on parameter stack
+
+	pla 				; pull 'value' off stack
+	tax 
+	pla 
+	jsr _uint16toString
+
+	lda sp		 		; print string buffer
+	ldx sp+1
+	jsr _printLine 
+
+	ldy #32				; free 32 bytes on stack
+	jsr addysp
+	
+	rts 
+.endproc
+
+
+; Stat Printing
+
 ; void printAllCharaStats(UInt8 row);
 .export _printAllCharaStats
 .proc _printAllCharaStats
@@ -54,6 +186,33 @@
 		bcc loop
 	rts
 .endproc 
+
+
+; void eraseCharaBoxAtIndex(UInt8 index);
+.export _eraseCharaBoxAtIndex
+.proc _eraseCharaBoxAtIndex
+	; _setSavadrToTextCursor uses AXY, sreg, ptr1
+
+	width = 9
+	height = 4
+
+	jsr _setSavadrToTextCursor
+
+	ldx #height
+	loop_row: 
+		lda #0
+		ldy #width 
+		loop_col:
+			dey
+			sta (SAVADR),Y
+			bne loop_col
+		lda #ROW_BYTES 				; SAVADR += row_bytes
+		jsr _addAToSavadr
+	next_row:
+		dex
+		bne loop_row
+	rts
+.endproc
 
 
 ; void printCharaAtIndex(UInt8 index);
@@ -106,7 +265,7 @@
 		lda (charaPtr),Y 
 		jsr print_value
 
-		jsr move_to_next_line
+		jsr _moveToNextLine
 
 	print_hp:
 		ldy #charaHp 
@@ -122,7 +281,7 @@
 		lda (charaPtr),Y
 		jsr print_value
 
-		jsr move_to_next_line
+		jsr _moveToNextLine
 
 	draw_hp_bar:
 		lda COLCRS  		; Temporarily set COLCRS to 0 so 
@@ -170,13 +329,8 @@
 		ldx sp+1 
 		jsr print_string_axy
 		rts 
-
-	move_to_next_line:
-		lda LMARGN 
-		sta COLCRS 
-		inc ROWCRS
-		rts 	
 .endproc
+
 
 ; void printPartyStats(void);
 .export _printPartyStats
@@ -198,7 +352,7 @@
 
 	party_money:
 		lda #'$'
-		jsr _appendCharToPtr2 		; start off with money symbol
+		jsr append_char 		; start off with money symbol
 
 		lda _partyMoney				; append money string
 		sta value 
@@ -214,8 +368,8 @@
 
 	@skip_msb:
 		lda #' '
-		jsr _appendCharToPtr2
-		jsr _appendCharToPtr2
+		jsr append_char
+		jsr append_char
 
 	party_potions:
 		lda _partyPotions 			; append potions string
@@ -232,10 +386,10 @@
 
 	@skip_msb:
 		lda #$11
-		jsr _appendCharToPtr2
+		jsr append_char
 		lda #' '
-		jsr _appendCharToPtr2
-		jsr _appendCharToPtr2
+		jsr append_char
+		jsr append_char
 
 	party_fangs:
 		lda _partyFangs 			; append fangs string
@@ -252,11 +406,11 @@
 
 	@skip_msb:
 		lda #$12
-		jsr _appendCharToPtr2
+		jsr append_char
 
 	append_terminator:
 		lda #0
-		jsr _appendCharToPtr2
+		jsr append_char
 
 	center_text:
 		lda sp  					; get string length
@@ -280,10 +434,22 @@
 
 	ldy #32				; free 32 bytes on stack
 	jsr addysp 
-
 	rts
-.endproc
 
+	append_char:
+		; appends char in A to string at ptr2 and moves ptr2 to end.
+		; does not append null terminator
+		ldy #0
+		sta (ptr2),Y
+		inc ptr2 
+		bne @skip_msb 
+			inc ptr2+1
+		@skip_msb:
+		rts 
+.endproc 
+
+
+; Formatted Printing
 
 ; void drawTextBox(const UInt8 *s);
 .export _drawTextBox
@@ -321,7 +487,7 @@
 			cmp #NEWLINE
 			beq print_newline 		; jump to next line
 		check_wrap:
-			jsr _wordLengthAtPtr1 	; check if word will fit
+			jsr word_length		 	; check if word will fit
 			sta length 
 			sec
 			lda RMARGN
@@ -384,8 +550,27 @@
 			bne next_row
 
 			jmp loop 				; next loop
+
+	word_length:
+		; returns length up to but not including space or newline char	
+		ldy #0
+		@loop:
+			lda (string),Y
+			beq @return 		; null termintor
+			cmp #SPACE
+			beq @return 		; space
+			cmp #NEWLINE
+			beq @return  	; newline
+			iny  	
+			beq @return 		; max length
+			jmp @loop
+		@return:
+			tya 
+			rts 
 .endproc
 
+
+; Internal Printing Routines
 
 .proc _printStringWithLength 
 	; uses ptr1, SAVADR
@@ -430,70 +615,32 @@
 .endproc 
 
 
-.proc _wordLengthAtPtr1
-	; returns length up to but not including space or newline char
+.export _setSavadrToTextCursor
+.proc _setSavadrToTextCursor 
+	; Stores cursor address in SAVADR
+	; Calls _multiplyAXtoPtr1 (uses sreg, ptr1)
 	.importzp 	ptr1
-	string = ptr1
 
-	ldy #0
-	loop:
-		lda (string),Y
-		beq return 		; null termintor
-		cmp #SPACE
-		beq return 		; space
-		cmp #NEWLINE
-		beq return  	; newline
-		iny  	
-		beq return 		; max length
-		jmp loop
-	return:
-		tya 
-		rts 
+	lda ROWCRS			; ptr1 = y * row_bytes
+	ldx #ROW_BYTES
+	jsr _multiplyAXtoPtr1
+
+	clc 				; SAVADR = ptr1 + TXTMSC
+	lda ptr1
+	adc TXTMSC 
+	sta SAVADR
+	lda ptr1+1
+	adc TXTMSC+1
+	sta SAVADR+1
+
+	lda COLCRS
+	jsr _addAToSavadr
+
+	rts 
 .endproc
 
 
-.proc _appendCharToPtr2
-	; appends char in A to string at ptr2 and moves ptr2 to end.
-	; does not append null terminator
-	.importzp 	ptr2
-
-	ldy #0
-	sta (ptr2),Y
-	inc_ptr2:
-		inc ptr2 
-		bne return 
-		inc ptr2+1
-	return:
-		rts 
-.endproc 
-
-
-; void eraseCharaBoxAtIndex(UInt8 index);
-.export _eraseCharaBoxAtIndex
-.proc _eraseCharaBoxAtIndex
-	; _setSavadrToTextCursor uses AXY, sreg, ptr1
-
-	width = 9
-	height = 4
-
-	jsr _setSavadrToTextCursor
-
-	ldx #height
-	loop_row: 
-		lda #0
-		ldy #width 
-		loop_col:
-			dey
-			sta (SAVADR),Y
-			bne loop_col
-		lda #ROW_BYTES 				; SAVADR += row_bytes
-		jsr _addAToSavadr
-	next_row:
-		dex
-		bne loop_row
-	rts
-.endproc
-
+; String Utilities
 
 ; void stringConcat(UInt8 *dst, const UInt8 *src);
 .export _stringConcat 		
@@ -598,64 +745,6 @@
 .endproc
 
 
-; void printLine(UInt8 *s);
-.export _printLine
-.proc _printLine
-	.importzp 	ptr1 	; uses AXY, sreg, ptr1
-
-	cpx #0
-	beq next_line		; if s == NULL: jump to next line
-
-	pha 				; push s onto stack
-	txa 
-	pha 
-
-	jsr _setSavadrToTextCursor ; uses AXY, sreg, ptr1
-
-	string = ptr1
-	pla
-	sta string+1
-	pla 
-	sta string 
-
-	ldy #0
-	loop:
-		lda(string),Y
-		beq next_line		; if string[Y] == 0: jump to next line
-		jsr _toAtascii
-		sta(SAVADR),Y		; screen[Y] = string[Y]
-		iny
-		bne loop
-	next_line:
-		inc ROWCRS
-		lda LMARGN
-		sta COLCRS
-		lda #0
-		sta COLCRS+1
-	rts
-.endproc
-
-
-; void printStringAtXY(const UInt8 *s, UInt8 x, UInt8 y);
-.export _printStringAtXY
-.proc _printStringAtXY
-	.importzp 	ptr1
-
-	sta ROWCRS   		; parameter 'y'
-
-	jsr popa  			; parameter 'x'
-	sta COLCRS 
-	sta LMARGN
-	
-	jsr popptr1 		; parameter 's'
-	lda ptr1
-	ldx ptr1+1
-
-	jsr _printLine
-	rts
-.endproc
-
-
 ; UInt8 uint8toString(UInt8 *string, UInt8 value);
 .export _uint8toString
 .proc _uint8toString
@@ -747,82 +836,4 @@
 	rts
 .endproc
 
-
-; void debugPrint(const UInt8 *s, UInt16 value, UInt8 x, UInt8 y);
-.export _debugPrint
-.proc _debugPrint
-	.importzp 	sp, ptr1, ptr2
-
-	sta ROWCRS  		; parameter 'y'
-
-	jsr popa  			; parameter 'x'
-	sta COLCRS
-
-	jsr popptr1 		; parameter 'value'
-	lda ptr1
-	pha  				; store 'value' on stack
-	lda ptr1+1
-	pha 
-
-	jsr popptr1 		; parameter 's'
-	lda ptr1 			; ptr2 is source for copy
-	sta ptr2 
-	lda ptr1+1
-	sta ptr2+1 
-
-	ldy #32				; reserve 32 bytes on stack for string buffer
-	jsr subysp 
-
-	lda sp
-	sta ptr1 
-	lda sp+1
-	sta ptr1+1
-
-	jsr _stringCopyInternal ; copy string from ptr2 to ptr1
-
-	jsr _stringLengthInternal 
-	clc 
-	adc ptr1 			; put pointer to end of string in AX
-	ldx ptr1+1
-	jsr pushax 			; push string pointer on parameter stack
-
-	pla 				; pull 'value' off stack
-	tax 
-	pla 
-	jsr _uint16toString
-
-	lda sp		 		; print string buffer
-	ldx sp+1
-	jsr _printLine 
-
-	ldy #32				; free 32 bytes on stack
-	jsr addysp
-	
-	rts 
-.endproc
-
-
-.export _setSavadrToTextCursor
-.proc _setSavadrToTextCursor 
-	; Stores cursor address in SAVADR
-	; Calls _multiplyAXtoPtr1 (uses sreg, ptr1)
-	.importzp 	ptr1
-
-	lda ROWCRS			; ptr1 = y * row_bytes
-	ldx #ROW_BYTES
-	jsr _multiplyAXtoPtr1
-
-	clc 				; SAVADR = ptr1 + TXTMSC
-	lda ptr1
-	adc TXTMSC 
-	sta SAVADR
-	lda ptr1+1
-	adc TXTMSC+1
-	sta SAVADR+1
-
-	lda COLCRS
-	jsr _addAToSavadr
-
-	rts 
-.endproc
 

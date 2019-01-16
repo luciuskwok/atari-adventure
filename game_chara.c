@@ -54,72 +54,96 @@ UInt8 calculateXpGain(UInt8 playerLevel, UInt8 enemyLevel) {
 UInt8 addExperienceToChara(UInt8 charaIndex, UInt8 xp) {
 	GameChara *chara = &partyChara[charaIndex];
 	UInt8 didLevelUp = 0;
+	UInt8 lvl = chara->level;
 	
 	chara->xp += xp;
 	if (chara->xp >= chara->maxXp) {
-		if (chara->level >= maxCharaLevel) {
+		if (lvl >= maxCharaLevel) {
 			chara->xp = chara->maxXp;
 		} else {
-			UInt8 lv = chara->level;
+			++lvl;
+			chara->level = lvl;
 			chara->xp -= chara->maxXp;
-			chara->maxHp = maxHpWithCharaLevel(lv);
-			chara->maxXp = maxXpWithCharaLevel(lv);
+			chara->maxHp = maxHpWithCharaLevel(lvl);
+			chara->maxXp = maxXpWithCharaLevel(lvl);
+			recalculateAttackDefense(charaIndex);
 			didLevelUp = 1;
 		}
 	}
 	return didLevelUp;
 }
 
-UInt8 charaAttackRating(UInt8 charaIndex) {
+// Recalculates attack and defenese attributes based on level and equipment.
+void recalculateAttackDefense(UInt8 charaIndex) {
 	GameChara *chara = &partyChara[charaIndex];
-	UInt8 attack = chara->baseAttack + chara->level;
-	return attack;
-}
+	UInt8 lvl = chara->level;
+	UInt8 atk = (lvl + 1) * 4 / 3;
+	UInt8 def = lvl * 3 / 2;
 
-UInt8 charaDefenseRating(UInt8 charaIndex) {
-	GameChara *chara = &partyChara[charaIndex];
-	UInt8 defense = chara->baseDefense + chara->level;
-	return defense;
-}
+	// Add weapon stat
+	if (chara->weapon == equip_knife) {
+		atk += 1;
+	} else if (chara->weapon == equip_basic) {
+		atk += 3;
+	} else if (chara->weapon == equip_legendary) {
+		atk += 6;
+	} else if (chara->weapon == equip_ultimate) {
+		atk += 10;
+	}
+	chara->attack = atk;
 
-void levelUpChara(UInt8 charaIndex) {
-	UInt8 level;
-
-	GameChara *chara = &partyChara[charaIndex];
-	if (chara->level < 25) {
-		// Max level is 25
-		level = chara->level + 1;
-		chara->level = level;
-		chara->maxHp = maxHpWithCharaLevel(chara->level);
-		chara->maxXp = maxXpWithCharaLevel(chara->level);
+	// Add armor stat 
+	if (chara->armor == equip_basic) {
+		def += 5;
+	} else if (chara->armor == equip_legendary) {
+		def += 10;
 	}
 
+	// Add shield stat 
+	if (chara->shield == equip_basic) {
+		def += 5;
+	} else if (chara->shield == equip_legendary) {
+		def += 10;
+	}
+	chara->defense = def;
 }
 
-void initChara(GameChara *chara, UInt8 *name, UInt8 level, UInt8 atk, UInt8 def) {
+void initEnemyChara(GameChara *chara, UInt8 *name, UInt8 maxHp, UInt8 atk, UInt8 def) {
+	chara->name = name;
+	chara->hp = maxHp;
+	chara->maxHp = maxHp;
+	chara->attack = atk;
+	chara->defense = def;
+
+	chara->level = 0;
+	chara->xp = 0;
+	chara->maxXp = 0;
+	chara->weapon = 0;
+	chara->armor = 0;
+	chara->shield = 0;
+}
+
+void initCharaAtIndex(UInt8 index, UInt8 *name, UInt8 level) {
+	GameChara *chara = &partyChara[index];
+
 	chara->name = name;
 	chara->level = level;
 	chara->hp = maxHpWithCharaLevel(level);
 	chara->maxHp = maxHpWithCharaLevel(level);
 	chara->xp = 0;
 	chara->maxXp = maxXpWithCharaLevel(level);
-	chara->baseAttack = atk;
-	chara->baseDefense = def;
 	chara->weapon = 0;
 	chara->armor = 0;
 	chara->shield = 0;
-}
 
-void initCharaAtIndex(UInt8 index, UInt8 *name, UInt8 level, UInt8 atk, UInt8 def) {
-	GameChara *chara = &partyChara[index];
-	initChara(chara, name, level, atk, def);
+	recalculateAttackDefense(index);
 }
 
 void initParty(void) {
-	initCharaAtIndex(0, "Kim", 25, 8, 9);
-	initCharaAtIndex(1, "Sam", 3, 6, 12);
-	initCharaAtIndex(2, "Jony", 2, 6, 5);
-	initCharaAtIndex(3, "Frisk", 1, 10, 8);
+	initCharaAtIndex(0, "Kim", 25);
+	initCharaAtIndex(1, "Sam", 3);
+	initCharaAtIndex(2, "Jony", 2);
+	initCharaAtIndex(3, "Frisk", 1);
 
 	// Testing
 	// partyChara[1].hp = 18;
