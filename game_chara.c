@@ -13,6 +13,16 @@ UInt16 partyFangs;
 SInt16 partyReputation;
 
 
+// ATK lookup table
+const UInt8 baseAttackTable[] = {
+	 3,  4,  5,  6,  7,  8, 
+	10, 12, 14, 16, 18, 20, 
+	22, 24, 26, 28, 31, 34,
+	38, 42, 46, 52, 56, 60, 
+	65, 70, 75, 80, 85, 90, 95
+};
+
+
 // Chara Stats
 
 static UInt8 maxHpWithCharaLevel(UInt8 level) {
@@ -31,8 +41,8 @@ static UInt16 maxXpWithCharaLevel(UInt8 level) {
 // Battle 
 
 UInt8 calculateDamage(UInt8 attack, UInt8 defense) {
-	UInt16 def = defense + 256;
-	UInt16 dmg = attack * 256 / def; 
+	UInt16 def = defense + 32;
+	UInt16 dmg = attack * 32 / def; 
 	return dmg;
 }
 
@@ -77,7 +87,7 @@ UInt8 addExperienceToChara(UInt8 charaIndex, UInt8 xp) {
 void recalculateAttackDefense(UInt8 charaIndex) {
 	GameChara *chara = &partyChara[charaIndex];
 	UInt8 lvl = chara->level;
-	UInt8 atk = ((lvl + 1) * 8 + 3) / 6;
+	UInt8 atk = baseAttackTable[lvl - 1];
 	UInt8 def = (lvl * 7 + 1) / 4 - 1;
 
 	// Add weapon stat

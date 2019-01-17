@@ -885,20 +885,22 @@ _dliSpriteData:
 	lda DINDEX 
 	bne tile_mode
 	normal_mode:
-		ldx #40 		; 40 bytes per row
+		lda ROWCRS 
+		ldx #0 
+		jsr _mulax40		; 40 bytes per row
 		jmp mode_done
 	tile_mode:
 		ldx #24
+		lda ROWCRS			; ptr1 = y * row_bytes
+		jsr _multiplyAXtoPtr1
+		lda ptr1 
+		ldx ptr1+1
 	mode_done:
 
-	lda ROWCRS			; ptr1 = y * row_bytes
-	jsr _multiplyAXtoPtr1
-
 	clc 				; SAVADR = ptr1 + TXTMSC
-	lda ptr1
 	adc SAVMSC 
 	sta SAVADR
-	lda ptr1+1
+	txa 
 	adc SAVMSC+1
 	sta SAVADR+1
 
@@ -907,6 +909,33 @@ _dliSpriteData:
 
 	rts 
 .endproc
+
+.proc _mulax40 
+	; 40 = %0010 1000
+	; 10 = %0101
+	.importzp ptr1
+
+	sta ptr1  		; A=LSB
+	stx ptr1+1 		; X=MSB
+	asl a 
+	rol ptr1+1
+	asl a
+	rol ptr1+1
+	clc 
+	adc ptr1 
+	sta ptr1
+	txa  			; flip LSB/MSB, so A=MSB, X=LSB
+	adc ptr1+1 
+	asl ptr1
+	rol a
+	asl ptr1 
+	rol a
+	asl ptr1
+	rol a 
+	tax 
+	lda ptr1 
+	rts 
+.endproc 
 
 .export _addAToSavadr
 .proc _addAToSavadr
