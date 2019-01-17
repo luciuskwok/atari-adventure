@@ -30,6 +30,35 @@
 	rts
 .endproc
 
+
+.export _mulax40
+.proc _mulax40 
+	; 40 = %0010 1000
+	.importzp ptr1
+
+	sta ptr1  		; A=LSB
+	stx ptr1+1 		; X=MSB
+	asl a 
+	rol ptr1+1
+	asl a
+	rol ptr1+1
+	clc 
+	adc ptr1 
+	sta ptr1
+	txa  			; flip LSB/MSB, so A=MSB, X=LSB
+	adc ptr1+1 
+	asl ptr1
+	rol a
+	asl ptr1 
+	rol a
+	asl ptr1
+	rol a 
+	tax 
+	lda ptr1 
+	rts 
+.endproc 
+
+
 .export _addSregToPtr1
 .proc _addSregToPtr1
 	.importzp sreg, ptr1 

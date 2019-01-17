@@ -568,15 +568,14 @@ _dliSpriteData:
 	.import _addAToPtr1
 	.import _setSavadrToGraphicsCursor
 	.import _uncompress
+	.import _mulax40
 
 	get_rowCount:
 	destLen = ENDPT  			; using ENDPT for its 16-bit size
-		ldx #ROW_BYTES 			; A already has rowCount
-		jsr _multiplyAXtoPtr1
-		lda ptr1 
+		ldx #0 
+		jsr _mulax40 
 		sta destLen 
-		lda ptr1+1 
-		sta destLen+1 
+		stx destLen+1
 
 	get_rowOffset:
 		jsr popa
@@ -881,6 +880,7 @@ _dliSpriteData:
 	; Set DINDEX to zero for normal mode, nonzero for map view mode.
 	; Calls _multiplyAXtoPtr1 (uses sreg, ptr1)
 	.importzp ptr1
+	.import _mulax40
 
 	lda DINDEX 
 	bne tile_mode
@@ -909,33 +909,6 @@ _dliSpriteData:
 
 	rts 
 .endproc
-
-.proc _mulax40 
-	; 40 = %0010 1000
-	; 10 = %0101
-	.importzp ptr1
-
-	sta ptr1  		; A=LSB
-	stx ptr1+1 		; X=MSB
-	asl a 
-	rol ptr1+1
-	asl a
-	rol ptr1+1
-	clc 
-	adc ptr1 
-	sta ptr1
-	txa  			; flip LSB/MSB, so A=MSB, X=LSB
-	adc ptr1+1 
-	asl ptr1
-	rol a
-	asl ptr1 
-	rol a
-	asl ptr1
-	rol a 
-	tax 
-	lda ptr1 
-	rts 
-.endproc 
 
 .export _addAToSavadr
 .proc _addAToSavadr

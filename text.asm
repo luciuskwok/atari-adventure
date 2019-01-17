@@ -2,7 +2,6 @@
 
 .import 	addysp, popa, popptr1, popsreg, pushax, subysp
 .import 	_zeroOutYAtPtr1
-.import 	_multiplyAXtoPtr1
 .import 	_addAToSavadr
 .import 	_sizeBarChart, _drawBarChart
 
@@ -618,18 +617,18 @@
 .export _setSavadrToTextCursor
 .proc _setSavadrToTextCursor 
 	; Stores cursor address in SAVADR
-	; Calls _multiplyAXtoPtr1 (uses sreg, ptr1)
+	; Calls _mulax40 (uses  ptr1)
 	.importzp 	ptr1
+	.import _mulax40
 
 	lda ROWCRS			; ptr1 = y * row_bytes
-	ldx #ROW_BYTES
-	jsr _multiplyAXtoPtr1
+	ldx #0
+	jsr _mulax40
 
 	clc 				; SAVADR = ptr1 + TXTMSC
-	lda ptr1
 	adc TXTMSC 
 	sta SAVADR
-	lda ptr1+1
+	txa
 	adc TXTMSC+1
 	sta SAVADR+1
 
