@@ -69,7 +69,7 @@ _dliSpriteData:
 		.byte          DL_TEXT|DL_DLI, DL_BLK1	; chara name
 		.byte -11+257, DL_TEXT 					; chara stats
 		.byte   4-1,   DL_TEXT|DL_DLI, DL_BLK8 
-		.byte          DL_TEXT|DL_DLI, DL_BLK1 ; "Items"
+		.byte          DL_TEXT|DL_DLI, DL_BLK1 	; "Items"
 		.byte  -3+257, DL_TEXT 					; items body
 		.byte   2-1,   DL_TEXT|DL_DLI 			; last line DLI
 		.byte          DL_JVB

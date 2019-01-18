@@ -21,6 +21,7 @@
 #define NEWCOL (0x0061)
 #define SAVADR (0x0068) /* Temporary pointer for screen row */
 #define RAMTOP (0x006A)
+#define BITMSK (0x006E)
 #define DELTAR (0x0076)
 #define DELTAC (0x0077)
 #define ROWINC (0x0079)

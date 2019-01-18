@@ -18,10 +18,9 @@ UInt8 menuType;
 UInt8 rootMenuSelectedIndex;
 UInt8 previousSelectedIndex;
 UInt8 shouldRedrawEncounterTextOnMove;
-GameChara enemy;
+EnemyChara enemy;
 
 // Constants
-UInt8 enemyName[] = "Steve Jobs"; 
 
 #define graphicsHeight (44)
 
@@ -232,8 +231,9 @@ static void enemyWasHit(UInt8 damage) {
 }
 
 static void addPlayerExperience(UInt8 charaIndex) {
-	GameChara *chara = &partyChara[charaIndex];
-	UInt8 xpg = calculateXpGain(chara->level, enemy.level);
+	PlayerChara *chara = &partyChara[charaIndex];
+	UInt8 level = (enemy.maxHp + 7) / 8; // enemy level is only used for calculating xp gain, so round up to next level. 
+	UInt8 xpg = calculateXpGain(chara->level, level);
 	UInt8 leveledUp = addExperienceToChara(charaIndex, xpg);
 
 	// TODO: add leveled up animation
@@ -271,7 +271,7 @@ static void charaAtIndexWasHit(UInt8 index, UInt8 damage) {
 
 static void doAttack(UInt8 player) {
 	UInt8 s[40] = "* ";
-	GameChara *chara = &partyChara[player];
+	PlayerChara *chara = &partyChara[player];
 
 	stringConcat(s, chara->name);
 	clearDialogBox();
@@ -492,8 +492,11 @@ void initBattle(void) {
 	// }
 
 	// Set up enemy character
-	initEnemyChara(&enemy, "Steve Jobs", /*maxHp*/ 96, /*atk*/5, /*def*/10);
-	enemy.level = (enemy.maxHp + 7) / 8; // enemy level is only used for calculating xp gain, so round up to next level. 
+	enemy.name = "Steve Jobs";
+	enemy.maxHp = 96;
+	enemy.hp = 96;
+	enemy.attack = 5;
+	enemy.defense = 10;
 	showEncounterText();
 	shouldRedrawEncounterTextOnMove = 0;
 

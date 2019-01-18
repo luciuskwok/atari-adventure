@@ -2,7 +2,7 @@
 
 #include "types.h"
 
-typedef struct GameChara {
+typedef struct PlayerChara {
 	UInt8 *name;
 	UInt8 level;
 	UInt8 hp;
@@ -15,7 +15,15 @@ typedef struct GameChara {
 	UInt8 armor; 
 	UInt8 shield;
 	UInt8 padding[2];
-} GameChara; // 16 bytes
+} PlayerChara; // 16 bytes
+
+typedef struct EnemyChara {
+	UInt8 *name;
+	UInt8 hp;
+	UInt8 maxHp;
+	UInt8 attack;
+	UInt8 defense;
+} EnemyChara; 
 
 enum Equipment {
 	equip_none = 0,
@@ -26,7 +34,7 @@ enum Equipment {
 };
 
 // Globals
-extern GameChara partyChara[];
+extern PlayerChara partyChara[];
 extern UInt8 partySize;
 extern UInt8 partyPotions;
 extern UInt16 partyMoney;
@@ -34,7 +42,7 @@ extern UInt16 partyFangs;
 extern SInt16 partyReputation;
 
 // Constants
-#define maxCharaLevel (31)
+#define maxCharaLevel (16)
 
 
 // Battle 
@@ -45,7 +53,7 @@ UInt8 addExperienceToChara(UInt8 charaIndex, UInt8 xp);
 void recalculateAttackDefense(UInt8 charaIndex);
 
 // Init
-void initEnemyChara(GameChara *chara, UInt8 *name, UInt8 maxHp, UInt8 atk, UInt8 def);
-void initChara(GameChara *chara, UInt8 *name, UInt8 level);
+void initEnemyChara(PlayerChara *chara, UInt8 *name, UInt8 maxHp, UInt8 atk, UInt8 def);
+void initChara(PlayerChara *chara, UInt8 *name, UInt8 level);
 void initParty(void);
 

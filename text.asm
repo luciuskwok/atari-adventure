@@ -20,7 +20,7 @@
 ; void printString(const UInt8 *s);
 .export _printString
 .proc _printString 
-	.importzp 	ptr2 	; uses AXY, sreg, ptr1, ptr2
+	.importzp 	ptr2 	; uses ptr1, ptr2
 
 	cmp #0 
 	bne @skip_msb
@@ -32,13 +32,14 @@
 		sta string 
 		stx string+1
 
-	jsr _setSavadrToTextCursor ; uses AXY, sreg, ptr1
+	jsr _setSavadrToTextCursor ; uses ptr1
 
 	ldy #0
 	loop:
 		lda(string),Y
 		beq inc_colcrs		; if string[Y] == 0: break
 		jsr _toAtascii
+		ora BITMSK
 		sta(SAVADR),Y		; screen[Y] = string[Y]
 		iny
 		bne loop
@@ -81,6 +82,9 @@
 	jsr popa  			; parameter 'x'
 	sta COLCRS 
 	sta LMARGN
+
+	lda #0
+	sta BITMSK 			; set BITMASK to 0 
 	
 	jsr popptr1 		; parameter 's'
 	lda ptr1
@@ -107,38 +111,33 @@
 	lda ptr1+1
 	pha 
 
-	jsr popptr1 		; parameter 's'
-	lda ptr1 			; ptr2 is source for copy
-	sta ptr2 
-	lda ptr1+1
-	sta ptr2+1 
+	lda #0
+	sta BITMSK 			; set BITMASK to 0 
 
-	ldy #32				; reserve 32 bytes on stack for string buffer
+	jsr popptr1 		; print parameter 's'
+	lda ptr1 
+	ldx ptr1+1
+	jsr _printString 
+
+	ldy #6				; reserve 6 bytes on stack for string buffer
 	jsr subysp 
 
-	lda sp
-	sta ptr1 
+	lda sp 				; ptr2 = output string for _uint16StringInternal
+	sta ptr2 
 	lda sp+1
-	sta ptr1+1
-
-	jsr _stringCopyInternal ; copy string from ptr2 to ptr1
-
-	jsr _stringLengthInternal 
-	clc 
-	adc ptr1 			; put pointer to end of string in AX
-	ldx ptr1+1
-	jsr pushax 			; push string pointer on parameter stack
+	sta ptr2+1
 
 	pla 				; pull 'value' off stack
-	tax 
+	sta ptr1+1  			; ptr1 = value for _uint16StringInternal
 	pla 
-	jsr _uint16toString
+	sta ptr1 
+	jsr _uint16StringInternal
 
 	lda sp		 		; print string buffer
 	ldx sp+1
 	jsr _printLine 
 
-	ldy #32				; free 32 bytes on stack
+	ldy #6				; free 6 bytes on stack
 	jsr addysp
 	
 	rts 
@@ -242,6 +241,10 @@
 		adc #0
 		sta charaPtr+1
 
+	clear_bitmsk:
+		lda #0
+		sta BITMSK 
+
 	print_name:
 		ldy #1 
 		lda (charaPtr),Y
@@ -343,11 +346,14 @@
 
 	value = ptr1
 	string = ptr2
-	lda sp
-	sta string 
-	lda sp+1
-	sta string+1
+		lda sp
+		sta string 
+		lda sp+1
+		sta string+1
 
+	clear_bitmsk:
+		lda #0
+		sta BITMSK 
 
 	party_money:
 		lda #'$'

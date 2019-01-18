@@ -22,6 +22,7 @@ void printPartyStats(void);
 
 // Formatted Printing
 void drawTextBox(const UInt8 *s);
+void setSavadrToTextCursor(void);
 
 // String Utilities
 void stringConcat(UInt8 *dst, const UInt8 *src);

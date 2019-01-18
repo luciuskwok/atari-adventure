@@ -136,12 +136,13 @@ static SInt8 infoCursorHandler(UInt8 event) {
 }
 
 static void drawCharaInfoAtIndex(UInt8 index) {
-	GameChara *chara = &partyChara[index];
+	PlayerChara *chara = &partyChara[index];
 	UInt8 maxHp = chara->maxHp;
 	UInt8 hp = chara->hp;
 	UInt8 x = 1 + index * 10;
 	UInt8 s[9];
 
+	POKE(BITMSK, 0); // Set text to non-inverse.
 	SET_TXT_ORIGIN(x, 0)
 	printLine(chara->name);
 
@@ -282,6 +283,7 @@ void initInfo(void) {
 
 	// Column 1
 	SET_TXT_ORIGIN(1, ITEM_ROW)
+	POKE(BITMSK, 0);
 
 	printLine("Items");
 

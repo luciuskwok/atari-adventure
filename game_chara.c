@@ -5,7 +5,7 @@
 
 
 // Globals
-GameChara partyChara[4];
+PlayerChara partyChara[4];
 UInt8 partySize = 4;
 UInt8 partyPotions;
 UInt16 partyMoney;
@@ -15,11 +15,8 @@ SInt16 partyReputation;
 
 // ATK lookup table
 const UInt8 baseAttackTable[] = {
-	 3,  4,  5,  6,  7,  8, 
-	10, 12, 14, 16, 18, 20, 
-	22, 24, 26, 28, 31, 34,
-	38, 42, 46, 52, 56, 60, 
-	65, 70, 75, 80, 85, 90, 95
+	 3,  4,  5,  6,  7,  8, 10, 12, 
+	14, 16, 19, 22, 25, 28, 32, 36
 };
 
 
@@ -41,8 +38,8 @@ static UInt16 maxXpWithCharaLevel(UInt8 level) {
 // Battle 
 
 UInt8 calculateDamage(UInt8 attack, UInt8 defense) {
-	UInt16 def = defense + 32;
-	UInt16 dmg = attack * 32 / def; 
+	UInt16 def = defense + 16;
+	UInt16 dmg = (attack * 16 + def - 1) / def; // = ceil(atk * 16 / def), but for ints
 	return dmg;
 }
 
@@ -62,7 +59,7 @@ UInt8 calculateXpGain(UInt8 playerLevel, UInt8 enemyLevel) {
 }
 
 UInt8 addExperienceToChara(UInt8 charaIndex, UInt8 xp) {
-	GameChara *chara = &partyChara[charaIndex];
+	PlayerChara *chara = &partyChara[charaIndex];
 	UInt8 didLevelUp = 0;
 	UInt8 lvl = chara->level;
 	
@@ -85,7 +82,7 @@ UInt8 addExperienceToChara(UInt8 charaIndex, UInt8 xp) {
 
 // Recalculates attack and defenese attributes based on level and equipment.
 void recalculateAttackDefense(UInt8 charaIndex) {
-	GameChara *chara = &partyChara[charaIndex];
+	PlayerChara *chara = &partyChara[charaIndex];
 	UInt8 lvl = chara->level;
 	UInt8 atk = baseAttackTable[lvl - 1];
 	UInt8 def = (lvl * 7 + 1) / 4 - 1;
@@ -118,7 +115,7 @@ void recalculateAttackDefense(UInt8 charaIndex) {
 	chara->defense = def;
 }
 
-void initEnemyChara(GameChara *chara, UInt8 *name, UInt8 maxHp, UInt8 atk, UInt8 def) {
+void initEnemyChara(PlayerChara *chara, UInt8 *name, UInt8 maxHp, UInt8 atk, UInt8 def) {
 	chara->name = name;
 	chara->hp = maxHp;
 	chara->maxHp = maxHp;
@@ -134,7 +131,7 @@ void initEnemyChara(GameChara *chara, UInt8 *name, UInt8 maxHp, UInt8 atk, UInt8
 }
 
 void initCharaAtIndex(UInt8 index, UInt8 *name, UInt8 level) {
-	GameChara *chara = &partyChara[index];
+	PlayerChara *chara = &partyChara[index];
 
 	chara->name = name;
 	chara->level = level;

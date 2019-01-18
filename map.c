@@ -303,13 +303,13 @@ SInt8 mapCursorHandler(UInt8 event) {
 		// Check map bounds. Because newLoc is unsigned, it wraps around from 0 to 255.
 		if (newLoc.x < mapSize.width && newLoc.y < mapSize.height) {
 			if (canMoveTo(newLoc.x, newLoc.y)) {
-				// UInt16 startTime = SHORT_CLOCK;
+				UInt16 startTime = SHORT_CLOCK;
 
 				noteOn(NoteF+Oct3, 1, 4, 15, 0x00, 3);
 				playerLocation = newLoc;
 				drawCurrentMap();
 
-				// debugPrint("Map:", SHORT_CLOCK-startTime, 0, 5);
+				debugPrint("Map:", SHORT_CLOCK-startTime, 0, 5);
 			}
 		} else {
 			// Handle moving off the map for towns
