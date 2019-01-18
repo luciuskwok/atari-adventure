@@ -51,5 +51,6 @@ void initGraphics(void);
 // From misc.asm
 void setDliColorTable(UInt8 *ptr);
 UInt8* getDliColorTable(void);
+void setWaterTile(UInt8 *ptr);
 
 #endif

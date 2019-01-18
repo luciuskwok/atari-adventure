@@ -27,6 +27,8 @@
 .segment "EXTZP": zeropage
 	dliColorTable: .word 0
 	.exportzp dliColorTable
+	waterTile: .word 0
+	.exportzp waterTile
 
 .code
 
@@ -63,6 +65,13 @@
 	rts 
 .endproc
 
+; void setWaterTile(UInt8 *ptr);
+.export _setWaterTile
+.proc _setWaterTile
+	sta waterTile
+	stx waterTile+1
+	rts
+.endproc 
 
 .proc _immediateUserVBI
 	jsr _soundVBI
@@ -104,6 +113,24 @@
 
 		sta PCOLR0			; store new color value in players 0 and 1
 		sta PCOLR1
+
+	animate_water: 
+		lda waterTile+1 
+		beq skip_animate_water
+
+		ldy #0 
+		loop_water:
+			lda (waterTile),Y 
+			asl a 
+			bcc @skip_set_bit
+				ora #1
+			@skip_set_bit:
+			sta (waterTile),Y 
+			iny 
+			cpy #16 
+			bne loop_water 
+	skip_animate_water:
+
 
 	return:
 		jmp XITVBV

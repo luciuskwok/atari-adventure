@@ -972,6 +972,7 @@ customTiles:
 .proc _initFont
 	; uses ptr1, ptr2
 	.importzp ptr1, ptr2
+	.import _setWaterTile
 
 	; Set the map view to use characters starting at fontPage + 2. It seems that the text box area ignores the bottom 2 bits of CHBAS, allowing for regular characters starting at fontPage.
 	customFont = ptr1 
@@ -1012,6 +1013,12 @@ customTiles:
 		iny
 		cpy #customTilesLength
 		bne loop_custom
+
+	set_water_tile:
+		lda #6*8 
+		ldx CHBAS
+		jsr _setWaterTile
+
 	rts
 .endproc
 
