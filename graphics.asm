@@ -935,38 +935,38 @@ _dliSpriteData:
 
 
 .rodata
-fontPage2: ; custom graphic tiles
-	.byte $00, $00, $00, $00, $00, $00, $00, $00 ; Blank
-	.byte $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF ; Solid / Desert
-
-	.byte $FF, $F7, $FF, $BF, $FD, $FF, $EF, $FF ; Plains
-	.byte $7E, $7E, $00, $7E, $7E, $00, $7E, $7E ; BridgeH
-	.byte $00, $DB, $DB, $DB, $DB, $DB, $DB, $00 ; BridgeV
-	.byte $FF, $F7, $E3, $F7, $C1, $F7, $80, $F7 ; Forest
-	.byte $FE, $FF, $FB, $FF, $EF, $FF, $BF, $FF ; Shallows
-	.byte $CE, $B5, $5D, $73, $CE, $BA, $AD, $73 ; Water
-	.byte $F7, $E3, $C1, $80, $FF, $BF, $1F, $0E ; Mountains
-
-	.byte $DF, $DF, $DF, $00, $FD, $FD, $FD, $00 ; Brick
-	.byte $FE, $FF, $BB, $FF, $EF, $FF, $BB, $FF ; Floor
-	.byte $24, $3C, $24, $3C, $24, $3C, $24, $00 ; Ladder
-	.byte $3C, $FF, $00, $E7, $FF, $FF, $FF, $00 ; Chest
-	.byte $C0, $DF, $9F, $BF, $3F, $7F, $7F, $00 ; House1
-	.byte $07, $E3, $EB, $C9, $DD, $9C, $BE, $00 ; House2
-	.byte $7F, $7F, $7F, $4C, $4C, $7F, $7F, $00 ; House3
-	.byte $6D, $6D, $6D, $12, $6D, $6D, $6D, $00 ; House4
-
-	.byte $3C, $18, $18, $2C, $5E, $7E, $3C, $00 ; Potion
-	.byte $04, $04, $0C, $0C, $1C, $7C, $78, $30 ; Fang
-
-	.byte $00, $00, $22, $1C, $1C, $18, $22, $00 ; Castle
-	.byte $00, $00, $28, $00, $28, $00, $00, $00 ; Town
-	.byte $FF, $D3, $89, $C9, $AC, $93, $CD, $F7 ; Village
-	.byte $FF, $FF, $FF, $E7, $E3, $F1, $F8, $FC ; Monument
-	.byte $FF, $FF, $FF, $E7, $E7, $E7, $FF, $FF ; Cave
-	.byte $80, $80, $80, $80, $80, $80, $80, $00 ; HouseDoor
-
-	customTilesLength = 26*8
+;fontPage2: ; custom graphic tiles
+;	.byte $00, $00, $00, $00, $00, $00, $00, $00 ; Blank
+;	.byte $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF ; Solid / Desert
+;
+;	.byte $FF, $F7, $FF, $BF, $FD, $FF, $EF, $FF ; Plains
+;	.byte $7E, $7E, $00, $7E, $7E, $00, $7E, $7E ; BridgeH
+;	.byte $00, $DB, $DB, $DB, $DB, $DB, $DB, $00 ; BridgeV
+;	.byte $FF, $F7, $E3, $F7, $C1, $F7, $80, $F7 ; Forest
+;	.byte $FE, $FF, $FB, $FF, $EF, $FF, $BF, $FF ; Shallows
+;	.byte $CE, $B5, $5D, $73, $CE, $BA, $AD, $73 ; Water
+;	.byte $F7, $E3, $C1, $80, $FF, $BF, $1F, $0E ; Mountains
+;
+;	.byte $DF, $DF, $DF, $00, $FD, $FD, $FD, $00 ; Brick
+;	.byte $FE, $FF, $BB, $FF, $EF, $FF, $BB, $FF ; Floor
+;	.byte $24, $3C, $24, $3C, $24, $3C, $24, $00 ; Ladder
+;	.byte $3C, $FF, $00, $E7, $FF, $FF, $FF, $00 ; Chest
+;	.byte $C0, $DF, $9F, $BF, $3F, $7F, $7F, $00 ; House1
+;	.byte $07, $E3, $EB, $C9, $DD, $9C, $BE, $00 ; House2
+;	.byte $7F, $7F, $7F, $4C, $4C, $7F, $7F, $00 ; House3
+;	.byte $6D, $6D, $6D, $12, $6D, $6D, $6D, $00 ; House4
+;
+;	.byte $3C, $18, $18, $2C, $5E, $7E, $3C, $00 ; Potion
+;	.byte $04, $04, $0C, $0C, $1C, $7C, $78, $30 ; Fang
+;
+;	.byte $00, $00, $22, $1C, $1C, $18, $22, $00 ; Castle
+;	.byte $00, $00, $28, $00, $28, $00, $00, $00 ; Town
+;	.byte $FF, $D3, $89, $C9, $AC, $93, $CD, $F7 ; Village
+;	.byte $FF, $FF, $FF, $E7, $E3, $F1, $F8, $FC ; Monument
+;	.byte $FF, $FF, $FF, $E7, $E7, $E7, $FF, $FF ; Cave
+;	.byte $80, $80, $80, $80, $80, $80, $80, $00 ; HouseDoor
+;
+;	customTilesLength = 26*8
 
 customFontData:
 	.byte $00, $00, $00, $00, $00, $00, $00, $00
@@ -1087,7 +1087,7 @@ customFontData:
 	.byte $00, $00, $3E, $70, $0E, $7C, $00, $00
 	.byte $00, $18, $7E, $18, $18, $0C, $00, $00
 	.byte $00, $00, $66, $66, $66, $3E, $00, $00
-	.byte $00, $00, $66, $6C, $78, $70, $00, $00
+	.byte $00, $00, $66, $6C, $38, $30, $00, $00
 	.byte $00, $00, $63, $6B, $7F, $36, $00, $00
 	.byte $00, $00, $66, $3C, $3C, $66, $00, $00
 	.byte $00, $00, $66, $66, $66, $3E, $06, $3C

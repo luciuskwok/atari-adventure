@@ -251,7 +251,7 @@ void initInfo(void) {
 	// Set up graphics window
 	setScreenMode(ScreenModeOff);
 	setPlayerCursorVisible(0);
-	zeroOut16(GRAPHICS_WINDOW, (24+18)*SCREEN_ROW_BYTES); // Clear graphics and text windows
+	zeroOut16(GRAPHICS_WINDOW, (25+19)*SCREEN_ROW_BYTES); // Clear graphics and text windows
 	setCursorEventHandler(infoCursorHandler);
 
 	// Start music
