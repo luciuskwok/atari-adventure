@@ -12,6 +12,7 @@
 ; Constants
 	ROW_BYTES = 40
 	SPACE     = $20
+	TAB       = $7F
 	NEWLINE   = $9B ; newlines converted to ATASCII are $9B
 
 
@@ -495,6 +496,8 @@
 		check_whitespace:
 			cmp #SPACE
 			beq print_space 		; print space between words
+			cmp #TAB
+			beq print_tab
 			cmp #NEWLINE
 			beq print_newline 		; jump to next line
 		check_wrap:
@@ -510,6 +513,7 @@
 			sta nonEmptyLine
 			jsr _printStringWithLength
 			jmp loop 				; next loop
+
 		check_empty_line:
 			lda nonEmptyLine 		; if line is empty: print truncated line 
 			bne wrap_line
@@ -523,6 +527,7 @@
 			lda LMARGN 				; move cursor to left margin
 			sta COLCRS
 			jmp next_line
+
 		print_space:
 			lda COLCRS  			; if colcrs >= rmargn: wrap line instead
 			cmp RMARGN
@@ -530,10 +535,18 @@
 			lda #1 					; print 1 space 
 			sta length 
 			lda nonEmptyLine 		; if line is empty, skip printing a space
-			beq skip_extra_space 
+			beq skip_char 
 			jsr _printStringWithLength
 			jmp loop
-		skip_extra_space:
+
+		print_tab: 
+			; print tab by skipping 4 spaces
+			lda COLCRS 
+			clc 
+			adc #4
+			sta COLCRS 
+
+		skip_char:
 			lda #1
 			jsr _addAToPtr1			; string += length
 			jmp loop

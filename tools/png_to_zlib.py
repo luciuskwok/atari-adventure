@@ -34,7 +34,7 @@ with open(sys.argv[1], "rb") as file:
 			colorIndex = 0
 			if lum > 0.9:
 				colorIndex = colorTable[3] # white
-			elif lum > 0.5:
+			elif lum > 0.333:
 				colorIndex = colorTable[2] # light background
 			elif lum > 0.1:
 				colorIndex = colorTable[1] # dark background

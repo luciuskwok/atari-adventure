@@ -78,17 +78,19 @@ _dliSpriteData:
 		.byte 128 ; terminator
 
 	packedDialogDL: ; display list in PackBits format
-		.byte   3-1,   DL_RASTER|DL_LMS, LMS_GR, 0 ; graphics, 48 rows
-		.byte -48+257, DL_RASTER 
-		.byte  19-1,   DL_TEXT, DL_RASTER
-		.byte          DL_TEXT, DL_RASTER
-		.byte          DL_TEXT, DL_RASTER
-		.byte          DL_TEXT, DL_RASTER
-		.byte          DL_TEXT, DL_RASTER
-		.byte          DL_TEXT, DL_RASTER
-		.byte          DL_TEXT, DL_RASTER
-		.byte          DL_TEXT, DL_RASTER
-		.byte          DL_TEXT, DL_RASTER
+		.byte   3-1,   DL_RASTER|DL_DLI|DL_LMS, LMS_GR, 0 ; graphics, 48 rows
+		.byte -47+257, DL_RASTER|DL_DLI
+		.byte  21-1,   DL_BLK8
+		.byte          DL_TEXT, DL_BLK2
+		.byte          DL_TEXT, DL_BLK2
+		.byte          DL_TEXT, DL_BLK2
+		.byte          DL_TEXT, DL_BLK2
+		.byte          DL_TEXT, DL_BLK2
+		.byte          DL_TEXT, DL_BLK2
+		.byte          DL_TEXT, DL_BLK2
+		.byte          DL_TEXT, DL_BLK2
+		.byte          DL_TEXT, DL_BLK2
+		.byte          DL_BLK8|DL_DLI
 		.byte          DL_JVB
 		.byte 128 ; terminator
 
@@ -138,6 +140,7 @@ _dliSpriteData:
 	.import _mapViewDLI
 	.import _battleViewDLI
 	.import _infoViewDLI
+	.import _dialogViewDLI
 
 	anticOptions = $2E 	; normal playfield, enable players & missiles, enable DMA
 	enableDLI    = $C0  ; enable VBI + DLI
@@ -219,11 +222,12 @@ _dliSpriteData:
 		ldx #>packedDialogDL
 		jsr _unpackDisplayList
 
-		lda #0
+		lda #<_dialogViewDLI
 		sta VDSLST
+		lda #>_dialogViewDLI
 		sta VDSLST+1
 
-		lda #20	 			; text window height
+		lda #9	 			; text window height
 		sta BOTSCR
 
 		jmp enable_screen

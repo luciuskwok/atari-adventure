@@ -1,10 +1,6 @@
 ; interrupts.asm
 
 ; Exports
-.export _initVBI			; void __fastcall__ initVBI(void);
-.export _mapViewDLI
-.export _battleViewDLI
-.export _infoViewDLI
 
 ; Imports
 .import _soundVBI
@@ -32,7 +28,8 @@
 
 .code
 
-.proc _initVBI		; 
+.export _initVBI	; void __fastcall__ initVBI(void);
+.proc _initVBI	
 	jsr _initSound
 
 	ldy #<_immediateUserVBI
@@ -137,6 +134,7 @@
 .endproc
 
 
+.export _mapViewDLI
 .proc _mapViewDLI
 	pha					; push accumulator and X register onto stack
 	txa
@@ -216,6 +214,7 @@
 		rti
 .endproc
 
+.export _battleViewDLI
 .proc _battleViewDLI
 	pha					; push accumulator and Y register onto stack
 	tya
@@ -310,6 +309,7 @@
 		rti
 .endproc
 
+.export _infoViewDLI
 .proc _infoViewDLI
 	pha					; push AX onto stack
 	txa 
@@ -364,6 +364,57 @@
 		sta HPOSM1
 		sta HPOSM2
 		sta HPOSM3
+
+	return:
+		pla 
+		tax 	
+		pla
+		rti
+.endproc
+
+.export _dialogViewDLI
+.proc _dialogViewDLI
+	pha					; push AX onto stack
+	txa 
+	pha 
+
+	lda VCOUNT 			; use debugger to get actual VCOUNT values
+
+	vcountOffset = $39 	; 57
+	cmp #vcountOffset
+		bcc colors 
+		beq text_box 			; VCOUNT = $39
+
+	jmp last_line
+
+	colors: 
+		ldy dliColorTable+1  ; check for NULL pointer
+			beq return
+		sec 
+		sbc #vcountTopMargin
+		tay 
+		sta WSYNC			; wait for horizontal sync
+		lda (dliColorTable),Y
+		sta COLPF4
+		jmp return
+
+	text_box:
+		lda TXTBKG
+		ldx TXTLUM
+		sta WSYNC			; wait for horizontal sync
+		sta COLPF4			; border background
+		sta COLPF2			; text box background
+		stx COLPF1			; text color
+		jmp return
+
+	last_line:
+		lda COLOR4
+		sta WSYNC			; wait for horizontal sync
+		sta COLPF4
+		lda COLOR2			; restore graphics colors
+		ldx COLOR1
+		sta COLPF2		
+		stx COLPF1		
 
 	return:
 		pla 

@@ -57,7 +57,8 @@ StackItem nullStackItem = { NULL, 0 };
 
 TreeNode exitNode = { "Exit", ExitNode, { NULL } };
 
-TreeNode backNode = { "<Back", ExitNode, { NULL } };
+TreeNode backNode = { "\tBack", ExitNode, { NULL } };
+// The tab char '\t' translates into 0x7F, the left-pointing triangle. 
 
 TreeNode buyFlake1InfoNode = { "Heals 2HP\nDISCOUNT FOOD OF TEM!!!", 1, { NULL } };
 TreeNode buyFlake1Node = { "tem flake", BuyItemNode, { &buyFlake1InfoNode, NULL } };
