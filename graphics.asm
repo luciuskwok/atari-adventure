@@ -39,9 +39,10 @@ _dliSpriteData:
 
 ; Screen modes
 	ScreenModeMap    = 1
-	ScreenModeDialog = 2
+	ScreenModeInfo   = 2
 	ScreenModeBattle = 3
-	ScreenModeInfo   = 4
+	ScreenModeShop   = 4
+	ScreenModeDialog = 5
 
 ; extern void setScreenMode(UInt8 mode);
 .export _setScreenMode
@@ -77,6 +78,21 @@ _dliSpriteData:
 		.byte 128 ; terminator
 
 	packedDialogDL: ; display list in PackBits format
+		.byte   3-1,   DL_RASTER|DL_LMS, LMS_GR, 0 ; graphics, 48 rows
+		.byte -48+257, DL_RASTER 
+		.byte  19-1,   DL_TEXT, DL_RASTER
+		.byte          DL_TEXT, DL_RASTER
+		.byte          DL_TEXT, DL_RASTER
+		.byte          DL_TEXT, DL_RASTER
+		.byte          DL_TEXT, DL_RASTER
+		.byte          DL_TEXT, DL_RASTER
+		.byte          DL_TEXT, DL_RASTER
+		.byte          DL_TEXT, DL_RASTER
+		.byte          DL_TEXT, DL_RASTER
+		.byte          DL_JVB
+		.byte 128 ; terminator
+
+	packedShopDL: ; display list in PackBits format
 		.byte   3-1,   DL_RASTER|DL_LMS, LMS_GR, 0 ; raster, 72 rows
 		.byte -71+257, DL_RASTER 
 		.byte   3-1,   DL_TEXT|DL_LMS, LMS_TXT, 0 ; text, 7 rows
@@ -149,6 +165,8 @@ _dliSpriteData:
 			beq init_map
 		cmp #ScreenModeInfo
 			beq init_info
+		cmp #ScreenModeShop
+			beq init_shop
 		cmp #ScreenModeDialog
 			beq init_dialog
 		cmp #ScreenModeBattle
@@ -185,6 +203,17 @@ _dliSpriteData:
 
 		jmp enable_screen
 
+	init_shop:
+		lda #<packedShopDL
+		ldx #>packedShopDL
+		jsr _unpackDisplayList
+
+		lda #0
+		sta VDSLST
+		sta VDSLST+1
+
+		jmp enable_screen
+
 	init_dialog:
 		lda #<packedDialogDL
 		ldx #>packedDialogDL
@@ -193,6 +222,9 @@ _dliSpriteData:
 		lda #0
 		sta VDSLST
 		sta VDSLST+1
+
+		lda #20	 			; text window height
+		sta BOTSCR
 
 		jmp enable_screen
 
@@ -813,7 +845,7 @@ _dliSpriteData:
 	rts
 .endproc 
 
-; extern void zeroOut16(UInt8 *ptr, UInt16 length);
+; void zeroOut16(UInt8 *ptr, UInt16 length);
 .export _zeroOut16
 .proc _zeroOut16
 	.importzp sreg, ptr1 
@@ -873,6 +905,28 @@ _dliSpriteData:
 		bne loop
 	rts 
 .endproc
+
+
+; void setMemory8(UInt8 *ptr, UInt8 value, UInt8 length);
+.export _setMemory8
+.proc _setMemory8
+	.importzp ptr1, tmp1, tmp2 
+	.import popptr1 , popa
+
+	length = tmp1
+		sta length	; parameter "length"
+	value = tmp2 
+		jsr popa 	; parameter "value"
+		sta value 
+	jsr popptr1 
+	ldy length 
+	lda value
+	loop: 
+		dey 
+		sta (ptr1),Y 
+		bne loop 
+	rts 
+.endproc 
 
 
 .export _setSavadrToGraphicsCursor

@@ -51,6 +51,7 @@
 #include "map_data.h"
 #include "sound.h"
 #include "sprites.h"
+#include "tem_shop.h"
 #include "text.h"
 #include "types.h"
 #include <atari.h>
@@ -77,6 +78,10 @@ static void handleMessage(SInt8 message) {
 		case MessageEnterDialog:
 			fadeOutScreen();
 			initDialog();
+			break;
+		case MessageEnterShop:
+			fadeOutScreen();
+			initTemShop();
 			break;
 		case MessageEnterBattle:
 			fadeOutScreen();

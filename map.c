@@ -282,7 +282,7 @@ SInt8 mapCursorHandler(UInt8 event) {
 				result = MessageEnterBattle;
 				break;
 			case tHouseDoor:
-				result = MessageEnterDialog;
+				result = MessageEnterShop;
 				break;
 			case tLadder:
 				exitToOverworld();

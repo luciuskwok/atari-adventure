@@ -16,10 +16,11 @@ enum CursorEventType {
 };
 enum CursorEventMessages {
 	MessageNone = 0,
+	MessageReturnToMap,
 	MessageEnterDialog,
+	MessageEnterShop,
 	MessageEnterBattle,
 	MessageEnterInfo,
-	MessageReturnToMap,
 };
 
 // Functions

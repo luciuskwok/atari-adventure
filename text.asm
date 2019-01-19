@@ -459,7 +459,7 @@
 
 ; Formatted Printing
 
-; void drawTextBox(const UInt8 *s);
+; UInt8* drawTextBox(const UInt8 *s);
 .export _drawTextBox
 .proc _drawTextBox
 	; COLCRS: starting & newline X-position.
@@ -467,6 +467,7 @@
 	; LMARGN: X-position after wrapping line
 	; RMARGN: X-position of right margin
 	; ROWINC: line spacing
+	; Returns: pointer to end of printed text
 	.importzp 	ptr1, tmp1, tmp3, tmp4
 	.import 	_addAToPtr1
 
@@ -488,7 +489,9 @@
 		ldy #0
 		lda (string),Y
 		bne check_whitespace  		; return upon reaching null terminator
-		rts 
+			lda string 
+			ldx string+1 			; return pointer to end of text
+			rts 
 		check_whitespace:
 			cmp #SPACE
 			beq print_space 		; print space between words
@@ -550,6 +553,9 @@
 			sty ROWCRS 
 			cpy BOTSCR 				; if rowcrs >= botscr: return
 			bcc next_screen_row 	; at or beyond bottom of screen
+		return_at_bottom:
+			lda string 
+			ldx string+1 			; return pointer to end of text
 			rts
 		next_screen_row:
 			lda #ROW_BYTES			; move SAVADR to next row

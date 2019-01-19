@@ -8,7 +8,7 @@
 #include "sound.h"
 #include "sprites.h"
 #include "text.h"
-#include <string.h>
+
 
 #define TEXT_WINDOW_ROW (25)
 #define ITEM_ROW (14)
@@ -275,8 +275,8 @@ void initInfo(void) {
 	setScreenMode(ScreenModeInfo);
 
 	// Fill title top margin raster areas
-	memset(GRAPHICS_WINDOW + (TEXT_WINDOW_ROW - 1) * SCREEN_ROW_BYTES, 0xAA, SCREEN_ROW_BYTES);
-	memset(GRAPHICS_WINDOW + (TEXT_WINDOW_ROW + ITEM_ROW - 1) * SCREEN_ROW_BYTES, 0xFF, SCREEN_ROW_BYTES);
+	setMemory8(GRAPHICS_WINDOW + (TEXT_WINDOW_ROW - 1) * SCREEN_ROW_BYTES, 0xAA, SCREEN_ROW_BYTES);
+	setMemory8(GRAPHICS_WINDOW + (TEXT_WINDOW_ROW + ITEM_ROW - 1) * SCREEN_ROW_BYTES, 0xFF, SCREEN_ROW_BYTES);
 
 
 	// Print chara info

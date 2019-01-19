@@ -21,7 +21,7 @@ void printCharaAtIndex(UInt8 index);
 void printPartyStats(void);
 
 // Formatted Printing
-void drawTextBox(const UInt8 *s);
+UInt8* drawTextBox(const UInt8 *s);
 void setSavadrToTextCursor(void);
 
 // String Utilities

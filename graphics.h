@@ -20,9 +20,10 @@ extern UInt8 dliSpriteData[];
 enum ScreenMode {
 	ScreenModeOff = 0,
 	ScreenModeMap,
-	ScreenModeDialog,
-	ScreenModeBattle,
 	ScreenModeInfo,
+	ScreenModeBattle,
+	ScreenModeShop,
+	ScreenModeDialog,
 };
 void setScreenMode(UInt8 mode);
 
@@ -41,6 +42,7 @@ void compositeImage(const UInt8 *data);
 void drawBarChart(void);
 void zeroOut16(UInt8 *ptr, UInt16 length);
 void zeroOut8(UInt8 *ptr, UInt8 length);
+void setMemory8(UInt8 *ptr, UInt8 value, UInt8 length);
 
 // Timing
 void delayTicks(UInt8 ticks);
