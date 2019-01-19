@@ -10,8 +10,8 @@
 #include "text.h"
 #include <string.h>
 
-#define TEXT_WINDOW_ROW (24)
-#define ITEM_ROW (13)
+#define TEXT_WINDOW_ROW (25)
+#define ITEM_ROW (14)
 
 // Data
 
@@ -239,7 +239,7 @@ static void setHiglightSprite(UInt8 index, const DataBlock *sprite, UInt8 x, UIn
 void initInfo(void) {
 	const UInt8 musicHeight = 12;
 	const UInt8 portraitsHeight = 26;
-	const UInt8 charaStatsHeight = 13*4+1;
+	const UInt8 charaStatsHeight = 13*4+2;
 	const UInt8 charaStatsBottom = musicHeight + portraitsHeight + charaStatsHeight;
 	UInt16 oldTextWindow = PEEKW(TXTMSC);
 	UInt8 count = partySize;
@@ -274,6 +274,11 @@ void initInfo(void) {
 	loadColorTable(NULL);
 	setScreenMode(ScreenModeInfo);
 
+	// Fill title top margin raster areas
+	memset(GRAPHICS_WINDOW + (TEXT_WINDOW_ROW - 1) * SCREEN_ROW_BYTES, 0xAA, SCREEN_ROW_BYTES);
+	memset(GRAPHICS_WINDOW + (TEXT_WINDOW_ROW + ITEM_ROW - 1) * SCREEN_ROW_BYTES, 0xFF, SCREEN_ROW_BYTES);
+
+
 	// Print chara info
 	for (i=0; i<count; ++i) {
 		drawCharaInfoAtIndex(i);
@@ -287,31 +292,31 @@ void initInfo(void) {
 
 	printLine("Items");
 
-	stringCopy(s, "Gold:$");
-	uint16toString(s+stringLength(s), partyMoney);
+	printString("Gold:$");
+	uint16toString(s, partyMoney);
 	printLine(s);
 
-	stringCopy(s, "Herbs:");
-	uint8toString(s+stringLength(s), partyPotions);
-	stringConcat(s, "\x11");
-	printLine(s);
+	printString("Herbs:");
+	uint8toString(s, partyPotions);
+	printString(s);
+	printLine("\x0E");
 
-	stringCopy(s, "Fangs:");
-	uint8toString(s+stringLength(s), partyFangs);
-	stringConcat(s, "\x12");
-	printLine(s);
+	printString("Fangs:");
+	uint8toString(s, partyFangs);
+	printString(s);
+	printLine("\x0F");
 
 	// Column 2
 	SET_TXT_ORIGIN(16, ITEM_ROW+1)
 
-	stringCopy(s, "Nuts:");
-	uint8toString(s+stringLength(s), 11);
+	printString("Nuts:");
+	uint8toString(s, 11);
 	printLine(s);
 
-	printLine(NULL);
+	moveToNextLine();
 
-	stringCopy(s, "Staff:");
-	uint8toString(s+stringLength(s), 3);
+	printString("Staves:");
+	uint8toString(s, 3);
 	printLine(s);
 
 	// Column 3

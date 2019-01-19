@@ -220,7 +220,7 @@
 	.import _partyChara
 
 	.rodata 
-		lvString: .byte "Lv "
+		lvString: .byte "Lv."
 		hpString: .byte "/"
 	.code
 

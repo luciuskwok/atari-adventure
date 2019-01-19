@@ -63,12 +63,13 @@ _dliSpriteData:
 		.byte 128 ; terminator
 
 	packedInfoDL: ; display list in PackBits format
-		.byte   3-1,   DL_RASTER|DL_LMS, LMS_GR, 0 ; raster, 24 rows
-		.byte -21+257, DL_RASTER 
+		.byte   3-1,   DL_RASTER|DL_LMS, LMS_GR, 0 ; raster, 25 rows
+		.byte -22+257, DL_RASTER 
 		.byte   4-1,   DL_RASTER|DL_DLI, DL_RASTER|DL_DLI
 		.byte          DL_TEXT|DL_DLI, DL_BLK1	; chara name
 		.byte -11+257, DL_TEXT 					; chara stats
-		.byte   4-1,   DL_TEXT|DL_DLI, DL_BLK8 
+		.byte   5-1,   DL_TEXT|DL_DLI
+		.byte          DL_BLK4, DL_RASTER
 		.byte          DL_TEXT|DL_DLI, DL_BLK1 	; "Items"
 		.byte  -3+257, DL_TEXT 					; items body
 		.byte   2-1,   DL_TEXT|DL_DLI 			; last line DLI

@@ -320,11 +320,11 @@
 	cmp #vcountTopMargin + 96
 	bcs last_line
 
-	cmp #vcountTopMargin + 24
+	cmp #vcountTopMargin + 25
 	bcc reposition_sprites
 	beq title_rows
 
-	cmp #vcountTopMargin + 77
+	cmp #vcountTopMargin + 78
 	beq title_rows
 
 	jmp normal_rows
