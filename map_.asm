@@ -241,7 +241,7 @@
 		sta tileMap+1
 
 	windowWidth = _mapFrame+2
-	tCastle = 19
+	tCastle = 26
 
 	lda #0
 	sta COLCRS 
