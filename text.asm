@@ -344,6 +344,9 @@
 	ldy #32				; reserve 32 bytes on stack for string buffer
 	jsr subysp 
 
+	potionChar = 14
+	fangChar = 15 
+
 	value = ptr1
 	string = ptr2
 		lda sp
@@ -390,7 +393,7 @@
 		inc string+1
 
 	@skip_msb:
-		lda #$11
+		lda #potionChar
 		jsr append_char
 		lda #' '
 		jsr append_char
@@ -410,7 +413,7 @@
 		inc string+1
 
 	@skip_msb:
-		lda #$12
+		lda #fangChar
 		jsr append_char
 
 	append_terminator:

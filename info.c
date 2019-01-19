@@ -146,7 +146,7 @@ static void drawCharaInfoAtIndex(UInt8 index) {
 	SET_TXT_ORIGIN(x, 0)
 	printLine(chara->name);
 
-	printString("Lv ");
+	printString("Lv.");
 	uint8toString(s, chara->level);
 	printLine(s);
 
@@ -287,16 +287,16 @@ void initInfo(void) {
 
 	printLine("Items");
 
-	stringCopy(s, "Gold: $");
+	stringCopy(s, "Gold:$");
 	uint16toString(s+stringLength(s), partyMoney);
 	printLine(s);
 
-	stringCopy(s, "Herbs: ");
+	stringCopy(s, "Herbs:");
 	uint8toString(s+stringLength(s), partyPotions);
 	stringConcat(s, "\x11");
 	printLine(s);
 
-	stringCopy(s, "Fangs: ");
+	stringCopy(s, "Fangs:");
 	uint8toString(s+stringLength(s), partyFangs);
 	stringConcat(s, "\x12");
 	printLine(s);
@@ -304,13 +304,13 @@ void initInfo(void) {
 	// Column 2
 	SET_TXT_ORIGIN(16, ITEM_ROW+1)
 
-	stringCopy(s, "Nuts: ");
+	stringCopy(s, "Nuts:");
 	uint8toString(s+stringLength(s), 11);
 	printLine(s);
 
 	printLine(NULL);
 
-	stringCopy(s, "Staff: ");
+	stringCopy(s, "Staff:");
 	uint8toString(s+stringLength(s), 3);
 	printLine(s);
 

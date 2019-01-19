@@ -48,16 +48,17 @@ enum TileValues {
 	tFloor,
 	tLadder,
 	tChest,
-	tHouse1,
+
+	tPotion = 14,
+	tFang,
+
+	tHouse1 = 16,
 	tHouse2,
 	tHouse3,
 	tHouse4,
 
-	tPotion, // 17
-	tFang,
-
 	// Tiles with sprite overlays
-	tCastle, // 19
+	tCastle = 26, 
 	tTown,
 	tVillage,
 	tMonument,
