@@ -78,7 +78,8 @@ _dliSpriteData:
 		.byte 128 ; terminator
 
 	packedDialogDL: ; display list in PackBits format
-		.byte   3-1,   DL_RASTER|DL_DLI|DL_LMS, LMS_GR, 0 ; graphics, 48 rows
+		.byte   4-1,   DL_BLK2|DL_DLI
+		.byte          DL_RASTER|DL_DLI|DL_LMS, LMS_GR, 0 ; graphics, 48 rows
 		.byte -47+257, DL_RASTER|DL_DLI
 		.byte  21-1,   DL_BLK8
 		.byte          DL_TEXT, DL_BLK2

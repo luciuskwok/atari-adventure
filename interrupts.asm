@@ -375,15 +375,15 @@
 .export _dialogViewDLI
 .proc _dialogViewDLI
 	pha					; push AX onto stack
-	txa 
+	tya 
 	pha 
 
 	lda VCOUNT 			; use debugger to get actual VCOUNT values
 
-	vcountOffset = $39 	; 57
+	vcountOffset = $3E
 	cmp #vcountOffset
 		bcc colors 
-		beq text_box 			; VCOUNT = $39
+		beq text_box 			; VCOUNT = $3E
 
 	jmp last_line
 
@@ -391,7 +391,7 @@
 		ldy dliColorTable+1  ; check for NULL pointer
 			beq return
 		sec 
-		sbc #vcountTopMargin
+		sbc #vcountTopMargin+1
 		tay 
 		sta WSYNC			; wait for horizontal sync
 		lda (dliColorTable),Y
@@ -400,25 +400,25 @@
 
 	text_box:
 		lda TXTBKG
-		ldx TXTLUM
-		sta WSYNC			; wait for horizontal sync
-		sta COLPF4			; border background
-		sta COLPF2			; text box background
-		stx COLPF1			; text color
+			sta WSYNC			; wait for horizontal sync
+			sta COLPF4			; border background
+			sta COLPF2			; text box background
+		lda TXTLUM
+			sta COLPF1			; text color
 		jmp return
 
 	last_line:
 		lda COLOR4
-		sta WSYNC			; wait for horizontal sync
-		sta COLPF4
+			sta WSYNC			; wait for horizontal sync
+			sta COLPF4
 		lda COLOR2			; restore graphics colors
-		ldx COLOR1
-		sta COLPF2		
-		stx COLPF1		
+			sta COLPF2		
+		lda COLOR1
+			sta COLPF1		
 
 	return:
 		pla 
-		tax 	
+		tay 	
 		pla
 		rti
 .endproc
