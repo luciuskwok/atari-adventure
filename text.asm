@@ -1,7 +1,6 @@
 ; text_.asm
 
 .import 	addysp, popa, popptr1, popsreg, pushax, subysp
-.import 	_zeroOutYAtPtr1
 .import 	_addAToSavadr
 .import 	_sizeBarChart, _drawBarChart
 
