@@ -3,7 +3,7 @@ An Atari Adventure RPG
 
 This is a work-in-progress. I am making something to test out some ideas I have for pushing some of the limits of the Atari 8-bit. 
 
-To build this project, you will need [CC65]((https://github.com/cc65/cc65)).
+To build this project, you will need [CC65](https://github.com/cc65/cc65).
 
 To run the program, you will need an Atari 8-bit emulator such as [Altirra](http://www.virtualdub.org/altirra.html).
 
