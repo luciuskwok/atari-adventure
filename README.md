@@ -10,7 +10,7 @@ To run the program, you will need an Atari 8-bit emulator such as [Altirra](http
 This project uses a Sublime Text 3 project file which contains the build command, cl65, and the list of files to build. Please see that file to see the latest list of files included in the build phase.
 
 The build command will look something like: 
-`cl65 -O -t nes -C <list of .c and .s files> -o adv.xex`
+`cl65 -O -t atari -C <list of .c and .s files> -o adv.xex`
 
 If you get build errors, make sure you have the latest maintained version of cc65 from [GitHub](https://github.com/cc65/cc65), and not one of the older versions floating around the Internet.
 
