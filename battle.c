@@ -1,5 +1,8 @@
 // battle.c
 
+#include <zlib.h>
+#include <atari.h>
+
 #include "battle.h"
 #include "cursor.h"
 #include "game_chara.h"
@@ -9,7 +12,6 @@
 #include "sprites.h"
 #include "text.h"
 #include "atari_memmap.h"
-#include <zlib.h>
 
 
 // Globals
@@ -202,17 +204,17 @@ static void drawEnemyHpBar(void) {
 }
 
 static void enemyWasHit(UInt8 damage) {
-	UInt8 originalColor = PEEK(COLOR0);
+	UInt8 originalColor = COLOR0;
 	UInt8 i;
 
 	// Show animation for when enemy was hit.
 	for (i=0; i<4; ++i) {
-		POKE(COLOR0, 0x32);
+		COLOR0 = 0x32;
 		delayTicks(4);
-		POKE(COLOR0, 0x0E);
+		COLOR0 = 0x0E;
 		delayTicks(4);
 	}
-	POKE(COLOR0, originalColor);
+	COLOR0 = originalColor;
 
 	// Decrement enemy HP
 	if (damage < enemy.hp) {
@@ -467,7 +469,7 @@ static void drawEnemyCharaImage(const UInt8 *image) {
 }
 
 void initBattle(void) {
-	// UInt16 startTime = SHORT_CLOCK;
+	// UInt16 startTime = Clock16;
 	// Use block of memory at end of graphics screen memory area for gradient.
 	UInt8 *unpackedGradient = GRAPHICS_WINDOW + (graphicsHeight+11) * SCREEN_ROW_BYTES;
 	int err; 
@@ -543,11 +545,11 @@ void initBattle(void) {
 	POKE(NMIEN, 0xC0);
 
 	// Copy first color to background color shadow register so that the color extends to overscan.
-	POKE(COLOR4, unpackedGradient[0]);  
+	COLOR4 = unpackedGradient[0];  
 
 	// Start battle music
 	startSong(8);
 
-	// debugPrint("Init:", SHORT_CLOCK - startTime, 30, 3);
+	// debugPrint("Init:", Clock16 - startTime, 30, 3);
 }
 

@@ -509,7 +509,7 @@ static SInt8 handleMenuClick(UInt8 index) {
 }
 
 void initTemShop(void) {
-	UInt16 startTime = SHORT_CLOCK;
+	UInt16 startTime = Clock16;
 
 	isLeavingShop = 0;
 
@@ -551,6 +551,6 @@ void initTemShop(void) {
 
 	// Draw background image
 	drawCompressedImage(&temShopImage, 0, graphicsHeight);
-	debugPrint("Init:", SHORT_CLOCK - startTime, 0, 6);
+	debugPrint("Init:", Clock16 - startTime, 0, 6);
 }
 

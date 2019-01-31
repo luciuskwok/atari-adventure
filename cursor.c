@@ -1,6 +1,7 @@
 // cursor.c
 
 #include "cursor.h"
+#include <atari.h>
 #include "atari_memmap.h"
 #include "graphics.h"
 #include "sprites.h"
@@ -15,7 +16,7 @@ CursorEventHandlerCallbackType gCursorEventHandler;
 
 SInt8 handleStick(void) {
 	// Only allow moves in 4 cardinal directions and not diagonals.
-	UInt8 stick = PEEK (STICK0);
+	UInt8 stick = STICK0;
 	UInt8 vb_timer = *VB_TIMER;
 	UInt8 cursorEvent = CursorNone;
 	SInt8 msg = 0;
@@ -42,7 +43,7 @@ SInt8 handleStick(void) {
 }
 
 SInt8 handleTrigger(void) {
-	UInt8 trigger = PEEK (STRIG0);
+	UInt8 trigger = STRIG0;
 	SInt8 msg = 0;
 
 	// Recognize trigger only when it transitions from up to down.
@@ -61,17 +62,17 @@ SInt8 handleTrigger(void) {
 
 void waitForAnyInput(void) {
 	// Wait for trigger to be released first.
-	while (PEEK(STRIG0) == 0) {
+	while (STRIG0 == 0) {
 	}
 
 	// Then wait for trigger to be pressed
-	while (PEEK(STRIG0) != 0) {
+	while (STRIG0 != 0) {
 		resetAttractMode();
 	}
 }
 
 void resetAttractMode(void) {
-	POKE(ATRACT, 0);
+	ATRACT_value = 0;
 }
 
 // Init

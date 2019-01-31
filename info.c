@@ -246,7 +246,7 @@ void initInfo(void) {
 	UInt8 i;
 	UInt8 s[20];
 
-	// UInt16 startTime = SHORT_CLOCK;
+	// UInt16 startTime = Clock16;
 
 	// Set up graphics window
 	setScreenMode(ScreenModeOff);
@@ -338,7 +338,7 @@ void initInfo(void) {
 	setHiglightSprite(3, &avatar2SpriteL, 124 + 11, 8);
 	setHiglightSprite(4, &avatar4SpriteR, 124 + 22, 9);
 
-	// debugPrint("Init:", SHORT_CLOCK - startTime, 0, ITEM_ROW+4);
+	// debugPrint("Init:", Clock16 - startTime, 0, ITEM_ROW+4);
 
 	// Show screen
 	fadeInColorTable(infoColorTable);

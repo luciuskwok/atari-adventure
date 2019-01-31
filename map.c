@@ -1,6 +1,8 @@
 // map.c
 
 #include "map.h"
+#include <atari.h>
+#include <string.h>
 #include "cursor.h"
 #include "graphics.h"
 #include "map_data.h"
@@ -9,7 +11,6 @@
 #include "sprites.h"
 #include "text.h"
 #include "atari_memmap.h"
-#include <string.h>
 
 
 // Globals
@@ -40,12 +41,12 @@ void decodeRunLenRange(UInt8 *outData, const UInt8 *runLenData);
 // Menu
 
 static void drawMapTextBox(void) {
-	// UInt16 startTime = SHORT_CLOCK;
+	// UInt16 startTime = Clock16;
 
 	printAllCharaStats(0);
 	printPartyStats();
 
-	// debugPrint("Text:", SHORT_CLOCK - startTime, 0, 5);
+	// debugPrint("Text:", Clock16 - startTime, 0, 5);
 }
 
 static void exitMapMenu(void) {
@@ -303,13 +304,13 @@ SInt8 mapCursorHandler(UInt8 event) {
 		// Check map bounds. Because newLoc is unsigned, it wraps around from 0 to 255.
 		if (newLoc.x < mapSize.width && newLoc.y < mapSize.height) {
 			if (canMoveTo(newLoc.x, newLoc.y)) {
-				UInt16 startTime = SHORT_CLOCK;
+				UInt16 startTime = Clock16;
 
 				noteOn(NoteF+Oct3, 1, 4, 15, 0x00, 3);
 				playerLocation = newLoc;
 				drawCurrentMap();
 
-				debugPrint("Map:", SHORT_CLOCK-startTime, 0, 5);
+				debugPrint("Map:", Clock16-startTime, 0, 5);
 			}
 		} else {
 			// Handle moving off the map for towns
@@ -336,7 +337,7 @@ void initMap(void) {
 	// setSpriteOriginX(6, 72);
 
 	// Set player 3 sprite size
-	POKE(SIZEP3, 0);
+	GTIA_WRITE.sizep3 = 0;
 
 	transitionToMap(currentMapType, 0, 1);
 	drawMapTextBox();

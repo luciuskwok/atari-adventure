@@ -40,6 +40,7 @@
 */
 
 // Includes
+#include <atari.h>
 #include "atari_memmap.h"
 #include "battle.h"
 #include "cursor.h"
@@ -54,7 +55,6 @@
 #include "tem_shop.h"
 #include "text.h"
 #include "types.h"
-#include <atari.h>
 
 
 // Globals
