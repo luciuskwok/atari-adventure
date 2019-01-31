@@ -999,8 +999,8 @@ return:
 	; uses chStateOffset & vibratoTimer to return AUDF# value
 	ldx chStateOffset
 	lda chNote,X 			; X = note
-	cmp noteTableLength
-	bcs get_note 			; if note >= noteTableLength: return 255
+	cmp #noteTableLength
+	bcc get_note 			; if note >= noteTableLength: return 255
 	lda #$FF
 	rts
 
